@@ -1,0 +1,153 @@
+name: llvm-general
+version: 0.1
+license: BSD3
+license-file: LICENSE
+author: Benjamin S.Scarlet <fgthb0@greynode.net>
+maintainer: Benjamin S. Scarlet <fgthb0@greynode.net>
+copyright: Benjamin S. Scarlet 2013
+build-type: Custom
+cabal-version: >= 1.8
+synopsis: Rich LLVM bindings (with transfer of LLVM IR to and from C++, detailed compilation pass control, etc.)
+description:
+  llvm-general is a set of Haskell bindings for LLVM <http://llvm.org/>. Unlike other current Haskell bindings,
+	it uses an ADT to represent LLVM IR (<http://llvm.org/docs/LangRef.html>), and so offers two advantages: it
+	handles almost all of the stateful complexities of using the LLVM API to build IR; and it supports moving IR not
+	only from Haskell into LLVM C++ objects, but the other direction - from LLVM C++ into Haskell.
+   
+Library
+  build-tools: llvm-config
+  ghc-options: -fwarn-unused-imports
+  hs-source-dirs: src
+  build-depends: 
+    base >= 3 && < 5,
+    text >= 0.11.2.1,
+    bytestring >= 0.9.1.10,
+    transformers >= 0.3.0.0,
+    mtl >= 2.0.1.0,
+    template-haskell >= 2.5.0.0,
+    containers >= 0.5.0.0,
+    parsec >= 3.1.3,
+    array >= 0.4.0.1,
+    setenv >= 0.1.0
+  include-dirs: src
+  extra-libraries: LLVM-3.2svn stdc++
+  exposed-modules:
+    LLVM.General
+    LLVM.General.AST
+    LLVM.General.AST.AddrSpace
+    LLVM.General.AST.InlineAssembly
+    LLVM.General.AST.Attribute
+    LLVM.General.AST.CallingConvention
+    LLVM.General.AST.Constant
+    LLVM.General.AST.DataLayout
+    LLVM.General.AST.FloatingPointPredicate
+    LLVM.General.AST.Global
+    LLVM.General.AST.Instruction
+    LLVM.General.AST.IntegerPredicate
+    LLVM.General.AST.Linkage
+    LLVM.General.AST.Name
+    LLVM.General.AST.Operand
+    LLVM.General.AST.RMWOperation
+    LLVM.General.AST.Type
+    LLVM.General.AST.Visibility
+    LLVM.General.CodeGenOpt
+    LLVM.General.CodeModel
+    LLVM.General.Context
+    LLVM.General.Diagnostic
+    LLVM.General.ExecutionEngine
+    LLVM.General.Module
+    LLVM.General.PassManager
+    LLVM.General.Relocation
+    LLVM.General.Target
+    LLVM.General.Target.Options
+    LLVM.General.Transforms
+
+  other-modules:
+    Control.Monad.Phased
+    Control.Monad.Phased.Class
+    Control.Monad.Trans.Phased
+    Control.Monad.AnyCont
+    Control.Monad.AnyCont.Class
+    Control.Monad.Trans.AnyCont
+    LLVM.General.Internal.Atomicity
+    LLVM.General.Internal.Attribute
+    LLVM.General.Internal.BasicBlock
+    LLVM.General.Internal.CallingConvention
+    LLVM.General.Internal.Coding
+    LLVM.General.Internal.Constant
+    LLVM.General.Internal.Context
+    LLVM.General.Internal.DataLayout
+    LLVM.General.Internal.DecodeAST
+    LLVM.General.Internal.Diagnostic
+    LLVM.General.Internal.EncodeAST
+    LLVM.General.Internal.ExecutionEngine
+    LLVM.General.Internal.FloatingPointPredicate
+    LLVM.General.Internal.Function
+    LLVM.General.Internal.Global
+    LLVM.General.Internal.InlineAssembly
+    LLVM.General.Internal.Instruction
+    LLVM.General.Internal.InstructionDefs
+    LLVM.General.Internal.IntegerPredicate
+    LLVM.General.Internal.Metadata
+    LLVM.General.Internal.Module
+    LLVM.General.Internal.Operand
+    LLVM.General.Internal.PassManager
+    LLVM.General.Internal.RMWOperation
+    LLVM.General.Internal.String
+    LLVM.General.Internal.Target
+    LLVM.General.Internal.Type
+    LLVM.General.Internal.Value
+    LLVM.General.Internal.FFI.InlineAssembly
+    LLVM.General.Internal.FFI.BasicBlock
+    LLVM.General.Internal.FFI.Builder
+    LLVM.General.Internal.FFI.Cleanup
+    LLVM.General.Internal.FFI.Constant
+    LLVM.General.Internal.FFI.Context
+    LLVM.General.Internal.FFI.ExecutionEngine
+    LLVM.General.Internal.FFI.Function
+    LLVM.General.Internal.FFI.GlobalAlias
+    LLVM.General.Internal.FFI.GlobalValue
+    LLVM.General.Internal.FFI.GlobalVariable
+    LLVM.General.Internal.FFI.Instruction
+    LLVM.General.Internal.FFI.InstructionDefs
+    LLVM.General.Internal.FFI.Iterate
+    LLVM.General.Internal.FFI.LLVMCTypes
+    LLVM.General.Internal.FFI.Metadata
+    LLVM.General.Internal.FFI.Module
+    LLVM.General.Internal.FFI.PassManager
+    LLVM.General.Internal.FFI.PtrHierarchy
+    LLVM.General.Internal.FFI.SMDiagnostic
+    LLVM.General.Internal.FFI.Target
+    LLVM.General.Internal.FFI.Type
+    LLVM.General.Internal.FFI.Value
+
+  C-Sources: 
+    src/LLVM/General/Internal/FFI/AssemblyC.cpp
+    src/LLVM/General/Internal/FFI/BuilderC.cpp
+    src/LLVM/General/Internal/FFI/ConstantC.cpp
+    src/LLVM/General/Internal/FFI/FunctionC.cpp
+    src/LLVM/General/Internal/FFI/GlobalAliasC.cpp
+    src/LLVM/General/Internal/FFI/GlobalValueC.cpp
+    src/LLVM/General/Internal/FFI/InlineAssemblyC.cpp
+    src/LLVM/General/Internal/FFI/InstructionC.cpp
+    src/LLVM/General/Internal/FFI/MetadataC.cpp
+    src/LLVM/General/Internal/FFI/ModuleC.cpp
+    src/LLVM/General/Internal/FFI/PassManagerC.cpp
+    src/LLVM/General/Internal/FFI/SMDiagnosticC.cpp
+    src/LLVM/General/Internal/FFI/TargetC.cpp
+    src/LLVM/General/Internal/FFI/TypeC.cpp
+    src/LLVM/General/Internal/FFI/ValueC.cpp
+
+Test-Suite test
+  type: exitcode-stdio-1.0
+  main-is: Test.hs
+  hs-source-dirs: test
+  build-depends:  
+    base >= 3 && < 5,
+    test-framework >= 0.5,
+    test-framework-hunit >= 0.2.7,
+    HUnit >= 1.2.4.2,
+    test-framework-quickcheck2 >= 0.3.0.1,
+    QuickCheck >= 2.5.1.1,
+    llvm-general >= 0.1,
+    containers >= 0.5.0.0

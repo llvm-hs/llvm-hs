@@ -1,0 +1,5 @@
+dist
+cabal-dev
+.shake.database
+out
+.DS_Store

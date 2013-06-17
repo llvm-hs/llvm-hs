@@ -1,0 +1,40 @@
+module LLVM.General.Internal.Function where
+
+import Control.Monad
+import Control.Monad.Trans
+import Control.Monad.AnyCont
+
+import Foreign.Ptr
+
+import qualified LLVM.General.Internal.FFI.Function as FFI
+import qualified LLVM.General.Internal.FFI.PtrHierarchy as FFI
+
+import LLVM.General.Internal.DecodeAST
+import LLVM.General.Internal.Value
+import LLVM.General.Internal.Coding
+import LLVM.General.Internal.Attribute ()
+
+import qualified LLVM.General.AST as A
+import qualified LLVM.General.AST.Attribute as A.A
+
+getFunctionAttrs :: Ptr FFI.Function -> IO [A.A.FunctionAttribute]
+getFunctionAttrs = decodeM <=< FFI.getFunctionAttr
+
+setFunctionAttrs :: Ptr FFI.Function -> [A.A.FunctionAttribute] -> IO ()
+setFunctionAttrs f = FFI.addFunctionAttr f <=< encodeM 
+
+getParameterAttrs :: Ptr FFI.Parameter -> IO [A.A.ParameterAttribute]
+getParameterAttrs = decodeM <=< FFI.getAttribute
+
+getParameters :: Ptr FFI.Function -> DecodeAST [A.Parameter]
+getParameters f = scopeAnyCont $ do
+  n <- liftIO (FFI.countParams f)
+  ps <- allocaArray n
+  liftIO $ FFI.getParams f ps
+  params <- peekArray n ps
+  forM params $ \param -> 
+    return A.Parameter 
+       `ap` typeOf param
+       `ap` getLocalName param
+       `ap` (liftIO $ getParameterAttrs param)
+  
