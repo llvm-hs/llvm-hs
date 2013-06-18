@@ -1,13 +1,17 @@
 {-# LANGUAGE
   DeriveDataTypeable
   #-}
-  
+-- | This module provides an enumeration of the various transformation (e.g. optimization) passes
+-- provided by LLVM. They can be used to create a 'LLVM.General.PassManager.PassManager' to, in turn,
+-- run the passes on 'LLVM.General.Module.Module's. If you don't know what passes you want, consider
+-- instead using 'LLVM.General.PassManager.CuratedPassSetSpec'.
 module LLVM.General.Transforms where
 
 import Data.Data
 import Data.Int
 import Data.Word
 
+-- | <http://llvm.org/doxygen/classllvm_1_1Pass.html>
 data Pass
   -- here begin the Scalar passes
   = AggressiveDeadCodeElimination
@@ -103,6 +107,9 @@ data Pass
   | LoopVectorize
   deriving (Eq, Ord, Read, Show, Typeable, Data)
 
+-- | Defaults for the 'BasicBlockVectorize' pass - copied from the C++ code to keep these defaults
+-- constant. (The C++ defaults are modifiable through global objects used for command-line processing,
+-- in a design apparently oblivious to uses of LLVM besides the standard command-line tools).
 defaultVectorizeBasicBlocks = BasicBlockVectorize {
     vectorBits = 128,
     vectorizeBools = True,

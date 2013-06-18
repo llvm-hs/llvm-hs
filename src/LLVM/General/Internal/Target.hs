@@ -64,7 +64,12 @@ genCodingInstance' [t| TO.FloatingPointOperationFusionMode |] ''FFI.FPOpFusionMo
 
 newtype Target = Target (Ptr FFI.Target)
 
-lookupTarget :: Maybe String -> String -> IO (Either String (Target, String))
+-- | Find a Target given an architecture and/or a "triple".
+-- | <http://llvm.org/doxygen/structllvm_1_1TargetRegistry.html#a3105b45e546c9cc3cf78d0f2ec18ad89>
+lookupTarget :: 
+  Maybe String -- ^ arch
+  -> String -- ^ "triple"
+  -> IO (Either String (Target, String))
 lookupTarget arch triple = flip runAnyContT return $ do
   cErrorP <- alloca
   cNewTripleP <- alloca
@@ -81,11 +86,14 @@ lookupTarget arch triple = flip runAnyContT return $ do
    else
      Right . (Target target, ) <$> readString cNewTripleP
 
+-- | <http://llvm.org/doxygen/classllvm_1_1TargetOptions.html>
 newtype TargetOptions = TargetOptions (Ptr FFI.TargetOptions)
 
+-- | bracket creation and destruction of a 'TargetOptions' object
 withTargetOptions :: (TargetOptions -> IO a) -> IO a
 withTargetOptions = bracket FFI.createTargetOptions FFI.disposeTargetOptions . (. TargetOptions)
 
+-- | set all target options
 pokeTargetOptions :: TO.Options -> TargetOptions -> IO ()
 pokeTargetOptions hOpts (TargetOptions cOpts) = do
   mapM_ (\(c, ha) -> FFI.setTargetOptionFlag cOpts c =<< encodeM (ha hOpts)) [
@@ -118,6 +126,7 @@ pokeTargetOptions hOpts (TargetOptions cOpts) = do
   FFI.setAllowFPOpFusion cOpts =<< encodeM (TO.allowFloatingPointOperationFusion hOpts)
   FFI.setSSPBufferSize cOpts =<< encodeM (TO.stackSmashingProtectionBufferSize hOpts)
   
+-- | get all target options
 peekTargetOptions :: TargetOptions -> IO TO.Options
 peekTargetOptions (TargetOptions tOpts) = do
   let gof = decodeM <=< FFI.getTargetOptionsFlag tOpts 
@@ -168,13 +177,15 @@ peekTargetOptions (TargetOptions tOpts) = do
   stackSmashingProtectionBufferSize <- decodeM =<< FFI.getSSPBufferSize tOpts
   return TO.Options { .. }
 
+-- | <http://llvm.org/doxygen/classllvm_1_1TargetMachine.html>
 newtype TargetMachine = TargetMachine (Ptr FFI.TargetMachine)
 
+-- | bracket creation and destruction of a 'TargetMachine'
 withTargetMachine :: 
-    Target 
-    -> String
-    -> String
-    -> String
+    Target
+    -> String -- ^ triple
+    -> String -- ^ cpu
+    -> String -- ^ features
     -> TargetOptions
     -> Reloc.Model
     -> CodeModel.Model
@@ -210,7 +221,9 @@ withTargetMachine
       FFI.disposeTargetMachine
       . (. TargetMachine)
 
+-- | <http://llvm.org/doxygen/classllvm_1_1TargetLowering.html>
 newtype TargetLowering = TargetLowering (Ptr FFI.TargetLowering)
 
+-- | get the 'TargetLowering' of a 'TargetMachine'
 getTargetLowering :: TargetMachine -> IO TargetLowering
 getTargetLowering (TargetMachine tm) = TargetLowering <$> FFI.getTargetLowering tm

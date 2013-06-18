@@ -1,6 +1,8 @@
 {-# LANGUAGE
   DeriveDataTypeable
   #-}
+-- | LLVM instructions 
+-- <http://llvm.org/docs/LangRef.html#instruction-reference>
 module LLVM.General.AST.Instruction where
 
 import Data.Data
@@ -16,8 +18,11 @@ import LLVM.General.AST.RMWOperation (RMWOperation)
 import LLVM.General.AST.CallingConvention (CallingConvention)
 import LLVM.General.AST.Attribute (ParameterAttribute, FunctionAttribute)
 
+-- | <http://llvm.org/docs/LangRef.html#metadata-nodes-and-metadata-strings>
+-- Metadata can be attached to an instruction
 type InstructionMetadata = [(String, MetadataNode)]
 
+-- | <http://llvm.org/docs/LangRef.html#terminators>
 data Terminator 
   = Ret { 
       returnOperand :: Maybe Operand,
@@ -63,6 +68,8 @@ data Terminator
     }
   deriving (Eq, Read, Show)
 
+-- | <http://llvm.org/docs/LangRef.html#atomic-memory-ordering-constraints>
+-- <http://llvm.org/docs/Atomics.html>
 data MemoryOrdering
   = Unordered
   | Monotonic
@@ -72,17 +79,24 @@ data MemoryOrdering
   | SequentiallyConsistent
   deriving (Eq, Ord, Read, Show, Data, Typeable)
 
+-- | An 'Atomicity' describes constraints on the visibility of effects of an atomic instruction
 data Atomicity = Atomicity { 
-  crossThread :: Bool, 
+  crossThread :: Bool, -- ^ <http://llvm.org/docs/LangRef.html#singlethread>
   memoryOrdering :: MemoryOrdering
  }
  deriving (Eq, Ord, Read, Show)
 
+-- | For the redoubtably complex 'LandingPad' instruction
 data LandingPadClause
     = Catch Constant
     | Filter Constant
     deriving (Eq, Ord, Read, Show)
 
+-- | non-terminator instructions:
+-- <http://llvm.org/docs/LangRef.html#binaryops>
+-- <http://llvm.org/docs/LangRef.html#bitwiseops>
+-- <http://llvm.org/docs/LangRef.html#memoryops>
+-- <http://llvm.org/docs/LangRef.html#otherops>
 data Instruction
   = Add { 
       nsw :: Bool,
@@ -367,6 +381,8 @@ data Instruction
     }
   deriving (Eq, Read, Show)
 
+-- | Instances of instructions may be given a name, allowing their results to be referenced as 'Operand's.
+-- Sometimes instructions - e.g. a call to a function returning void - don't need names.
 data Named a 
   = Name := a
   | Do a

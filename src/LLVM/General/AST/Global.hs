@@ -1,3 +1,4 @@
+-- | 'Global's - top-level values in 'Module's - and supporting structures.
 module LLVM.General.AST.Global where
 
 import Data.Word
@@ -12,7 +13,9 @@ import qualified LLVM.General.AST.Visibility as V
 import qualified LLVM.General.AST.CallingConvention as CC
 import qualified LLVM.General.AST.Attribute as A
 
+-- | <http://llvm.org/doxygen/classllvm_1_1GlobalValue.html>
 data Global
+    -- | <http://llvm.org/docs/LangRef.html#global-variables>
     = GlobalVariable {
         name :: Name,
         linkage :: L.Linkage,
@@ -26,6 +29,7 @@ data Global
         section :: Maybe String,
         alignment :: Word32
       }
+    -- | <http://llvm.org/docs/LangRef.html#aliases>
     | GlobalAlias {
         name :: Name,
         linkage :: L.Linkage,
@@ -33,6 +37,7 @@ data Global
         type' :: Type,
         aliasee :: Constant
       }
+    -- | <http://llvm.org/docs/LangRef.html#functions>
     | Function {
         linkage :: L.Linkage,
         visibility :: V.Visibility,
@@ -48,12 +53,17 @@ data Global
       }
   deriving (Eq, Read, Show)
 
+-- | 'Parameter's for 'Function's
 data Parameter = Parameter Type Name [A.ParameterAttribute]
   deriving (Eq, Read, Show)
 
+-- | <http://llvm.org/doxygen/classllvm_1_1BasicBlock.html>
+-- LLVM code in a function is a sequence of 'BasicBlock's each with a label,
+-- some instructions, and a terminator.
 data BasicBlock = BasicBlock Name [Named Instruction] (Named Terminator)
   deriving (Eq, Read, Show)
 
+-- | helper for making 'GlobalVariable's
 globalVariableDefaults :: Global
 globalVariableDefaults = 
   GlobalVariable {
@@ -70,6 +80,7 @@ globalVariableDefaults =
   alignment = 0
   }
 
+-- | helper for making 'GlobalAlias's
 globalAliasDefaults :: Global
 globalAliasDefaults =
   GlobalAlias {
@@ -80,6 +91,7 @@ globalAliasDefaults =
     aliasee = undefined
   }
 
+-- | helper for making 'Function's
 functionDefaults :: Global
 functionDefaults = 
   Function {

@@ -20,6 +20,7 @@ import LLVM.General.Internal.Coding
 
 import qualified LLVM.General.AST as A
 
+-- | <http://llvm.org/doxygen/classllvm_1_1ExecutionEngine.html>
 newtype ExecutionEngine = ExecutionEngine (Ptr FFI.ExecutionEngine)
 
 removeModule :: Ptr FFI.ExecutionEngine -> Ptr FFI.Module -> IO ()
@@ -30,6 +31,7 @@ removeModule e m = flip runAnyContT return $ do
   when (r /= 0) $ fail "FFI.removeModule failure"
 
 
+-- | bracket the creation and destruction of an 'ExecutionEngine'
 withExecutionEngine :: Context -> (ExecutionEngine -> IO a) -> IO a
 withExecutionEngine c f = flip runAnyContT return $ do
   liftIO $ FFI.initializeNativeTarget
@@ -45,9 +47,14 @@ withExecutionEngine c f = flip runAnyContT return $ do
   liftIO $ f (ExecutionEngine executionEngine)
           
       
+-- | bracket the availability of machine code for a given 'Module' in an 'ExecutionEngine'.
+-- See 'findFunction'.
 withModuleInEngine :: ExecutionEngine -> Module -> IO a -> IO a
 withModuleInEngine (ExecutionEngine e) (Module m) = bracket_ (FFI.addModule e m) (removeModule e m)
 
+-- | While a 'Module' is in an 'ExecutionEngine', use 'findFunction' to lookup functions in the module.
+-- To run them from Haskell, treat them as any other function pointer: cast them to an appropriate and
+-- foreign type, then wrap them with a dynamic FFI stub.
 findFunction :: ExecutionEngine -> A.Name -> IO (Maybe (Ptr ()))
 findFunction (ExecutionEngine e) (A.Name fName) = flip runAnyContT return $ do
   out <- alloca

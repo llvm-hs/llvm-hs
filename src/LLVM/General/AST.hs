@@ -21,6 +21,7 @@ import LLVM.General.AST.Operand
 import LLVM.General.AST.Instruction
 import LLVM.General.AST.DataLayout
 
+-- | Any thing which can be at the top level of a 'Module'
 data Definition 
   = GlobalDefinition Global
   | TypeDefinition Name (Maybe Type)
@@ -33,12 +34,14 @@ data Definition
 data Module = 
   Module {
     moduleName :: String,
-    moduleDataLayout :: Maybe DataLayout,
+    -- | a 'DataLayout', if specified, must match that of the eventual code generator
+    moduleDataLayout :: Maybe DataLayout, 
     moduleTargetTriple :: Maybe String,
     moduleDefinitions :: [Definition]
   } 
   deriving (Eq, Read, Show)
 
+-- | helper for making 'Module's
 defaultModule = 
   Module {
     moduleName = "<string>",

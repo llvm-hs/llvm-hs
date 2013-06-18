@@ -3,6 +3,8 @@
   StandaloneDeriving,
   GeneralizedNewtypeDeriving
   #-}
+-- | Define types which correspond cleanly with some simple types on the C/C++ side.
+-- Encapsulate hsc macro weirdness here, supporting higher-level tricks elsewhere.
 module LLVM.General.Internal.FFI.LLVMCTypes where
 
 #define __STDC_LIMIT_MACROS

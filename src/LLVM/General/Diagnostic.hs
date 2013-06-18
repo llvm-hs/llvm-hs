@@ -1,6 +1,7 @@
 {-# LANGUAGE
   DeriveDataTypeable
   #-}
+-- | Diagnostics describe parse errors
 module LLVM.General.Diagnostic (
   DiagnosticKind(..),
   Diagnostic(..),
@@ -9,12 +10,14 @@ module LLVM.General.Diagnostic (
 
 import Data.Data
 
+-- | What kind of problem does a diagnostic describe?
 data DiagnosticKind 
   = ErrorKind
   | WarningKind
   | NoteKind
   deriving (Eq, Ord, Read, Show, Typeable, Data)
 
+-- | A 'Diagnostic' described a problem during parsing of LLVM IR
 data Diagnostic = Diagnostic {
     lineNumber :: Int,
     columnNumber :: Int,
@@ -25,6 +28,7 @@ data Diagnostic = Diagnostic {
   }
   deriving (Eq, Ord, Read, Show)
 
+-- | Convert a 'Diagnostic' to a printable form.
 diagnosticDisplay :: Diagnostic -> String
 diagnosticDisplay d = 
   (filename d) ++ ":" ++ show (lineNumber d) ++ ":" ++ show (columnNumber d)

@@ -1,3 +1,4 @@
+-- | A representation of LLVM constants
 module LLVM.General.AST.Constant where
 
 import Data.Word (Word32)
@@ -7,6 +8,16 @@ import LLVM.General.AST.Name
 import LLVM.General.AST.FloatingPointPredicate (FloatingPointPredicate)
 import LLVM.General.AST.IntegerPredicate (IntegerPredicate)
 
+{- |
+<http://llvm.org/docs/LangRef.html#constants>
+
+N.B. - <http://llvm.org/docs/LangRef.html#constant-expressions>
+
+Although constant expressions and instructions have many similarites, there are important
+differences - so they're represented using different types in this AST. At the cost of making it
+harder to move an code back and forth between being constant and not, this approach embeds more of
+the rules of what IR is legal into the Haskell types.
+-} 
 data Constant
     = Int { constantType :: Type, integerValue :: Integer }
     | Float { constantType :: Type, floatValue :: Double }

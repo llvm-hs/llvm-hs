@@ -50,8 +50,10 @@ import qualified LLVM.General.AST.DataLayout as A
 import qualified LLVM.General.AST.AddrSpace as A
 import qualified LLVM.General.AST.Global as A.G
 
+-- | <http://llvm.org/doxygen/classllvm_1_1Module.html>
 newtype Module = Module (Ptr FFI.Module)
 
+-- | parse 'Module' from LLVM assembly
 withModuleFromString :: Context -> String -> (Module -> IO a) -> IO (Either Diagnostic a)
 withModuleFromString (Context c) s f = flip runAnyContT return $ do
   s <- encodeM s
@@ -62,6 +64,7 @@ withModuleFromString (Context c) s f = flip runAnyContT return $ do
      else
       Right <$> finally (f (Module m)) (FFI.disposeModule m)
 
+-- | generate LLVM assembly from a 'Module'
 moduleString :: Module -> IO String
 moduleString (Module m) = bracket (FFI.getModuleAssembly m) free $ decodeM
 
@@ -83,6 +86,7 @@ setDataLayout m dl = flip runAnyContT return $ do
 getDataLayout :: Ptr FFI.Module -> IO (Maybe A.DataLayout)
 getDataLayout m = parseDataLayout <$> (decodeM =<< FFI.getDataLayout m)
 
+-- | Build a 'Module' from a 'LLVM.General.AST.Module'.
 withModuleFromAST :: Context -> A.Module -> (Module -> IO a) -> IO (Either String a)
 withModuleFromAST context@(Context c) (A.Module moduleId dataLayout triple definitions) f = do
   let makeModule = flip runAnyContT return $ do
@@ -185,6 +189,7 @@ withModuleFromAST context@(Context c) (A.Module moduleId dataLayout triple defin
 
     either (return . Left) (const $ Right <$> f (Module m)) r
 
+-- | Get a 'LLVM.General.AST.Module' from a 'Module'.
 moduleAST :: Module -> IO A.Module
 moduleAST (Module mod) = runDecodeAST $ do
   c <- return Context `ap` liftIO (FFI.getModuleContext mod)

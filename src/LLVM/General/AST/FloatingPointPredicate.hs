@@ -1,10 +1,12 @@
 {-# LANGUAGE
   DeriveDataTypeable 
   #-}  
+-- | Predicates for the 'LLVM.General.AST.Instruction.FCmp' instruction
 module LLVM.General.AST.FloatingPointPredicate where
 
 import Data.Data
 
+-- | <http://llvm.org/docs/LangRef.html#fcmp-instruction>
 data FloatingPointPredicate
   = False
   | OEQ

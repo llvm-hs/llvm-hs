@@ -24,19 +24,26 @@ import LLVM.General.Internal.Target
 import LLVM.General.Internal.Coding
 import LLVM.General.Transforms
 
+-- | <http://llvm.org/doxygen/classllvm_1_1PassManager.html>
 newtype PassManager = PassManager (Ptr FFI.PassManager)
 
+-- | There are two different ways to get a 'PassManager'. This class embodies both.
 class PassManagerSpecification s where
+    -- | make a 'PassManager'
     createPassManager :: s -> IO (Ptr FFI.PassManager)
 
+-- | This type is a high-level specification of a set of passes. It uses the same
+-- collection of passes chosen by the LLVM team in the command line tool 'opt'.  The fields
+-- of this spec are much like typical compiler command-line flags - e.g. -O<n>, etc.
 data CuratedPassSetSpec = CuratedPassSetSpec {
-      optLevel :: Maybe Int,
-      sizeLevel :: Maybe Int,
-      unitAtATime :: Maybe Bool,
-      simplifyLibCalls :: Maybe Bool,
-      useInlinerWithThreshold :: Maybe Int
+    optLevel :: Maybe Int,
+    sizeLevel :: Maybe Int,
+    unitAtATime :: Maybe Bool,
+    simplifyLibCalls :: Maybe Bool,
+    useInlinerWithThreshold :: Maybe Int
   }
 
+-- | Helper to make a 'CuratedPassSetSpec'
 defaultCuratedPassSetSpec = CuratedPassSetSpec {
     optLevel = Nothing,
     sizeLevel = Nothing,
@@ -46,17 +53,20 @@ defaultCuratedPassSetSpec = CuratedPassSetSpec {
   }
 
 instance PassManagerSpecification CuratedPassSetSpec where
-    createPassManager s = bracket FFI.passManagerBuilderCreate FFI.passManagerBuilderDispose $ \b -> do
-      let handleOption g m = maybe (return ()) (g b . fromIntegral . fromEnum) (m s)
-      handleOption FFI.passManagerBuilderSetOptLevel optLevel
-      handleOption FFI.passManagerBuilderSetSizeLevel sizeLevel
-      handleOption FFI.passManagerBuilderSetDisableUnitAtATime (liftM not . unitAtATime)
-      handleOption FFI.passManagerBuilderSetDisableSimplifyLibCalls (liftM not . simplifyLibCalls)
-      handleOption FFI.passManagerBuilderUseInlinerWithThreshold useInlinerWithThreshold
-      pm <- FFI.createPassManager
-      FFI.passManagerBuilderPopulateModulePassManager b pm
-      return pm
+  createPassManager s = bracket FFI.passManagerBuilderCreate FFI.passManagerBuilderDispose $ \b -> do
+    let handleOption g m = maybe (return ()) (g b . fromIntegral . fromEnum) (m s)
+    handleOption FFI.passManagerBuilderSetOptLevel optLevel
+    handleOption FFI.passManagerBuilderSetSizeLevel sizeLevel
+    handleOption FFI.passManagerBuilderSetDisableUnitAtATime (liftM not . unitAtATime)
+    handleOption FFI.passManagerBuilderSetDisableSimplifyLibCalls (liftM not . simplifyLibCalls)
+    handleOption FFI.passManagerBuilderUseInlinerWithThreshold useInlinerWithThreshold
+    pm <- FFI.createPassManager
+    FFI.passManagerBuilderPopulateModulePassManager b pm
+    return pm
 
+-- | This type is a low-level specification of a set of passes. List 'em as you want 'em.
+-- A few passes ('LLVM.General.Transforms.CodeGenPrepare', 'LLVM.General.Transforms.LoopStrengthReduce',
+-- and 'LLVM.General.Transforms.LowerInvoke') require a 'TargetLowering'.
 data PassSetSpec = PassSetSpec [Pass] (Maybe TargetLowering)
 
 instance PassManagerSpecification PassSetSpec where
@@ -89,13 +99,15 @@ instance PassManagerSpecification PassSetSpec where
     return pm
 
 instance PassManagerSpecification [Pass] where
-    createPassManager ps = createPassManager (PassSetSpec ps Nothing)
+  createPassManager ps = createPassManager (PassSetSpec ps Nothing)
 
 instance PassManagerSpecification ([Pass], TargetLowering) where
-    createPassManager (ps, tl) = createPassManager (PassSetSpec ps (Just tl))
+  createPassManager (ps, tl) = createPassManager (PassSetSpec ps (Just tl))
 
+-- | bracket the creation of a 'PassManager'
 withPassManager :: PassManagerSpecification s => s -> (PassManager -> IO a) -> IO a
 withPassManager s = bracket (createPassManager s) FFI.disposePassManager . (. PassManager)
 
+-- | run the passes in a 'PassManager' on a 'Module', modifying the 'Module'.
 runPassManager :: PassManager -> Module -> IO Bool
 runPassManager (PassManager p) (Module m) = toEnum . fromIntegral <$> FFI.runPassManager p m

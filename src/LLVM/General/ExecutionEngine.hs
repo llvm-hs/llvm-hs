@@ -1,3 +1,4 @@
+-- | Tools for JIT execution
 module LLVM.General.ExecutionEngine (
   ExecutionEngine,
   withExecutionEngine,

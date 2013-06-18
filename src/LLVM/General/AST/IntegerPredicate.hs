@@ -1,10 +1,12 @@
 {-# LANGUAGE
   DeriveDataTypeable 
   #-}  
+-- | Predicates for the 'LLVM.General.AST.Instruction.ICmp' instruction
 module LLVM.General.AST.IntegerPredicate where
 
 import Data.Data
 
+-- | <http://llvm.org/docs/LangRef.html#icmp-instruction>
 data IntegerPredicate
   = EQ
   | NE

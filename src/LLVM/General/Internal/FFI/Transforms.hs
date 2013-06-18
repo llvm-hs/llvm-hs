@@ -1,10 +1,17 @@
+-- | Code used with Template Haskell to build the FFI for transform passes.
 module LLVM.General.Internal.FFI.Transforms where
 
+-- | does the constructor for this pass require a TargetLowering object
 needsTargetLowering "CodeGenPrepare" = True
 needsTargetLowering "LoopStrengthReduce" = True
 needsTargetLowering "LowerInvoke" = True
 needsTargetLowering _ = False
 
+-- | Translate a Haskell name (used in the public Haskell interface, typically not abbreviated)
+-- | for a pass into the (sometimes obscure, sometimes abbreviated) name used in the LLVM C interface.
+-- | This translation includes, by choice of prefix, whether the C interface implementation is found in
+-- | the LLVM distribution ("LLVM" prefix) or either not available or broken there and so implemented
+-- | as part of this Haskell package ("LLVM_General_" prefix).
 cName n = 
     let core = case n of
             "AggressiveDeadCodeElimination" -> "AggressiveDCE"
