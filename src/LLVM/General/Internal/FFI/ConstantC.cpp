@@ -49,4 +49,10 @@ const unsigned *LLVM_General_GetConstIndices(LLVMValueRef v, unsigned *n) {
 	return r.data();
 }
 
+const uint64_t *LLVM_General_GetConstantIntWords(LLVMValueRef v, unsigned *n) {
+	const APInt &i = unwrap<ConstantInt>(v)->getValue();
+	*n = i.getNumWords();
+	return i.getRawData();
+}
+
 }

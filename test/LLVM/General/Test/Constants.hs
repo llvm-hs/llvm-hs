@@ -36,6 +36,21 @@ tests = testGroup "Constants" [
       C.Int (IntegerType 32) 1,
       "global i32 1"
     ), (
+      "wide integer",
+      IntegerType 65,
+      C.Int (IntegerType 65) 1,
+      "global i65 1"
+    ), (
+      "big wide integer",
+      IntegerType 66,
+      C.Int (IntegerType 66) 20000000000000000000,
+      "global i66 20000000000000000000"
+    ), (
+      "negative wide integer",
+      IntegerType 65,
+      C.Int (IntegerType 65) 36893488147419103231,
+      "global i65 -1"
+    ), (
       "float",
       FloatingPointType 32,
       C.Float (FloatingPointType 32) 1,

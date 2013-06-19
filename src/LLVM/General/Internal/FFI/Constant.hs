@@ -43,11 +43,8 @@ foreign import ccall unsafe "LLVMGetOperand" getConstantOperand ::
 foreign import ccall unsafe "LLVMIsAConstantPointerNull" isAConstantPointerNull ::
   Ptr Value -> IO (Ptr Constant)
 
-foreign import ccall unsafe "LLVMConstIntGetZExtValue" constIntGetZExtValue ::
-  Ptr Constant -> IO CULLong
-
-foreign import ccall unsafe "LLVMConstIntGetSExtValue" constIntGetSExtValue ::
-  Ptr Constant -> IO CLLong
+foreign import ccall unsafe "LLVM_General_GetConstantIntWords" getConstantIntWords ::
+  Ptr Constant -> Ptr CUInt -> IO (Ptr CULong)
 
 foreign import ccall unsafe "LLVM_General_ConstFloatDoubleValue" constFloatDoubleValue ::
   Ptr Constant -> IO CDouble
@@ -65,6 +62,11 @@ foreign import ccall unsafe "LLVM_General_GetConstantDataSequentialElementAsCons
 
 foreign import ccall unsafe "LLVMConstInt" constantInt ::
   Ptr Type -> CULLong -> LLVMBool -> IO (Ptr Constant)
+
+foreign import ccall unsafe "LLVMConstIntOfArbitraryPrecision" constantIntOfArbitraryPrecision' ::
+  Ptr Type -> CUInt -> Ptr CULong -> IO (Ptr Constant)
+
+constantIntOfArbitraryPrecision t = uncurry (constantIntOfArbitraryPrecision' t)
 
 foreign import ccall unsafe "LLVMConstReal" constantFloat ::
   Ptr Type -> CDouble -> IO (Ptr Constant)

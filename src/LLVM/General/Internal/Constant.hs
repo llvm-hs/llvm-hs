@@ -12,7 +12,8 @@ import qualified Language.Haskell.TH.Quote as TH
 import qualified LLVM.General.Internal.InstructionDefs as ID
 
 import Control.Applicative
-import Data.Word (Word32)
+import Data.Word (Word32, Word64)
+import Data.Bits
 import Control.Monad.State
 import Control.Monad.AnyCont
 
@@ -44,10 +45,13 @@ import LLVM.General.Internal.FloatingPointPredicate ()
 
 instance EncodeM EncodeAST A.Constant (Ptr FFI.Constant) where
   encodeM c = scopeAnyCont $ case c of
-    A.C.Int { A.C.constantType = t, A.C.integerValue = v } -> do
+    A.C.Int { A.C.constantType = t@(A.IntegerType bits), A.C.integerValue = v } -> do
       t' <- encodeM t
-      fl <- encodeM False
-      liftIO $ FFI.constantInt t' (fromIntegral v) fl
+      words <- encodeM [
+        fromIntegral ((v `shiftR` (w*64)) .&. 0xffffffffffffffff) :: Word64
+        | w <- [0 .. ((fromIntegral bits-1) `div` 64)] 
+       ]
+      liftIO $ FFI.constantIntOfArbitraryPrecision t' words
     A.C.Float { A.C.constantType = t, A.C.floatValue = v } -> do
       t' <- encodeM t
       liftIO $ FFI.constantFloat t' (realToFrac v)
@@ -106,8 +110,12 @@ instance DecodeM DecodeAST A.Constant (Ptr FFI.Constant) where
       [FFI.valueSubclassIdP|Function|] -> globalRef
       [FFI.valueSubclassIdP|GlobalAlias|] -> globalRef
       [FFI.valueSubclassIdP|GlobalVariable|] -> globalRef
-      [FFI.valueSubclassIdP|ConstantInt|] -> 
-            liftIO $ A.C.Int t <$> (fromIntegral <$> FFI.constIntGetZExtValue c)
+      [FFI.valueSubclassIdP|ConstantInt|] -> do
+        np <- alloca
+        wsp <- liftIO $ FFI.getConstantIntWords c np
+        n <- peek np
+        words <- decodeM (n, wsp)
+        return $ A.C.Int t (foldr (\b a -> (a `shiftL` 64) .|. fromIntegral (b :: Word64)) 0 words)
       [FFI.valueSubclassIdP|ConstantFP|] -> 
             liftIO $ A.C.Float t <$> (
               case t of

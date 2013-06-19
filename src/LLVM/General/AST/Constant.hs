@@ -2,6 +2,7 @@
 module LLVM.General.AST.Constant where
 
 import Data.Word (Word32)
+import Data.Bits ((.|.), testBit, shiftL)
 
 import LLVM.General.AST.Type
 import LLVM.General.AST.Name
@@ -192,3 +193,20 @@ data Constant
         indices' :: [Word32]
       }
     deriving (Eq, Ord, Read, Show)
+
+
+-- | Since LLVM types don't include signedness, there's ambiguity in interpreting
+-- an constant as an Integer. The LLVM assembly printer prints integers as signed, but
+-- cheats for 1-bit integers and prints them as 'true' or 'false'. That way it circuments the
+-- otherwise awkward fact that a twos complement 1-bit number only has the values -1 and 0.
+-- This function will sign-extend as necessary, while the record accessor function 'integerValue' 
+-- is the corresponding unsigned version.
+signedIntegerValue :: Constant -> Integer
+signedIntegerValue (Int (IntegerType nBits') unsignedBits) =
+  let nBits = fromIntegral nBits'
+  in
+    if unsignedBits `testBit` (nBits - 1) 
+     then
+         unsignedBits .|. (-1 `shiftL` nBits)
+     else 
+         unsignedBits
