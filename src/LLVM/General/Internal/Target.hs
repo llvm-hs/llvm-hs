@@ -64,11 +64,11 @@ genCodingInstance' [t| TO.FloatingPointOperationFusionMode |] ''FFI.FPOpFusionMo
 
 newtype Target = Target (Ptr FFI.Target)
 
--- | Find a Target given an architecture and/or a "triple".
+-- | Find a Target given an architecture and/or a \"triple\".
 -- | <http://llvm.org/doxygen/structllvm_1_1TargetRegistry.html#a3105b45e546c9cc3cf78d0f2ec18ad89>
 lookupTarget :: 
   Maybe String -- ^ arch
-  -> String -- ^ "triple"
+  -> String -- ^ \"triple\" - e.g. x86_64-unknown-linux-gnu
   -> IO (Either String (Target, String))
 lookupTarget arch triple = flip runAnyContT return $ do
   cErrorP <- alloca

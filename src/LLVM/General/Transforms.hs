@@ -11,12 +11,16 @@ import Data.Data
 import Data.Int
 import Data.Word
 
--- | <http://llvm.org/doxygen/classllvm_1_1Pass.html>
+-- | <http://llvm.org/docs/Passes.html#transform-passes>
+-- A few passes can make use of information in a 'LLVM.General.Target.TargetLowering' if one
+-- is provided to 'LLVM.General.PassManager.createPassManager'.
+-- <http://llvm.org/doxygen/classllvm_1_1Pass.html>
 data Pass
   -- here begin the Scalar passes
   = AggressiveDeadCodeElimination
   | BlockPlacement
   | BreakCriticalEdges
+  -- | can use a 'LLVM.General.Target.TargetLowering'
   | CodeGenPrepare
   | ConstantPropagation
   | CorrelatedValuePropagation
@@ -35,11 +39,13 @@ data Pass
   | LoopIdiom
   | LoopInstructionSimplify
   | LoopRotate
+  -- | can use a 'LLVM.General.Target.TargetLowering'
   | LoopStrengthReduce
   | LoopUnroll { loopUnrollThreshold :: Int32, count :: Int32, allowPartial :: Int32 }
   | LoopUnswitch { optimizeForSize :: Bool }
   | LowerAtomic
-  | LowerInvoke { useExpensiveExceptionHandlingSupport :: Bool }
+  -- | can use a 'LLVM.General.Target.TargetLowering'
+  | LowerInvoke { useExpensiveExceptionHandlingSupport :: Bool } 
   | LowerSwitch
   | LowerExpectIntrinsic
   | MemcpyOptimization

@@ -27,14 +27,14 @@ import LLVM.General.Transforms
 -- | <http://llvm.org/doxygen/classllvm_1_1PassManager.html>
 newtype PassManager = PassManager (Ptr FFI.PassManager)
 
--- | There are two different ways to get a 'PassManager'. This class embodies both.
+-- | There are different ways to get a 'PassManager'. This class embodies them.
 class PassManagerSpecification s where
     -- | make a 'PassManager'
     createPassManager :: s -> IO (Ptr FFI.PassManager)
 
 -- | This type is a high-level specification of a set of passes. It uses the same
 -- collection of passes chosen by the LLVM team in the command line tool 'opt'.  The fields
--- of this spec are much like typical compiler command-line flags - e.g. -O<n>, etc.
+-- of this spec are much like typical compiler command-line flags - e.g. -O\<n\>, etc.
 data CuratedPassSetSpec = CuratedPassSetSpec {
     optLevel :: Maybe Int,
     sizeLevel :: Maybe Int,
@@ -64,9 +64,6 @@ instance PassManagerSpecification CuratedPassSetSpec where
     FFI.passManagerBuilderPopulateModulePassManager b pm
     return pm
 
--- | This type is a low-level specification of a set of passes. List 'em as you want 'em.
--- A few passes ('LLVM.General.Transforms.CodeGenPrepare', 'LLVM.General.Transforms.LoopStrengthReduce',
--- and 'LLVM.General.Transforms.LowerInvoke') require a 'TargetLowering'.
 data PassSetSpec = PassSetSpec [Pass] (Maybe TargetLowering)
 
 instance PassManagerSpecification PassSetSpec where
