@@ -71,7 +71,7 @@ handAST = Module "<string>" Nothing Nothing [
       GlobalDefinition $ globalVariableDefaults {
         G.name = UnName 0,
         G.type' = IntegerType 32,
-        G.initializer = Just (C.Int (IntegerType 32) 1)
+        G.initializer = Just (C.Int 32 1)
       },
       GlobalDefinition $ globalVariableDefaults {
         G.name = UnName 1,
@@ -84,7 +84,7 @@ handAST = Module "<string>" Nothing Nothing [
         G.name = UnName 2,
         G.hasUnnamedAddr = True,
         G.type' = IntegerType 8,
-        G.initializer = Just (C.Int (IntegerType 8) 2)
+        G.initializer = Just (C.Int 8 2)
       },
       GlobalDefinition $ globalVariableDefaults {
         G.name = UnName 3,
@@ -97,7 +97,7 @@ handAST = Module "<string>" Nothing Nothing [
       GlobalDefinition $ globalVariableDefaults {
         G.name = Name ".argyle",
         G.type' = IntegerType 32,
-        G.initializer = Just (C.Int (IntegerType 32) 0),
+        G.initializer = Just (C.Int 32 0),
         G.isThreadLocal = True
       },
       GlobalDefinition $ globalAliasDefaults {
@@ -119,8 +119,8 @@ handAST = Module "<string>" Nothing Nothing [
            returnAttributes = [A.ZeroExt],
            function = Right (ConstantOperand (C.GlobalReference (Name "foo"))),
            arguments = [
-            (ConstantOperand (C.Int (IntegerType 32) 1), [A.InReg]),
-            (ConstantOperand (C.Int (IntegerType 8) 4), [A.SignExt])
+            (ConstantOperand (C.Int 32 1), [A.InReg]),
+            (ConstantOperand (C.Int 8 4), [A.SignExt])
            ],
            functionAttributes = [A.NoUnwind, A.ReadNone, A.UWTable],
            metadata = []
@@ -166,7 +166,7 @@ handAST = Module "<string>" Nothing Nothing [
            nsw = True,
            nuw = False,
            operand0 = LocalReference (UnName 1),
-           operand1 = ConstantOperand (C.Int (IntegerType 32) 3),
+           operand1 = ConstantOperand (C.Int 32 3),
            metadata = []
          }
          ] (
@@ -176,8 +176,8 @@ handAST = Module "<string>" Nothing Nothing [
          Name "r" := Phi {
            type' = IntegerType 32,
            incomingValues = [
-             (ConstantOperand (C.Int (IntegerType 32) 2), Name "there"),
-             (ConstantOperand (C.Int (IntegerType 32) 57), Name "here")
+             (ConstantOperand (C.Int 32 2), Name "there"),
+             (ConstantOperand (C.Int 32 57), Name "here")
            ],
            metadata = []
          }
@@ -233,8 +233,8 @@ tests = testGroup "Module" [
               UnName 1 := Mul {
                 nsw = True,
                 nuw = False,
-                operand0 = ConstantOperand (C.Int (IntegerType 32) 1),
-                operand1 = ConstantOperand (C.Int (IntegerType 32) 1),
+                operand0 = ConstantOperand (C.Int 32 1),
+                operand1 = ConstantOperand (C.Int 32 1),
                 metadata = []
               }
               ] (
@@ -262,8 +262,8 @@ tests = testGroup "Module" [
               UnName 1 := Mul {
                 nsw = True,
                 nuw = False,
-                operand0 = ConstantOperand (C.Int (IntegerType 32) 1),
-                operand1 = ConstantOperand (C.Int (IntegerType 32) 1),
+                operand0 = ConstantOperand (C.Int 32 1),
+                operand1 = ConstantOperand (C.Int 32 1),
                 metadata = []
               }
               ] (

@@ -59,12 +59,13 @@ const uint64_t *LLVM_General_GetConstantIntWords(LLVMValueRef v, unsigned *n) {
 LLVMValueRef LLVM_General_ConstFloatOfArbitraryPrecision(
 	LLVMContextRef c,
 	unsigned bits,
-	const uint64_t *words
+	const uint64_t *words,
+	unsigned notPairOfFloats
 ) {
 	return wrap(
 		ConstantFP::get(
 			*unwrap(c),
-			APFloat(APInt(bits, ArrayRef<uint64_t>(words, (bits-1)/64 + 1)), true)
+			APFloat(APInt(bits, ArrayRef<uint64_t>(words, (bits-1)/64 + 1)), notPairOfFloats)
 		)
 	);
 }

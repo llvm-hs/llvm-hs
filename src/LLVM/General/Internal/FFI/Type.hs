@@ -137,3 +137,7 @@ foreign import ccall unsafe "LLVMX86FP80TypeInContext" x86FP80TypeInContext ::
 -- | <http://llvm.org/doxygen/group__LLVMCCoreTypeFloat.html#ga1c02fb08f9ae12a719ed42099d42ccd8>
 foreign import ccall unsafe "LLVMFP128TypeInContext" fP128TypeInContext ::
   Ptr Context -> IO (Ptr Type)
+
+-- | <http://llvm.org/doxygen/group__LLVMCCoreTypeFloat.html#gac2491184fc3d8631c7b264c067f2f761>
+foreign import ccall unsafe "LLVMPPCFP128TypeInContext" ppcFP128TypeInContext ::
+  Ptr Context -> IO (Ptr Type)

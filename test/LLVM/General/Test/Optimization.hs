@@ -42,8 +42,8 @@ handAST =
          UnName 1 := Mul {
            nsw = False,
            nuw = False,
-           operand0 = ConstantOperand (C.Int (IntegerType 32) 6),
-           operand1 = ConstantOperand (C.Int (IntegerType 32) 7),
+           operand0 = ConstantOperand (C.Int 32 6),
+           operand1 = ConstantOperand (C.Int 32 7),
            metadata = []
          }
          ] (
@@ -53,7 +53,7 @@ handAST =
          Name "go" := ICmp {
            iPredicate = IPred.EQ,
            operand0 = LocalReference (UnName 1),
-           operand1 = ConstantOperand (C.Int (IntegerType 32) 42),
+           operand1 = ConstantOperand (C.Int 32 42),
            metadata = []
          }
          ] (
@@ -80,7 +80,7 @@ handAST =
            type' = IntegerType 32,
            incomingValues = [
              (LocalReference (UnName 2), Name "take"),
-             (ConstantOperand (C.Int (IntegerType 32) 57), Name "here")
+             (ConstantOperand (C.Int 32 57), Name "here")
            ],
            metadata = []
          }
@@ -110,7 +110,7 @@ tests = testGroup "Optimization" [
        [
         BasicBlock (Name "here") [
            ] (
-           Do $ Ret (Just (ConstantOperand (C.Int (IntegerType 32) 0))) []
+           Do $ Ret (Just (ConstantOperand (C.Int 32 0))) []
          )
        ]
       ],
@@ -129,7 +129,7 @@ tests = testGroup "Optimization" [
           BasicBlock (UnName 0) [] (Do $ Br (Name "here") []),
           BasicBlock (Name "here") [] (
              Do $ CondBr {
-               condition = ConstantOperand (C.Int (IntegerType 1) 1),
+               condition = ConstantOperand (C.Int 1 1),
                trueDest = Name "take", 
                falseDest = Name "done",
                metadata' = []
@@ -147,7 +147,7 @@ tests = testGroup "Optimization" [
            Do $ Br (Name "done") []
           ),
           BasicBlock (Name "done") [
-           Name "r" := Phi {type' = IntegerType 32, incomingValues = [(LocalReference (UnName 1),Name "take"),(ConstantOperand (C.Int (IntegerType 32) 57), Name "here")], metadata = []}
+           Name "r" := Phi {type' = IntegerType 32, incomingValues = [(LocalReference (UnName 1),Name "take"),(ConstantOperand (C.Int 32 57), Name "here")], metadata = []}
           ] (
             Do $ Ret (Just (LocalReference (Name "r"))) []
           )
@@ -157,11 +157,11 @@ tests = testGroup "Optimization" [
     testCase "BasicBlockVectorization" $ do
       let
         mIn = Module "<string>" Nothing Nothing [
-         GlobalDefinition $ Function L.External V.Default CC.C [] (FloatingPointType 64) (Name "foo") ([
-             Parameter (FloatingPointType 64) (Name "a1") [],
-             Parameter (FloatingPointType 64) (Name "a2") [],
-             Parameter (FloatingPointType 64) (Name "b1") [],
-             Parameter (FloatingPointType 64) (Name "b2") []
+         GlobalDefinition $ Function L.External V.Default CC.C [] (FloatingPointType 64 IEEE) (Name "foo") ([
+             Parameter (FloatingPointType 64 IEEE) (Name "a1") [],
+             Parameter (FloatingPointType 64 IEEE) (Name "a2") [],
+             Parameter (FloatingPointType 64 IEEE) (Name "b1") [],
+             Parameter (FloatingPointType 64 IEEE) (Name "b2") []
             ],False)
           [] 
           Nothing 0         
@@ -215,38 +215,38 @@ tests = testGroup "Optimization" [
               ] mIn
       mOut @?= Module "<string>" Nothing Nothing [
        GlobalDefinition $ Function 
-        L.External V.Default CC.C [] (FloatingPointType 64) (Name "foo") ([
-              Parameter (FloatingPointType 64) (Name "a1") [],
-              Parameter (FloatingPointType 64) (Name "a2") [],
-              Parameter (FloatingPointType 64) (Name "b1") [],
-              Parameter (FloatingPointType 64) (Name "b2") []
+        L.External V.Default CC.C [] (FloatingPointType 64 IEEE) (Name "foo") ([
+              Parameter (FloatingPointType 64 IEEE) (Name "a1") [],
+              Parameter (FloatingPointType 64 IEEE) (Name "a2") [],
+              Parameter (FloatingPointType 64 IEEE) (Name "b1") [],
+              Parameter (FloatingPointType 64 IEEE) (Name "b2") []
              ],False)
              []
              Nothing 0
           [
            BasicBlock (UnName 0) [
              Name "x1.v.i1.1" := InsertElement {
-               vector = ConstantOperand (C.Undef (VectorType 2 (FloatingPointType 64))),
+               vector = ConstantOperand (C.Undef (VectorType 2 (FloatingPointType 64 IEEE))),
                element = LocalReference (Name "b1"),
-               index = ConstantOperand (C.Int (IntegerType 32) 0),
+               index = ConstantOperand (C.Int 32 0),
                metadata = []
               },
              Name "x1.v.i1.2" := InsertElement {
                vector = LocalReference (Name "x1.v.i1.1"),
                element = LocalReference (Name "b2"),
-               index = ConstantOperand (C.Int (IntegerType 32) 1),
+               index = ConstantOperand (C.Int 32 1),
                metadata = []
               },
              Name "x1.v.i0.1" := InsertElement {
-               vector = ConstantOperand (C.Undef (VectorType 2 (FloatingPointType 64))),
+               vector = ConstantOperand (C.Undef (VectorType 2 (FloatingPointType 64 IEEE))),
                element = LocalReference (Name "a1"),
-               index = ConstantOperand (C.Int (IntegerType 32) 0),
+               index = ConstantOperand (C.Int 32 0),
                metadata = []
               },
              Name "x1.v.i0.2" := InsertElement {
                vector = LocalReference (Name "x1.v.i0.1"),
                element = LocalReference (Name "a2"),
-               index = ConstantOperand (C.Int (IntegerType 32) 1),
+               index = ConstantOperand (C.Int 32 1),
                metadata = []
               },
              Name "x1" := FSub {
@@ -266,12 +266,12 @@ tests = testGroup "Optimization" [
               },
              Name "z1.v.r1" := ExtractElement {
                vector = LocalReference (Name "z1"),
-               index = ConstantOperand (C.Int (IntegerType 32) 0),
+               index = ConstantOperand (C.Int 32 0),
                metadata = []
               },
              Name "z1.v.r2" := ExtractElement {
                vector = LocalReference (Name "z1"),
-               index = ConstantOperand (C.Int (IntegerType 32) 1),
+               index = ConstantOperand (C.Int 32 1),
                metadata = []
               },
              Name "r" := FMul {
@@ -304,7 +304,7 @@ tests = testGroup "Optimization" [
                           ],False) [] Nothing 0 [
                             BasicBlock (Name "here") [
                             ] (
-                              Do $ Ret (Just (ConstantOperand (C.Int (IntegerType 32) 0))) []
+                              Do $ Ret (Just (ConstantOperand (C.Int 32 0))) []
                             )
                           ]
                      ] 
@@ -317,7 +317,7 @@ tests = testGroup "Optimization" [
                         ],False) [] Nothing 0 [
                          BasicBlock (Name "here") [
                          ] (
-                           Do $ Ret (Just (ConstantOperand (C.Int (IntegerType 32) 0))) []
+                           Do $ Ret (Just (ConstantOperand (C.Int 32 0))) []
                          )
                         ],
                        GlobalDefinition $ Function L.External V.Default CC.C [] VoidType (Name "abort") ([],False)

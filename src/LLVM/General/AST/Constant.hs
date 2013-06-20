@@ -21,8 +21,8 @@ harder to move an code back and forth between being constant and not, this appro
 the rules of what IR is legal into the Haskell types.
 -} 
 data Constant
-    = Int { constantType :: Type, integerValue :: Integer }
-    | Float { constantType :: Type, floatValue :: F.SomeFloat }
+    = Int { integerBits :: Word32, integerValue :: Integer }
+    | Float { floatValue :: F.SomeFloat }
     | Null { constantType :: Type }
     | Struct { isPacked :: Bool, memberValues :: [ Constant ] }
     | Array { memberType :: Type, memberValues :: [ Constant ] }
@@ -201,7 +201,7 @@ data Constant
 -- cheats for 1-bit integers and prints them as 'true' or 'false'. That way it circuments the
 -- otherwise awkward fact that a twos complement 1-bit number only has the values -1 and 0.
 signedIntegerValue :: Constant -> Integer
-signedIntegerValue (Int (IntegerType nBits') bits) =
+signedIntegerValue (Int nBits' bits) =
   let nBits = fromIntegral nBits'
   in
     if bits `testBit` (nBits - 1) then bits .|. (-1 `shiftL` nBits) else bits
@@ -213,6 +213,6 @@ signedIntegerValue (Int (IntegerType nBits') bits) =
 -- as such, likely producing the intended result if lowered to C++. If, however one wishes to interpret
 -- an 'Int' of unknown provenance as unsigned, then this function will serve.
 unsignedIntegerValue :: Constant -> Integer
-unsignedIntegerValue (Int (IntegerType nBits) bits) =
+unsignedIntegerValue (Int nBits bits) =
   bits .&. (complement (-1 `shiftL` (fromIntegral nBits)))
 

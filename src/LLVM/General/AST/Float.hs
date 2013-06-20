@@ -14,5 +14,6 @@ data SomeFloat
   | Double P.Double
   | Quadruple Word64 Word64
   | X86_FP80 Word16 Word64
+  | PPC_FP128 Word64 Word64
   deriving (Eq, Ord, Read, Show)
 

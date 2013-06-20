@@ -52,29 +52,36 @@ allocaWords nBits = do
 
 instance EncodeM EncodeAST A.Constant (Ptr FFI.Constant) where
   encodeM c = scopeAnyCont $ case c of
-    A.C.Int { A.C.constantType = t@(A.IntegerType bits), A.C.integerValue = v } -> do
-      t' <- encodeM t
+    A.C.Int { A.C.integerBits = bits, A.C.integerValue = v } -> do
+      t <- encodeM (A.IntegerType bits)
       words <- encodeM [
         fromIntegral ((v `shiftR` (w*64)) .&. 0xffffffffffffffff) :: Word64
         | w <- [0 .. ((fromIntegral bits-1) `div` 64)] 
        ]
-      liftIO $ FFI.constantIntOfArbitraryPrecision t' words
-    A.C.Float { A.C.constantType = t@(A.FloatingPointType nBits), A.C.floatValue = v } -> do
+      liftIO $ FFI.constantIntOfArbitraryPrecision t words
+    A.C.Float { A.C.floatValue = v } -> do
       Context context <- gets encodeStateContext
-      words <- allocaWords nBits
-      case (nBits, v) of
-        (16, A.F.Half f) -> poke (castPtr words) f
-        (32, A.F.Single f) -> poke (castPtr words) f
-        (64, A.F.Double f) -> poke (castPtr words) f
-        (80, A.F.X86_FP80 high low) -> do
-          pokeByteOff (castPtr words) 0 low
-          pokeByteOff (castPtr words) 8 high
-        (128, A.F.Quadruple high low) -> do
-          pokeByteOff (castPtr words) 0 low
-          pokeByteOff (castPtr words) 8 high
-        x -> fail $ "invalid type encoding float: " ++ show x
+      let poke1 f = do
+            let nBits = fromIntegral $ 8*(sizeOf f)
+            words <- allocaWords nBits
+            poke (castPtr words) f
+            return (nBits, words)
+          poke2 fh fl = do
+             let nBits = fromIntegral $ 8*(sizeOf fh) + 8*(sizeOf fl)
+             words <- allocaWords nBits
+             pokeByteOff (castPtr words) 0 fl
+             pokeByteOff (castPtr words) (sizeOf fl) fh
+             return (nBits, words)
+      (nBits, words) <- case v of
+        A.F.Half f -> poke1 f
+        A.F.Single f -> poke1 f
+        A.F.Double f -> poke1 f
+        A.F.X86_FP80 high low -> poke2 high low
+        A.F.Quadruple high low -> poke2 high low
+        A.F.PPC_FP128 high low -> poke2 high low
+      notPairOfFloats <- encodeM $ case v of A.F.PPC_FP128 _ _ -> False; _ -> True
       nBits <- encodeM nBits
-      liftIO $ FFI.constantFloatOfArbitraryPrecision context nBits words
+      liftIO $ FFI.constantFloatOfArbitraryPrecision context nBits words notPairOfFloats
     A.C.GlobalReference n -> FFI.upCast <$> referGlobal n
     A.C.BlockAddress f b -> do
       f' <- referGlobal f
@@ -135,18 +142,20 @@ instance DecodeM DecodeAST A.Constant (Ptr FFI.Constant) where
         wsp <- liftIO $ FFI.getConstantIntWords c np
         n <- peek np
         words <- decodeM (n, wsp)
-        return $ A.C.Int t (foldr (\b a -> (a `shiftL` 64) .|. fromIntegral (b :: Word64)) 0 words)
+        return $ A.C.Int (A.typeBits t) (foldr (\b a -> (a `shiftL` 64) .|. fromIntegral (b :: Word64)) 0 words)
       [FFI.valueSubclassIdP|ConstantFP|] -> do
-        let A.FloatingPointType nBits = t
+        let A.FloatingPointType nBits fmt = t
         ws <- allocaWords nBits
         liftIO $ FFI.getConstantFloatWords c ws
-        A.C.Float t <$> (
-          case nBits of
-            16 -> A.F.Half <$> peek (castPtr ws)
-            32 -> A.F.Single <$> peek (castPtr ws)
-            64 -> A.F.Double <$> peek (castPtr ws)
-            80 -> A.F.X86_FP80 <$> peekByteOff (castPtr ws) 8 <*> peekByteOff (castPtr ws) 0
-            128 -> A.F.Quadruple <$> peekByteOff (castPtr ws) 8 <*> peekByteOff (castPtr ws) 0
+        A.C.Float <$> (
+          case (nBits, fmt) of
+            (16, A.IEEE) -> A.F.Half <$> peek (castPtr ws)
+            (32, A.IEEE) -> A.F.Single <$> peek (castPtr ws)
+            (64, A.IEEE) -> A.F.Double <$> peek (castPtr ws)
+            (128, A.IEEE) -> A.F.Quadruple <$> peekByteOff (castPtr ws) 8 <*> peekByteOff (castPtr ws) 0
+            (80, A.DoubleExtended) -> A.F.X86_FP80 <$> peekByteOff (castPtr ws) 8 <*> peekByteOff (castPtr ws) 0
+            (128, A.PairOfFloats) -> A.F.PPC_FP128 <$> peekByteOff (castPtr ws) 8 <*> peekByteOff (castPtr ws) 0
+            _ -> error $ "don't know how to decode floating point constant of type: " ++ show t
           )
       [FFI.valueSubclassIdP|ConstantPointerNull|] -> return $ A.C.Null t
       [FFI.valueSubclassIdP|ConstantAggregateZero|] -> return $ A.C.Null t

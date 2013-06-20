@@ -78,12 +78,13 @@ instance EncodeM EncodeAST A.Type (Ptr FFI.Type) where
         a <- encodeM addressSpace
         liftIO $ FFI.pointerType e a
       A.VoidType -> liftIO $ FFI.voidTypeInContext context
-      A.FloatingPointType 16 -> liftIO $ FFI.halfTypeInContext context
-      A.FloatingPointType 32 -> liftIO $ FFI.floatTypeInContext context
-      A.FloatingPointType 64 -> liftIO $ FFI.doubleTypeInContext context
-      A.FloatingPointType 80 -> liftIO $ FFI.x86FP80TypeInContext context
-      A.FloatingPointType 128 -> liftIO $ FFI.fP128TypeInContext context
-      A.FloatingPointType n -> fail $ "unsupported floating point type size: " ++ show n
+      A.FloatingPointType 16 A.IEEE -> liftIO $ FFI.halfTypeInContext context
+      A.FloatingPointType 32 A.IEEE -> liftIO $ FFI.floatTypeInContext context
+      A.FloatingPointType 64 A.IEEE -> liftIO $ FFI.doubleTypeInContext context
+      A.FloatingPointType 80 A.DoubleExtended -> liftIO $ FFI.x86FP80TypeInContext context
+      A.FloatingPointType 128 A.IEEE -> liftIO $ FFI.fP128TypeInContext context
+      A.FloatingPointType 128 A.PairOfFloats -> liftIO $ FFI.ppcFP128TypeInContext context
+      A.FloatingPointType _ _ -> fail $ "unsupported floating point type: " ++ show f
       A.VectorType sz e -> do
         e <- encodeM e
         sz <- encodeM sz
@@ -118,11 +119,12 @@ instance DecodeM DecodeAST A.Type (Ptr FFI.Type) where
           return A.PointerType
              `ap` (decodeM =<< liftIO (FFI.getElementType t))
              `ap` (decodeM =<< liftIO (FFI.getPointerAddressSpace t))
-      [FFI.typeKindP|Half|] -> return $ A.FloatingPointType 16
-      [FFI.typeKindP|Float|] -> return $ A.FloatingPointType 32
-      [FFI.typeKindP|Double|] -> return $ A.FloatingPointType 64
-      [FFI.typeKindP|X86_FP80|] -> return $ A.FloatingPointType 80
-      [FFI.typeKindP|FP128|] -> return $ A.FloatingPointType 128
+      [FFI.typeKindP|Half|] -> return $ A.FloatingPointType 16 A.IEEE
+      [FFI.typeKindP|Float|] -> return $ A.FloatingPointType 32 A.IEEE
+      [FFI.typeKindP|Double|] -> return $ A.FloatingPointType 64 A.IEEE
+      [FFI.typeKindP|FP128|] -> return $ A.FloatingPointType 128 A.IEEE
+      [FFI.typeKindP|X86_FP80|] -> return $ A.FloatingPointType 80 A.DoubleExtended
+      [FFI.typeKindP|PPC_FP128|] -> return $ A.FloatingPointType 128 A.PairOfFloats
       [FFI.typeKindP|Vector|] -> 
         return A.VectorType
          `ap` (decodeM =<< liftIO (FFI.getVectorSize t))

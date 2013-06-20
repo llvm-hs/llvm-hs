@@ -40,7 +40,7 @@ tests = testGroup "ExecutionEngine" [
                  Nothing 0
                  [
                   BasicBlock (UnName 0) [] (
-                    Do $ Ret (Just (ConstantOperand (C.Int (IntegerType 32) 42))) []
+                    Do $ Ret (Just (ConstantOperand (C.Int 32 42))) []
                    )
                  ]
                 ]

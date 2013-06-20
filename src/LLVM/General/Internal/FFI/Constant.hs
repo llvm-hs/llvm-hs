@@ -66,7 +66,7 @@ foreign import ccall unsafe "LLVMConstIntOfArbitraryPrecision" constantIntOfArbi
 constantIntOfArbitraryPrecision t = uncurry (constantIntOfArbitraryPrecision' t)
 
 foreign import ccall unsafe "LLVM_General_ConstFloatOfArbitraryPrecision" constantFloatOfArbitraryPrecision ::
-  Ptr Context -> CUInt -> Ptr CULong -> IO (Ptr Constant)
+  Ptr Context -> CUInt -> Ptr CULong -> LLVMBool -> IO (Ptr Constant)
 
 foreign import ccall unsafe "LLVM_General_GetConstantFloatWords" getConstantFloatWords ::
   Ptr Constant -> Ptr CULong -> IO ()

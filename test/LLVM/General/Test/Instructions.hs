@@ -35,7 +35,7 @@ tests = testGroup "Instructions" [
       let mAST = Module "<string>" Nothing Nothing [
             GlobalDefinition $ Function L.External V.Default CC.C [] (VoidType) (UnName 0) ([
                   Parameter (IntegerType 32) (UnName 0) [],
-                  Parameter (FloatingPointType 32) (UnName 1) [],
+                  Parameter (FloatingPointType 32 IEEE) (UnName 1) [],
                   Parameter (PointerType (IntegerType 32) (AddrSpace 0)) (UnName 2) [],
                   Parameter (IntegerType 64) (UnName 3) [],
                   Parameter (IntegerType 1) (UnName 4) [],
@@ -345,28 +345,28 @@ tests = testGroup "Instructions" [
           ("uitofp",
            UIToFP {
              operand0 = a 0,
-             type' = FloatingPointType 32,
+             type' = FloatingPointType 32 IEEE,
              metadata = [] 
            },
            "uitofp i32 %0 to float"),
           ("sitofp",
            SIToFP {
              operand0 = a 0,
-             type' = FloatingPointType 32,
+             type' = FloatingPointType 32 IEEE,
              metadata = [] 
            },
            "sitofp i32 %0 to float"),
           ("fptrunc",
            FPTrunc {
              operand0 = a 1,
-             type' = FloatingPointType 16,
+             type' = FloatingPointType 16 IEEE,
              metadata = [] 
            },
            "fptrunc float %1 to half"),
           ("fpext",
            FPExt {
              operand0 = a 1,
-             type' = FloatingPointType 64,
+             type' = FloatingPointType 64 IEEE,
              metadata = [] 
            },
            "fpext float %1 to double"),
@@ -387,7 +387,7 @@ tests = testGroup "Instructions" [
           ("bitcast",
            BitCast {
              operand0 = a 0,
-             type' = FloatingPointType 32,
+             type' = FloatingPointType 32 IEEE,
              metadata = [] 
            },
            "bitcast i32 %0 to float"),
@@ -425,7 +425,7 @@ tests = testGroup "Instructions" [
            ShuffleVector {
              operand0 = a 5,
              operand1 = a 5,
-             mask = C.Vector [ C.Int (IntegerType 32) p | p <- [0..1] ],
+             mask = C.Vector [ C.Int 32 p | p <- [0..1] ],
              metadata = []
            },
            "shufflevector <2 x i32> %5, <2 x i32> %5, <2 x i32> <i32 0, i32 1>"),
@@ -587,7 +587,7 @@ tests = testGroup "Instructions" [
              ],False) [] Nothing 0
          [
           BasicBlock (Name "bar") [] (
-            Do $ CondBr (ConstantOperand (C.Int (IntegerType 1) 1)) (Name "foo") (Name "bar") []
+            Do $ CondBr (ConstantOperand (C.Int 1 1)) (Name "foo") (Name "bar") []
            ),
           BasicBlock (Name "foo") [] (
             Do $ Ret Nothing []
@@ -611,12 +611,12 @@ tests = testGroup "Instructions" [
          [
           BasicBlock (UnName 0) [] (
             Do $ Switch {
-              operand0' = ConstantOperand (C.Int (IntegerType 16) 2),
+              operand0' = ConstantOperand (C.Int 16 2),
               defaultDest = Name "foo",
               dests = [
-               (C.Int (IntegerType 16) 0, UnName 0),
-               (C.Int (IntegerType 16) 2, Name "foo"),
-               (C.Int (IntegerType 16) 3, UnName 0)
+               (C.Int 16 0, UnName 0),
+               (C.Int 16 2, Name "foo"),
+               (C.Int 16 3, UnName 0)
               ],
               metadata' = []
            }
@@ -696,8 +696,8 @@ tests = testGroup "Instructions" [
              returnAttributes' = [],
              function' = Right (ConstantOperand (C.GlobalReference (UnName 0))),
              arguments' = [
-              (ConstantOperand (C.Int (IntegerType 32) 4), []),
-              (ConstantOperand (C.Int (IntegerType 16) 8), [])
+              (ConstantOperand (C.Int 32 4), []),
+              (ConstantOperand (C.Int 16 8), [])
              ],
              functionAttributes' = [],
              returnDest = Name "foo",
@@ -746,7 +746,7 @@ tests = testGroup "Instructions" [
              ],False) [] Nothing 0
          [
           BasicBlock (UnName 0) [] (
-            Do $ Resume (ConstantOperand (C.Int (IntegerType 32) 1)) []
+            Do $ Resume (ConstantOperand (C.Int 32 1)) []
            )
          ]
         ],

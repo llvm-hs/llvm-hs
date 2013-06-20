@@ -31,7 +31,7 @@ tests = testGroup "Metadata" [
                          metadata = []
                        }
               ] (
-              Do $ Ret (Just (ConstantOperand (C.Int (IntegerType 32) 0))) [
+              Do $ Ret (Just (ConstantOperand (C.Int 32 0))) [
                 (
                   "my-metadatum", 
                   MetadataNode [
@@ -62,12 +62,12 @@ tests = testGroup "Metadata" [
           [
            BasicBlock (UnName 0) [
               ] (
-              Do $ Ret (Just (ConstantOperand (C.Int (IntegerType 32) 0))) [
+              Do $ Ret (Just (ConstantOperand (C.Int 32 0))) [
                 ("my-metadatum", MetadataNodeReference (MetadataNodeID 0))
               ]
             )
           ],
-          MetadataNodeDefinition (MetadataNodeID 0) [ ConstantOperand (C.Int (IntegerType 32) 1) ]
+          MetadataNodeDefinition (MetadataNodeID 0) [ ConstantOperand (C.Int 32 1) ]
          ]
     let s = "; ModuleID = '<string>'\n\
             \\n\
@@ -81,7 +81,7 @@ tests = testGroup "Metadata" [
   testCase "named" $ do
     let ast = Module "<string>" Nothing Nothing [
           NamedMetadataDefinition "my-module-metadata" [MetadataNodeID 0],
-          MetadataNodeDefinition (MetadataNodeID 0) [ ConstantOperand (C.Int (IntegerType 32) 1) ]
+          MetadataNodeDefinition (MetadataNodeID 0) [ ConstantOperand (C.Int 32 1) ]
          ]
     let s = "; ModuleID = '<string>'\n\
             \\n\
