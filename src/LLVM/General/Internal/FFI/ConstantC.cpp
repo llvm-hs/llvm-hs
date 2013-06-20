@@ -1,5 +1,6 @@
 #define __STDC_LIMIT_MACROS
 #include "llvm-c/Core.h"
+#include "llvm/LLVMContext.h"
 #include "llvm/Constants.h"
 #include "LLVM/General/Internal/FFI/Value.h"
 
@@ -53,6 +54,24 @@ const uint64_t *LLVM_General_GetConstantIntWords(LLVMValueRef v, unsigned *n) {
 	const APInt &i = unwrap<ConstantInt>(v)->getValue();
 	*n = i.getNumWords();
 	return i.getRawData();
+}
+
+LLVMValueRef LLVM_General_ConstFloatOfArbitraryPrecision(
+	LLVMContextRef c,
+	unsigned bits,
+	const uint64_t *words
+) {
+	return wrap(
+		ConstantFP::get(
+			*unwrap(c),
+			APFloat(APInt(bits, ArrayRef<uint64_t>(words, (bits-1)/64 + 1)), true)
+		)
+	);
+}
+
+void LLVM_General_GetConstantFloatWords(LLVMValueRef v, uint64_t *bits) {
+	APInt a = unwrap<ConstantFP>(v)->getValueAPF().bitcastToAPInt();
+	for(unsigned i=0; i != a.getNumWords(); ++i) bits[i] = a.getRawData()[i];
 }
 
 }

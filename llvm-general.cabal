@@ -53,6 +53,7 @@ library
     LLVM.General.AST.CallingConvention
     LLVM.General.AST.Constant
     LLVM.General.AST.DataLayout
+    LLVM.General.AST.Float
     LLVM.General.AST.FloatingPointPredicate
     LLVM.General.AST.Global
     LLVM.General.AST.Instruction

@@ -25,6 +25,7 @@ import qualified LLVM.General.AST.CallingConvention as CC
 import qualified LLVM.General.AST.Attribute as A
 import qualified LLVM.General.AST.Global as G
 import qualified LLVM.General.AST.Constant as C
+import qualified LLVM.General.AST.Float as F
 import qualified LLVM.General.AST.IntegerPredicate as IPred
 
 tests = testGroup "Constants" [
@@ -51,10 +52,35 @@ tests = testGroup "Constants" [
       C.Int (IntegerType 65) 36893488147419103231,
       "global i65 -1"
     ), (
+      "half",
+      FloatingPointType 16,
+      C.Float (FloatingPointType 16) (F.Half 0x1234),
+      "global half 0xH1234"
+    ), (
       "float",
       FloatingPointType 32,
-      C.Float (FloatingPointType 32) 1,
+      C.Float (FloatingPointType 32) (F.Single 1),
       "global float 1.000000e+00"
+    ), (
+      "double",
+      FloatingPointType 64,
+      C.Float (FloatingPointType 64) (F.Double 1),
+      "global double 1.000000e+00"
+    ), (
+      "quad",
+      FloatingPointType 128,
+      C.Float (FloatingPointType 128) (F.Quadruple 0x0007000600050004 0x0003000200010000),
+      "global fp128 0xL00030002000100000007000600050004" -- yes, this order is weird
+    ), (
+      "quad 1.0",
+      FloatingPointType 128,
+      C.Float (FloatingPointType 128) (F.Quadruple 0x3fff000000000000 0x0000000000000000),
+      "global fp128 0xL00000000000000003FFF000000000000" -- yes, this order is weird
+    ), (
+      "x86_fp80",
+      FloatingPointType 80,
+      C.Float (FloatingPointType 80) (F.X86_FP80 0x0004 0x0003000200010000),
+      "global x86_fp80 0xK00040003000200010000"
     ), (
       "struct",
       StructureType False (replicate 2 (IntegerType 32)),

@@ -3,7 +3,9 @@
   QuasiQuotes,
   TupleSections,
   MultiParamTypeClasses,
-  FlexibleInstances
+  FlexibleInstances,
+  FlexibleContexts,
+  ScopedTypeVariables
   #-}
 module LLVM.General.Internal.Constant where
 
@@ -19,7 +21,7 @@ import Control.Monad.AnyCont
 
 import qualified Data.Map as Map
 import Foreign.Ptr
-
+import Foreign.Storable (Storable, sizeOf)
 
 import qualified LLVM.General.Internal.FFI.Constant as FFI
 import qualified LLVM.General.Internal.FFI.GlobalValue as FFI
@@ -34,6 +36,7 @@ import qualified LLVM.General.AST.Constant as A.C hiding (Constant)
 import qualified LLVM.General.AST.Type as A
 import qualified LLVM.General.AST.IntegerPredicate as A (IntegerPredicate)
 import qualified LLVM.General.AST.FloatingPointPredicate as A (FloatingPointPredicate)
+import qualified LLVM.General.AST.Float as A.F
 
 import LLVM.General.Internal.Coding
 import LLVM.General.Internal.DecodeAST
@@ -42,6 +45,10 @@ import LLVM.General.Internal.Context
 import LLVM.General.Internal.Type ()
 import LLVM.General.Internal.IntegerPredicate ()
 import LLVM.General.Internal.FloatingPointPredicate ()
+
+allocaWords :: forall a m . (Storable a, MonadAnyCont IO m, Monad m, MonadIO m) => Word32 -> m (Ptr a)
+allocaWords nBits = do
+  allocaArray (((nBits-1) `div` (8*(fromIntegral (sizeOf (undefined :: a))))) + 1)
 
 instance EncodeM EncodeAST A.Constant (Ptr FFI.Constant) where
   encodeM c = scopeAnyCont $ case c of
@@ -52,9 +59,22 @@ instance EncodeM EncodeAST A.Constant (Ptr FFI.Constant) where
         | w <- [0 .. ((fromIntegral bits-1) `div` 64)] 
        ]
       liftIO $ FFI.constantIntOfArbitraryPrecision t' words
-    A.C.Float { A.C.constantType = t, A.C.floatValue = v } -> do
-      t' <- encodeM t
-      liftIO $ FFI.constantFloat t' (realToFrac v)
+    A.C.Float { A.C.constantType = t@(A.FloatingPointType nBits), A.C.floatValue = v } -> do
+      Context context <- gets encodeStateContext
+      words <- allocaWords nBits
+      case (nBits, v) of
+        (16, A.F.Half f) -> poke (castPtr words) f
+        (32, A.F.Single f) -> poke (castPtr words) f
+        (64, A.F.Double f) -> poke (castPtr words) f
+        (80, A.F.X86_FP80 high low) -> do
+          pokeByteOff (castPtr words) 0 low
+          pokeByteOff (castPtr words) 8 high
+        (128, A.F.Quadruple high low) -> do
+          pokeByteOff (castPtr words) 0 low
+          pokeByteOff (castPtr words) 8 high
+        x -> fail $ "invalid type encoding float: " ++ show x
+      nBits <- encodeM nBits
+      liftIO $ FFI.constantFloatOfArbitraryPrecision context nBits words
     A.C.GlobalReference n -> FFI.upCast <$> referGlobal n
     A.C.BlockAddress f b -> do
       f' <- referGlobal f
@@ -116,12 +136,18 @@ instance DecodeM DecodeAST A.Constant (Ptr FFI.Constant) where
         n <- peek np
         words <- decodeM (n, wsp)
         return $ A.C.Int t (foldr (\b a -> (a `shiftL` 64) .|. fromIntegral (b :: Word64)) 0 words)
-      [FFI.valueSubclassIdP|ConstantFP|] -> 
-            liftIO $ A.C.Float t <$> (
-              case t of
-                A.FloatingPointType 64 -> realToFrac <$> FFI.constFloatDoubleValue c
-                A.FloatingPointType 32 -> realToFrac <$> FFI.constFloatFloatValue c
-              )
+      [FFI.valueSubclassIdP|ConstantFP|] -> do
+        let A.FloatingPointType nBits = t
+        ws <- allocaWords nBits
+        liftIO $ FFI.getConstantFloatWords c ws
+        A.C.Float t <$> (
+          case nBits of
+            16 -> A.F.Half <$> peek (castPtr ws)
+            32 -> A.F.Single <$> peek (castPtr ws)
+            64 -> A.F.Double <$> peek (castPtr ws)
+            80 -> A.F.X86_FP80 <$> peekByteOff (castPtr ws) 8 <*> peekByteOff (castPtr ws) 0
+            128 -> A.F.Quadruple <$> peekByteOff (castPtr ws) 8 <*> peekByteOff (castPtr ws) 0
+          )
       [FFI.valueSubclassIdP|ConstantPointerNull|] -> return $ A.C.Null t
       [FFI.valueSubclassIdP|ConstantAggregateZero|] -> return $ A.C.Null t
       [FFI.valueSubclassIdP|UndefValue|] -> return $ A.C.Undef t

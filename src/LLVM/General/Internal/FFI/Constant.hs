@@ -60,16 +60,16 @@ constStructInContext ctx (n, cs) p = constStructInContext' ctx cs n p
 foreign import ccall unsafe "LLVM_General_GetConstantDataSequentialElementAsConstant" getConstantDataSequentialElementAsConstant ::
   Ptr Constant -> CUInt -> IO (Ptr Constant)
 
-foreign import ccall unsafe "LLVMConstInt" constantInt ::
-  Ptr Type -> CULLong -> LLVMBool -> IO (Ptr Constant)
-
 foreign import ccall unsafe "LLVMConstIntOfArbitraryPrecision" constantIntOfArbitraryPrecision' ::
   Ptr Type -> CUInt -> Ptr CULong -> IO (Ptr Constant)
 
 constantIntOfArbitraryPrecision t = uncurry (constantIntOfArbitraryPrecision' t)
 
-foreign import ccall unsafe "LLVMConstReal" constantFloat ::
-  Ptr Type -> CDouble -> IO (Ptr Constant)
+foreign import ccall unsafe "LLVM_General_ConstFloatOfArbitraryPrecision" constantFloatOfArbitraryPrecision ::
+  Ptr Context -> CUInt -> Ptr CULong -> IO (Ptr Constant)
+
+foreign import ccall unsafe "LLVM_General_GetConstantFloatWords" getConstantFloatWords ::
+  Ptr Constant -> Ptr CULong -> IO ()
 
 foreign import ccall unsafe "LLVMConstVector" constantVector' ::
   Ptr (Ptr Constant) -> CUInt -> IO (Ptr Constant)

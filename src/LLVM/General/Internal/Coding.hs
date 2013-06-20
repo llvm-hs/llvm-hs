@@ -70,10 +70,19 @@ alloca :: (Storable a, MonadAnyCont IO m) => m (Ptr a)
 alloca = anyContToM Foreign.Marshal.Alloc.alloca
 
 peek :: (Storable a, MonadIO m) => Ptr a -> m a
-peek a = liftIO $ Foreign.Storable.peek a
+peek p = liftIO $ Foreign.Storable.peek p
+
+peekByteOff :: (Storable a, MonadIO m) => Ptr a -> Int -> m a
+peekByteOff p i = liftIO $ Foreign.Storable.peekByteOff p i
+
+poke :: (Storable a, MonadIO m) => Ptr a -> a -> m ()
+poke p a = liftIO $ Foreign.Storable.poke p a
+
+pokeByteOff :: (Storable a, MonadIO m) => Ptr a -> Int -> a -> m ()
+pokeByteOff p i a = liftIO $ Foreign.Storable.pokeByteOff p i a
 
 peekArray :: (Integral i, Storable a, MonadIO m) => i -> Ptr a -> m [a]
-peekArray n a = liftIO $ Foreign.Marshal.Array.peekArray (fromIntegral n) a
+peekArray n p = liftIO $ Foreign.Marshal.Array.peekArray (fromIntegral n) p
 
 instance (Monad m, EncodeM m h c, Storable c, MonadAnyCont IO m) => EncodeM m [h] (CUInt, Ptr c) where
   encodeM hs = do

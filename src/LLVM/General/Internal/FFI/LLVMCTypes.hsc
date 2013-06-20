@@ -40,6 +40,7 @@ define hsc_inject(l, typ, cons, hprefix, recmac) { \
   for(p = list; p < list + sizeof(list)/sizeof(list[0]); ++p) { \
     hsc_printf("\n    \"%s\" -> " #hprefix "%s", p->s, p->s); \
   } \
+  hsc_printf("\n    x -> error $ \"bad quasiquoted FFI constant for " #hprefix ": \" ++ x"); \
   hsc_printf(",\n" \
              "  quoteType = undefined,\n" \
              "  quoteDec = undefined\n" \

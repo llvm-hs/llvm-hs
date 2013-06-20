@@ -2,12 +2,13 @@
 module LLVM.General.AST.Constant where
 
 import Data.Word (Word32)
-import Data.Bits ((.|.), testBit, shiftL)
+import Data.Bits ((.|.), (.&.), complement, testBit, shiftL)
 
 import LLVM.General.AST.Type
 import LLVM.General.AST.Name
 import LLVM.General.AST.FloatingPointPredicate (FloatingPointPredicate)
 import LLVM.General.AST.IntegerPredicate (IntegerPredicate)
+import qualified LLVM.General.AST.Float as F
 
 {- |
 <http://llvm.org/docs/LangRef.html#constants>
@@ -21,7 +22,7 @@ the rules of what IR is legal into the Haskell types.
 -} 
 data Constant
     = Int { constantType :: Type, integerValue :: Integer }
-    | Float { constantType :: Type, floatValue :: Double }
+    | Float { constantType :: Type, floatValue :: F.SomeFloat }
     | Null { constantType :: Type }
     | Struct { isPacked :: Bool, memberValues :: [ Constant ] }
     | Array { memberType :: Type, memberValues :: [ Constant ] }
@@ -199,14 +200,19 @@ data Constant
 -- an constant as an Integer. The LLVM assembly printer prints integers as signed, but
 -- cheats for 1-bit integers and prints them as 'true' or 'false'. That way it circuments the
 -- otherwise awkward fact that a twos complement 1-bit number only has the values -1 and 0.
--- This function will sign-extend as necessary, while the record accessor function 'integerValue' 
--- is the corresponding unsigned version.
 signedIntegerValue :: Constant -> Integer
-signedIntegerValue (Int (IntegerType nBits') unsignedBits) =
+signedIntegerValue (Int (IntegerType nBits') bits) =
   let nBits = fromIntegral nBits'
   in
-    if unsignedBits `testBit` (nBits - 1) 
-     then
-         unsignedBits .|. (-1 `shiftL` nBits)
-     else 
-         unsignedBits
+    if bits `testBit` (nBits - 1) then bits .|. (-1 `shiftL` nBits) else bits
+
+-- | This library's conversion from LLVM C++ objects will always produce integer constants
+-- as unsigned, so this function in many cases is not necessary. However, nothing's to keep
+-- stop direct construction of an 'Int' with a negative 'integerValue'. There's nothing in principle
+-- wrong with such a value - it has perfectly good low order bits like any integer, and will be used
+-- as such, likely producing the intended result if lowered to C++. If, however one wishes to interpret
+-- an 'Int' of unknown provenance as unsigned, then this function will serve.
+unsignedIntegerValue :: Constant -> Integer
+unsignedIntegerValue (Int (IntegerType nBits) bits) =
+  bits .&. (complement (-1 `shiftL` (fromIntegral nBits)))
+

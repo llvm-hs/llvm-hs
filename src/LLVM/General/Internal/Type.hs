@@ -121,6 +121,8 @@ instance DecodeM DecodeAST A.Type (Ptr FFI.Type) where
       [FFI.typeKindP|Half|] -> return $ A.FloatingPointType 16
       [FFI.typeKindP|Float|] -> return $ A.FloatingPointType 32
       [FFI.typeKindP|Double|] -> return $ A.FloatingPointType 64
+      [FFI.typeKindP|X86_FP80|] -> return $ A.FloatingPointType 80
+      [FFI.typeKindP|FP128|] -> return $ A.FloatingPointType 128
       [FFI.typeKindP|Vector|] -> 
         return A.VectorType
          `ap` (decodeM =<< liftIO (FFI.getVectorSize t))
