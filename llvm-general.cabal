@@ -42,7 +42,7 @@ library
     parsec >= 3.1.3,
     array >= 0.4.0.1,
     setenv >= 0.1.0
-  extra-libraries: LLVM-3.2svn stdc++
+  extra-libraries: stdc++
   hs-source-dirs: src
   exposed-modules:
     LLVM.General

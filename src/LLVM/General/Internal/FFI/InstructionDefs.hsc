@@ -16,7 +16,13 @@ import LLVM.General.Internal.FFI.LLVMCTypes
 
 #define LAST_OTHER_INST(num) { 0, 0, 0, 0, } };
 
+#include "llvm/Config/llvm-config.h"
+
+#if LLVM_VERSION_MAJOR == 3 && LLVM_VERSION_MINOR < 3
 #include "llvm/Instruction.def"
+#else
+#include "llvm/IR/Instruction.def"
+#endif
 
 #{
 define hsc_inject() {                                       \

@@ -1,5 +1,11 @@
 #define __STDC_LIMIT_MACROS
+#include "llvm/Config/llvm-config.h"
+#if LLVM_VERSION_MAJOR < 3 || (LLVM_VERSION_MAJOR == 3 && LLVM_VERSION_MINOR < 3)
 #include "llvm/LLVMContext.h"
+#else
+#include "llvm/IR/LLVMContext.h"
+#include "llvm/IR/Module.h"
+#endif
 #include "llvm/Assembly/Parser.h"
 #include "llvm/Assembly/PrintModulePass.h"
 #include "llvm/Pass.h"

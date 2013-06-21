@@ -1,6 +1,12 @@
 #define __STDC_LIMIT_MACROS
+#include "llvm/Config/llvm-config.h"
+#if LLVM_VERSION_MAJOR < 3 || (LLVM_VERSION_MAJOR == 3 && LLVM_VERSION_MINOR < 3)
 #include "llvm/LLVMContext.h"
 #include "llvm/IRBuilder.h"
+#else
+#include "llvm/IR/LLVMContext.h"
+#include "llvm/IR/IRBuilder.h"
+#endif
 
 #include "llvm-c/Core.h"
 
@@ -11,7 +17,7 @@ using namespace llvm;
 namespace llvm {
 static AtomicOrdering unwrap(LLVMAtomicOrdering l) {
 	switch(l) {
-#define ENUM_CASE(x) case LLVM ## x ## AtomicOrdering: return x;
+#define ENUM_CASE(x) case LLVMAtomicOrdering ## x: return x;
 LLVM_GENERAL_FOR_EACH_ATOMIC_ORDERING(ENUM_CASE)
 #undef ENUM_CASE
 	default: return AtomicOrdering(0);
@@ -28,9 +34,9 @@ LLVM_GENERAL_FOR_EACH_SYNCRONIZATION_SCOPE(ENUM_CASE)
 }
 
 
-static AtomicRMWInst::BinOp unwrap(LLVMAtomicRMWOperation l) {
+static AtomicRMWInst::BinOp unwrap(LLVMAtomicRMWBinOp l) {
 	switch(l) {
-#define ENUM_CASE(x) case LLVM ## x ## RMWOperation: return AtomicRMWInst::x;
+#define ENUM_CASE(x) case LLVMAtomicRMWBinOp ## x: return AtomicRMWInst::x;
 LLVM_GENERAL_FOR_EACH_RMW_OPERATION(ENUM_CASE)
 #undef ENUM_CASE
 	default: return AtomicRMWInst::BinOp(0);
@@ -141,7 +147,7 @@ LLVMValueRef LLVM_General_BuildAtomicCmpXchg(
 
 LLVMValueRef LLVM_General_BuildAtomicRMW(
 	LLVMBuilderRef b,
-	LLVMAtomicRMWOperation rmwOp,
+	LLVMAtomicRMWBinOp rmwOp,
 	LLVMValueRef ptr, 
 	LLVMValueRef val, 
 	LLVMBool v,

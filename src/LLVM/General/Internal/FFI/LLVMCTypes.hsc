@@ -96,7 +96,7 @@ newtype MDKindID = MDKindID CUInt
 
 newtype MemoryOrdering = MemoryOrdering CUInt
   deriving (Eq, Typeable, Data)
-#define MO_Rec(n) { #n, LLVM ## n ## AtomicOrdering },
+#define MO_Rec(n) { #n, LLVMAtomicOrdering ## n },
 #{inject ATOMIC_ORDERING, MemoryOrdering, MemoryOrdering, memoryOrdering, MO_Rec}
 
 newtype Linkage = Linkage CUInt
@@ -131,7 +131,7 @@ newtype AsmDialect = AsmDialect CUInt
 
 newtype RMWOperation = RMWOperation CUInt
   deriving (Eq, Read, Show, Typeable, Data)
-#define RMWOp_Rec(n) { #n, LLVM ## n ## RMWOperation },
+#define RMWOp_Rec(n) { #n, LLVMAtomicRMWBinOp ## n },
 #{inject RMW_OPERATION, RMWOperation, RMWOperation, rmwOperation, RMWOp_Rec}
 
 newtype RelocModel = RelocModel CUInt

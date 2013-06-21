@@ -35,7 +35,7 @@ import Text.Parsec
 import Text.Parsec.String
 import Data.Version
 
-llvmVersion = "3.2"
+llvmVersion = "3.3"
 
 wipedir :: FilePath -> Action ()
 wipedir d = do

@@ -2,6 +2,7 @@ import Control.Monad
 import Data.List (isPrefixOf, (\\))
 import Data.Map (Map)
 import qualified Data.Map as Map
+import Data.Monoid
 import Distribution.Simple
 import Distribution.Simple.Program
 import Distribution.Simple.Setup
@@ -48,22 +49,28 @@ main = do
     confHook = \(genericPackageDescription, hookedBuildInfo) configFlags -> do
       llvmConfig <- getLLVMConfig configFlags
 
-      cppflags <- llvmConfig ["--cppflags"]
-      let useCppFlags = (filter ("-D" `isPrefixOf`) $ words cppflags) \\ (map ("-D"++) uncheckedHsFFIDefines)
+      llvmCppFlags <- do
+        l <- llvmConfig ["--cppflags"]
+        return $ (filter ("-D" `isPrefixOf`) $ words l) \\ (map ("-D"++) uncheckedHsFFIDefines)
       includeDirs <- liftM lines $ llvmConfig ["--includedir"]
       libDirs@[libDir] <- liftM lines $ llvmConfig ["--libdir"]
+      [llvmVersion] <- liftM lines $ llvmConfig ["--version"]
+      let libraryVersion = 
+              case llvmVersion of
+                "3.2" -> "3.2svn"
+                "3.3" -> "3.3"
+                x -> error $ "llvm version " ++ x ++ " not yet supported by llvm-general"
 
       let genericPackageDescription' = genericPackageDescription {
             condLibrary = do
               libraryCondTree <- condLibrary genericPackageDescription
               return libraryCondTree {
-                condTreeData = 
-                  let library = condTreeData libraryCondTree
-                  in library { 
-                    libBuildInfo = 
-                      let buildInfo = libBuildInfo library 
-                      in buildInfo { ccOptions = ccOptions buildInfo ++ useCppFlags }
-                    }
+                condTreeData = condTreeData libraryCondTree <> mempty { 
+                  libBuildInfo = mempty {
+                    ccOptions = llvmCppFlags,
+                    extraLibs = ["LLVM-" ++ libraryVersion]
+                   }
+                 }
               }
            }
           configFlags' = configFlags {
