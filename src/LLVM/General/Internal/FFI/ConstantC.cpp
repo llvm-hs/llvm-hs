@@ -9,7 +9,7 @@ using namespace llvm;
 extern "C" {
 
 LLVMValueRef LLVM_General_GetConstantDataSequentialElementAsConstant(LLVMValueRef v, unsigned i) {
-	wrap(unwrap<ConstantDataSequential>(v)->getElementAsConstant(i));
+	return wrap(unwrap<ConstantDataSequential>(v)->getElementAsConstant(i));
 }
 
 LLVMValueRef LLVM_General_GetBlockAddressFunction(LLVMValueRef v) {
