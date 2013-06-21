@@ -175,8 +175,10 @@ withModuleFromAST context@(Context c) (A.Module moduleId dataLayout triple defin
                 defineLocal n p
                 n <- encodeM n
                 liftIO $ FFI.setValueName (FFI.upCast p) n
-                attrs <- encodeM attrs
-                liftIO $ FFI.addAttribute p attrs
+                unless (null attrs) $
+                       do attrs <- encodeM attrs
+                          liftIO $ FFI.addAttribute p attrs
+                          return ()
                 return ()
               forInterleavedM blocks $ \(A.BasicBlock bName namedInstrs term) -> do
                 b <- encodeM bName
@@ -268,11 +270,8 @@ moduleAST (Module mod) = runDecodeAST $ do
               n <- liftIO $ FFI.getNamedMetadataNumOperands nm
               os <- allocaArray n
               liftIO $ FFI.getNamedMetadataOperands nm os
-              l <- alloca
-              cs <- liftIO $ FFI.getNamedMetadataName nm l
-              l <- peek l
               return A.NamedMetadataDefinition
-                 `ap` decodeM (cs, l)
+                 `ap` (decodeM $ FFI.getNamedMetadataName nm)
                  `ap` liftM (map (\(A.MetadataNodeReference mid) -> mid)) (decodeM (n, os))
          
        mds <- getMetadataDefinitions

@@ -31,9 +31,9 @@ getDiagnostic p = do
   l <- decodeM =<< FFI.getSMDiagnosticLineNo p
   c <- decodeM =<< FFI.getSMDiagnosticColumnNo p
   k <- decodeM =<< FFI.getSMDiagnosticKind p
-  f <- decodeM =<< FFI.getSMDiagnosticFilename p
-  m <- decodeM =<< FFI.getSMDiagnosticMessage p
-  lc <- decodeM =<< FFI.getSMDiagnosticLineContents p
+  f <- decodeM $ FFI.getSMDiagnosticFilename p
+  m <- decodeM $ FFI.getSMDiagnosticMessage p
+  lc <- decodeM $ FFI.getSMDiagnosticLineContents p
   return $ Diagnostic { 
     lineNumber = l, columnNumber = c, diagnosticKind = k, filename = f, message = m, lineContents = lc
    }

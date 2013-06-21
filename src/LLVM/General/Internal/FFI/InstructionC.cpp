@@ -1,9 +1,12 @@
 #define __STDC_LIMIT_MACROS
-#include "llvm/LLVMContext.h"
-#include "llvm/InstrTypes.h"
+#include "llvm/Config/llvm-config.h"
+#include "llvm/IR/LLVMContext.h"
+#include "llvm/IR/InstrTypes.h"
+#include "llvm/IR/Attributes.h"
+#include "llvm/IR/Operator.h"
+#include "llvm/IR/BasicBlock.h"
+#include "llvm/IR/Metadata.h"
 #include "llvm/Support/CallSite.h"
-#include "llvm/Attributes.h"
-#include "llvm/Operator.h"
 
 #include "llvm-c/Core.h"
 
@@ -15,7 +18,7 @@ namespace llvm {
 
 static LLVMAtomicOrdering wrap(AtomicOrdering l) {
 	switch(l) {
-#define ENUM_CASE(x) case x: return LLVM ## x ## AtomicOrdering;
+#define ENUM_CASE(x) case x: return LLVMAtomicOrdering ## x;
 LLVM_GENERAL_FOR_EACH_ATOMIC_ORDERING(ENUM_CASE)
 #undef ENUM_CASE
 	default: return LLVMAtomicOrdering(0);
@@ -31,12 +34,12 @@ LLVM_GENERAL_FOR_EACH_SYNCRONIZATION_SCOPE(ENUM_CASE)
 	}
 }
 
-static LLVMAtomicRMWOperation wrap(AtomicRMWInst::BinOp l) {
+static LLVMAtomicRMWBinOp wrap(AtomicRMWInst::BinOp l) {
 	switch(l) {
-#define ENUM_CASE(x) case AtomicRMWInst::x: return LLVM ## x ## RMWOperation;
+#define ENUM_CASE(x) case AtomicRMWInst::x: return LLVMAtomicRMWBinOp ## x;
 LLVM_GENERAL_FOR_EACH_RMW_OPERATION(ENUM_CASE)
 #undef ENUM_CASE
-	default: return LLVMAtomicRMWOperation(0);
+	default: return LLVMAtomicRMWBinOp(0);
 	}
 }
 
@@ -67,22 +70,22 @@ LLVMValueRef LLVM_General_GetCallInstCalledValue(
 }
 
 LLVMAttribute LLVM_General_GetCallInstAttr(LLVMValueRef callInst, unsigned i) {
-	return (LLVMAttribute)CallSite(unwrap<Instruction>(callInst)).getAttributes().getParamAttributes(i).Raw();
+	return (LLVMAttribute)CallSite(unwrap<Instruction>(callInst)).getAttributes().Raw(i);
 }
 
 void LLVM_General_AddCallInstAttr(LLVMValueRef callInst, unsigned i, LLVMAttribute attr) {
 	CallSite callSite(unwrap<Instruction>(callInst));
 	LLVMContext &context = callSite->getContext();
 	AttrBuilder attrBuilder(attr);
-	callSite.setAttributes(callSite.getAttributes().addAttr(context, i, Attributes::get(context, attrBuilder)));
+	callSite.setAttributes(callSite.getAttributes().addAttributes(context, i, AttributeSet::get(context, i, attrBuilder)));
 }
 
 LLVMAttribute LLVM_General_GetCallInstFunctionAttr(LLVMValueRef callInst) {
-	return LLVM_General_GetCallInstAttr(callInst, AttrListPtr::FunctionIndex);
+	return LLVM_General_GetCallInstAttr(callInst, AttributeSet::FunctionIndex);
 }
 
 void LLVM_General_AddCallInstFunctionAttr(LLVMValueRef callInst, LLVMAttribute attr) {
-	LLVM_General_AddCallInstAttr(callInst, AttrListPtr::FunctionIndex, attr);
+	LLVM_General_AddCallInstAttr(callInst, AttributeSet::FunctionIndex, attr);
 }
 
 LLVMValueRef LLVM_General_GetAllocaNumElements(LLVMValueRef a) {
@@ -169,7 +172,7 @@ void LLVM_General_SetInBounds(LLVMValueRef i, LLVMBool b) {
 	unwrap<GetElementPtrInst>(i)->setIsInBounds(b);
 }
 
-LLVMAtomicRMWOperation LLVM_General_GetAtomicRMWOperation(LLVMValueRef i) {
+LLVMAtomicRMWBinOp LLVM_General_GetAtomicRMWBinOp(LLVMValueRef i) {
 	return wrap(unwrap<AtomicRMWInst>(i)->getOperation());
 }
 

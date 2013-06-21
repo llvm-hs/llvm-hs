@@ -306,7 +306,7 @@ $(do
                           a <- allocaArray n
                           liftIO $ FFI.getInstStructureIndices i a
                           decodeM (n, a) |])
-                "rmwOperation" -> ([], [| decodeM =<< liftIO (FFI.getAtomicRMWOperation i) |])
+                "rmwOperation" -> ([], [| decodeM =<< liftIO (FFI.getAtomicRMWBinOp i) |])
                 "cleanup" -> ([], [| decodeM =<< liftIO (FFI.isCleanup i) |])
                 _ -> ([], [| error $ "unrecognized instruction field or depenency thereof: " ++ show s |])
           in

@@ -30,11 +30,11 @@ foreign import ccall unsafe "LLVM_General_GetSMDiagnosticColumnNo" getSMDiagnost
   Ptr SMDiagnostic -> IO CInt 
 
 foreign import ccall unsafe "LLVM_General_GetSMDiagnosticFilename" getSMDiagnosticFilename ::
-  Ptr SMDiagnostic -> IO CString 
+  Ptr SMDiagnostic -> Ptr CUInt -> IO CString 
 
 foreign import ccall unsafe "LLVM_General_GetSMDiagnosticMessage" getSMDiagnosticMessage ::
-  Ptr SMDiagnostic -> IO CString 
+  Ptr SMDiagnostic -> Ptr CUInt -> IO CString 
 
 foreign import ccall unsafe "LLVM_General_GetSMDiagnosticLineContents" getSMDiagnosticLineContents ::
-  Ptr SMDiagnostic -> IO CString 
+  Ptr SMDiagnostic -> Ptr CUInt -> IO CString 
 

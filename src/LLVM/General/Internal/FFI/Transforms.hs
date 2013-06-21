@@ -3,7 +3,6 @@ module LLVM.General.Internal.FFI.Transforms where
 
 -- | does the constructor for this pass require a TargetLowering object
 needsTargetLowering "CodeGenPrepare" = True
-needsTargetLowering "LoopStrengthReduce" = True
 needsTargetLowering "LowerInvoke" = True
 needsTargetLowering _ = False
 

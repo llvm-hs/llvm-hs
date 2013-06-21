@@ -10,21 +10,30 @@
 using namespace llvm;
 
 namespace llvm {
+// Taken from llvm/lib/Target/TargetMachineC.cpp
+static Target *unwrap(LLVMTargetRef P) {
+  return reinterpret_cast<Target*>(P);
+}
+// Taken from llvm/lib/Target/TargetMachineC.cpp
+static LLVMTargetRef wrap(const Target * P) {
+  return reinterpret_cast<LLVMTargetRef>(const_cast<Target*>(P));
+}
+// Taken from llvm/lib/Target/TargetMachineC.cpp
+inline TargetMachine *unwrap(LLVMTargetMachineRef P) {
+  return reinterpret_cast<TargetMachine*>(P);
+}
+// Taken from llvm/lib/Target/TargetMachineC.cpp
+inline LLVMTargetMachineRef wrap(const TargetMachine *P) {
+  return
+    reinterpret_cast<LLVMTargetMachineRef>(const_cast<TargetMachine*>(P));
+}
+
 static Reloc::Model unwrap(LLVMRelocMode x) {
 	switch(x) {
 #define ENUM_CASE(x,y) case LLVMReloc ## x: return Reloc::y;
 LLVM_GENERAL_FOR_EACH_RELOC_MODEL(ENUM_CASE)
 #undef ENUM_CASE
 	default: return Reloc::Model(0);
-	}
-}
-
-static CodeModel::Model unwrap(LLVMCodeModel x) {
-	switch(x) {
-#define ENUM_CASE(x) case LLVMCodeModel ## x: return CodeModel::x;
-LLVM_GENERAL_FOR_EACH_CODE_MODEL(ENUM_CASE)
-#undef ENUM_CASE
-	default: return CodeModel::Model(0);
 	}
 }
 

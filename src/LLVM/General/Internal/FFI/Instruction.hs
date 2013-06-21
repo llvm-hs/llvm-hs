@@ -122,7 +122,7 @@ foreign import ccall unsafe "LLVM_General_GetInBounds" getInBounds ::
 foreign import ccall unsafe "LLVM_General_SetInBounds" setInBounds ::
   Ptr Instruction -> LLVMBool -> IO ()
 
-foreign import ccall unsafe "LLVM_General_GetAtomicRMWOperation" getAtomicRMWOperation ::
+foreign import ccall unsafe "LLVM_General_GetAtomicRMWBinOp" getAtomicRMWBinOp ::
   Ptr Instruction -> IO RMWOperation
 
 foreign import ccall unsafe "LLVM_General_CountInstStructureIndices" countInstStructureIndices ::

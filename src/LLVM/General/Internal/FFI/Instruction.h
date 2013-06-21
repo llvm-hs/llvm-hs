@@ -29,22 +29,6 @@
 	macro(SingleThread) \
 	macro(CrossThread)
 
-#if LLVM_VERSION_MAJOR < 3 || (LLVM_VERSION_MAJOR == 3 && LLVM_VERSION_MINOR < 3)
-
-typedef enum {
-#define ENUM_CASE(x) LLVMAtomicOrdering ## x,
-LLVM_GENERAL_FOR_EACH_ATOMIC_ORDERING(ENUM_CASE)
-#undef ENUM_CASE
-} LLVMAtomicOrdering;
-
-typedef enum {
-#define ENUM_CASE(x) LLVMAtomicRMWBinOp ## x,
-LLVM_GENERAL_FOR_EACH_RMW_OPERATION(ENUM_CASE)
-#undef ENUM_CASE
-} LLVMAtomicRMWBinOp;
-
-#endif
-
 typedef enum {
 #define ENUM_CASE(x) LLVM ## x ## SynchronizationScope,
 LLVM_GENERAL_FOR_EACH_SYNCRONIZATION_SCOPE(ENUM_CASE)

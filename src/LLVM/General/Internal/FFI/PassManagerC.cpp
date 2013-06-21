@@ -1,5 +1,5 @@
 #define __STDC_LIMIT_MACROS
-#include "llvm/LLVMContext.h"
+#include "llvm/IR/LLVMContext.h"
 #include "llvm/Transforms/Scalar.h"
 #include "llvm/Transforms/IPO.h"
 #include "llvm/Transforms/Vectorize.h"
@@ -63,8 +63,8 @@ void LLVM_General_AddInternalizePass(LLVMPassManagerRef PM, unsigned nExports, c
 	unwrap(PM)->add(createInternalizePass(exportList));
 }
 
-void LLVM_General_AddLoopStrengthReducePass(LLVMPassManagerRef PM, LLVMTargetLoweringRef T) {
-	unwrap(PM)->add(createLoopStrengthReducePass(unwrap(T)));
+void LLVM_General_AddLoopStrengthReducePass(LLVMPassManagerRef PM) {
+	unwrap(PM)->add(createLoopStrengthReducePass());
 }
 
 void LLVM_General_AddLowerInvokePass(LLVMPassManagerRef PM, LLVMTargetLoweringRef T, LLVMBool expensiveEH) {

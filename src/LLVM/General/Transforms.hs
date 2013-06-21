@@ -39,7 +39,6 @@ data Pass
   | LoopIdiom
   | LoopInstructionSimplify
   | LoopRotate
-  -- | can use a 'LLVM.General.Target.TargetLowering'
   | LoopStrengthReduce
   | LoopUnroll { loopUnrollThreshold :: Int32, count :: Int32, allowPartial :: Int32 }
   | LoopUnswitch { optimizeForSize :: Bool }

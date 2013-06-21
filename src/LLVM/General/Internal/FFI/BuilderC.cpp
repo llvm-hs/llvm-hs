@@ -1,12 +1,6 @@
 #define __STDC_LIMIT_MACROS
-#include "llvm/Config/llvm-config.h"
-#if LLVM_VERSION_MAJOR < 3 || (LLVM_VERSION_MAJOR == 3 && LLVM_VERSION_MINOR < 3)
-#include "llvm/LLVMContext.h"
-#include "llvm/IRBuilder.h"
-#else
 #include "llvm/IR/LLVMContext.h"
 #include "llvm/IR/IRBuilder.h"
-#endif
 
 #include "llvm-c/Core.h"
 

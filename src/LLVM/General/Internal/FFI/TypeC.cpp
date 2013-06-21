@@ -1,6 +1,8 @@
 #define __STDC_LIMIT_MACROS
 #include "llvm-c/Core.h"
-#include "llvm/Type.h"
+#include "llvm/IR/LLVMContext.h"
+#include "llvm/IR/Type.h"
+#include "llvm/IR/DerivedTypes.h"
 
 using namespace llvm;
 

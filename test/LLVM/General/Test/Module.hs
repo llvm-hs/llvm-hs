@@ -39,11 +39,12 @@ handString = "; ModuleID = '<string>'\n\
     \@two = alias i32 addrspace(3)* @three\n\
     \\n\
     \define i32 @bar() {\n\
-    \  %1 = call zeroext i32 @foo(i32 inreg 1, i8 signext 4) nounwind uwtable readnone\n\
+    \  %1 = call zeroext i32 @foo(i32 inreg 1, i8 signext 4) #0\n\
     \  ret i32 %1\n\
     \}\n\
     \\n\
-    \define zeroext i32 @foo(i32 inreg %x, i8 signext %y) nounwind uwtable readnone {\n\
+    \; Function Attrs: nounwind readnone uwtable\n\
+    \define zeroext i32 @foo(i32 inreg %x, i8 signext %y) #0 {\n\
     \  %1 = mul nsw i32 %x, %x\n\
     \  br label %here\n\
     \\n\
@@ -58,7 +59,9 @@ handString = "; ModuleID = '<string>'\n\
     \elsewhere:                                        ; preds = %there, %here\n\
     \  %r = phi i32 [ 2, %there ], [ 57, %here ]\n\
     \  ret i32 %r\n\
-    \}\n"
+    \}\n\
+    \\n\
+    \attributes #0 = { nounwind readnone uwtable }\n"
 
 handAST = Module "<string>" Nothing Nothing [
       TypeDefinition (UnName 0) (

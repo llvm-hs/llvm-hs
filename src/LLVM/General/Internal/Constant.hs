@@ -79,9 +79,15 @@ instance EncodeM EncodeAST A.Constant (Ptr FFI.Constant) where
         A.F.X86_FP80 high low -> poke2 high low
         A.F.Quadruple high low -> poke2 high low
         A.F.PPC_FP128 high low -> poke2 high low
-      notPairOfFloats <- encodeM $ case v of A.F.PPC_FP128 _ _ -> False; _ -> True
+      let fpSem = case v of
+                    A.F.Half _ -> FFI.floatSemanticsIEEEhalf
+                    A.F.Single _ -> FFI.floatSemanticsIEEEsingle
+                    A.F.Double _ -> FFI.floatSemanticsIEEEdouble
+                    A.F.Quadruple _ _ -> FFI.floatSemanticsIEEEquad
+                    A.F.X86_FP80 _ _ -> FFI.floatSemanticsx87DoubleExtended
+                    A.F.PPC_FP128 _ _ -> FFI.floatSemanticsPPCDoubleDouble
       nBits <- encodeM nBits
-      liftIO $ FFI.constantFloatOfArbitraryPrecision context nBits words notPairOfFloats
+      liftIO $ FFI.constantFloatOfArbitraryPrecision context nBits words fpSem
     A.C.GlobalReference n -> FFI.upCast <$> referGlobal n
     A.C.BlockAddress f b -> do
       f' <- referGlobal f

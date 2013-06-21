@@ -19,6 +19,7 @@ module LLVM.General.Internal.FFI.LLVMCTypes where
 #include "LLVM/General/Internal/FFI/Function.h"
 #include "LLVM/General/Internal/FFI/GlobalValue.h"
 #include "LLVM/General/Internal/FFI/Type.h"
+#include "LLVM/General/Internal/FFI/Constant.h"
 
 import Language.Haskell.TH.Quote
 
@@ -178,3 +179,8 @@ newtype FunctionAttr = FunctionAttr CUInt
   deriving (Eq, Read, Show, Bits, Typeable, Data)
 #define FA_Rec(n,a) { #n, LLVM ## n ## a },
 #{inject FUNCTION_ATTR, FunctionAttr, FunctionAttr, functionAttr, FA_Rec}
+
+newtype FloatSemantics = FloatSemantics CUInt
+  deriving (Eq, Read, Show, Typeable, Data)
+#define FS_Rec(n) { #n, LLVMFloatSemantics ## n },
+#{inject FLOAT_SEMANTICS, FloatSemantics, FloatSemantics, floatSemantics, FS_Rec}

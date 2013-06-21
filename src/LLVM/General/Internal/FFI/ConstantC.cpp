@@ -1,19 +1,26 @@
 #define __STDC_LIMIT_MACROS
-#include "llvm/Config/llvm-config.h"
-#if LLVM_VERSION_MAJOR < 3 || (LLVM_VERSION_MAJOR == 3 && LLVM_VERSION_MINOR < 3)
-#include "llvm/LLVMContext.h"
-#include "llvm/Constants.h"
-#else
 #include "llvm/IR/LLVMContext.h"
 #include "llvm/IR/Constants.h"
 #include "llvm/IR/Function.h"
-#endif
 
 #include "llvm-c/Core.h"
 #include "LLVM/General/Internal/FFI/Value.h"
-
+#include "LLVM/General/Internal/FFI/Constant.h"
 
 using namespace llvm;
+
+namespace llvm {
+
+static const struct fltSemantics &unwrap(LLVMFloatSemantics s) {
+	switch(s) {
+#define ENUM_CASE(x) case LLVMFloatSemantics ## x: return APFloat::x;
+LLVM_GENERAL_FOR_EACH_FLOAT_SEMANTICS(ENUM_CASE)
+#undef ENUM_CASE
+	default: return APFloat::Bogus;
+	}
+}
+
+}
 
 extern "C" {
 
@@ -69,32 +76,12 @@ LLVMValueRef LLVM_General_ConstFloatOfArbitraryPrecision(
 	LLVMContextRef c,
 	unsigned bits,
 	const uint64_t *words,
-	unsigned notPairOfFloats
+	LLVMFloatSemantics semantics
 ) {
-#if LLVM_VERSION_MAJOR < 3 || (LLVM_VERSION_MAJOR == 3 && LLVM_VERSION_MINOR < 3)
-#define OLD_WAY
-#endif
-#ifndef OLD_WAY
-	const fltSemantics *sem = 0;
-	switch(bits) {
-	case 16: sem = &APFloat::IEEEhalf; break;
-	case 32: sem = &APFloat::IEEEsingle; break;
-	case 64: sem = &APFloat::IEEEdouble; break;
-	case 128: sem = notPairOfFloats ? &APFloat::IEEEdouble : &APFloat::PPCDoubleDouble; break;
-	case 80: sem = &APFloat::x87DoubleExtended; break;
-	default: break;
-	}
-#endif
-	APInt api(bits, ArrayRef<uint64_t>(words, (bits-1)/64 + 1));
-
 	return wrap(
 		ConstantFP::get(
 			*unwrap(c),
-#ifdef OLD_WAY
-			APFloat(api, notPairOfFloats)
-#else
-			APFloat(*sem, api)
-#endif
+			APFloat(unwrap(semantics), APInt(bits, ArrayRef<uint64_t>(words, (bits-1)/64 + 1)))
 		)
 	);
 }
