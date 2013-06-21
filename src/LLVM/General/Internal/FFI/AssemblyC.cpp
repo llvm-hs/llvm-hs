@@ -17,7 +17,7 @@ LLVMModuleRef LLVM_General_GetModuleFromAssemblyInContext(
 	const char *assembly,
 	SMDiagnostic *error
 ) {
-	wrap(ParseAssemblyString(assembly, NULL, *error, *unwrap(context))); 
+	return wrap(ParseAssemblyString(assembly, NULL, *error, *unwrap(context))); 
 }
 
 char *LLVM_General_GetModuleAssembly(LLVMModuleRef module) {
