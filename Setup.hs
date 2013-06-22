@@ -59,8 +59,7 @@ main = do
       let libraryVersion = 
               case llvmVersion of
                 "3.2" -> "3.2svn"
-                "3.3" -> "3.3"
-                x -> error $ "llvm version " ++ x ++ " not yet supported by llvm-general"
+                x -> x
 
       let genericPackageDescription' = genericPackageDescription {
             condLibrary = do

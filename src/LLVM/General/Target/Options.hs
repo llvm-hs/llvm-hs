@@ -34,7 +34,6 @@ data Options = Options {
   honorSignDependentRoundingFloatingPointMathOption :: Bool,
   useSoftFloat :: Bool,
   noZerosInBSS :: Bool,
-  jITExceptionHandling :: Bool,
   jITEmitDebugInfo :: Bool,
   jITEmitDebugInfoToDisk :: Bool,
   guaranteedTailCallOptimization :: Bool,

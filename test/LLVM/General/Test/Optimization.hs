@@ -296,8 +296,7 @@ tests = testGroup "Optimization" [
         withTargetOptions $ \targetOptions -> do
           withTargetMachine target triple "" "" targetOptions
                             R.Default CM.Default CGO.Default $ \targetMachine -> do
-            targetLowering <- getTargetLowering targetMachine
-            withPassManager ([LowerInvoke False], targetLowering) $ \passManager -> do
+            withPassManager ([LowerInvoke False], targetMachine) $ \passManager -> do
               let astIn = 
                     Module "<string>" Nothing Nothing [
                      GlobalDefinition $ Function L.External V.Default CC.C [] (IntegerType 32) (Name "foo") ([

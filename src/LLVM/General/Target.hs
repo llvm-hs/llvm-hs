@@ -5,8 +5,8 @@ module LLVM.General.Target (
    lookupTarget,
    TargetOptions,
    withTargetOptions, peekTargetOptions, pokeTargetOptions,
-   withTargetMachine,
-   getTargetLowering
+   TargetMachine,
+   withTargetMachine
  ) where
 
 import LLVM.General.Internal.Target

@@ -107,7 +107,6 @@ pokeTargetOptions hOpts (TargetOptions cOpts) = do
     (FFI.targetOptionFlagHonorSignDependentRoundingFPMathOption, TO.honorSignDependentRoundingFloatingPointMathOption),
     (FFI.targetOptionFlagUseSoftFloat, TO.useSoftFloat),
     (FFI.targetOptionFlagNoZerosInBSS, TO.noZerosInBSS),
-    (FFI.targetOptionFlagJITExceptionHandling, TO.jITExceptionHandling),
     (FFI.targetOptionFlagJITEmitDebugInfo, TO.jITEmitDebugInfo),
     (FFI.targetOptionFlagJITEmitDebugInfoToDisk, TO.jITEmitDebugInfoToDisk),
     (FFI.targetOptionFlagGuaranteedTailCallOpt, TO.guaranteedTailCallOptimization),
@@ -150,8 +149,6 @@ peekTargetOptions (TargetOptions tOpts) = do
     <- gof FFI.targetOptionFlagUseSoftFloat
   noZerosInBSS
     <- gof FFI.targetOptionFlagNoZerosInBSS
-  jITExceptionHandling
-    <- gof FFI.targetOptionFlagJITExceptionHandling
   jITEmitDebugInfo
     <- gof FFI.targetOptionFlagJITEmitDebugInfo
   jITEmitDebugInfoToDisk

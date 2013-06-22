@@ -12,6 +12,7 @@ using namespace llvm;
 extern "C" {
 typedef struct LLVMOpaqueVectorizationConfig *LLVMVectorizationConfigRef;
 typedef struct LLVMOpaqueTargetLowering *LLVMTargetLoweringRef;
+typedef struct LLVMOpaqueTargetMachine *LLVMTargetMachineRef;
 }
 
 namespace llvm {
@@ -21,6 +22,14 @@ inline TargetLowering *unwrap(LLVMTargetLoweringRef P) {
 
 inline LLVMTargetLoweringRef wrap(const TargetLowering *P) { 
 	return reinterpret_cast<LLVMTargetLoweringRef>(const_cast<TargetLowering *>(P));
+}
+
+inline TargetMachine *unwrap(LLVMTargetMachineRef P) {
+	return reinterpret_cast<TargetMachine*>(P);
+}
+
+inline LLVMTargetMachineRef wrap(const TargetMachine *P) {
+	return reinterpret_cast<LLVMTargetMachineRef>(const_cast<TargetMachine *>(P));
 }
 }
 
@@ -50,7 +59,7 @@ void LLVM_General_Add ## p ## Pass(LLVMPassManagerRef PM) {	\
 LLVM_GENERAL_FOR_EACH_PASS_WITHOUT_LLVM_C_BINDING(ENUM_CASE)
 #undef ENUM_CASE
 
-void LLVM_General_AddCodeGenPreparePass(LLVMPassManagerRef PM, LLVMTargetLoweringRef T) {
+void LLVM_General_AddCodeGenPreparePass(LLVMPassManagerRef PM, LLVMTargetMachineRef T) {
 	unwrap(PM)->add(createCodeGenPreparePass(unwrap(T)));
 }
 	
@@ -67,7 +76,7 @@ void LLVM_General_AddLoopStrengthReducePass(LLVMPassManagerRef PM) {
 	unwrap(PM)->add(createLoopStrengthReducePass());
 }
 
-void LLVM_General_AddLowerInvokePass(LLVMPassManagerRef PM, LLVMTargetLoweringRef T, LLVMBool expensiveEH) {
+void LLVM_General_AddLowerInvokePass(LLVMPassManagerRef PM, LLVMTargetMachineRef T, LLVMBool expensiveEH) {
 	unwrap(PM)->add(createLowerInvokePass(unwrap(T), expensiveEH));
 }
 	

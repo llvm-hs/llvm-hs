@@ -64,11 +64,11 @@ instance PassManagerSpecification CuratedPassSetSpec where
     FFI.passManagerBuilderPopulateModulePassManager b pm
     return pm
 
-data PassSetSpec = PassSetSpec [Pass] (Maybe TargetLowering)
+data PassSetSpec = PassSetSpec [Pass] (Maybe TargetMachine)
 
 instance PassManagerSpecification PassSetSpec where
-  createPassManager (PassSetSpec ps tl') = flip runAnyContT return $ do
-    let tl = maybe nullPtr (\(TargetLowering tl) -> tl) tl'
+  createPassManager (PassSetSpec ps tm') = flip runAnyContT return $ do
+    let tm = maybe nullPtr (\(TargetMachine tm) -> tm) tm'
     pm <- liftIO $ FFI.createPassManager
     forM ps $ \p -> $(
       do
@@ -86,7 +86,7 @@ instance PassManagerSpecification PassSetSpec where
                    foldl1 TH.appE
                    (map TH.dyn $
                       ["FFI.add" ++ TH.nameBase n ++ "Pass", "pm"]
-                      ++ ["tl" | FFI.needsTargetLowering (TH.nameBase n)]
+                      ++ ["tm" | FFI.needsTargetMachine (TH.nameBase n)]
                       ++ fns)
                   )
                  |]
@@ -98,8 +98,8 @@ instance PassManagerSpecification PassSetSpec where
 instance PassManagerSpecification [Pass] where
   createPassManager ps = createPassManager (PassSetSpec ps Nothing)
 
-instance PassManagerSpecification ([Pass], TargetLowering) where
-  createPassManager (ps, tl) = createPassManager (PassSetSpec ps (Just tl))
+instance PassManagerSpecification ([Pass], TargetMachine) where
+  createPassManager (ps, tm) = createPassManager (PassSetSpec ps (Just tm))
 
 -- | bracket the creation of a 'PassManager'
 withPassManager :: PassManagerSpecification s => s -> (PassManager -> IO a) -> IO a

@@ -53,7 +53,7 @@ $(do
           (cName n)
           ("add" ++ n ++ "Pass")
           ([[t| Ptr PassManager |]] 
-           ++ [[t| Ptr TargetLowering |] | needsTargetLowering n]
+           ++ [[t| Ptr TargetMachine |] | needsTargetMachine n]
            ++ map typeMapping extraParams)
           (tupleT 0)
 

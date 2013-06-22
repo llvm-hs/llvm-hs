@@ -1,10 +1,10 @@
 -- | Code used with Template Haskell to build the FFI for transform passes.
 module LLVM.General.Internal.FFI.Transforms where
 
--- | does the constructor for this pass require a TargetLowering object
-needsTargetLowering "CodeGenPrepare" = True
-needsTargetLowering "LowerInvoke" = True
-needsTargetLowering _ = False
+-- | does the constructor for this pass require a TargetMachine object
+needsTargetMachine "CodeGenPrepare" = True
+needsTargetMachine "LowerInvoke" = True
+needsTargetMachine _ = False
 
 -- | Translate a Haskell name (used in the public Haskell interface, typically not abbreviated)
 -- | for a pass into the (sometimes obscure, sometimes abbreviated) name used in the LLVM C interface.

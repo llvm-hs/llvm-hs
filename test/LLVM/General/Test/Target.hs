@@ -33,7 +33,6 @@ instance Arbitrary Options where
     honorSignDependentRoundingFloatingPointMathOption <- arbitrary
     useSoftFloat <- arbitrary
     noZerosInBSS <- arbitrary
-    jITExceptionHandling <- arbitrary
     jITEmitDebugInfo <- arbitrary
     jITEmitDebugInfoToDisk <- arbitrary
     guaranteedTailCallOptimization <- arbitrary
@@ -55,7 +54,7 @@ tests = testGroup "Target" [
      testGroup "regressions" [
        testCase "hurm" $ do
          withTargetOptions $ \to -> do
-           let o = Options {printMachineCode = True, noFramePointerElimination = False, noFramePointerEliminationNonLeaf = True, lessPreciseFloatingPointMultiplyAddOption = True, unsafeFloatingPointMath = True, noInfinitiesFloatingPointMath = True, noNaNsFloatingPointMath = False, honorSignDependentRoundingFloatingPointMathOption = True, useSoftFloat = True, noZerosInBSS = False, jITExceptionHandling = True, jITEmitDebugInfo = True, jITEmitDebugInfoToDisk = False, guaranteedTailCallOptimization = False, disableTailCalls = False, realignStack = False, enableFastInstructionSelection = True, positionIndependentExecutable = True, enableSegmentedStacks = False, useInitArray = True, stackAlignmentOverride = 9432851444, trapFunctionName = "baz", floatABIType = FloatABISoft, allowFloatingPointOperationFusion = FloatingPointOperationFusionStrict, stackSmashingProtectionBufferSize = 2650013862}
+           let o = Options {printMachineCode = True, noFramePointerElimination = False, noFramePointerEliminationNonLeaf = True, lessPreciseFloatingPointMultiplyAddOption = True, unsafeFloatingPointMath = True, noInfinitiesFloatingPointMath = True, noNaNsFloatingPointMath = False, honorSignDependentRoundingFloatingPointMathOption = True, useSoftFloat = True, noZerosInBSS = False, jITEmitDebugInfo = True, jITEmitDebugInfoToDisk = False, guaranteedTailCallOptimization = False, disableTailCalls = False, realignStack = False, enableFastInstructionSelection = True, positionIndependentExecutable = True, enableSegmentedStacks = False, useInitArray = True, stackAlignmentOverride = 9432851444, trapFunctionName = "baz", floatABIType = FloatABISoft, allowFloatingPointOperationFusion = FloatingPointOperationFusionStrict, stackSmashingProtectionBufferSize = 2650013862}
            pokeTargetOptions o to
            o' <- peekTargetOptions to
            o' @?= o

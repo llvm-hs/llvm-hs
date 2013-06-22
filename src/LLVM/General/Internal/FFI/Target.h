@@ -32,7 +32,6 @@
 	macro(HonorSignDependentRoundingFPMathOption)					\
 	macro(UseSoftFloat)																		\
 	macro(NoZerosInBSS)																		\
-	macro(JITExceptionHandling)														\
 	macro(JITEmitDebugInfo)																\
 	macro(JITEmitDebugInfoToDisk)													\
 	macro(GuaranteedTailCallOpt)													\

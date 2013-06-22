@@ -1,5 +1,5 @@
 name: llvm-general
-version: 3.3.0.0
+version: 3.4.0.0
 license: BSD3
 license-file: LICENSE
 author: Benjamin S.Scarlet <fgthb0@greynode.net>
@@ -29,12 +29,6 @@ extra-source-files:
 source-repository head
   type: git
   location: git://github.com/bscarlet/llvm-general.git
-
-source-repository this
-  type: git
-  location: git://github.com/bscarlet/llvm-general.git
-  branch: llvm-3.3
-  tag: v3.3.0.0
 
 library
   build-tools: llvm-config
