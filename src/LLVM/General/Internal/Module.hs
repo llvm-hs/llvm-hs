@@ -86,7 +86,8 @@ setDataLayout m dl = flip runAnyContT return $ do
 getDataLayout :: Ptr FFI.Module -> IO (Maybe A.DataLayout)
 getDataLayout m = parseDataLayout <$> (decodeM =<< FFI.getDataLayout m)
 
--- | Build a 'Module' from a 'LLVM.General.AST.Module'.
+-- | Build an LLVM.General.'Module' from a LLVM.General.AST.'LLVM.General.AST.Module' - i.e.
+-- lower an AST from Haskell into C++ objects.
 withModuleFromAST :: Context -> A.Module -> (Module -> IO a) -> IO (Either String a)
 withModuleFromAST context@(Context c) (A.Module moduleId dataLayout triple definitions) f = do
   let makeModule = flip runAnyContT return $ do
@@ -191,7 +192,8 @@ withModuleFromAST context@(Context c) (A.Module moduleId dataLayout triple defin
 
     either (return . Left) (const $ Right <$> f (Module m)) r
 
--- | Get a 'LLVM.General.AST.Module' from a 'Module'.
+-- | Get an LLVM.General.AST.'LLVM.General.AST.Module' from a LLVM.General.'Module' - i.e.
+-- raise C++ objects into an Haskell AST.
 moduleAST :: Module -> IO A.Module
 moduleAST (Module mod) = runDecodeAST $ do
   c <- return Context `ap` liftIO (FFI.getModuleContext mod)
