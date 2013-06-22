@@ -1,11 +1,12 @@
 name: llvm-general
-version: 0.1
+version: 3.2.0.2
 license: BSD3
 license-file: LICENSE
 author: Benjamin S.Scarlet <fgthb0@greynode.net>
 maintainer: Benjamin S. Scarlet <fgthb0@greynode.net>
 copyright: Benjamin S. Scarlet 2013
 build-type: Custom
+stability: experimental
 cabal-version: >= 1.8
 category: Compilers/Interpreters, Code Generation
 synopsis: General purpose LLVM bindings
@@ -27,6 +28,12 @@ extra-source-files:
 source-repository head
   type: git
   location: git://github.com/bscarlet/llvm-general.git
+
+source-repository this
+  type: git
+  location: git://github.com/bscarlet/llvm-general.git
+	branch: llvm-3.2
+	tag: v3.2.0.2
 
 library
   build-tools: llvm-config
