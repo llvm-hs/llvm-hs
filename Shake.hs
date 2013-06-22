@@ -36,6 +36,7 @@ import Text.Parsec.String
 import Data.Version
 
 llvmVersion = "3.3"
+llvmDir = "out" </> ("llvm-" ++ llvmVersion)
 
 wipedir :: FilePath -> Action ()
 wipedir d = do
@@ -104,8 +105,8 @@ main = shake shakeOptions {
     Exit exitCode <- command [] "which" ["llvm-config"]
     let x = exitCode /= ExitSuccess
     when x $ do
-      done <- doesFileExist "out/install/bin/llvm-config"
-      unless done $ need ["out/install/bin/llvm-config"]
+      done <- doesFileExist (llvmDir </> "install/bin/llvm-config")
+      unless done $ need [ (llvmDir </> "install/bin/llvm-config") ]
     return x
 
   action $ do
@@ -113,7 +114,7 @@ main = shake shakeOptions {
     buildRoot <- getBuildRoot (BuildRoot ())
     ownLLVM <- getLlvmConfig (LLVMConfig ())
     let subBuildEnv = if ownLLVM 
-                       then withAlteredEnvVar "PATH" (prefixPathVar $ buildRoot </> "out/install" </> "bin")
+                       then withAlteredEnvVar "PATH" (prefixPathVar $ buildRoot </> llvmDir </> "install/bin")
                        else id
     let cabalStep args = subBuildEnv $ systemCwdV "." "cabal-dev" args
     need [ pkgName ++ ".cabal" ]
@@ -136,11 +137,11 @@ main = shake shakeOptions {
     cabalStep [ "install" ]
     
     
-  "out/install/bin/llvm-config" *> \out -> do
+  llvmDir </> "install/bin/llvm-config" *> \out -> do
     let tarball = "downloads/llvm-" ++ llvmVersion ++ ".src.tar.gz"
     buildRoot <- askOracle (BuildRoot ())
     need [ tarball ]
-    let buildDir = "out/llvm/build"
+    let buildDir = llvmDir </> "build"
     wipedir buildDir
     mkdir buildDir
     untar buildDir tarball
@@ -148,7 +149,7 @@ main = shake shakeOptions {
     let srcDir = buildDir </> srcDir'
     systemCwdV srcDir "sh" [
         "./configure",
-        "--prefix=" ++ buildRoot </> "out/install",
+        "--prefix=" ++ buildRoot </> llvmDir </> "install",
         "--enable-shared"
         ]
     systemCwdV srcDir "make" [ "-j", "8", "install" ]
