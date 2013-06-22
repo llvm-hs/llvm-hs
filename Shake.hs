@@ -119,15 +119,7 @@ main = shake shakeOptions {
     let cabalStep args = subBuildEnv $ systemCwdV "." "cabal-dev" args
     need [ pkgName ++ ".cabal" ]
     cabalStep [ "install-deps", "--enable-shared", "--enable-tests" ]
-    cabalStep [
-      "configure",
---      "--haddock-option", "--use-index=" ++ (buildRoot </> docDir </> "doc-index.html"),
---      "--haddock-option", "--use-contents=" ++ (buildRoot </> docDir </> "index.html"),
-      "--haddock-options", "+RTS -K32M -RTS",
-      "--ghc-options", "-optl -Wl,-rpath,../lib",
-      "--enable-shared",
-      "--enable-tests"
-     ]
+    cabalStep [ "configure", "--enable-shared", "--enable-tests" ]
     needRecursive "src"
     cabalStep [ "build" ]
     needRecursive "test"              

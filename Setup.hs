@@ -1,5 +1,5 @@
 import Control.Monad
-import Data.List (isPrefixOf, (\\))
+import Data.List (isPrefixOf, (\\), intercalate)
 import Data.Map (Map)
 import qualified Data.Map as Map
 import Data.Monoid
@@ -46,6 +46,7 @@ main = do
          
   defaultMainWithHooks simpleUserHooks {
     hookedPrograms = [ llvmProgram ],
+
     confHook = \(genericPackageDescription, hookedBuildInfo) configFlags -> do
       llvmConfig <- getLLVMConfig configFlags
 
@@ -79,11 +80,20 @@ main = do
            }
       addLLVMToLdLibraryPath configFlags'
       confHook simpleUserHooks (genericPackageDescription', hookedBuildInfo) configFlags',
+
     buildHook = \packageDescription localBuildInfo userHooks buildFlags -> do
       addLLVMToLdLibraryPath (configFlags localBuildInfo)
       buildHook simpleUserHooks packageDescription localBuildInfo userHooks buildFlags,
+
     testHook = \packageDescription localBuildInfo userHooks testFlags -> do
       addLLVMToLdLibraryPath (configFlags localBuildInfo)
-      testHook simpleUserHooks packageDescription localBuildInfo userHooks testFlags
+      testHook simpleUserHooks packageDescription localBuildInfo userHooks testFlags,
+
+    haddockHook = \packageDescription localBuildInfo userHooks haddockFlags -> do
+       let v = "GHCRTS"
+       oldGhcRts <- lookupEnv v
+       setEnv v (maybe id (\o n -> o ++ " " ++ n) oldGhcRts "-K32M")
+       haddockHook simpleUserHooks packageDescription localBuildInfo userHooks haddockFlags
+       maybe (unsetEnv v) (setEnv v) oldGhcRts
    }
 
