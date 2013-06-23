@@ -4,7 +4,7 @@ module LLVM.General.Module (
     Module,
     withModuleFromAST,
     moduleAST,
-    writeModule,
+    writeBitcodeToFile,
     withModuleFromString,
     moduleString
   ) where

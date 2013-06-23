@@ -55,7 +55,7 @@ const char *LLVM_General_ModuleGetInlineAsm(LLVMModuleRef m) {
 	return unwrap(m)->getModuleInlineAsm().c_str();
 }
 
-LLVMBool LLVM_General_WriteModule(LLVMModuleRef m, const char *path, char **error) {
+LLVMBool LLVM_General_WriteBitcodeToFile(LLVMModuleRef m, const char *path, char **error) {
   std::string ErrorInfo;
   raw_fd_ostream OS(path, ErrorInfo, raw_fd_ostream::F_Binary);
 

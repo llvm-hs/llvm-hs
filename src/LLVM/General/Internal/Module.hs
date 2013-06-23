@@ -70,8 +70,8 @@ withModuleFromString (Context c) s f = flip runAnyContT return $ do
 moduleString :: Module -> IO String
 moduleString (Module m) = bracket (FFI.getModuleAssembly m) free $ decodeM
 
-writeModule :: FilePath -> Module -> IO ()
-writeModule path (Module m) =
+writeBitcodeToFile :: FilePath -> Module -> IO ()
+writeBitcodeToFile path (Module m) =
     alloca $ \msgptr -> do
       result <- withCString path $ \cpath ->
                 FFI.writeBitcodeToFile m cpath msgptr
