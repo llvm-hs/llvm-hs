@@ -16,6 +16,7 @@ import Control.Exception
 
 import Foreign.Ptr
 import Foreign.Marshal.Alloc (free)
+import Foreign.C.String (withCString)
 
 import qualified LLVM.General.Internal.FFI.Assembly as FFI
 import qualified LLVM.General.Internal.FFI.Builder as FFI
@@ -67,6 +68,11 @@ withModuleFromString (Context c) s f = flip runAnyContT return $ do
 -- | generate LLVM assembly from a 'Module'
 moduleString :: Module -> IO String
 moduleString (Module m) = bracket (FFI.getModuleAssembly m) free $ decodeM
+
+writeModule :: FilePath -> Module -> IO ()
+writeModule path (Module m) = do
+  result <- withCString path (FFI.writeBitcodeToFile m)
+  when (result /= 0) $ fail ("Failed to write bitcode to " ++ path)
 
 setTargetTriple :: Ptr FFI.Module -> String -> IO ()
 setTargetTriple m t = flip runAnyContT return $ do

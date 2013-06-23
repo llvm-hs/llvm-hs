@@ -4,6 +4,7 @@ module LLVM.General.Module (
     Module,
     withModuleFromAST,
     moduleAST,
+    writeModule,
     withModuleFromString,
     moduleString
   ) where
