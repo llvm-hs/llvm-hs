@@ -15,8 +15,9 @@ import Control.Applicative
 import Control.Exception
 
 import Foreign.Ptr
-import Foreign.Marshal.Alloc (free)
-import Foreign.C.String (withCString)
+import Foreign.Marshal.Alloc (free, alloca)
+import Foreign.Storable (peek)
+import Foreign.C.String (withCString, peekCString)
 
 import qualified LLVM.General.Internal.FFI.Assembly as FFI
 import qualified LLVM.General.Internal.FFI.Builder as FFI
@@ -31,7 +32,7 @@ import qualified LLVM.General.Internal.FFI.Value as FFI
 import qualified LLVM.General.Internal.FFI.Metadata as FFI
 
 import LLVM.General.Internal.BasicBlock
-import LLVM.General.Internal.Coding
+import LLVM.General.Internal.Coding hiding (alloca, peek)
 import LLVM.General.Internal.Context
 import LLVM.General.Internal.DataLayout
 import LLVM.General.Internal.DecodeAST
@@ -69,10 +70,16 @@ withModuleFromString (Context c) s f = flip runAnyContT return $ do
 moduleString :: Module -> IO String
 moduleString (Module m) = bracket (FFI.getModuleAssembly m) free $ decodeM
 
-writeModule :: FilePath -> Module -> IO ()
-writeModule path (Module m) = do
-  result <- withCString path (FFI.writeBitcodeToFile m)
-  when (result /= 0) $ fail ("Failed to write bitcode to " ++ path)
+writeBitcodeToFile :: FilePath -> Module -> IO ()
+writeBitcodeToFile path (Module m) =
+    alloca $ \msgptr -> do
+      result <- withCString path $ \cpath ->
+                FFI.writeBitcodeToFile m cpath msgptr
+      when (result /= 0) $ do
+        cmsg <- peek msgptr
+        msg <- peekCString cmsg
+        free cmsg
+        fail msg
 
 setTargetTriple :: Ptr FFI.Module -> String -> IO ()
 setTargetTriple m t = flip runAnyContT return $ do
