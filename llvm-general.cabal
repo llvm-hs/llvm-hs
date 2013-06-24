@@ -34,6 +34,10 @@ flag shared-llvm
   description: link against llvm shared rather than static library
   default: False
 
+flag debug
+  description: compile C(++) shims with debug info for ease of troubleshooting
+  default: False
+
 library
   build-tools: llvm-config
   ghc-options: -fwarn-unused-imports
@@ -166,6 +170,9 @@ library
     src/LLVM/General/Internal/FFI/TargetC.cpp
     src/LLVM/General/Internal/FFI/TypeC.cpp
     src/LLVM/General/Internal/FFI/ValueC.cpp
+
+  if flag(debug)
+    cc-options: -g
 
 test-suite test
   type: exitcode-stdio-1.0
