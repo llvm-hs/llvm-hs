@@ -30,6 +30,10 @@ source-repository head
   type: git
   location: git://github.com/bscarlet/llvm-general.git
 
+flag shared-llvm
+  description: link against llvm shared rather than static library
+  default: False
+
 library
   build-tools: llvm-config
   ghc-options: -fwarn-unused-imports

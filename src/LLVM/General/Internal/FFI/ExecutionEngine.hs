@@ -14,19 +14,34 @@ import LLVM.General.Internal.FFI.Module
 data ExecutionEngine
 
 foreign import ccall unsafe "LLVMCreateExecutionEngineForModule" createExecutionEngineForModule ::
-    Ptr (Ptr ExecutionEngine) -> Ptr Module -> Ptr CString -> IO CUInt
+  Ptr (Ptr ExecutionEngine) -> Ptr Module -> Ptr CString -> IO CUInt
+
+foreign import ccall unsafe "LLVMCreateInterpreterForModule" createInterpreterForModule ::
+  Ptr (Ptr ExecutionEngine) -> Ptr Module -> Ptr CString -> IO CUInt
+
+foreign import ccall unsafe "LLVMCreateJITCompilerForModule" createJITCompilerForModule ::
+  Ptr (Ptr ExecutionEngine) -> Ptr Module -> CUInt -> Ptr CString -> IO CUInt
 
 foreign import ccall unsafe "LLVMDisposeExecutionEngine" disposeExecutionEngine ::
-    Ptr ExecutionEngine -> IO ()
+  Ptr ExecutionEngine -> IO ()
 
 foreign import ccall unsafe "LLVMAddModule" addModule ::
-    Ptr ExecutionEngine -> Ptr Module -> IO ()
+  Ptr ExecutionEngine -> Ptr Module -> IO ()
 
 foreign import ccall unsafe "LLVMRemoveModule" removeModule ::
-    Ptr ExecutionEngine -> Ptr Module -> Ptr (Ptr Module) -> Ptr CString -> IO CUInt
+  Ptr ExecutionEngine -> Ptr Module -> Ptr (Ptr Module) -> Ptr CString -> IO CUInt
 
 foreign import ccall unsafe "LLVMFindFunction" findFunction ::
-    Ptr ExecutionEngine -> CString -> Ptr (Ptr Function) -> IO CUInt
+  Ptr ExecutionEngine -> CString -> Ptr (Ptr Function) -> IO CUInt
 
 foreign import ccall unsafe "LLVMGetPointerToGlobal" getPointerToGlobal ::
-    Ptr ExecutionEngine -> Ptr GlobalValue -> IO (Ptr ())
+  Ptr ExecutionEngine -> Ptr GlobalValue -> IO (Ptr ())
+
+foreign import ccall unsafe "LLVMLinkInInterpreter" linkInInterpreter :: 
+  IO ()
+
+foreign import ccall unsafe "LLVMLinkInJIT" linkInJIT :: 
+  IO ()
+
+foreign import ccall unsafe "LLVMLinkInMCJIT" linkInMCJIT :: 
+  IO ()

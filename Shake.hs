@@ -118,8 +118,9 @@ main = shake shakeOptions {
                        else id
     let cabalStep args = subBuildEnv $ systemCwdV "." "cabal-dev" args
     need [ pkgName ++ ".cabal" ]
-    cabalStep [ "install-deps", "--enable-shared", "--enable-tests" ]
-    cabalStep [ "configure", "--enable-shared", "--enable-tests" ]
+    let shared = [ "--enable-shared" | True ]
+    cabalStep $ [ "install-deps", "--enable-tests" ] ++ shared
+    cabalStep $ [ "configure", "--enable-tests" {- , "-fshared-llvm" -} ] ++ shared
     needRecursive "src"
     cabalStep [ "build" ]
     needRecursive "test"              

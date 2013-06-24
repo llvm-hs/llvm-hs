@@ -44,6 +44,7 @@ tests = testGroup "ExecutionEngine" [
                    )
                  ]
                 ]
+    
     s <- withModuleFromAST context mAST $ \m -> do
           withModuleInEngine executionEngine m $ do
             Just p <- findFunction executionEngine (Name "foo")

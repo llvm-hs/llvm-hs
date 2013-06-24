@@ -2,6 +2,7 @@
 #include "llvm/Support/TargetRegistry.h"
 #include "llvm/Target/TargetMachine.h"
 #include "llvm/ADT/Triple.h"
+#include "llvm/ExecutionEngine/Interpreter.h"
 #include "llvm-c/Target.h"
 #include "llvm-c/TargetMachine.h"
 #include "llvm-c/Core.h"
