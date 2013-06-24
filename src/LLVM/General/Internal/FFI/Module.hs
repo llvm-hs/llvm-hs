@@ -84,3 +84,6 @@ moduleAppendInlineAsm m (ModuleAsm (c, n)) = moduleAppendInlineAsm' m c n
 
 foreign import ccall unsafe "LLVM_General_ModuleGetInlineAsm" moduleGetInlineAsm ::
   Ptr Module -> IO (ModuleAsm CString)
+
+foreign import ccall unsafe "LLVM_General_WriteBitcodeToFile" writeBitcodeToFile ::
+  Ptr Module -> CString -> Ptr CString -> IO Int

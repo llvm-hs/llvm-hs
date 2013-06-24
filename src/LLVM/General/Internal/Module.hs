@@ -16,6 +16,7 @@ import Control.Exception
 
 import Foreign.Ptr
 import Foreign.Marshal.Alloc (free)
+import Foreign.C.String (withCString, peekCString)
 
 import qualified LLVM.General.Internal.FFI.Assembly as FFI
 import qualified LLVM.General.Internal.FFI.Builder as FFI
@@ -67,6 +68,15 @@ withModuleFromString (Context c) s f = flip runAnyContT return $ do
 -- | generate LLVM assembly from a 'Module'
 moduleString :: Module -> IO String
 moduleString (Module m) = bracket (FFI.getModuleAssembly m) free $ decodeM
+
+writeBitcodeToFile :: FilePath -> Module -> IO ()
+writeBitcodeToFile path (Module m) = flip runAnyContT return $ do
+  msgPtr <- alloca
+  path <- encodeM path
+  result <- liftIO $ FFI.writeBitcodeToFile m path msgPtr
+  when (result /= 0) $ do
+    msg <- anyContT $ bracket (peek msgPtr) free
+    fail =<< decodeM msg
 
 setTargetTriple :: Ptr FFI.Module -> String -> IO ()
 setTargetTriple m t = flip runAnyContT return $ do
