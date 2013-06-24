@@ -16,7 +16,6 @@ import Control.Exception
 
 import Foreign.Ptr
 import Foreign.Marshal.Alloc (free)
-import Foreign.C.String (withCString, peekCString)
 
 import qualified LLVM.General.Internal.FFI.Assembly as FFI
 import qualified LLVM.General.Internal.FFI.Builder as FFI
