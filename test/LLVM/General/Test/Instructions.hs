@@ -511,8 +511,8 @@ tests = testGroup "Instructions" [
          ("store",
           Do $ Store {
             volatile = False,
-            address = a 0,
-            value = a 2,
+            address = a 2,
+            value = a 0,
             maybeAtomicity = Nothing,
             alignment = 0,
             metadata = [] 

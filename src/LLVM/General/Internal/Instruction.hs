@@ -247,8 +247,8 @@ $(do
                 "exact" -> (["b"], [| get_exact $(TH.dyn "b") |])
                 "operand0" -> ([], [| op 0 |])
                 "operand1" -> ([], [| op 1 |])
-                "address" -> ([], [| op 0 |])
-                "value" -> ([], [| op 1 |])
+                "address" -> ([], case lrn of "Store" -> [| op 1 |]; _ -> [| op 0 |])
+                "value" -> ([], case lrn of "Store" -> [| op 0 |]; _ -> [| op 1 |])
                 "expected" -> ([], [| op 1 |])
                 "replacement" -> ([], [| op 2 |])
                 "condition'" -> ([], [| op 0 |])
@@ -491,7 +491,7 @@ $(do
                  al <- encodeM al
                  vol <- encodeM vol
                  (ss, mo) <- encodeM mat
-                 i <- liftIO $ FFI.buildStore builder a' v' al vol mo ss s
+                 i <- liftIO $ FFI.buildStore builder v' a' al vol mo ss s
                  return $ FFI.upCast i
               A.GetElementPtr { A.address = a, A.indices = is, A.inBounds = ib } -> do
                  a' <- encodeM a
