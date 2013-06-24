@@ -68,6 +68,7 @@ withModuleFromString (Context c) s f = flip runAnyContT return $ do
 moduleString :: Module -> IO String
 moduleString (Module m) = bracket (FFI.getModuleAssembly m) free $ decodeM
 
+-- | generate LLVM bitcode from a 'Module'
 writeBitcodeToFile :: FilePath -> Module -> IO ()
 writeBitcodeToFile path (Module m) = flip runAnyContT return $ do
   msgPtr <- alloca
