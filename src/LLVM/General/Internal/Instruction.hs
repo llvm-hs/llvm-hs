@@ -4,7 +4,8 @@
   TupleSections,
   MultiParamTypeClasses,
   FlexibleContexts,
-  FlexibleInstances
+  FlexibleInstances,
+  UndecidableInstances
   #-}
 module LLVM.General.Internal.Instruction where
 
@@ -333,9 +334,10 @@ $(do
                 ]
          )
 
-    instance EncodeM EncodeAST A.Instruction (Ptr FFI.Instruction) where
+    instance EncodeM EncodeAST A.Instruction (Ptr FFI.Instruction, EncodeAST ()) where
       encodeM o = scopeAnyCont $ do
         builder <- gets encodeStateBuilder
+        let return' i = return (FFI.upCast i, return ())
         s <- encodeM ""
         $(
           [|
@@ -350,7 +352,7 @@ $(do
                 op1' <- encodeM op1
                 pred <- encodeM pred
                 i <- liftIO $ FFI.buildICmp builder pred op0' op1' s
-                return $ FFI.upCast i
+                return' i
               A.FCmp {
                 A.fpPredicate = pred, 
                 A.operand0 = op0, 
@@ -361,16 +363,18 @@ $(do
                 op1' <- encodeM op1
                 pred <- encodeM pred
                 i <- liftIO $ FFI.buildFCmp builder pred op0' op1' s
-                return $ FFI.upCast i
+                return' i
               A.Phi { A.type' = t, A.incomingValues = ivs } -> do
                  t' <- encodeM t
                  i <- liftIO $ FFI.buildPhi builder t' s
-                 defer
-                 let (ivs3, bs3) = unzip ivs
-                 ivs3' <- encodeM ivs3
-                 bs3' <- encodeM bs3
-                 liftIO $ FFI.addIncoming i ivs3' bs3'
-                 return $ FFI.upCast i
+                 return (
+                   FFI.upCast i,
+                   do
+                     let (ivs3, bs3) = unzip ivs
+                     ivs3' <- encodeM ivs3
+                     bs3' <- encodeM bs3
+                     liftIO $ FFI.addIncoming i ivs3' bs3'
+                   )
               A.Call {
                 A.isTailCall = tc,
                 A.callingConvention = cc,
@@ -394,46 +398,46 @@ $(do
                   liftIO $ FFI.setTailCall i tc
                 cc <- encodeM cc
                 liftIO $ FFI.setInstructionCallConv i cc
-                return $ FFI.upCast i
+                return' i
               A.Select { A.condition' = c, A.trueValue = t, A.falseValue = f } -> do
                 c' <- encodeM c
                 t' <- encodeM t
                 f' <- encodeM f
                 i <- liftIO $ FFI.buildSelect builder c' t' f' s
-                return $ FFI.upCast i
+                return' i
               A.VAArg { A.argList = al, A.type' = t } -> do
                 al' <- encodeM al
                 t' <- encodeM t
                 i <- liftIO $ FFI.buildVAArg builder al' t' s
-                return $ FFI.upCast i
+                return' i
               A.ExtractElement { A.vector = v, A.index = idx } -> do
                 v' <- encodeM v
                 idx' <- encodeM idx
                 i <- liftIO $ FFI.buildExtractElement builder v' idx' s
-                return $ FFI.upCast i
+                return' i
               A.InsertElement { A.vector = v, A.element = e, A.index = idx } -> do
                 v' <- encodeM v
                 e' <- encodeM e
                 idx' <- encodeM idx
                 i <- liftIO $ FFI.buildInsertElement builder v' e' idx' s
-                return $ FFI.upCast i
+                return' i
               A.ShuffleVector { A.operand0 = o0, A.operand1 = o1, A.mask = mask } -> do
                 o0' <- encodeM o0
                 o1' <- encodeM o1
                 mask' <- encodeM mask
                 i <- liftIO $ FFI.buildShuffleVector builder o0' o1' mask' s
-                return $ FFI.upCast i
+                return' i
               A.ExtractValue { A.aggregate = a, A.indices' = is } -> do
                 a' <- encodeM a
                 (n, is') <- encodeM is
                 i <- liftIO $ FFI.buildExtractValue builder a' is' n s
-                return $ FFI.upCast i
+                return' i
               A.InsertValue { A.aggregate = a, A.element = e, A.indices' = is } -> do
                 a' <- encodeM a
                 e' <- encodeM e
                 (n, is') <- encodeM is
                 i <- liftIO $ FFI.buildInsertValue builder a' e' is' n s
-                return $ FFI.upCast i
+                return' i
               A.LandingPad { 
                 A.type' = t,
                 A.personalityFunction = pf,
@@ -458,13 +462,13 @@ $(do
                 when cl $ do
                   cl <- encodeM cl
                   liftIO $ FFI.setCleanup i cl
-                return $ FFI.upCast i
+                return' i
               A.Alloca { A.allocatedType = alt, A.numElements = n, A.alignment = alignment } -> do 
                  alt' <- encodeM alt
                  n' <- maybe (return nullPtr) encodeM n
                  i <- liftIO $ FFI.buildAlloca builder alt' n' s
                  unless (alignment == 0) $ liftIO $ FFI.setInstrAlignment i (fromIntegral alignment)
-                 return $ FFI.upCast i
+                 return' i
               A.Load {
                 A.volatile = vol,
                 A.address = a,
@@ -477,7 +481,7 @@ $(do
                  vol <- encodeM vol
                  (ss, mo) <- encodeM mat
                  i <- liftIO $ FFI.buildLoad builder a' al vol mo ss s
-                 return $ FFI.upCast i
+                 return' i
               A.Store { 
                 A.volatile = vol, 
                 A.address = a, 
@@ -492,7 +496,7 @@ $(do
                  vol <- encodeM vol
                  (ss, mo) <- encodeM mat
                  i <- liftIO $ FFI.buildStore builder v' a' al vol mo ss s
-                 return $ FFI.upCast i
+                 return' i
               A.GetElementPtr { A.address = a, A.indices = is, A.inBounds = ib } -> do
                  a' <- encodeM a
                  (n, is') <- encodeM is
@@ -500,11 +504,11 @@ $(do
                  when ib $ do
                    ib <- encodeM ib 
                    liftIO $ FFI.setInBounds i ib
-                 return $ FFI.upCast i
+                 return' i
               A.Fence { A.atomicity = at } -> do
                  (ss, mo) <- encodeM at
                  i <- liftIO $ FFI.buildFence builder mo ss s
-                 return $ FFI.upCast i
+                 return' i
               A.CmpXchg { 
                 A.volatile = vol, 
                 A.address = a, A.expected = e, A.replacement = r,
@@ -517,7 +521,7 @@ $(do
                  vol <- encodeM vol
                  (ss, mo) <- encodeM at
                  i <- liftIO $ FFI.buildCmpXchg builder a' e' r' vol mo ss s
-                 return $ FFI.upCast i
+                 return' i
               A.AtomicRMW {
                 A.volatile = vol,
                 A.rmwOperation = rmwOp,
@@ -532,7 +536,7 @@ $(do
                  vol <- encodeM vol
                  (ss, mo) <- encodeM at
                  i <- liftIO $ FFI.buildAtomicRMW builder rmwOp a' v' vol mo ss s
-                 return $ FFI.upCast i
+                 return' i
               o -> $(
                      let
                        fieldData :: String -> [Either TH.ExpQ TH.ExpQ]
@@ -584,7 +588,7 @@ $(do
                               let s = TH.nameBase f,
                               Right action <- fieldData s
                            ] ++ [
-                            TH.noBindS [| return $ FFI.upCast $(TH.dyn "i") |]
+                            TH.noBindS [| return' $(TH.dyn "i") |]
                            ]
                           )
                          ]
@@ -610,5 +614,15 @@ instance EncodeM EncodeAST a (Ptr FFI.Instruction) => EncodeM EncodeAST (A.Named
     liftIO $ FFI.setValueName v n'
     defineLocal n v
     return i
+
+instance EncodeM EncodeAST a (Ptr FFI.Instruction, EncodeAST ()) => EncodeM EncodeAST (A.Named a) (EncodeAST ()) where
+  encodeM (A.Do o) = liftM snd $ (encodeM o :: EncodeAST (Ptr FFI.Instruction, EncodeAST ()))
+  encodeM (n A.:= o) = do
+    (i, later) <- encodeM o
+    let v = FFI.upCast (i :: Ptr FFI.Instruction)
+    n' <- encodeM n
+    liftIO $ FFI.setValueName v n'
+    defineLocal n v
+    return later
 
 

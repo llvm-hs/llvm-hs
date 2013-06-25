@@ -250,7 +250,58 @@ tests = testGroup "Module" [
             ]
            ]
       t <- withModuleFromAST context ast $ \_ -> return True
-      t @?= Right True
+      t @?= Right True,
+
+    testCase "Phi node finishes" $ withContext $ \context -> do
+      let ast = Module "<string>" Nothing Nothing [
+           GlobalDefinition $ Function L.External V.Default CC.C [] (IntegerType 32) (Name "foo") ([
+               Parameter (IntegerType 32) (Name "x") []
+              ],False)
+              [] Nothing 0 
+            [
+             BasicBlock (UnName 0) [
+              UnName 1 := Mul {
+                nsw = True,
+                nuw = False,
+                operand0 = LocalReference (Name "x"),
+                operand1 = LocalReference (Name "x"),
+                metadata = []
+              }
+              ] (
+                Do $ Br (Name "here") []
+              ),
+             BasicBlock (Name "here") [
+              UnName 2 := Phi (IntegerType 32) [ (ConstantOperand (C.Int 32 42), UnName 0) ] []
+              ] (
+                Do $ Br (Name "elsewhere") []
+              ),
+             BasicBlock (Name "elsewhere") [             
+              ] (
+                Do $ Br (Name "there") []
+              ),
+             BasicBlock (Name "there") [
+              ] (
+                Do $ Ret (Just (LocalReference (UnName 1))) []
+              )
+            ]
+           ]
+          s = "; ModuleID = '<string>'\n\
+              \\n\
+              \define i32 @foo(i32 %x) {\n\
+              \  %1 = mul nsw i32 %x, %x\n\
+              \  br label %here\n\
+              \\n\
+              \here:                                             ; preds = %0\n\
+              \  %2 = phi i32 [ 42, %0 ]\n\
+              \  br label %elsewhere\n\
+              \\n\
+              \elsewhere:                                        ; preds = %here\n\
+              \  br label %there\n\
+              \\n\
+              \there:                                            ; preds = %elsewhere\n\
+              \  ret i32 %1\n\
+              \}\n"
+      strCheck ast s
    ],
 
   testGroup "failures" [

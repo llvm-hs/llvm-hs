@@ -42,6 +42,7 @@ import LLVM.General.Internal.Metadata
 import LLVM.General.Internal.Operand
 import LLVM.General.Internal.Type
 import LLVM.General.Internal.Value
+import LLVM.General.Internal.Instruction ()
 
 import LLVM.General.Diagnostic
 
@@ -191,11 +192,15 @@ withModuleFromAST context@(Context c) (A.Module moduleId dataLayout triple defin
                           liftIO $ FFI.addAttribute p attrs
                           return ()
                 return ()
-              forInterleavedM blocks $ \(A.BasicBlock bName namedInstrs term) -> do
+              finishInstrs <- forInterleavedM blocks $ \(A.BasicBlock bName namedInstrs term) -> do
                 b <- encodeM bName
-                (do builder <- gets encodeStateBuilder; liftIO $ FFI.positionBuilderAtEnd builder b)
-                (mapM encodeM namedInstrs :: EncodeAST [Ptr FFI.Instruction])
-                encodeM term :: EncodeAST (Ptr FFI.Instruction)
+                (do
+                  builder <- gets encodeStateBuilder
+                  liftIO $ FFI.positionBuilderAtEnd builder b)
+                finishes <- mapM encodeM namedInstrs :: EncodeAST [EncodeAST ()]
+                (encodeM term :: EncodeAST (Ptr FFI.Instruction))
+                return (sequence_ finishes)
+              sequence_ finishInstrs
             return (FFI.upCast f)
         setLinkage g' (A.G.linkage g)
         setVisibility g' (A.G.visibility g)

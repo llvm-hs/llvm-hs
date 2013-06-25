@@ -200,5 +200,4 @@ test-suite test
     LLVM.General.Test.Support
     LLVM.General.Test.Target
     LLVM.General.Test.Tests
-    LLVM.General.Test.Regression
     

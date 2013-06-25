@@ -12,11 +12,8 @@ import qualified LLVM.General.Test.Metadata as Metadata
 import qualified LLVM.General.Test.Module as Module
 import qualified LLVM.General.Test.Optimization as Optimization
 import qualified LLVM.General.Test.Target as Target
-import qualified LLVM.General.Test.Regression as Regression
-
 
 tests = testGroup "llvm-general" [
-{-
     Constants.tests,
     DataLayout.tests,
     ExecutionEngine.tests,
@@ -26,7 +23,5 @@ tests = testGroup "llvm-general" [
     Metadata.tests,
     Module.tests,
     Optimization.tests,
-    Target.tests,
--}
-    Regression.tests
+    Target.tests
   ]
