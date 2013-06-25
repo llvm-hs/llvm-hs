@@ -120,7 +120,7 @@ main = shake shakeOptions {
     need [ pkgName ++ ".cabal" ]
     let shared = [ "--enable-shared" | True ]
     cabalStep $ [ "install-deps", "--enable-tests" ] ++ shared
-    cabalStep $ [ "configure", "--enable-tests" {- , "-fshared-llvm" -} ] ++ shared
+    cabalStep $ [ "configure", "--enable-tests", "-fshared-llvm" ] ++ shared
     needRecursive "src"
     cabalStep [ "build" ]
     needRecursive "test"              
