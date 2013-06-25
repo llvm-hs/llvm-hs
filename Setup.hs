@@ -73,8 +73,8 @@ main = do
                 condTreeComponents = condTreeComponents libraryCondTree ++ [
                   (
                     Var (Flag (FlagName "shared-llvm")),
-                    CondNode (mempty { libBuildInfo = mempty { extraLibs = externLibs ++ [sharedLib] } }) [] [],
-                    Just (CondNode (mempty { libBuildInfo = mempty { extraLibs = externLibs ++ staticLibs } }) [] [])
+                    CondNode (mempty { libBuildInfo = mempty { extraLibs = [sharedLib] ++ externLibs } }) [] [],
+                    Just (CondNode (mempty { libBuildInfo = mempty { extraLibs = staticLibs ++ externLibs } }) [] [])
                   )
                 ] 
               }
