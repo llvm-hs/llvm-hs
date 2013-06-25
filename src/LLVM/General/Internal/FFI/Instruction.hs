@@ -119,9 +119,6 @@ foreign import ccall unsafe "LLVM_General_GetVolatile" getVolatile ::
 foreign import ccall unsafe "LLVM_General_GetInBounds" getInBounds ::
   Ptr Value -> IO LLVMBool
 
-foreign import ccall unsafe "LLVM_General_SetInBounds" setInBounds ::
-  Ptr Instruction -> LLVMBool -> IO ()
-
 foreign import ccall unsafe "LLVM_General_GetAtomicRMWBinOp" getAtomicRMWBinOp ::
   Ptr Instruction -> IO RMWOperation
 

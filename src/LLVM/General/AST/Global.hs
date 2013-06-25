@@ -67,14 +67,14 @@ data BasicBlock = BasicBlock Name [Named Instruction] (Named Terminator)
 globalVariableDefaults :: Global
 globalVariableDefaults = 
   GlobalVariable {
-  name = undefined,
+  name = error "global variable name not defined",
   linkage = L.External,
   visibility = V.Default,
   isThreadLocal = False,
   addrSpace = AddrSpace 0,
   hasUnnamedAddr = False,
   isConstant = False,
-  type' = undefined,
+  type' = error "global variable type not defined",
   initializer = Nothing,
   section = Nothing,
   alignment = 0
@@ -84,11 +84,11 @@ globalVariableDefaults =
 globalAliasDefaults :: Global
 globalAliasDefaults =
   GlobalAlias {
-    name = undefined,
+    name = error "global alias name not defined",
     linkage = L.External,
     visibility = V.Default,
-    type' = undefined,
-    aliasee = undefined
+    type' = error "global alias type not defined",
+    aliasee = error "global alias aliasee not defined"
   }
 
 -- | helper for making 'Function's
@@ -99,9 +99,9 @@ functionDefaults =
     visibility = V.Default,
     callingConvention = CC.C,
     returnAttributes = [],
-    returnType = undefined,
-    name = undefined,
-    parameters = undefined,
+    returnType = error "function return type not defined",
+    name = error "function name not defined",
+    parameters = ([], False),
     functionAttributes = [],
     section = Nothing,
     alignment = 0,

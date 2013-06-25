@@ -500,10 +500,8 @@ $(do
               A.GetElementPtr { A.address = a, A.indices = is, A.inBounds = ib } -> do
                  a' <- encodeM a
                  (n, is') <- encodeM is
-                 i <- liftIO $ FFI.buildGetElementPtr builder a' is' n s
-                 when ib $ do
-                   ib <- encodeM ib 
-                   liftIO $ FFI.setInBounds i ib
+                 ib <- encodeM ib 
+                 i <- liftIO $ FFI.buildGetElementPtr builder ib a' is' n s
                  return' i
               A.Fence { A.atomicity = at } -> do
                  (ss, mo) <- encodeM at

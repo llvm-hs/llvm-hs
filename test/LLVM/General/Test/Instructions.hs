@@ -538,6 +538,46 @@ tests = testGroup "Instructions" [
         ]
       )
    ],
+  testCase "GEP inBounds constant" $ do
+    let mAST = Module "<string>" Nothing Nothing [
+          GlobalDefinition $ globalVariableDefaults {
+            G.name = Name "fortytwo",
+            G.type' = IntegerType 32,
+            G.isConstant = True,
+            G.initializer = Just $ C.Int 32 42
+          },
+          GlobalDefinition $ Function L.External V.Default CC.C [] (IntegerType 32) (UnName 0) ([
+            ],False) [] Nothing 0 [
+              BasicBlock (UnName 1) [
+                 UnName 2 := GetElementPtr {
+                   inBounds = True,
+                   address = ConstantOperand (C.GlobalReference (Name "fortytwo")),
+                   indices = [ ConstantOperand (C.Int 32 0) ],
+                   metadata = []
+                 },
+                 UnName 3 := Load {
+                   volatile = False,
+                   address = LocalReference (UnName 2),
+                   maybeAtomicity = Nothing,
+                   alignment = 1,
+                   metadata = []
+                 }
+               ] (
+                Do $ Ret (Just (LocalReference (UnName 3))) []
+               )
+             ]
+            ]
+        mStr = "; ModuleID = '<string>'\n\
+               \\n\
+               \@0 = constant i32 42\n\
+               \\n\
+               \define i32 @1() {\n\
+               \  %1 = load i32* @0, align 1\n\
+               \  ret i32 %1\n\
+               \}\n"
+    s <- withContext $ \context -> withModuleFromAST context mAST moduleString
+    s @?= Right mStr,
+    
   testGroup "terminators" [
     testCase name $ strCheck mAST mStr
     | (name, mAST, mStr) <- [

@@ -100,8 +100,15 @@ foreign import ccall unsafe "LLVM_General_BuildLoad" buildLoad ::
 foreign import ccall unsafe "LLVM_General_BuildStore" buildStore ::
   Ptr Builder -> Ptr Value -> Ptr Value -> CUInt -> LLVMBool -> MemoryOrdering -> LLVMBool -> CString -> IO (Ptr Instruction)
 
-foreign import ccall unsafe "LLVMBuildGEP" buildGetElementPtr ::
+foreign import ccall unsafe "LLVMBuildGEP" buildGetElementPtr' ::
   Ptr Builder -> Ptr Value -> Ptr (Ptr Value) -> CUInt -> CString -> IO (Ptr Instruction)
+
+foreign import ccall unsafe "LLVMBuildInBoundsGEP" buildInBoundsGetElementPtr' ::
+  Ptr Builder -> Ptr Value -> Ptr (Ptr Value) -> CUInt -> CString -> IO (Ptr Instruction)
+
+buildGetElementPtr :: Ptr Builder -> LLVMBool -> Ptr Value -> Ptr (Ptr Value) -> CUInt -> CString -> IO (Ptr Instruction)
+buildGetElementPtr builder (LLVMBool 1) = buildInBoundsGetElementPtr' builder
+buildGetElementPtr builder (LLVMBool 0) = buildGetElementPtr' builder
 
 foreign import ccall unsafe "LLVMBuildFence" buildFence ::
   Ptr Builder -> MemoryOrdering -> LLVMBool -> CString -> IO (Ptr Instruction)
