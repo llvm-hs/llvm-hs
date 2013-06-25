@@ -61,6 +61,7 @@ main = do
                         "3.2" -> "LLVM-3.2svn"
                         x -> "LLVM-" ++ x
       staticLibs <- liftM (map (fromJust . stripPrefix "-l") . words) $ llvmConfig ["--libs"]
+      externLibs <- liftM (mapMaybe (stripPrefix "-l") . words) $ llvmConfig ["--ldflags"]
 
       let genericPackageDescription' = genericPackageDescription {
             condLibrary = do
@@ -72,8 +73,8 @@ main = do
                 condTreeComponents = condTreeComponents libraryCondTree ++ [
                   (
                     Var (Flag (FlagName "shared-llvm")),
-                    CondNode (mempty { libBuildInfo = mempty { extraLibs = [sharedLib] } }) [] [],
-                    Just (CondNode (mempty { libBuildInfo = mempty { extraLibs = staticLibs } }) [] [])
+                    CondNode (mempty { libBuildInfo = mempty { extraLibs = externLibs ++ [sharedLib] } }) [] [],
+                    Just (CondNode (mempty { libBuildInfo = mempty { extraLibs = externLibs ++ staticLibs } }) [] [])
                   )
                 ] 
               }
