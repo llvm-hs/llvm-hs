@@ -7,6 +7,7 @@ import Test.HUnit
 import LLVM.General.Test.Support
 
 import Data.Bits
+import Data.Word
 import Data.Functor
 
 import LLVM.General.Context
@@ -301,9 +302,39 @@ tests = testGroup "Module" [
               \there:                                            ; preds = %elsewhere\n\
               \  ret i32 %1\n\
               \}\n"
-      strCheck ast s
-   ],
+      strCheck ast s,
 
+      testCase "switchblock" $ do
+        let count = 450
+            start = 2 -- won't come back the same w/o start = 2
+            ns = [start..count + start - 1]
+            vbps = zip [ ConstantOperand (C.Int 32 i) | i <- [0..] ] [ UnName n | n <- (1:ns) ]
+            cbps = zip [ C.Int 32 i | i <- [0..] ] [ UnName n | n <- ns ]
+
+        withContext $ \context -> do
+          let ast = Module "<string>" Nothing Nothing [
+                GlobalDefinition $ functionDefaults {
+                  G.name = Name "foo",
+                  G.returnType = IntegerType 32,
+                  G.parameters = ([Parameter (IntegerType 32) (UnName 0) []], False),
+                  G.basicBlocks = [
+                   BasicBlock (UnName 1) [] (Do $ Switch (LocalReference $ UnName 0) (Name "end") cbps [])
+                  ] ++ [
+                   BasicBlock (UnName n) [] (Do $ Br (Name "end") []) | n <- ns
+                  ] ++ [
+                   BasicBlock (Name "end") [
+                     Name "val" := Phi (IntegerType 32) vbps []
+                   ] (
+                     Do $ Ret (Just (LocalReference (Name "val"))) []
+                   )
+                  ]
+                }
+               ]
+          Right s <- withModuleFromAST context ast moduleString
+          Right m <- withModuleFromString context s moduleAST
+          m @?= ast
+   ],
+        
   testGroup "failures" [
     testCase "bad block reference" $ withContext $ \context -> do
       let badAST = Module "<string>" Nothing Nothing [

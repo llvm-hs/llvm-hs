@@ -6,10 +6,10 @@
 module Control.Monad.AnyCont (
     MonadAnyCont(..),
     AnyContT(..),
+    LiftAnyCont(..),
     runAnyContT,
     withAnyContT,
     mapAnyContT,
-    anyContIOToM,
     anyContT
   ) where
 

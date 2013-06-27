@@ -52,7 +52,7 @@ newtype EncodeAST a = EncodeAST { unEncodeAST :: AnyContT (PhasedT (ErrorT Strin
      )
 
 instance MonadAnyCont IO EncodeAST where
-  anyContToM = EncodeAST . anyContIOToM
+  anyContToM c = EncodeAST (anyContToM (liftAnyCont c))
   scopeAnyCont = EncodeAST . scopeAnyCont . unEncodeAST
 
 lookupNamedType :: A.Name -> EncodeAST (Ptr FFI.Type)

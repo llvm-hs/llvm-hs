@@ -13,7 +13,6 @@ import qualified Control.Monad.Trans.AnyCont as AnyCont
 import Control.Monad.Trans.Error as Error
 import Control.Monad.Trans.State as State
 import Control.Monad.Trans.Phased as Phased
-import Control.Monad.IO.Class
 
 class MonadAnyCont b m | m -> b where
   anyContToM :: (forall r . (a -> b r) -> b r) -> m a
@@ -35,5 +34,17 @@ instance (Monad m, MonadAnyCont b m) => MonadAnyCont b (StateT s m) where
   anyContToM = lift . anyContToM
   scopeAnyCont = StateT . (scopeAnyCont .) . runStateT
 
-anyContIOToM :: MonadIO m => (forall r . (a -> IO r) -> IO r) -> AnyContT m a
-anyContIOToM ioac = AnyCont.anyContT (\c -> liftIO (ioac return) >>= c)
+class LiftAnyCont b m where
+  liftAnyCont :: (forall r . (a -> b r) -> b r) -> (forall r . (a -> m r) -> m r)
+
+instance LiftAnyCont b b where
+  liftAnyCont c = c
+
+instance LiftAnyCont b m => LiftAnyCont b (PhasedT m) where
+  liftAnyCont c = \q -> PhasedT (liftAnyCont c (unPhasedT . q))
+
+instance LiftAnyCont b m => LiftAnyCont b (StateT s m) where
+  liftAnyCont c = \q -> StateT $ \s -> (liftAnyCont c (($ s) . runStateT . q))
+
+instance LiftAnyCont b m => LiftAnyCont b (ErrorT e m) where
+  liftAnyCont c = \q -> ErrorT (liftAnyCont c (runErrorT . q))

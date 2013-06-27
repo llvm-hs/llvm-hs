@@ -67,7 +67,7 @@ newtype DecodeAST a = DecodeAST { unDecodeAST :: AnyContT (PhasedT (StateT Decod
   )
 
 instance MonadAnyCont IO DecodeAST where
-  anyContToM = DecodeAST . anyContIOToM
+  anyContToM c = DecodeAST (anyContToM (liftAnyCont c))
   scopeAnyCont = DecodeAST . scopeAnyCont . unDecodeAST
 
 runDecodeAST :: DecodeAST a -> IO a
