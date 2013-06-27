@@ -42,7 +42,7 @@ library
   build-tools: llvm-config
   ghc-options: -fwarn-unused-imports
   build-depends: 
-    base >= 3 && < 5,
+    base >= 4.6.0.0 && < 5,
     text >= 0.11.2.1,
     bytestring >= 0.9.1.10,
     transformers >= 0.3.0.0,
