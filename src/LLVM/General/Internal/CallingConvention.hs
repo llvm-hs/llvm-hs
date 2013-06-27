@@ -7,6 +7,7 @@
 module LLVM.General.Internal.CallingConvention where
 
 import LLVM.General.Internal.Coding
+import Foreign.C.Types (CUInt(..))
 
 import qualified LLVM.General.Internal.FFI.LLVMCTypes as FFI
 
@@ -26,5 +27,5 @@ instance Monad m => DecodeM m A.CC.CallingConvention FFI.CallConv where
     [FFI.callConvP|C|] -> A.CC.C
     [FFI.callConvP|Fast|] -> A.CC.Fast
     [FFI.callConvP|Cold|] -> A.CC.Cold
-    FFI.CallConv 10 -> A.CC.GHC
-    FFI.CallConv ci | ci >= 64 -> A.CC.Numbered (fromIntegral ci)
+    FFI.CallConv (CUInt 10) -> A.CC.GHC
+    FFI.CallConv (CUInt ci) | ci >= 64 -> A.CC.Numbered (fromIntegral ci)
