@@ -1,8 +1,6 @@
 {-# LANGUAGE
-  TemplateHaskell,
-  CPP
+  TemplateHaskell
   #-}
-
 module LLVM.General.Internal.InstructionDefs (
   astInstructionRecs,
   astConstantRecs,
@@ -43,30 +41,15 @@ instructionDefs = Map.fromList [ ((refName . ID.cAPIName $ i), i) | i <- ID.inst
     refName x = x
 
 innerJoin :: Ord k => Map k a -> Map k b -> Map k (a,b)
-innerJoin = go
-  where
-#if MIN_VERSION_containers(5,0,0)
-    go = Map.mergeWithKey (\_ a b -> Just (a,b)) (const Map.empty) (const Map.empty)
-#else
-    go = Map.intersectionWith (,)
-#endif
+innerJoin = Map.intersectionWith (,)
 
 outerJoin :: Ord k => Map k a -> Map k b -> Map k (Maybe a, Maybe b)
-outerJoin = go
-  where
-#if MIN_VERSION_containers(5,0,0)
-    go = Map.mergeWithKey
-         (\_ a b -> Just (Just a, Just b))
-         (Map.map $ \a -> (Just a, Nothing))
-         (Map.map $ \b -> (Nothing, Just b))
-#else
-    go xs ys = Map.unionWith combine
-               (Map.map (\a -> (Just a, Nothing)) xs)
-               (Map.map (\b -> (Nothing, Just b)) ys)
-
-    combine (Just a, Nothing) (Nothing, Just b) = (Just a, Just b)
-    combine _ _ = error "outerJoin: the impossible happened"
-#endif
+outerJoin xs ys = Map.unionWith combine
+                  (Map.map (\a -> (Just a, Nothing)) xs)
+                  (Map.map (\b -> (Nothing, Just b)) ys)
+    where
+      combine (Just a, Nothing) (Nothing, Just b) = (Just a, Just b)
+      combine _ _ = error "outerJoin: the impossible happened"
 
 instrP = TH.QuasiQuoter { 
   TH.quoteExp = undefined,
