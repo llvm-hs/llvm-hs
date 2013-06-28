@@ -14,6 +14,7 @@ import qualified Data.Set as Set
 import Foreign.Ptr
 
 import qualified LLVM.General.Internal.FFI.LLVMCTypes as FFI
+import LLVM.General.Internal.FFI.LLVMCTypes (typeKindP)
 import qualified LLVM.General.Internal.FFI.Type as FFI
 
 import qualified LLVM.General.AST as A
@@ -103,9 +104,9 @@ instance DecodeM DecodeAST A.Type (Ptr FFI.Type) where
   decodeM t = scopeAnyCont $ do
     k <- liftIO $ FFI.getTypeKind t
     case k of
-      [FFI.typeKindP|Void|] -> return A.VoidType
-      [FFI.typeKindP|Integer|] -> A.IntegerType <$> (decodeM =<< liftIO (FFI.getIntTypeWidth t))
-      [FFI.typeKindP|Function|] -> 
+      [typeKindP|Void|] -> return A.VoidType
+      [typeKindP|Integer|] -> A.IntegerType <$> (decodeM =<< liftIO (FFI.getIntTypeWidth t))
+      [typeKindP|Function|] -> 
           return A.FunctionType
                `ap` (decodeM =<< liftIO (FFI.getReturnType t))
                `ap` (do
@@ -115,27 +116,27 @@ instance DecodeM DecodeAST A.Type (Ptr FFI.Type) where
                       decodeM (n, ts)
                    )
                `ap` (decodeM =<< liftIO (FFI.isFunctionVarArg t))
-      [FFI.typeKindP|Pointer|] ->
+      [typeKindP|Pointer|] ->
           return A.PointerType
              `ap` (decodeM =<< liftIO (FFI.getElementType t))
              `ap` (decodeM =<< liftIO (FFI.getPointerAddressSpace t))
-      [FFI.typeKindP|Half|] -> return $ A.FloatingPointType 16 A.IEEE
-      [FFI.typeKindP|Float|] -> return $ A.FloatingPointType 32 A.IEEE
-      [FFI.typeKindP|Double|] -> return $ A.FloatingPointType 64 A.IEEE
-      [FFI.typeKindP|FP128|] -> return $ A.FloatingPointType 128 A.IEEE
-      [FFI.typeKindP|X86_FP80|] -> return $ A.FloatingPointType 80 A.DoubleExtended
-      [FFI.typeKindP|PPC_FP128|] -> return $ A.FloatingPointType 128 A.PairOfFloats
-      [FFI.typeKindP|Vector|] -> 
+      [typeKindP|Half|] -> return $ A.FloatingPointType 16 A.IEEE
+      [typeKindP|Float|] -> return $ A.FloatingPointType 32 A.IEEE
+      [typeKindP|Double|] -> return $ A.FloatingPointType 64 A.IEEE
+      [typeKindP|FP128|] -> return $ A.FloatingPointType 128 A.IEEE
+      [typeKindP|X86_FP80|] -> return $ A.FloatingPointType 80 A.DoubleExtended
+      [typeKindP|PPC_FP128|] -> return $ A.FloatingPointType 128 A.PairOfFloats
+      [typeKindP|Vector|] -> 
         return A.VectorType
          `ap` (decodeM =<< liftIO (FFI.getVectorSize t))
          `ap` (decodeM =<< liftIO (FFI.getElementType t))
-      [FFI.typeKindP|Struct|] -> do
+      [typeKindP|Struct|] -> do
         let ifM c a b = c >>= \x -> if x then a else b
         ifM (decodeM =<< liftIO (FFI.structIsLiteral t)) 
             (getStructure t)
             (saveNamedType t >> return A.NamedTypeReference `ap` getTypeName t)
 
-      [FFI.typeKindP|Array|] -> 
+      [typeKindP|Array|] -> 
         return A.ArrayType
          `ap` (decodeM =<< liftIO (FFI.getArrayLength t))
          `ap` (decodeM =<< liftIO (FFI.getElementType t))
