@@ -48,7 +48,7 @@ innerJoin = go
 #if MIN_VERSION_containers(5,0,0)
     go = Map.mergeWithKey (\_ a b -> Just (a,b)) (const Map.empty) (const Map.empty)
 #else
-    go = undefined
+    go = Map.intersectionWith (,)
 #endif
 
 outerJoin :: Ord k => Map k a -> Map k b -> Map k (Maybe a, Maybe b)
@@ -60,7 +60,12 @@ outerJoin = go
          (Map.map $ \a -> (Just a, Nothing))
          (Map.map $ \b -> (Nothing, Just b))
 #else
-    go = undefined
+    go xs ys = Map.unionWith combine
+               (Map.map (\a -> (Just a, Nothing)) xs)
+               (Map.map (\b -> (Nothing, Just b)) ys)
+
+    combine (Just a, Nothing) (Nothing, Just b) = (Just a, Just b)
+    combine _ _ = error "outerJoin: the impossible happened"
 #endif
 
 instrP = TH.QuasiQuoter { 
