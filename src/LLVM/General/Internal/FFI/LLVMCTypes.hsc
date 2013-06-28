@@ -171,12 +171,12 @@ newtype TypeKind = TypeKind CUInt
 #{inject TYPE_KIND, TypeKind, TypeKind, typeKind, TK_Rec}
 
 newtype ParamAttr = ParamAttr CUInt
-  deriving (Eq, Read, Show, Bits, Typeable, Data)
+  deriving (Eq, Read, Show, Bits, Typeable, Data, Num)
 #define PA_Rec(n) { #n, LLVM ## n ## Attribute },
 #{inject PARAM_ATTR, ParamAttr, ParamAttr, paramAttr, PA_Rec}
 
 newtype FunctionAttr = FunctionAttr CUInt
-  deriving (Eq, Read, Show, Bits, Typeable, Data)
+  deriving (Eq, Read, Show, Bits, Typeable, Data, Num)
 #define FA_Rec(n,a) { #n, LLVM ## n ## a },
 #{inject FUNCTION_ATTR, FunctionAttr, FunctionAttr, functionAttr, FA_Rec}
 

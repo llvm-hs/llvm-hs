@@ -27,6 +27,7 @@ import qualified LLVM.General.Internal.FFI.Constant as FFI
 import qualified LLVM.General.Internal.FFI.GlobalValue as FFI
 import qualified LLVM.General.Internal.FFI.Instruction as FFI
 import qualified LLVM.General.Internal.FFI.LLVMCTypes as FFI
+import LLVM.General.Internal.FFI.LLVMCTypes (valueSubclassIdP)
 import qualified LLVM.General.Internal.FFI.PtrHierarchy as FFI
 import qualified LLVM.General.Internal.FFI.User as FFI
 import qualified LLVM.General.Internal.FFI.Value as FFI
@@ -140,16 +141,16 @@ instance DecodeM DecodeAST A.Constant (Ptr FFI.Constant) where
              decodeM <=< liftIO . FFI.getConstantDataSequentialElementAsConstant c . fromIntegral
 
     case valueSubclassId of
-      [FFI.valueSubclassIdP|Function|] -> globalRef
-      [FFI.valueSubclassIdP|GlobalAlias|] -> globalRef
-      [FFI.valueSubclassIdP|GlobalVariable|] -> globalRef
-      [FFI.valueSubclassIdP|ConstantInt|] -> do
+      [valueSubclassIdP|Function|] -> globalRef
+      [valueSubclassIdP|GlobalAlias|] -> globalRef
+      [valueSubclassIdP|GlobalVariable|] -> globalRef
+      [valueSubclassIdP|ConstantInt|] -> do
         np <- alloca
         wsp <- liftIO $ FFI.getConstantIntWords c np
         n <- peek np
         words <- decodeM (n, wsp)
         return $ A.C.Int (A.typeBits t) (foldr (\b a -> (a `shiftL` 64) .|. fromIntegral (b :: Word64)) 0 words)
-      [FFI.valueSubclassIdP|ConstantFP|] -> do
+      [valueSubclassIdP|ConstantFP|] -> do
         let A.FloatingPointType nBits fmt = t
         ws <- allocaWords nBits
         liftIO $ FFI.getConstantFloatWords c ws
@@ -163,22 +164,22 @@ instance DecodeM DecodeAST A.Constant (Ptr FFI.Constant) where
             (128, A.PairOfFloats) -> A.F.PPC_FP128 <$> peekByteOff (castPtr ws) 8 <*> peekByteOff (castPtr ws) 0
             _ -> error $ "don't know how to decode floating point constant of type: " ++ show t
           )
-      [FFI.valueSubclassIdP|ConstantPointerNull|] -> return $ A.C.Null t
-      [FFI.valueSubclassIdP|ConstantAggregateZero|] -> return $ A.C.Null t
-      [FFI.valueSubclassIdP|UndefValue|] -> return $ A.C.Undef t
-      [FFI.valueSubclassIdP|BlockAddress|] -> 
+      [valueSubclassIdP|ConstantPointerNull|] -> return $ A.C.Null t
+      [valueSubclassIdP|ConstantAggregateZero|] -> return $ A.C.Null t
+      [valueSubclassIdP|UndefValue|] -> return $ A.C.Undef t
+      [valueSubclassIdP|BlockAddress|] -> 
             return A.C.BlockAddress 
                `ap` (getGlobalName =<< do liftIO $ FFI.isAGlobalValue =<< FFI.getBlockAddressFunction c)
                `ap` (getLocalName =<< do liftIO $ FFI.getBlockAddressBlock c)
-      [FFI.valueSubclassIdP|ConstantStruct|] -> 
+      [valueSubclassIdP|ConstantStruct|] -> 
             return A.C.Struct `ap` (return $ A.isPacked t) `ap` getConstantOperands
-      [FFI.valueSubclassIdP|ConstantDataArray|] -> 
+      [valueSubclassIdP|ConstantDataArray|] -> 
             return A.C.Array `ap` (return $ A.elementType t) `ap` getConstantData
-      [FFI.valueSubclassIdP|ConstantArray|] -> 
+      [valueSubclassIdP|ConstantArray|] -> 
             return A.C.Array `ap` (return $ A.elementType t) `ap` getConstantOperands
-      [FFI.valueSubclassIdP|ConstantDataVector|] -> 
+      [valueSubclassIdP|ConstantDataVector|] -> 
             return A.C.Vector `ap` getConstantData
-      [FFI.valueSubclassIdP|ConstantExpr|] -> do
+      [valueSubclassIdP|ConstantExpr|] -> do
             cppOpcode <- liftIO $ FFI.getConstantCPPOpcode c
             $(
               TH.caseE [| cppOpcode |] $ do

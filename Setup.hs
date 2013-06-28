@@ -1,3 +1,4 @@
+import Control.Exception (SomeException, try)
 import Control.Monad
 import Data.Maybe
 import Data.List (isPrefixOf, (\\), intercalate, stripPrefix)
@@ -28,8 +29,8 @@ main = do
           OSX -> ("DYLD_LIBRARY_PATH",":")
           _ -> ("LD_LIBRARY_PATH",":")
       addToLdLibraryPath s = do
-         v <- lookupEnv ldLibraryPathVar
-         setEnv ldLibraryPathVar (s ++ maybe "" (ldLibraryPathSep ++) v)
+         v <- try $ getEnv ldLibraryPathVar :: IO (Either SomeException String)
+         setEnv ldLibraryPathVar (s ++ either (const "") (ldLibraryPathSep ++) v)
       getLLVMConfig configFlags = do
          let verbosity = fromFlag $ configVerbosity configFlags
          -- preconfigure the configuration-generating program "llvm-config"
@@ -96,9 +97,8 @@ main = do
 
     haddockHook = \packageDescription localBuildInfo userHooks haddockFlags -> do
        let v = "GHCRTS"
-       oldGhcRts <- lookupEnv v
-       setEnv v (maybe id (\o n -> o ++ " " ++ n) oldGhcRts "-K32M")
+       oldGhcRts <- try $ getEnv v :: IO (Either SomeException String)
+       setEnv v (either (const id) (\o n -> o ++ " " ++ n) oldGhcRts "-K32M")
        haddockHook simpleUserHooks packageDescription localBuildInfo userHooks haddockFlags
-       maybe (unsetEnv v) (setEnv v) oldGhcRts
+       either (const (unsetEnv v)) (setEnv v) oldGhcRts
    }
-

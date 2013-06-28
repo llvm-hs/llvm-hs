@@ -12,6 +12,7 @@ module LLVM.General.Internal.Instruction where
 import qualified Language.Haskell.TH as TH
 import qualified Language.Haskell.TH.Quote as TH
 import qualified LLVM.General.Internal.InstructionDefs as ID
+import LLVM.General.Internal.InstructionDefs (instrP)
 
 import Data.Functor
 import Control.Monad
@@ -69,10 +70,10 @@ instance DecodeM DecodeAST A.Terminator (Ptr FFI.Instruction) where
     let op n = decodeM =<< (liftIO $ FFI.getOperand (FFI.upCast i) n)
         successor n = decodeM =<< (liftIO $ FFI.isABasicBlock =<< FFI.getOperand (FFI.upCast i) n)
     case n of
-      [ID.instrP|Ret|] -> do
+      [instrP|Ret|] -> do
         returnOperand' <- if nOps == 0 then return Nothing else Just <$> op 0
         return $ A.Ret { A.returnOperand = returnOperand', A.metadata' = md }
-      [ID.instrP|Br|] -> do
+      [instrP|Br|] -> do
         n <- liftIO $ FFI.getNumOperands (FFI.upCast i)
         case n of
           1 -> do
@@ -88,7 +89,7 @@ instance DecodeM DecodeAST A.Terminator (Ptr FFI.Instruction) where
                A.trueDest = trueDest,
                A.metadata' = md
              }
-      [ID.instrP|Switch|] -> do
+      [instrP|Switch|] -> do
         op0 <- op 0
         dd <- successor 1
         let nCases = (nOps - 2) `div` 2
@@ -103,7 +104,7 @@ instance DecodeM DecodeAST A.Terminator (Ptr FFI.Instruction) where
           A.dests = dests,
           A.metadata' = md
         }
-      [ID.instrP|IndirectBr|] -> do
+      [instrP|IndirectBr|] -> do
         op0 <- op 0
         let nDests = nOps - 1
         dests <- allocaArray nDests
@@ -114,7 +115,7 @@ instance DecodeM DecodeAST A.Terminator (Ptr FFI.Instruction) where
            A.possibleDests = dests,
            A.metadata' = md
         }
-      [ID.instrP|Invoke|] -> do
+      [instrP|Invoke|] -> do
         cc <- decodeM =<< liftIO (FFI.getInstructionCallConv i)
         rAttrs <- callInstAttr i 0
         fv <- liftIO $ FFI.getCallInstCalledValue i
@@ -133,13 +134,13 @@ instance DecodeM DecodeAST A.Terminator (Ptr FFI.Instruction) where
           A.exceptionDest = ed,
           A.metadata' = md
         }
-      [ID.instrP|Resume|] -> do
+      [instrP|Resume|] -> do
         op0 <- op 0
         return A.Resume {
           A.operand0' = op0,
           A.metadata' = md
         }
-      [ID.instrP|Unreachable|] -> do
+      [instrP|Unreachable|] -> do
         return A.Unreachable {
           A.metadata' = md
         }
