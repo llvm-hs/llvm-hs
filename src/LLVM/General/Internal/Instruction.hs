@@ -18,7 +18,6 @@ import Control.Monad
 import Control.Monad.Trans
 import Control.Monad.AnyCont
 import Control.Monad.State
-import Control.Monad.Phased
 
 import Foreign.Ptr
 
@@ -598,10 +597,11 @@ $(do
  )
 
 
-instance DecodeM DecodeAST a (Ptr FFI.Instruction) => DecodeM DecodeAST (A.Named a) (Ptr FFI.Instruction) where
+instance DecodeM DecodeAST a (Ptr FFI.Instruction) => DecodeM DecodeAST (DecodeAST (A.Named a)) (Ptr FFI.Instruction) where
   decodeM i = do
     t <- typeOf i
-    (if t == A.VoidType then (return A.Do) else (return (A.:=) `ap` getLocalName i)) `ap` (do defer; decodeM i)
+    w <- if t == A.VoidType then (return A.Do) else (return (A.:=) `ap` getLocalName i)
+    return $ return w `ap` decodeM i
 
 instance EncodeM EncodeAST a (Ptr FFI.Instruction) => EncodeM EncodeAST (A.Named a) (Ptr FFI.Instruction) where
   encodeM (A.Do o) = encodeM o

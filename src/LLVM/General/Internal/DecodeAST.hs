@@ -10,7 +10,6 @@ module LLVM.General.Internal.DecodeAST where
 
 import Control.Applicative
 import Control.Monad.State
-import Control.Monad.Phased
 import Control.Monad.AnyCont
 
 import Foreign.Ptr
@@ -56,14 +55,13 @@ initialDecode = DecodeState {
     metadataNodes = Map.empty,
     metadataKinds = Array.listArray (1,0) []
   }
-newtype DecodeAST a = DecodeAST { unDecodeAST :: AnyContT (PhasedT (StateT DecodeState IO)) a }
+newtype DecodeAST a = DecodeAST { unDecodeAST :: AnyContT (StateT DecodeState IO) a }
   deriving (
     Applicative,
     Functor,
     Monad,
     MonadIO,
-    MonadState DecodeState,
-    MonadPhased
+    MonadState DecodeState
   )
 
 instance MonadAnyCont IO DecodeAST where
@@ -71,27 +69,15 @@ instance MonadAnyCont IO DecodeAST where
   scopeAnyCont = DecodeAST . scopeAnyCont . unDecodeAST
 
 runDecodeAST :: DecodeAST a -> IO a
-runDecodeAST d = flip evalStateT initialDecode . runPhasedT . flip runAnyContT return . unDecodeAST $ d
+runDecodeAST d = flip evalStateT initialDecode . flip runAnyContT return . unDecodeAST $ d
 
 localScope :: DecodeAST a -> DecodeAST a
-localScope (DecodeAST x) = DecodeAST (mapAnyContT pScope (tweak x))
+localScope (DecodeAST x) = DecodeAST (tweak x)
   where tweak x = do
           modify (\s@DecodeState { localNameCounter = Nothing } -> s { localNameCounter = Just 0 })
           r <- x
           modify (\s@DecodeState { localNameCounter = Just _ } -> s { localNameCounter = Nothing })
           return r
-        pScope (PhasedT x) = PhasedT $ do
-          let s0 `withLocalsFrom` s1 = s0 { 
-                localNameCounter = localNameCounter s1
-               }
-          state <- get -- save the state
-          a <- x
-          state' <- get -- get the modified state
-          put $ state' `withLocalsFrom` state -- revert the local part
-          -- Finally here's the fun bit - in the Left case where we're coming back to a deferment point,
-          -- prepend an action which reinstates the local state, but re-wrap with pScope to continue
-          -- containment.
-          return $ either (Left . pScope . (modify (`withLocalsFrom` state') >>)) Right a
 
 getName :: (Ptr a -> IO CString)
            -> Ptr a

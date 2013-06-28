@@ -9,7 +9,6 @@ module LLVM.General.Internal.Module where
 
 import Control.Monad.Trans
 import Control.Monad.State
-import Control.Monad.Phased
 import Control.Monad.AnyCont
 import Control.Applicative
 import Control.Exception
@@ -97,6 +96,8 @@ setDataLayout m dl = flip runAnyContT return $ do
 getDataLayout :: Ptr FFI.Module -> IO (Maybe A.DataLayout)
 getDataLayout m = parseDataLayout <$> (decodeM =<< FFI.getDataLayout m)
 
+type P a = a -> a
+
 -- | Build an LLVM.General.'Module' from a LLVM.General.AST.'LLVM.General.AST.Module' - i.e.
 -- lower an AST from Haskell into C++ objects.
 withModuleFromAST :: Context -> A.Module -> (Module -> IO a) -> IO (Either String a)
@@ -107,37 +108,41 @@ withModuleFromAST context@(Context c) (A.Module moduleId dataLayout triple defin
   bracket makeModule FFI.disposeModule $ \m -> do
     maybe (return ()) (setDataLayout m) dataLayout
     maybe (return ()) (setTargetTriple m) triple
-    r <- runEncodeAST context $ forInterleavedM definitions $ \d -> case d of
+    let sequencePhases :: EncodeAST [EncodeAST (EncodeAST (EncodeAST (EncodeAST ())))] -> EncodeAST ()
+        sequencePhases l = (l >>= (sequence >=> sequence >=> sequence >=> sequence)) >> (return ())
+
+    r <- runEncodeAST context $ sequencePhases $ forM definitions $ \d -> case d of
       A.TypeDefinition n t -> do
         t' <- createNamedType n
         defineType n t'
-        defer
-        maybe (return ()) (setNamedType t') t
+        return $ do
+          maybe (return ()) (setNamedType t') t
+          return . return . return $ return ()
 
-      A.MetadataNodeDefinition i os -> do
-        replicateM_ 2 defer
+      A.MetadataNodeDefinition i os -> return . return $ do
         t <- liftIO $ FFI.createTemporaryMDNodeInContext c
         defineMDNode i t
-        defer
-        n <- encodeM (A.MetadataNode os)
-        liftIO $ FFI.replaceAllUsesWith (FFI.upCast t) (FFI.upCast n)
-        defineMDNode i n
-        liftIO $ FFI.destroyTemporaryMDNode t
+        return $ do
+          n <- encodeM (A.MetadataNode os)
+          liftIO $ FFI.replaceAllUsesWith (FFI.upCast t) (FFI.upCast n)
+          defineMDNode i n
+          liftIO $ FFI.destroyTemporaryMDNode t
+          return $ return ()
 
-      A.NamedMetadataDefinition n ids -> do
-        replicateM_ 4 defer
+      A.NamedMetadataDefinition n ids -> return . return . return . return $ do
         n <- encodeM n
         ids <- encodeM (map A.MetadataNodeReference ids)
         nm <- liftIO $ FFI.getOrAddNamedMetadata m n
         liftIO $ FFI.namedMetadataAddOperands nm ids
+        return ()
 
       A.ModuleInlineAssembly s -> do
         s <- encodeM s
         liftIO $ FFI.moduleAppendInlineAsm m (FFI.ModuleAsm s)
+        return . return . return . return $ return ()
 
-      A.GlobalDefinition g -> do
-        replicateM_ 2 defer
-        g' :: Ptr FFI.GlobalValue <- case g of
+      A.GlobalDefinition g -> return . phase $ do
+        eg' :: EncodeAST (Ptr FFI.GlobalValue) <- case g of
           g@(A.GlobalVariable { A.G.name = n }) -> do
             typ <- encodeM (A.G.type' g)
             g' <- liftIO $ withName n $ \gName -> 
@@ -151,18 +156,18 @@ withModuleFromAST context@(Context c) (A.Module moduleId dataLayout triple defin
               FFI.setUnnamedAddr (FFI.upCast g') hua
               ic <- encodeM (A.G.isConstant g)
               FFI.setGlobalConstant g' ic
-            defer
-            maybe (return ()) ((liftIO . FFI.setInitializer g') <=< encodeM) (A.G.initializer g)
-            setSection g' (A.G.section g)
-            setAlignment g' (A.G.alignment g)
-            return (FFI.upCast g')
+            return $ do
+              maybe (return ()) ((liftIO . FFI.setInitializer g') <=< encodeM) (A.G.initializer g)
+              setSection g' (A.G.section g)
+              setAlignment g' (A.G.alignment g)
+              return (FFI.upCast g')
           (a@A.G.GlobalAlias { A.G.name = n }) -> do
             typ <- encodeM (A.G.type' a)
             a' <- liftIO $ withName n $ \name -> FFI.justAddAlias m typ name
             defineGlobal n a'
-            defer
-            (liftIO . FFI.setAliasee a') =<< encodeM (A.G.aliasee a)
-            return (FFI.upCast a')
+            return $ do
+              (liftIO . FFI.setAliasee a') =<< encodeM (A.G.aliasee a)
+              return (FFI.upCast a')
           (A.Function _ _ cc rAttrs resultType fName (args,isVarArgs) attrs _ _ blocks) -> do
             typ <- encodeM $ A.FunctionType resultType (map (\(A.Parameter t _ _) -> t) args) isVarArgs
             f <- liftIO . withName fName $ \fName -> FFI.addFunction m fName typ
@@ -174,11 +179,10 @@ withModuleFromAST context@(Context c) (A.Module moduleId dataLayout triple defin
             liftIO $ setFunctionAttrs f attrs
             setSection f (A.G.section g)
             setAlignment f (A.G.alignment g)
-            encodeScope $ do
-              forM blocks $ \(A.BasicBlock bName _ _) -> do
-                b <- liftIO $ withName bName $ \bName -> FFI.appendBasicBlockInContext c f bName
-                defineBasicBlock fName bName b
-              defer
+            forM blocks $ \(A.BasicBlock bName _ _) -> do
+              b <- liftIO $ withName bName $ \bName -> FFI.appendBasicBlockInContext c f bName
+              defineBasicBlock fName bName b
+            phase $ do
               let nParams = length args
               ps <- allocaArray nParams
               liftIO $ FFI.getParams f ps
@@ -192,7 +196,7 @@ withModuleFromAST context@(Context c) (A.Module moduleId dataLayout triple defin
                           liftIO $ FFI.addAttribute p attrs
                           return ()
                 return ()
-              finishInstrs <- forInterleavedM blocks $ \(A.BasicBlock bName namedInstrs term) -> do
+              finishInstrs <- forM blocks $ \(A.BasicBlock bName namedInstrs term) -> do
                 b <- encodeM bName
                 (do
                   builder <- gets encodeStateBuilder
@@ -201,10 +205,13 @@ withModuleFromAST context@(Context c) (A.Module moduleId dataLayout triple defin
                 (encodeM term :: EncodeAST (Ptr FFI.Instruction))
                 return (sequence_ finishes)
               sequence_ finishInstrs
-            return (FFI.upCast f)
-        setLinkage g' (A.G.linkage g)
-        setVisibility g' (A.G.visibility g)
-
+              return (FFI.upCast f)
+        return $ do
+          g' <- eg'
+          setLinkage g' (A.G.linkage g)
+          setVisibility g' (A.G.visibility g)
+          return $ return ()
+          
     either (return . Left) (const $ Right <$> f (Module m)) r
 
 -- | Get an LLVM.General.AST.'LLVM.General.AST.Module' from a LLVM.General.'Module' - i.e.
@@ -221,13 +228,14 @@ moduleAST (Module mod) = runDecodeAST $ do
            return $ if s == "" then Nothing else Just s)
    `ap` (
      do
-       gs <- map A.GlobalDefinition . concat <$> runInterleaved [
+       gs <- map A.GlobalDefinition . concat <$> (join . liftM sequence . sequence) [
           do
             ffiGlobals <- liftIO $ FFI.getXs (FFI.getFirstGlobal mod) FFI.getNextGlobal
-            forM ffiGlobals $ \g -> do
+            liftM sequence . forM ffiGlobals $ \g -> do
               A.PointerType t as <- typeOf g
-              return A.GlobalVariable
-               `ap` getGlobalName g
+              n <- getGlobalName g
+              return $ return A.GlobalVariable
+               `ap` return n
                `ap` getLinkage g
                `ap` getVisibility g
                `ap` (liftIO $ decodeM =<< FFI.isThreadLocal g)
@@ -236,7 +244,6 @@ moduleAST (Module mod) = runDecodeAST $ do
                `ap` (liftIO $ decodeM =<< FFI.isGlobalConstant g)
                `ap` return t
                `ap` (do
-                      defer
                       i <- liftIO $ FFI.getInitializer g
                       if i == nullPtr then return Nothing else Just <$> decodeM i)
                `ap` getSection g
@@ -244,9 +251,10 @@ moduleAST (Module mod) = runDecodeAST $ do
 
           do
             ffiAliases <- liftIO $ FFI.getXs (FFI.getFirstAlias mod) FFI.getNextAlias
-            forM ffiAliases $ \a -> do
-              return A.G.GlobalAlias
-               `ap` (do n <- getGlobalName a; defer; return n)
+            liftM sequence . forM ffiAliases $ \a -> do
+              n <- getGlobalName a
+              return $ return A.G.GlobalAlias
+               `ap` return n
                `ap` getLinkage a
                `ap` getVisibility a
                `ap` typeOf a
@@ -254,27 +262,29 @@ moduleAST (Module mod) = runDecodeAST $ do
 
           do
             ffiFunctions <- liftIO $ FFI.getXs (FFI.getFirstFunction mod) FFI.getNextFunction
-            forM ffiFunctions $ \f -> localScope $ do
+            liftM sequence . forM ffiFunctions $ \f -> localScope $ do
               A.PointerType (A.FunctionType returnType _ isVarArg) _ <- typeOf f
-              return A.Function
+              n <- getGlobalName f
+              parameters <- getParameters f
+              decodeBlocks <- do
+                ffiBasicBlocks <- liftIO $ FFI.getXs (FFI.getFirstBasicBlock f) FFI.getNextBasicBlock
+                liftM sequence . forM ffiBasicBlocks $ \b -> do
+                  n <- getLocalName b
+                  decodeInstructions <- getNamedInstructions b
+                  decodeTerminator <- getBasicBlockTerminator b
+                  return $ return A.BasicBlock `ap` return n `ap` decodeInstructions `ap` decodeTerminator
+              return $ return A.Function
                  `ap` getLinkage f
                  `ap` getVisibility f
                  `ap` (liftIO $ decodeM =<< FFI.getFunctionCallConv f)
                  `ap` (liftIO $ decodeM =<< FFI.getFunctionRetAttr f)
                  `ap` return returnType
-                 `ap` (getGlobalName f)
-                 `ap` ((, isVarArg) <$> getParameters f)
+                 `ap` return n
+                 `ap` return (parameters, isVarArg)
                  `ap` (liftIO $ getFunctionAttrs f)
                  `ap` getSection f
                  `ap` getAlignment f
-                 `ap` (do
-                       ffiBasicBlocks <- liftIO $ FFI.getXs (FFI.getFirstBasicBlock f) FFI.getNextBasicBlock
-                       runInterleaved . flip map ffiBasicBlocks $ \b -> 
-                           return A.BasicBlock
-                            `ap` (do n <- getLocalName b; defer; return n)
-                            `iap` getNamedInstructions b
-                            `iap` getBasicBlockTerminator b
-                     )
+                 `ap` decodeBlocks
         ]
 
        tds <- getStructDefinitions

@@ -12,7 +12,6 @@ import Control.Monad.Trans.AnyCont (AnyContT)
 import qualified Control.Monad.Trans.AnyCont as AnyCont
 import Control.Monad.Trans.Error as Error
 import Control.Monad.Trans.State as State
-import Control.Monad.Trans.Phased as Phased
 
 class MonadAnyCont b m | m -> b where
   anyContToM :: (forall r . (a -> b r) -> b r) -> m a
@@ -26,10 +25,6 @@ instance (Error e, Monad m, MonadAnyCont b m) => MonadAnyCont b (ErrorT e m) whe
   anyContToM = lift . anyContToM
   scopeAnyCont = mapErrorT scopeAnyCont
 
-instance (Monad m, MonadAnyCont b m) => MonadAnyCont b (PhasedT m) where
-  anyContToM = lift . anyContToM
-  scopeAnyCont = mapPhasedT scopeAnyCont
-
 instance (Monad m, MonadAnyCont b m) => MonadAnyCont b (StateT s m) where
   anyContToM = lift . anyContToM
   scopeAnyCont = StateT . (scopeAnyCont .) . runStateT
@@ -39,9 +34,6 @@ class LiftAnyCont b m where
 
 instance LiftAnyCont b b where
   liftAnyCont c = c
-
-instance LiftAnyCont b m => LiftAnyCont b (PhasedT m) where
-  liftAnyCont c = \q -> PhasedT (liftAnyCont c (unPhasedT . q))
 
 instance LiftAnyCont b m => LiftAnyCont b (StateT s m) where
   liftAnyCont c = \q -> StateT $ \s -> (liftAnyCont c (($ s) . runStateT . q))

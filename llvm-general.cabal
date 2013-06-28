@@ -88,9 +88,6 @@ library
     LLVM.General.Transforms
 
   other-modules:
-    Control.Monad.Phased
-    Control.Monad.Phased.Class
-    Control.Monad.Trans.Phased
     Control.Monad.AnyCont
     Control.Monad.AnyCont.Class
     Control.Monad.Trans.AnyCont

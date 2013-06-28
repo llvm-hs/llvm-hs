@@ -127,7 +127,6 @@ main = shake shakeOptions {
     cabalStep [ "test" ]
     noDoc <- getNoDoc (NoDoc ())
     unless noDoc $ cabalStep [ "haddock", "--internal" ]
-    cabalStep [ "install" ]
     
     
   llvmDir </> "install/bin/llvm-config" *> \out -> do

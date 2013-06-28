@@ -10,7 +10,6 @@ module LLVM.General.Internal.EncodeAST where
 
 import Control.Exception
 import Control.Monad.State
-import Control.Monad.Phased
 import Control.Monad.Error
 import Control.Monad.AnyCont
 
@@ -41,13 +40,12 @@ data EncodeState = EncodeState {
       encodeStateNamedTypes :: Map A.Name (Ptr FFI.Type)
     }
 
-newtype EncodeAST a = EncodeAST { unEncodeAST :: AnyContT (PhasedT (ErrorT String (StateT EncodeState IO))) a }
+newtype EncodeAST a = EncodeAST { unEncodeAST :: AnyContT (ErrorT String (StateT EncodeState IO)) a }
     deriving (
        Functor,
        Monad,
        MonadIO,
        MonadState EncodeState,
-       MonadPhased,
        MonadError String
      )
 
@@ -76,7 +74,7 @@ runEncodeAST context@(Context ctx) (EncodeAST a) =
               encodeStateMDNodes = Map.empty,
               encodeStateNamedTypes = Map.empty
             }
-      flip evalStateT initEncodeState . runErrorT . runPhasedT . flip runAnyContT return $ a
+      flip evalStateT initEncodeState . runErrorT . flip runAnyContT return $ a
 
 withName :: A.Name -> (CString -> IO a) -> IO a
 withName (A.Name n) = withCString n
@@ -86,25 +84,19 @@ instance MonadAnyCont IO m => EncodeM m A.Name CString where
   encodeM (A.Name n) = encodeM n
   encodeM _ = encodeM ""
 
--- contain modifications to the local part of the encode state - in this case all those except
--- those to encodeStateAllBlocks
-encodeScope :: EncodeAST a -> EncodeAST a
-encodeScope (EncodeAST x) = 
-  EncodeAST . mapAnyContT pScope $ x -- get inside the boring wrappers down to the phasing
-  where pScope (PhasedT x) = PhasedT $ do
-          let s0 `withLocalsFrom` s1 = s0 { 
-                 encodeStateLocals = encodeStateLocals s1,
-                 encodeStateBlocks = encodeStateBlocks s1
-                }
-          state <- get -- save the state
-          a <- x
-          state' <- get -- get the modified state
-          put $ state' `withLocalsFrom` state -- revert the local part
-          -- Finally here's the fun bit - in the Left case where we're coming back to a deferment point,
-          -- prepend an action which reinstates the local state, but re-wrap with pScope to continue
-          -- containment.
-          return $ either (Left . pScope . (modify (`withLocalsFrom` state') >>)) Right a
-
+phase :: EncodeAST a -> EncodeAST (EncodeAST a)
+phase p = do
+  let s0 `withLocalsFrom` s1 = s0 { 
+         encodeStateLocals = encodeStateLocals s1,
+         encodeStateBlocks = encodeStateBlocks s1
+        }
+  s <- get
+  return $ do
+    s' <- get
+    put $ s' `withLocalsFrom` s
+    r <- p
+    modify (`withLocalsFrom` s')
+    return r
 
 define :: (Ord n, FFI.DescendentOf p v) => 
           (EncodeState -> Map n (Ptr p))
