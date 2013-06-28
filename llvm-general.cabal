@@ -42,15 +42,15 @@ library
   build-tools: llvm-config
   ghc-options: -fwarn-unused-imports
   build-depends: 
-    base >= 4.6.0.0 && < 5,
+    base >= 4.5.0.0 && < 5,
     text >= 0.11.2.1,
     bytestring >= 0.9.1.10,
     transformers >= 0.3.0.0,
     mtl >= 2.0.1.0,
     template-haskell >= 2.5.0.0,
-    containers >= 0.5.0.0,
+    containers >= 0.4.2.1,
     parsec >= 3.1.3,
-    array >= 0.4.0.1,
+    array >= 0.4.0.0,
     setenv >= 0.1.0
   extra-libraries: stdc++
   hs-source-dirs: src
@@ -181,7 +181,7 @@ test-suite test
     test-framework-quickcheck2 >= 0.3.0.1,
     QuickCheck >= 2.5.1.1,
     llvm-general >= 0.1,
-    containers >= 0.5.0.0
+    containers >= 0.4.2.1
   hs-source-dirs: test
   main-is: Test.hs
   other-modules:

@@ -1,5 +1,6 @@
 {-# LANGUAGE
-  TemplateHaskell
+  TemplateHaskell,
+  CPP
   #-}
 
 module LLVM.General.Internal.InstructionDefs (
@@ -42,13 +43,25 @@ instructionDefs = Map.fromList [ ((refName . ID.cAPIName $ i), i) | i <- ID.inst
     refName x = x
 
 innerJoin :: Ord k => Map k a -> Map k b -> Map k (a,b)
-innerJoin = Map.mergeWithKey (\_ a b -> Just (a,b)) (const Map.empty) (const Map.empty)
-       
+innerJoin = go
+  where
+#if MIN_VERSION_containers(5,0,0)
+    go = Map.mergeWithKey (\_ a b -> Just (a,b)) (const Map.empty) (const Map.empty)
+#else
+    go = undefined
+#endif
+
 outerJoin :: Ord k => Map k a -> Map k b -> Map k (Maybe a, Maybe b)
-outerJoin = Map.mergeWithKey 
-            (\_ a b -> Just (Just a, Just b))
-            (Map.map $ \a -> (Just a, Nothing))
-            (Map.map $ \b -> (Nothing, Just b))
+outerJoin = go
+  where
+#if MIN_VERSION_containers(5,0,0)
+    go = Map.mergeWithKey
+         (\_ a b -> Just (Just a, Just b))
+         (Map.map $ \a -> (Just a, Nothing))
+         (Map.map $ \b -> (Nothing, Just b))
+#else
+    go = undefined
+#endif
 
 instrP = TH.QuasiQuoter { 
   TH.quoteExp = undefined,

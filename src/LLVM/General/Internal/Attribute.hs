@@ -1,6 +1,7 @@
 {-# LANGUAGE
   TemplateHaskell,
   MultiParamTypeClasses,
+  ConstraintKinds,
   FlexibleInstances
   #-}
 
