@@ -10,6 +10,7 @@ import Distribution.Simple.Program
 import Distribution.Simple.Setup hiding (Flag)
 import Distribution.Simple.LocalBuildInfo
 import Distribution.PackageDescription
+import Distribution.Version
 import System.Environment
 import System.SetEnv
 import Distribution.System
@@ -21,7 +22,24 @@ import Distribution.System
 -- without checking they're already defined and so causes warnings.
 uncheckedHsFFIDefines = ["__STDC_LIMIT_MACROS"]
 
-llvmProgram = simpleProgram "llvm-config"
+llvmVersion = Version [3,4] []
+
+llvmConfigNames = [ "llvm-config-" ++ (intercalate "." . map show . versionBranch $ llvmVersion)
+                  , "llvm-config"
+                  ]
+
+llvmProgram = (simpleProgram "llvm-config")
+              { programFindLocation = \v -> findJustBy (findProgramLocation v) llvmConfigNames
+              , programFindVersion = \v p -> findProgramVersion "--version" id v p
+              }
+
+findJustBy :: Monad m => (a -> m (Maybe b)) -> [a] -> m (Maybe b)
+findJustBy f [] = return Nothing
+findJustBy f (x:xs) = do
+  x' <- f x
+  case x' of
+    j@(Just _) -> return j
+    Nothing -> findJustBy f xs
 
 main = do
   let (ldLibraryPathVar, ldLibraryPathSep) = 
@@ -33,13 +51,11 @@ main = do
          setEnv ldLibraryPathVar (s ++ either (const "") (ldLibraryPathSep ++) v)
       getLLVMConfig configFlags = do
          let verbosity = fromFlag $ configVerbosity configFlags
-         -- preconfigure the configuration-generating program "llvm-config"
-         programDb <- configureProgram verbosity llvmProgram
-                      . userSpecifyPaths (configProgramPaths configFlags)
-                      . userSpecifyArgss (configProgramArgs configFlags)
-                      $ configPrograms configFlags
+         (program, _, _) <- requireProgramVersion verbosity llvmProgram
+                            (withinVersion llvmVersion)
+                            (configPrograms configFlags)
          let llvmConfig :: [String] -> IO String
-             llvmConfig = getDbProgramOutput verbosity llvmProgram programDb
+             llvmConfig = getProgramOutput verbosity program
          return llvmConfig
       addLLVMToLdLibraryPath configFlags = do
         llvmConfig <- getLLVMConfig configFlags
