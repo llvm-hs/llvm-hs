@@ -16,8 +16,6 @@ import System.Environment
 import System.SetEnv
 import Distribution.System
 
-import Debug.Trace
-
 -- define these selectively in C files (where _not_ using HsFFI.h),
 -- rather than universally in the ccOptions, because HsFFI.h currently defines them
 -- without checking they're already defined and so causes warnings.
