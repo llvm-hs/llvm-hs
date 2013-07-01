@@ -5,6 +5,7 @@ import Data.List (isPrefixOf, (\\), intercalate, stripPrefix)
 import Data.Map (Map)
 import qualified Data.Map as Map
 import Data.Monoid
+import Data.Char
 import Distribution.Simple
 import Distribution.Simple.Program
 import Distribution.Simple.Setup hiding (Flag)
@@ -15,7 +16,7 @@ import System.Environment
 import System.SetEnv
 import Distribution.System
 
-
+import Debug.Trace
 
 -- define these selectively in C files (where _not_ using HsFFI.h),
 -- rather than universally in the ccOptions, because HsFFI.h currently defines them
@@ -31,16 +32,22 @@ llvmConfigNames = [
 
 llvmProgram = (simpleProgram "llvm-config") {
   programFindLocation = 
-    \v -> let
-            findJustBy :: Monad m => (a -> m (Maybe b)) -> [a] -> m (Maybe b)
-            findJustBy f (x:xs) = do
-              x' <- f x
-              case x' of
-                Nothing -> findJustBy f xs
-                j -> return j
-          in 
-            findJustBy (findProgramLocation v) llvmConfigNames,
-  programFindVersion = \v p -> findProgramVersion "--version" id v p
+    let
+      findJustBy :: Monad m => (a -> m (Maybe b)) -> [a] -> m (Maybe b)
+      findJustBy f (x:xs) = do
+        x' <- f x
+        case x' of
+          Nothing -> findJustBy f xs
+          j -> return j
+    in 
+      \v -> findJustBy (findProgramLocation v) llvmConfigNames,
+  programFindVersion = 
+    let
+      stripSuffix suf str = let r = reverse in liftM r (stripPrefix (r suf) (r str))
+      svnToTag v = maybe v (++"-svn") (stripSuffix "svn" v)
+      trim = dropWhile isSpace . reverse . dropWhile isSpace . reverse
+    in
+      \v p -> findProgramVersion "--version" (svnToTag . trim) v p
  }
 
 main = do
