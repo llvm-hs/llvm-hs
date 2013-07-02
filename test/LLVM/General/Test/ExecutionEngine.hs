@@ -1,4 +1,7 @@
-{-# LANGUAGE ForeignFunctionInterface #-}
+{-# LANGUAGE
+  ForeignFunctionInterface,
+  FlexibleContexts
+  #-}
 module LLVM.General.Test.ExecutionEngine where
 
 import Test.Framework
@@ -30,24 +33,27 @@ import qualified LLVM.General.AST.Constant as C
 
 foreign import ccall "dynamic" mkIO32Stub :: FunPtr (Word32 -> IO Word32) -> (Word32 -> IO Word32)
 
-tests = testGroup "ExecutionEngine" [
+testJIT :: ExecutionEngine e (FunPtr ()) => (Context -> (e -> IO ()) -> IO ()) -> Assertion
+testJIT withEE = withContext $ \context -> withEE context $ \executionEngine -> do
+  let mAST = Module "runSomethingModule" Nothing Nothing [
+              GlobalDefinition $ Function L.External V.Default CC.C [] (IntegerType 32) (Name "_foo") ([
+                            Parameter (IntegerType 32) (Name "bar") []
+                           ],False) [] 
+               Nothing 0
+               [
+                BasicBlock (UnName 0) [] (
+                  Do $ Ret (Just (ConstantOperand (C.Int 32 42))) []
+                 )
+               ]
+              ]
 
-  testCase "runSomething" $ withContext $ \context -> withExecutionEngine context $ \executionEngine -> do
-    let mAST = Module "runSomethingModule" Nothing Nothing [
-                GlobalDefinition $ Function L.External V.Default CC.C [] (IntegerType 32) (Name "foo") ([
-                              Parameter (IntegerType 32) (Name "foo") []
-                             ],False) [] 
-                 Nothing 0
-                 [
-                  BasicBlock (UnName 0) [] (
-                    Do $ Ret (Just (ConstantOperand (C.Int 32 42))) []
-                   )
-                 ]
-                ]
-    
-    s <- withModuleFromAST context mAST $ \m -> do
-          withModuleInEngine executionEngine m $ do
-            Just p <- findFunction executionEngine (Name "foo")
-            (mkIO32Stub ((castPtrToFunPtr p) :: FunPtr (Word32 -> IO Word32))) 7
-    s @?= Right 42
+  s <- withModuleFromAST context mAST $ \m -> do
+        withModuleInEngine executionEngine m $ \em -> do
+          Just p <- getFunction em (Name "_foo")
+          (mkIO32Stub ((castFunPtr p) :: FunPtr (Word32 -> IO Word32))) 7
+  s @?= Right 42
+
+tests = testGroup "ExecutionEngine" [
+  testCase "run something with JIT" $ testJIT (\c -> withJIT c 2),
+  testCase "run something with MCJIT" $ testJIT (\c -> withMCJIT c Nothing Nothing Nothing Nothing)
  ]

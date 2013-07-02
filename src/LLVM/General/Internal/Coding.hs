@@ -15,7 +15,7 @@ import Control.Monad.AnyCont
 import Control.Monad.IO.Class
 
 import Data.Data (Data)
-import Data.Word (Word32, Word64)
+import Data.Word (Word, Word32, Word64)
 import Data.Int (Int32)
 
 import Foreign.C
@@ -101,6 +101,9 @@ instance Monad m => EncodeM m Bool FFI.LLVMBool where
 instance Monad m => DecodeM m Bool FFI.LLVMBool where
   decodeM (FFI.LLVMBool 0) = return $ False
   decodeM (FFI.LLVMBool 1) = return $ True
+
+instance Monad m => EncodeM m Word CUInt where
+  encodeM = return . fromIntegral
 
 instance Monad m => EncodeM m Word32 CUInt where
   encodeM = return . fromIntegral

@@ -1,9 +1,9 @@
 -- | Tools for JIT execution
 module LLVM.General.ExecutionEngine (
-  ExecutionEngine,
-  withExecutionEngine,
-  withModuleInEngine,
-  findFunction
+  ExecutionEngine(..),
+  ExecutableModule,
+  JIT, withJIT,
+  MCJIT, withMCJIT
   ) where
 
 import LLVM.General.Internal.ExecutionEngine

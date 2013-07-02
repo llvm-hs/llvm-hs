@@ -10,6 +10,7 @@ import Foreign.C
 
 import LLVM.General.Internal.FFI.PtrHierarchy
 import LLVM.General.Internal.FFI.Module
+import LLVM.General.Internal.FFI.LLVMCTypes
 
 data ExecutionEngine
 
@@ -21,6 +22,9 @@ foreign import ccall unsafe "LLVMCreateInterpreterForModule" createInterpreterFo
 
 foreign import ccall unsafe "LLVMCreateJITCompilerForModule" createJITCompilerForModule ::
   Ptr (Ptr ExecutionEngine) -> Ptr Module -> CUInt -> Ptr CString -> IO CUInt
+
+foreign import ccall unsafe "LLVMCreateMCJITCompilerForModule" createMCJITCompilerForModule ::
+  Ptr (Ptr ExecutionEngine) -> Ptr Module -> Ptr MCJITCompilerOptions -> CSize -> Ptr CString -> IO CUInt
 
 foreign import ccall unsafe "LLVMDisposeExecutionEngine" disposeExecutionEngine ::
   Ptr ExecutionEngine -> IO ()
@@ -45,3 +49,25 @@ foreign import ccall unsafe "LLVMLinkInJIT" linkInJIT ::
 
 foreign import ccall unsafe "LLVMLinkInMCJIT" linkInMCJIT :: 
   IO ()
+
+data MCJITCompilerOptions
+
+foreign import ccall unsafe "LLVM_General_GetMCJITCompilerOptionsSize" getMCJITCompilerOptionsSize ::
+  IO CSize
+
+foreign import ccall unsafe "LLVMInitializeMCJITCompilerOptions" initializeMCJITCompilerOptions ::
+  Ptr MCJITCompilerOptions -> CSize -> IO ()
+
+foreign import ccall unsafe "LLVM_General_SetMCJITCompilerOptionsOptLevel" setMCJITCompilerOptionsOptLevel ::
+  Ptr MCJITCompilerOptions -> CUInt -> IO ()
+
+foreign import ccall unsafe "LLVM_General_SetMCJITCompilerOptionsCodeModel" setMCJITCompilerOptionsCodeModel ::
+  Ptr MCJITCompilerOptions -> CodeModel -> IO ()
+
+foreign import ccall unsafe "LLVM_General_SetMCJITCompilerOptionsNoFramePointerElim" setMCJITCompilerOptionsNoFramePointerElim ::
+  Ptr MCJITCompilerOptions -> LLVMBool -> IO ()
+
+foreign import ccall unsafe "LLVM_General_SetMCJITCompilerOptionsEnableFastISel" setMCJITCompilerOptionsEnableFastISel ::
+  Ptr MCJITCompilerOptions -> LLVMBool -> IO ()
+
+

@@ -1,5 +1,6 @@
 #define __STDC_LIMIT_MACROS
 #include "llvm/Support/TargetRegistry.h"
+#include "llvm/Support/TargetSelect.h"
 #include "llvm/Target/TargetMachine.h"
 #include "llvm/ADT/Triple.h"
 #include "llvm/ExecutionEngine/Interpreter.h"
@@ -87,7 +88,9 @@ LLVM_GENERAL_FOR_EACH_FP_OP_FUSION_MODE(ENUM_CASE)
 extern "C" {
 
 LLVMBool LLVM_General_InitializeNativeTarget() {
-	return LLVMInitializeNativeTarget();
+	return LLVMInitializeNativeTarget()
+    || InitializeNativeTargetAsmPrinter()
+    || InitializeNativeTargetAsmParser();
 }
 
 LLVMTargetRef LLVM_General_LookupTarget(

@@ -72,6 +72,9 @@ foreign import ccall unsafe "LLVM_General_JustAddAlias" justAddAlias ::
 foreign import ccall unsafe "LLVMAddFunction" addFunction ::
   Ptr Module -> CString -> Ptr Type -> IO (Ptr Function)
 
+foreign import ccall unsafe "LLVMGetNamedFunction" getNamedFunction ::
+  Ptr Module -> CString -> IO (Ptr Function)
+
 foreign import ccall unsafe "LLVM_General_GetOrAddNamedMetadata" getOrAddNamedMetadata ::
   Ptr Module -> CString -> IO (Ptr NamedMetadata)
 

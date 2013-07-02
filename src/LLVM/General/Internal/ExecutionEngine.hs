@@ -1,13 +1,22 @@
+{-# LANGUAGE
+  MultiParamTypeClasses,
+  FunctionalDependencies,
+  FlexibleInstances,
+  RankNTypes
+  #-}
 module LLVM.General.Internal.ExecutionEngine where
 
 import Control.Exception
 import Control.Monad
 import Control.Monad.IO.Class
 import Control.Monad.AnyCont
-import Data.Functor
 
+import Data.Word
+import Data.IORef
 import Foreign.Ptr
-import Foreign.Marshal.Alloc (free)
+import Foreign.C.String (CString)
+import Foreign.C.Types (CUInt)
+import Foreign.Marshal.Alloc (free, allocaBytes)
 
 import qualified LLVM.General.Internal.FFI.PtrHierarchy as FFI
 import qualified LLVM.General.Internal.FFI.ExecutionEngine as FFI
@@ -17,11 +26,9 @@ import qualified LLVM.General.Internal.FFI.Module as FFI
 import LLVM.General.Internal.Module
 import LLVM.General.Internal.Context
 import LLVM.General.Internal.Coding
-
+import qualified LLVM.General.CodeModel as CodeModel
+import LLVM.General.Internal.Target ()
 import qualified LLVM.General.AST as A
-
--- | <http://llvm.org/doxygen/classllvm_1_1ExecutionEngine.html>
-newtype ExecutionEngine = ExecutionEngine (Ptr FFI.ExecutionEngine)
 
 removeModule :: Ptr FFI.ExecutionEngine -> Ptr FFI.Module -> IO ()
 removeModule e m = flip runAnyContT return $ do
@@ -30,37 +37,113 @@ removeModule e m = flip runAnyContT return $ do
   r <- liftIO $ FFI.removeModule e m d0 d1
   when (r /= 0) $ fail "FFI.removeModule failure"
 
+-- | a 'ExecutableModule' e represents a 'Module' which is currently "in" an
+-- 'ExecutionEngine', and so the functions of which may be executed.
+data ExecutableModule e = ExecutableModule e (Ptr FFI.Module)
 
--- | bracket the creation and destruction of an 'ExecutionEngine'
-withExecutionEngine :: Context -> (ExecutionEngine -> IO a) -> IO a
-withExecutionEngine c f = flip runAnyContT return $ do
-  liftIO $ FFI.initializeNativeTarget
+-- | <http://llvm.org/doxygen/classllvm_1_1ExecutionEngine.html>
+class ExecutionEngine e f | e -> f where
+  withModuleInEngine :: e -> Module -> (ExecutableModule e -> IO a) -> IO a
+  getFunction :: ExecutableModule e -> A.Name -> IO (Maybe f)
+
+instance ExecutionEngine (Ptr FFI.ExecutionEngine) (FunPtr ()) where
+  withModuleInEngine e (Module m) = bracket_ (FFI.addModule e m) (removeModule e m) . ($ (ExecutableModule e m)) 
+  getFunction (ExecutableModule e m) (A.Name name) = flip runAnyContT return $ do
+    name <- encodeM name
+    f <- liftIO $ FFI.getNamedFunction m name
+    if f == nullPtr 
+      then 
+        return Nothing
+      else
+        do
+          p <- liftIO $ FFI.getPointerToGlobal e (FFI.upCast f)
+          return $ if p == nullPtr then Nothing else Just (castPtrToFunPtr p)
+
+withExecutionEngine :: 
+  Context ->
+  Maybe (Ptr FFI.Module) -> 
+  (Ptr (Ptr FFI.ExecutionEngine) -> Ptr FFI.Module -> Ptr CString -> IO CUInt) ->
+  (Ptr FFI.ExecutionEngine -> IO a) ->
+  IO a
+withExecutionEngine c m createEngine f = flip runAnyContT return $ do
+  failure <- decodeM =<< liftIO FFI.initializeNativeTarget
+  when failure $ fail "native target initializaiton failed"
   outExecutionEngine <- alloca
   outErrorCStringPtr <- alloca
-  Module dummyModule <- anyContT $ liftM (either undefined id) . withModuleFromAST c (A.Module "" Nothing Nothing [])
-  r <- liftIO $ FFI.createExecutionEngineForModule outExecutionEngine dummyModule outErrorCStringPtr
+  Module dummyModule <- maybe (anyContT $ liftM (either undefined id)
+                                   . withModuleFromAST c (A.Module "" Nothing Nothing []))
+                        (return . Module) m
+  r <- liftIO $ createEngine outExecutionEngine dummyModule outErrorCStringPtr
   when (r /= 0) $ do
     s <- anyContT $ bracket (peek outErrorCStringPtr) free
     fail =<< decodeM s
   executionEngine <- anyContT $ bracket (peek outExecutionEngine) FFI.disposeExecutionEngine
   liftIO $ removeModule executionEngine dummyModule
-  liftIO $ f (ExecutionEngine executionEngine)
+  liftIO $ f executionEngine
           
-      
--- | bracket the availability of machine code for a given 'Module' in an 'ExecutionEngine'.
--- See 'findFunction'.
-withModuleInEngine :: ExecutionEngine -> Module -> IO a -> IO a
-withModuleInEngine (ExecutionEngine e) (Module m) = bracket_ (FFI.addModule e m) (removeModule e m)
+-- | <http://llvm.org/doxygen/classllvm_1_1JIT.html>
+newtype JIT = JIT (Ptr FFI.ExecutionEngine)
 
--- | While a 'Module' is in an 'ExecutionEngine', use 'findFunction' to lookup functions in the module.
--- To run them from Haskell, treat them as any other function pointer: cast them to an appropriate and
--- foreign type, then wrap them with a dynamic FFI stub.
-findFunction :: ExecutionEngine -> A.Name -> IO (Maybe (Ptr ()))
-findFunction (ExecutionEngine e) (A.Name fName) = flip runAnyContT return $ do
-  out <- alloca
-  fName <- encodeM fName
-  r <- liftIO $ FFI.findFunction e fName out
-  if (r /= 0) then 
-      return Nothing
-   else 
-      Just <$> (liftIO $ FFI.getPointerToGlobal e . FFI.upCast =<< peek out)
+-- | bracket the creation and destruction of a 'JIT'
+withJIT :: 
+  Context
+  -> Word -- ^ optimization level
+  -> (JIT -> IO a)
+  -> IO a
+withJIT c opt = 
+    withExecutionEngine c Nothing (\e m -> FFI.createJITCompilerForModule e m (fromIntegral opt))
+    . (. JIT)
+
+instance ExecutionEngine JIT (FunPtr ()) where
+  withModuleInEngine (JIT e) m f = withModuleInEngine e m (\(ExecutableModule e m) -> f (ExecutableModule (JIT e) m))
+  getFunction (ExecutableModule (JIT e) m) = getFunction (ExecutableModule e m)
+      
+
+data MCJITState
+  = Deferred (forall a . Module -> (Ptr FFI.ExecutionEngine -> IO a) -> IO a)
+  | Constructed (Ptr FFI.ExecutionEngine)
+
+-- | <http://llvm.org/doxygen/classllvm_1_1MCJIT.html>
+-- <http://blog.llvm.org/2010/04/intro-to-llvm-mc-project.html>
+newtype MCJIT = MCJIT (IORef MCJITState)
+
+-- | bracket the creation and destruction of an 'MCJIT'
+withMCJIT :: 
+  Context
+  -> Maybe Word -- ^ optimization level
+  -> Maybe CodeModel.Model
+  -> Maybe Bool -- ^ True to disable frame pointer elimination
+  -> Maybe Bool -- ^ True to enable fast instruction selection
+--  -> Maybe MemoryManager -- llvm-general doesn't support this yet
+  -> (MCJIT -> IO a)
+  -> IO a
+withMCJIT c opt cm fpe fisel f = do
+  let createMCJITCompilerForModule e m s = do
+        size <- FFI.getMCJITCompilerOptionsSize
+        allocaBytes (fromIntegral size) $ \p -> do
+          FFI.initializeMCJITCompilerOptions p size
+          maybe (return ()) (FFI.setMCJITCompilerOptionsOptLevel p <=< encodeM) opt
+          maybe (return ()) (FFI.setMCJITCompilerOptionsCodeModel p <=< encodeM) cm
+          maybe (return ()) (FFI.setMCJITCompilerOptionsNoFramePointerElim p <=< encodeM) fpe
+          maybe (return ()) (FFI.setMCJITCompilerOptionsEnableFastISel p <=< encodeM) fisel
+          FFI.createMCJITCompilerForModule e m p size s
+  t <- newIORef (Deferred $ \(Module m) -> withExecutionEngine c (Just m) createMCJITCompilerForModule)
+  f (MCJIT t)
+
+instance ExecutionEngine MCJIT (FunPtr ()) where
+  withModuleInEngine (MCJIT s) m f = do
+    jitState <- readIORef s
+    let f' (ExecutableModule _ m) = f (ExecutableModule (MCJIT s) m)
+    case jitState of
+      Deferred c -> c m $ \e -> 
+        bracket_ 
+         (writeIORef s (Constructed e))
+         (writeIORef s jitState)
+         (withModuleInEngine e m f')
+      Constructed e -> withModuleInEngine e m f'
+
+  getFunction (ExecutableModule (MCJIT r) m) n = do
+    s <- liftIO $ readIORef r
+    case s of
+      Deferred _ -> return Nothing
+      Constructed e -> getFunction (ExecutableModule e m) n

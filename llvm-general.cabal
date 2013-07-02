@@ -155,6 +155,7 @@ library
     src/LLVM/General/Internal/FFI/BuilderC.cpp
     src/LLVM/General/Internal/FFI/ConstantC.cpp
     src/LLVM/General/Internal/FFI/CommandLineC.cpp
+    src/LLVM/General/Internal/FFI/ExecutionEngineC.cpp
     src/LLVM/General/Internal/FFI/FunctionC.cpp
     src/LLVM/General/Internal/FFI/GlobalAliasC.cpp
     src/LLVM/General/Internal/FFI/GlobalValueC.cpp
