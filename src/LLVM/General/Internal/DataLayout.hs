@@ -15,7 +15,7 @@ import LLVM.General.AST.AddrSpace
 dataLayoutToString :: DataLayout -> String
 dataLayoutToString dl = 
   let sTriple :: (Word32, AlignmentInfo) -> String
-      sTriple (s, ai) = show s ++ ":" ++ show (abiAlignment ai) ++ ":" ++ show (preferredAlignment ai)
+      sTriple (s, ai) = show s ++ ":" ++ show (abiAlignment ai) ++ (maybe "" (\p -> ":" ++ show p) (preferredAlignment ai))
       atChar at = case at of
                     IntegerAlign -> "i"
                     VectorAlign -> "v"
@@ -28,7 +28,7 @@ dataLayoutToString dl =
     ++
     (maybe [] (\s -> ["S" ++ show s]) (stackAlignment dl))
     ++
-    [ "p" ++ show a ++ ":" ++ sTriple t | (AddrSpace a, t) <- Map.toList . pointerLayouts $ dl]
+    [ "p" ++ (if a == 0 then "" else show a) ++ ":" ++ sTriple t | (AddrSpace a, t) <- Map.toList . pointerLayouts $ dl]
     ++
     [ atChar at ++ sTriple (s, ai) | ((at, s), ai) <- Map.toList . typeLayouts $ dl ]
     ++ 
@@ -46,8 +46,9 @@ parseDataLayout s =
       s <- num
       char ':'
       abi <- num
-      char ':'
-      pref <- num
+      pref <- optionMaybe $ do
+                char ':'
+                num
       return (s, (AlignmentInfo abi pref))
     parseSpec :: Parser (DataLayout -> DataLayout)
     parseSpec = choice [
@@ -63,7 +64,7 @@ parseDataLayout s =
         return $ \dl -> dl { stackAlignment = Just n },
       do
         char 'p'
-        a <- AddrSpace . read <$> many digit
+        a <- AddrSpace <$> option 0 (read <$> many1 digit)
         char ':'
         t <- triple
         return $ \dl -> dl { pointerLayouts = Map.insert a t (pointerLayouts dl) },

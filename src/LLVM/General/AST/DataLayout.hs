@@ -16,7 +16,7 @@ data Endianness = LittleEndian | BigEndian
 -- | An AlignmentInfo describes how a given type must and would best be aligned
 data AlignmentInfo = AlignmentInfo {
     abiAlignment :: Word32,
-    preferredAlignment :: Word32
+    preferredAlignment :: Maybe Word32
   }
   deriving (Eq, Ord, Read, Show)
 
