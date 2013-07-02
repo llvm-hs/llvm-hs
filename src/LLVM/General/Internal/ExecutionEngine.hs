@@ -105,6 +105,8 @@ data MCJITState
 
 -- | <http://llvm.org/doxygen/classllvm_1_1MCJIT.html>
 -- <http://blog.llvm.org/2010/04/intro-to-llvm-mc-project.html>
+-- N.B. - the LLVM MCJIT does not current support adding multiple
+-- modules to any one instance of the MCJIT.
 newtype MCJIT = MCJIT (IORef MCJITState)
 
 -- | bracket the creation and destruction of an 'MCJIT'
