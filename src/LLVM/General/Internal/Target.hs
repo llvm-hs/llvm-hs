@@ -228,4 +228,4 @@ getTargetLowering (TargetMachine tm) = TargetLowering <$> FFI.getTargetLowering 
 initializeNativeTarget :: IO ()
 initializeNativeTarget = do
   failure <- decodeM =<< liftIO FFI.initializeNativeTarget
-  when failure $ fail "native target initializaiton failed"
+  when failure $ fail "native target initialization failed"
