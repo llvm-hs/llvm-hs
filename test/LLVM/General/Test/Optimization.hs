@@ -8,7 +8,6 @@ import Data.Functor
 import qualified Data.Map as Map
 
 import LLVM.General.Module
-import LLVM.General.CommandLine
 import LLVM.General.Context
 import LLVM.General.PassManager
 import LLVM.General.Transforms
@@ -156,7 +155,6 @@ tests = testGroup "Optimization" [
         ],
 
     testCase "BasicBlockVectorization" $ do
-      parseCommandLineOptions ["test", "-bb-vectorize-ignore-target-info"] Nothing
       let
         mIn = Module "<string>" Nothing Nothing [
          GlobalDefinition $ Function L.External V.Default CC.C [] (FloatingPointType 64 IEEE) (Name "foo") ([
