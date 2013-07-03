@@ -15,6 +15,7 @@ import Control.Exception
 
 import Foreign.Ptr
 import Foreign.Marshal.Alloc (free)
+import Data.ByteString (ByteString)
 
 import qualified LLVM.General.Internal.FFI.Assembly as FFI
 import qualified LLVM.General.Internal.FFI.Builder as FFI
@@ -23,10 +24,13 @@ import qualified LLVM.General.Internal.FFI.GlobalAlias as FFI
 import qualified LLVM.General.Internal.FFI.GlobalValue as FFI
 import qualified LLVM.General.Internal.FFI.GlobalVariable as FFI
 import qualified LLVM.General.Internal.FFI.Iterate as FFI
+import qualified LLVM.General.Internal.FFI.LLVMCTypes as FFI
+import qualified LLVM.General.Internal.FFI.MemoryBuffer as FFI
+import qualified LLVM.General.Internal.FFI.Metadata as FFI
 import qualified LLVM.General.Internal.FFI.Module as FFI
 import qualified LLVM.General.Internal.FFI.PtrHierarchy as FFI
+import qualified LLVM.General.Internal.FFI.Target as FFI
 import qualified LLVM.General.Internal.FFI.Value as FFI
-import qualified LLVM.General.Internal.FFI.Metadata as FFI
 
 import LLVM.General.Internal.BasicBlock
 import LLVM.General.Internal.Coding
@@ -37,11 +41,14 @@ import LLVM.General.Internal.Diagnostic
 import LLVM.General.Internal.EncodeAST
 import LLVM.General.Internal.Function
 import LLVM.General.Internal.Global
+import LLVM.General.Internal.Instruction ()
+import LLVM.General.Internal.MemoryBuffer ()
 import LLVM.General.Internal.Metadata
 import LLVM.General.Internal.Operand
+import LLVM.General.Internal.String
+import LLVM.General.Internal.Target
 import LLVM.General.Internal.Type
 import LLVM.General.Internal.Value
-import LLVM.General.Internal.Instruction ()
 
 import LLVM.General.Diagnostic
 
@@ -73,10 +80,40 @@ writeBitcodeToFile :: FilePath -> Module -> IO ()
 writeBitcodeToFile path (Module m) = flip runAnyContT return $ do
   msgPtr <- alloca
   path <- encodeM path
-  result <- liftIO $ FFI.writeBitcodeToFile m path msgPtr
-  when (result /= 0) $ do
+  result <- decodeM =<< (liftIO $ FFI.writeBitcodeToFile m path msgPtr)
+  when result $ do
     msg <- anyContT $ bracket (peek msgPtr) free
     fail =<< decodeM msg
+
+emitToFile :: FFI.CodeGenFileType -> TargetMachine -> FilePath -> Module -> IO ()
+emitToFile fileType (TargetMachine tm) path (Module m) = flip runAnyContT return $ do
+  msgPtr <- alloca
+  path <- encodeM path
+  result <- decodeM =<< (liftIO $ FFI.targetMachineEmitToFile tm m path fileType msgPtr)
+  when result $ fail =<< decodeM =<< anyContT (bracket (peek msgPtr) free)
+
+writeAssemblyToFile :: TargetMachine -> FilePath -> Module -> IO ()
+writeAssemblyToFile = emitToFile FFI.codeGenFileTypeAssembly
+
+writeObjectToFile :: TargetMachine -> FilePath -> Module -> IO ()
+writeObjectToFile = emitToFile FFI.codeGenFileTypeObject
+
+emitToByteString :: FFI.CodeGenFileType -> TargetMachine -> Module -> IO ByteString
+emitToByteString fileType (TargetMachine tm) (Module m) = flip runAnyContT return $ do
+  msgPtr <- alloca
+  memoryBufferPtr <- alloca
+  result <- decodeM =<< (liftIO $ FFI.targetMachineEmitToMemoryBuffer tm m fileType msgPtr memoryBufferPtr)
+  if result 
+    then
+        fail =<< decodeM =<< anyContT (bracket (peek msgPtr) free)
+    else
+        decodeM =<< anyContT (bracket (peek memoryBufferPtr) FFI.disposeMemoryBuffer)
+
+moduleAssembly :: TargetMachine -> Module -> IO String
+moduleAssembly tm m = decodeM . UTF8ByteString =<< emitToByteString FFI.codeGenFileTypeAssembly tm m
+
+moduleObject :: TargetMachine -> Module -> IO ByteString
+moduleObject = emitToByteString FFI.codeGenFileTypeObject
 
 setTargetTriple :: Ptr FFI.Module -> String -> IO ()
 setTargetTriple m t = flip runAnyContT return $ do

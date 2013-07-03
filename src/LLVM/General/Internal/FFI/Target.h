@@ -21,6 +21,10 @@
 	macro(Default)																				\
 	macro(Aggressive)
 
+#define LLVM_GENERAL_FOR_EACH_CODE_GEN_FILE_TYPE(macro)	\
+	macro(Assembly)                                       \
+	macro(Object)
+
 #define LLVM_GENERAL_FOR_EACH_TARGET_OPTION_FLAG(macro)	\
 	macro(PrintMachineCode)																\
 	macro(NoFramePointerElim)															\

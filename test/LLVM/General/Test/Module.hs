@@ -13,6 +13,7 @@ import Data.Functor
 import LLVM.General.Context
 import LLVM.General.Module
 import LLVM.General.Diagnostic
+import LLVM.General.Target
 import LLVM.General.AST
 import LLVM.General.AST.AddrSpace
 import qualified LLVM.General.AST.IntegerPredicate as IPred
@@ -23,6 +24,10 @@ import qualified LLVM.General.AST.CallingConvention as CC
 import qualified LLVM.General.AST.Attribute as A
 import qualified LLVM.General.AST.Global as G
 import qualified LLVM.General.AST.Constant as C
+
+import qualified LLVM.General.Relocation as R
+import qualified LLVM.General.CodeModel as CM
+import qualified LLVM.General.CodeGenOpt as CGO
 
 handString = "; ModuleID = '<string>'\n\
     \\n\
@@ -205,6 +210,33 @@ tests = testGroup "Module" [
               \}\n"
       z <- withModuleFromString' context s (const $ return 0)
       z @?= 0
+   ],
+
+  testGroup "emit" [
+    testCase "assemble" $ withContext $ \context -> do
+      let s = "define i32 @main(i32 %argc, i8** %argv) {\n\
+              \  ret i32 0\n\
+              \}\n"
+      a <- withModuleFromString' context s $ \m -> do
+        Right (t, _) <- lookupTarget Nothing "x86_64-unknown-linux"
+        withTargetOptions $ \to -> do
+          withTargetMachine t "" "" "" to R.Default CM.Default CGO.Default $ \tm -> do
+            moduleAssembly tm m
+      a @?= "\t.file\t\"<string>\"\n\
+            \\t.text\n\
+            \\t.globl\tmain\n\
+            \\t.align\t16, 0x90\n\
+            \\t.type\tmain,@function\n\
+            \main:\n\
+            \\t.cfi_startproc\n\
+            \\txorl\t%eax, %eax\n\
+            \\tret\n\
+            \.Ltmp0:\n\
+            \\t.size\tmain, .Ltmp0-main\n\
+            \\t.cfi_endproc\n\
+            \\n\
+            \\n\
+            \\t.section\t\".note.GNU-stack\",\"\",@progbits\n"
    ],
 
   testCase "handStringIsCanonical" $ withContext $ \context -> do

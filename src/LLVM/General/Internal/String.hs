@@ -20,17 +20,26 @@ import qualified Data.ByteString as BS
 import qualified Data.Text as T
 import qualified Data.Text.Encoding as T
 
+newtype UTF8ByteString = UTF8ByteString { utf8Bytes :: BS.ByteString }
+
+instance (Monad e) => EncodeM e String UTF8ByteString where
+  encodeM = return . UTF8ByteString . T.encodeUtf8 . T.pack
+
+instance (MonadIO d) => DecodeM d String UTF8ByteString where
+  decodeM = return . T.unpack . T.decodeUtf8 . utf8Bytes
+
+
 instance (MonadAnyCont IO e) => EncodeM e String CString where
-  encodeM s = anyContToM (BS.useAsCString . T.encodeUtf8 . T.pack $ s)
+  encodeM s = anyContToM (BS.useAsCString . utf8Bytes =<< encodeM s)
 
 instance (Integral i, MonadAnyCont IO e) => EncodeM e String (Ptr CChar, i) where
-  encodeM s = anyContToM ((. (. second fromIntegral)) . BS.useAsCStringLen . T.encodeUtf8 . T.pack $ s)
+  encodeM s = anyContToM ((. (. second fromIntegral)) $ BS.useAsCStringLen . utf8Bytes =<< encodeM s)
 
 instance (MonadIO d) => DecodeM d String CString where
-  decodeM = liftIO . liftM (T.unpack . T.decodeUtf8) . BS.packCString
+  decodeM = decodeM . UTF8ByteString <=< liftIO . BS.packCString
 
 instance (Integral i, MonadIO d) => DecodeM d String (Ptr CChar, i) where
-  decodeM = liftIO . liftM (T.unpack . T.decodeUtf8) . BS.packCStringLen . second fromIntegral
+  decodeM = decodeM . UTF8ByteString <=< liftIO . BS.packCStringLen . second fromIntegral
 
 instance (Integral i, Storable i, MonadIO d) => DecodeM d String (Ptr i -> IO (Ptr CChar)) where
   decodeM f = decodeM =<< (liftIO $ F.M.alloca $ \p -> (,) `liftM` f p `ap` peek p)

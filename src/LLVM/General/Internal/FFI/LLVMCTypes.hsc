@@ -150,6 +150,11 @@ newtype CodeGenOptLevel = CodeGenOptLevel CUInt
 #define CGOL_Rec(n) { #n, LLVMCodeGenLevel ## n },
 #{inject CODE_GEN_OPT_LEVEL, CodeGenOptLevel, CodeGenOptLevel, codeGenOptLevel, CGOL_Rec}
 
+newtype CodeGenFileType = CodeGenFileType CUInt
+  deriving (Eq, Read, Show, Typeable, Data)
+#define CGFT_Rec(n) { #n, LLVM ## n ## File },
+#{inject CODE_GEN_FILE_TYPE, CodeGenFileType, CodeGenFileType, codeGenFileType, CGFT_Rec}
+
 newtype FloatABIType = FloatABIType CUInt
   deriving (Eq, Read, Show, Typeable, Data)
 #define FAT_Rec(n) { #n, LLVM_General_FloatABI_ ## n },

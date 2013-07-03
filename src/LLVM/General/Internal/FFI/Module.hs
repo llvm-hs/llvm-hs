@@ -2,14 +2,14 @@
   ForeignFunctionInterface,
   EmptyDataDecls
   #-}
-
 module LLVM.General.Internal.FFI.Module where
 
 import Foreign.Ptr
 import Foreign.C
 
-import LLVM.General.Internal.FFI.PtrHierarchy
 import LLVM.General.Internal.FFI.Context
+import LLVM.General.Internal.FFI.LLVMCTypes
+import LLVM.General.Internal.FFI.PtrHierarchy
 import LLVM.General.Internal.FFI.Type
 
 data Module
@@ -89,4 +89,4 @@ foreign import ccall unsafe "LLVM_General_ModuleGetInlineAsm" moduleGetInlineAsm
   Ptr Module -> IO (ModuleAsm CString)
 
 foreign import ccall unsafe "LLVM_General_WriteBitcodeToFile" writeBitcodeToFile ::
-  Ptr Module -> CString -> Ptr CString -> IO Int
+  Ptr Module -> CString -> Ptr CString -> IO LLVMBool

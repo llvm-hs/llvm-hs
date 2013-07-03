@@ -111,6 +111,7 @@ library
     LLVM.General.Internal.Instruction
     LLVM.General.Internal.InstructionDefs
     LLVM.General.Internal.IntegerPredicate
+    LLVM.General.Internal.MemoryBuffer
     LLVM.General.Internal.Metadata
     LLVM.General.Internal.Module
     LLVM.General.Internal.Operand
@@ -138,6 +139,7 @@ library
     LLVM.General.Internal.FFI.InstructionDefs
     LLVM.General.Internal.FFI.Iterate
     LLVM.General.Internal.FFI.LLVMCTypes
+    LLVM.General.Internal.FFI.MemoryBuffer
     LLVM.General.Internal.FFI.Metadata
     LLVM.General.Internal.FFI.Module
     LLVM.General.Internal.FFI.PassManager
