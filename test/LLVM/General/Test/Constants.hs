@@ -109,6 +109,11 @@ tests = testGroup "Constants" [
       C.Vector [C.Int 32 i | i <- [1,2,1]],
       "global <3 x i32> <i32 1, i32 2, i32 1>"
     ), (
+      "undef",
+      IntegerType 32,
+      C.Undef (IntegerType 32),
+      "global i32 undef"
+    ), (
       "binop/cast",
       IntegerType 64,
       C.Add (C.PtrToInt (C.GlobalReference (UnName 1)) (IntegerType 64)) (C.Int 64 2),

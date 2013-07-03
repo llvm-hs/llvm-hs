@@ -123,7 +123,7 @@ foreign import ccall unsafe "LLVM_General_GetConstPredicate" getConstantFCmpPred
 foreign import ccall unsafe "LLVM_General_GetConstIndices" getConstantIndices ::
   Ptr Constant -> Ptr CUInt -> IO (Ptr CUInt)
 
-foreign import ccall unsafe "LLVMGetUndef" getUndef ::
+foreign import ccall unsafe "LLVMGetUndef" constantUndef ::
   Ptr Type -> IO (Ptr Constant)
 
 foreign import ccall unsafe "LLVMBlockAddress" blockAddress ::
