@@ -4,6 +4,8 @@ import Test.Framework
 import Test.Framework.Providers.HUnit
 import Test.HUnit
 
+import LLVM.General.Test.Support
+
 import Data.Functor
 import qualified Data.Map as Map
 
@@ -91,11 +93,9 @@ handAST =
       ]
 
 optimize :: PassManagerSpecification s => s -> A.Module -> IO A.Module
-optimize s m = do
-  mOut <- withContext $ \context -> withModuleFromAST context m $ \mIn' -> do
-                  withPassManager s $ \pm -> runPassManager pm mIn'
-                  moduleAST mIn'
-  either fail return mOut
+optimize s m = withContext $ \context -> withModuleFromAST' context m $ \mIn' -> do
+  withPassManager s $ \pm -> runPassManager pm mIn'
+  moduleAST mIn'
 
 tests = testGroup "Optimization" [
   testCase "curated" $ do
@@ -290,7 +290,7 @@ tests = testGroup "Optimization" [
       -- how unwinding works (as is the invoke instruction)
       withContext $ \context -> do
         let triple = "x86_64-apple-darwin"
-        Right (target, _) <- lookupTarget Nothing triple
+        (target, _) <- failInIO $ lookupTarget Nothing triple
         withTargetOptions $ \targetOptions -> do
           withTargetMachine target triple "" "" targetOptions
                             R.Default CM.Default CGO.Default $ \targetMachine -> do
@@ -306,7 +306,7 @@ tests = testGroup "Optimization" [
                             )
                           ]
                      ] 
-              Right astOut <- withModuleFromAST context astIn $ \mIn -> do
+              astOut <- withModuleFromAST' context astIn $ \mIn -> do
                 runPassManager passManager mIn
                 moduleAST mIn
               astOut @?= Module "<string>" Nothing Nothing [

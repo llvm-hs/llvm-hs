@@ -4,6 +4,8 @@ import Test.Framework
 import Test.Framework.Providers.HUnit
 import Test.HUnit
 
+import LLVM.General.Test.Support
+
 import LLVM.General.Context
 import LLVM.General.Module
 import LLVM.General.AST
@@ -13,7 +15,7 @@ tests = testGroup "Global" [
   testGroup "Alignment" [
     testCase name $ withContext $ \context -> do
       let ast = Module "<string>" Nothing Nothing [ GlobalDefinition g ]
-      Right ast' <- withModuleFromAST context ast moduleAST
+      ast' <- withModuleFromAST' context ast moduleAST
       ast' @?= ast
     | a <- [0,1],
       s <- [Nothing, Just "foo"],

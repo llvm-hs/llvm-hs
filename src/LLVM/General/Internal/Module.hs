@@ -1,14 +1,15 @@
 {-#
   LANGUAGE
   TupleSections,
-  ScopedTypeVariables
+  ScopedTypeVariables,
+  FlexibleInstances
   #-}
-
 -- | This Haskell module is for/of functions for handling LLVM modules.
 module LLVM.General.Internal.Module where
 
 import Control.Monad.Trans
 import Control.Monad.State
+import Control.Monad.Error
 import Control.Monad.AnyCont
 import Control.Applicative
 import Control.Exception
@@ -60,30 +61,31 @@ import qualified LLVM.General.AST.Global as A.G
 -- | <http://llvm.org/doxygen/classllvm_1_1Module.html>
 newtype Module = Module (Ptr FFI.Module)
 
+instance Error (Either String Diagnostic) where
+    strMsg = Left
+
 -- | parse 'Module' from LLVM assembly
-withModuleFromString :: Context -> String -> (Module -> IO a) -> IO (Either Diagnostic a)
+withModuleFromString :: Context -> String -> (Module -> IO a) -> ErrorT (Either String Diagnostic) IO a
 withModuleFromString (Context c) s f = flip runAnyContT return $ do
   s <- encodeM s
-  liftIO $ withSMDiagnostic $ \smDiag -> do
-    m <- FFI.getModuleFromAssemblyInContext c s smDiag
-    if m == nullPtr then
-      Left <$> getDiagnostic smDiag
-     else
-      Right <$> finally (f (Module m)) (FFI.disposeModule m)
+  smDiag <- anyContToM withSMDiagnostic
+  m <- anyContToM $ bracket (FFI.getModuleFromAssemblyInContext c s smDiag) FFI.disposeModule
+  when (m == nullPtr) $ throwError . Right =<< liftIO (getDiagnostic smDiag)
+  liftIO $ f (Module m)
 
 -- | generate LLVM assembly from a 'Module'
 moduleString :: Module -> IO String
 moduleString (Module m) = bracket (FFI.getModuleAssembly m) free $ decodeM
 
 -- | generate LLVM bitcode from a 'Module'
-writeBitcodeToFile :: FilePath -> Module -> IO ()
+writeBitcodeToFile :: FilePath -> Module -> ErrorT String IO ()
 writeBitcodeToFile path (Module m) = flip runAnyContT return $ do
   msgPtr <- alloca
   path <- encodeM path
   result <- decodeM =<< (liftIO $ FFI.writeBitcodeToFile m path msgPtr)
   when result $ fail =<< (decodeM =<< (anyContToM $ bracket (peek msgPtr) free))
 
-emitToFile :: FFI.CodeGenFileType -> TargetMachine -> FilePath -> Module -> IO ()
+emitToFile :: FFI.CodeGenFileType -> TargetMachine -> FilePath -> Module -> ErrorT String IO ()
 emitToFile fileType (TargetMachine tm) path (Module m) = flip runAnyContT return $ do
   msgPtr <- alloca
   path <- encodeM path
@@ -91,14 +93,14 @@ emitToFile fileType (TargetMachine tm) path (Module m) = flip runAnyContT return
   when result $ fail =<< decodeM =<< anyContToM (bracket (peek msgPtr) free)
 
 -- | write target-specific assembly directly into a file
-writeAssemblyToFile :: TargetMachine -> FilePath -> Module -> IO ()
+writeAssemblyToFile :: TargetMachine -> FilePath -> Module -> ErrorT String IO ()
 writeAssemblyToFile = emitToFile FFI.codeGenFileTypeAssembly
 
 -- | write target-specific object code directly into a file
-writeObjectToFile :: TargetMachine -> FilePath -> Module -> IO ()
+writeObjectToFile :: TargetMachine -> FilePath -> Module -> ErrorT String IO ()
 writeObjectToFile = emitToFile FFI.codeGenFileTypeObject
 
-emitToByteString :: FFI.CodeGenFileType -> TargetMachine -> Module -> IO ByteString
+emitToByteString :: FFI.CodeGenFileType -> TargetMachine -> Module -> ErrorT String IO ByteString
 emitToByteString fileType (TargetMachine tm) (Module m) = flip runAnyContT return $ do
   msgPtr <- alloca
   memoryBufferPtr <- alloca
@@ -110,15 +112,15 @@ emitToByteString fileType (TargetMachine tm) (Module m) = flip runAnyContT retur
         decodeM =<< anyContToM (bracket (peek memoryBufferPtr) FFI.disposeMemoryBuffer)
 
 -- | produce target-specific assembly as a 'String'
-moduleAssembly :: TargetMachine -> Module -> IO String
+moduleAssembly :: TargetMachine -> Module -> ErrorT String IO String
 moduleAssembly tm m = decodeM . UTF8ByteString =<< emitToByteString FFI.codeGenFileTypeAssembly tm m
 
 -- | produce target-specific object code as a 'ByteString'
-moduleObject :: TargetMachine -> Module -> IO ByteString
+moduleObject :: TargetMachine -> Module -> ErrorT String IO ByteString
 moduleObject = emitToByteString FFI.codeGenFileTypeObject
 
-setTargetTriple :: Ptr FFI.Module -> String -> IO ()
-setTargetTriple m t = flip runAnyContT return $ do
+setTargetTriple :: Ptr FFI.Module -> String -> EncodeAST ()
+setTargetTriple m t = do
   t <- encodeM t
   liftIO $ FFI.setTargetTriple m t
 
@@ -127,8 +129,8 @@ getTargetTriple m = do
   s <- decodeM =<< liftIO (FFI.getTargetTriple m)
   return $ if s == "" then Nothing else Just s
 
-setDataLayout :: Ptr FFI.Module -> A.DataLayout -> IO ()
-setDataLayout m dl = flip runAnyContT return $ do
+setDataLayout :: Ptr FFI.Module -> A.DataLayout -> EncodeAST ()
+setDataLayout m dl = do
   s <- encodeM (dataLayoutToString dl)
   liftIO $ FFI.setDataLayout m s
 
@@ -139,119 +141,117 @@ type P a = a -> a
 
 -- | Build an LLVM.General.'Module' from a LLVM.General.AST.'LLVM.General.AST.Module' - i.e.
 -- lower an AST from Haskell into C++ objects.
-withModuleFromAST :: Context -> A.Module -> (Module -> IO a) -> IO (Either String a)
-withModuleFromAST context@(Context c) (A.Module moduleId dataLayout triple definitions) f = do
-  let makeModule = flip runAnyContT return $ do
-                     moduleId <- encodeM moduleId
-                     liftIO $ FFI.moduleCreateWithNameInContext moduleId c
-  bracket makeModule FFI.disposeModule $ \m -> do
-    maybe (return ()) (setDataLayout m) dataLayout
-    maybe (return ()) (setTargetTriple m) triple
-    let sequencePhases :: EncodeAST [EncodeAST (EncodeAST (EncodeAST (EncodeAST ())))] -> EncodeAST ()
-        sequencePhases l = (l >>= (sequence >=> sequence >=> sequence >=> sequence)) >> (return ())
+withModuleFromAST :: Context -> A.Module -> (Module -> IO a) -> ErrorT String IO a
+withModuleFromAST context@(Context c) (A.Module moduleId dataLayout triple definitions) f = runEncodeAST context $ do
+  moduleId <- encodeM moduleId
+  m <- anyContToM $ bracket (FFI.moduleCreateWithNameInContext moduleId c) FFI.disposeModule
+  maybe (return ()) (setDataLayout m) dataLayout
+  maybe (return ()) (setTargetTriple m) triple
+  let sequencePhases :: EncodeAST [EncodeAST (EncodeAST (EncodeAST (EncodeAST ())))] -> EncodeAST ()
+      sequencePhases l = (l >>= (sequence >=> sequence >=> sequence >=> sequence)) >> (return ())
 
-    r <- runEncodeAST context $ sequencePhases $ forM definitions $ \d -> case d of
-      A.TypeDefinition n t -> do
-        t' <- createNamedType n
-        defineType n t'
-        return $ do
-          maybe (return ()) (setNamedType t') t
-          return . return . return $ return ()
+  sequencePhases $ forM definitions $ \d -> case d of
+   A.TypeDefinition n t -> do
+     t' <- createNamedType n
+     defineType n t'
+     return $ do
+       maybe (return ()) (setNamedType t') t
+       return . return . return $ return ()
 
-      A.MetadataNodeDefinition i os -> return . return $ do
-        t <- liftIO $ FFI.createTemporaryMDNodeInContext c
-        defineMDNode i t
-        return $ do
-          n <- encodeM (A.MetadataNode os)
-          liftIO $ FFI.replaceAllUsesWith (FFI.upCast t) (FFI.upCast n)
-          defineMDNode i n
-          liftIO $ FFI.destroyTemporaryMDNode t
-          return $ return ()
+   A.MetadataNodeDefinition i os -> return . return $ do
+     t <- liftIO $ FFI.createTemporaryMDNodeInContext c
+     defineMDNode i t
+     return $ do
+       n <- encodeM (A.MetadataNode os)
+       liftIO $ FFI.replaceAllUsesWith (FFI.upCast t) (FFI.upCast n)
+       defineMDNode i n
+       liftIO $ FFI.destroyTemporaryMDNode t
+       return $ return ()
 
-      A.NamedMetadataDefinition n ids -> return . return . return . return $ do
-        n <- encodeM n
-        ids <- encodeM (map A.MetadataNodeReference ids)
-        nm <- liftIO $ FFI.getOrAddNamedMetadata m n
-        liftIO $ FFI.namedMetadataAddOperands nm ids
-        return ()
+   A.NamedMetadataDefinition n ids -> return . return . return . return $ do
+     n <- encodeM n
+     ids <- encodeM (map A.MetadataNodeReference ids)
+     nm <- liftIO $ FFI.getOrAddNamedMetadata m n
+     liftIO $ FFI.namedMetadataAddOperands nm ids
+     return ()
 
-      A.ModuleInlineAssembly s -> do
-        s <- encodeM s
-        liftIO $ FFI.moduleAppendInlineAsm m (FFI.ModuleAsm s)
-        return . return . return . return $ return ()
+   A.ModuleInlineAssembly s -> do
+     s <- encodeM s
+     liftIO $ FFI.moduleAppendInlineAsm m (FFI.ModuleAsm s)
+     return . return . return . return $ return ()
 
-      A.GlobalDefinition g -> return . phase $ do
-        eg' :: EncodeAST (Ptr FFI.GlobalValue) <- case g of
-          g@(A.GlobalVariable { A.G.name = n }) -> do
-            typ <- encodeM (A.G.type' g)
-            g' <- liftIO $ withName n $ \gName -> 
-                      FFI.addGlobalInAddressSpace m typ gName 
-                             (fromIntegral ((\(A.AddrSpace a) -> a) $ A.G.addrSpace g))
-            defineGlobal n g'
-            liftIO $ do
-              tl <- encodeM (A.G.isThreadLocal g)
-              FFI.setThreadLocal g' tl
-              hua <- encodeM (A.G.hasUnnamedAddr g)
-              FFI.setUnnamedAddr (FFI.upCast g') hua
-              ic <- encodeM (A.G.isConstant g)
-              FFI.setGlobalConstant g' ic
-            return $ do
-              maybe (return ()) ((liftIO . FFI.setInitializer g') <=< encodeM) (A.G.initializer g)
-              setSection g' (A.G.section g)
-              setAlignment g' (A.G.alignment g)
-              return (FFI.upCast g')
-          (a@A.G.GlobalAlias { A.G.name = n }) -> do
-            typ <- encodeM (A.G.type' a)
-            a' <- liftIO $ withName n $ \name -> FFI.justAddAlias m typ name
-            defineGlobal n a'
-            return $ do
-              (liftIO . FFI.setAliasee a') =<< encodeM (A.G.aliasee a)
-              return (FFI.upCast a')
-          (A.Function _ _ cc rAttrs resultType fName (args,isVarArgs) attrs _ _ blocks) -> do
-            typ <- encodeM $ A.FunctionType resultType (map (\(A.Parameter t _ _) -> t) args) isVarArgs
-            f <- liftIO . withName fName $ \fName -> FFI.addFunction m fName typ
-            defineGlobal fName f
-            cc <- encodeM cc
-            liftIO $ FFI.setFunctionCallConv f cc
-            rAttrs <- encodeM rAttrs
-            liftIO $ FFI.addFunctionRetAttr f rAttrs
-            liftIO $ setFunctionAttrs f attrs
-            setSection f (A.G.section g)
-            setAlignment f (A.G.alignment g)
-            forM blocks $ \(A.BasicBlock bName _ _) -> do
-              b <- liftIO $ withName bName $ \bName -> FFI.appendBasicBlockInContext c f bName
-              defineBasicBlock fName bName b
-            phase $ do
-              let nParams = length args
-              ps <- allocaArray nParams
-              liftIO $ FFI.getParams f ps
-              params <- peekArray nParams ps
-              forM (zip args params) $ \(A.Parameter _ n attrs, p) -> do
-                defineLocal n p
-                n <- encodeM n
-                liftIO $ FFI.setValueName (FFI.upCast p) n
-                unless (null attrs) $
-                       do attrs <- encodeM attrs
-                          liftIO $ FFI.addAttribute p attrs
-                          return ()
-                return ()
-              finishInstrs <- forM blocks $ \(A.BasicBlock bName namedInstrs term) -> do
-                b <- encodeM bName
-                (do
-                  builder <- gets encodeStateBuilder
-                  liftIO $ FFI.positionBuilderAtEnd builder b)
-                finishes <- mapM encodeM namedInstrs :: EncodeAST [EncodeAST ()]
-                (encodeM term :: EncodeAST (Ptr FFI.Instruction))
-                return (sequence_ finishes)
-              sequence_ finishInstrs
-              return (FFI.upCast f)
-        return $ do
-          g' <- eg'
-          setLinkage g' (A.G.linkage g)
-          setVisibility g' (A.G.visibility g)
-          return $ return ()
-          
-    either (return . Left) (const $ Right <$> f (Module m)) r
+   A.GlobalDefinition g -> return . phase $ do
+     eg' :: EncodeAST (Ptr FFI.GlobalValue) <- case g of
+       g@(A.GlobalVariable { A.G.name = n }) -> do
+         typ <- encodeM (A.G.type' g)
+         g' <- liftIO $ withName n $ \gName -> 
+                   FFI.addGlobalInAddressSpace m typ gName 
+                          (fromIntegral ((\(A.AddrSpace a) -> a) $ A.G.addrSpace g))
+         defineGlobal n g'
+         liftIO $ do
+           tl <- encodeM (A.G.isThreadLocal g)
+           FFI.setThreadLocal g' tl
+           hua <- encodeM (A.G.hasUnnamedAddr g)
+           FFI.setUnnamedAddr (FFI.upCast g') hua
+           ic <- encodeM (A.G.isConstant g)
+           FFI.setGlobalConstant g' ic
+         return $ do
+           maybe (return ()) ((liftIO . FFI.setInitializer g') <=< encodeM) (A.G.initializer g)
+           setSection g' (A.G.section g)
+           setAlignment g' (A.G.alignment g)
+           return (FFI.upCast g')
+       (a@A.G.GlobalAlias { A.G.name = n }) -> do
+         typ <- encodeM (A.G.type' a)
+         a' <- liftIO $ withName n $ \name -> FFI.justAddAlias m typ name
+         defineGlobal n a'
+         return $ do
+           (liftIO . FFI.setAliasee a') =<< encodeM (A.G.aliasee a)
+           return (FFI.upCast a')
+       (A.Function _ _ cc rAttrs resultType fName (args,isVarArgs) attrs _ _ blocks) -> do
+         typ <- encodeM $ A.FunctionType resultType (map (\(A.Parameter t _ _) -> t) args) isVarArgs
+         f <- liftIO . withName fName $ \fName -> FFI.addFunction m fName typ
+         defineGlobal fName f
+         cc <- encodeM cc
+         liftIO $ FFI.setFunctionCallConv f cc
+         rAttrs <- encodeM rAttrs
+         liftIO $ FFI.addFunctionRetAttr f rAttrs
+         liftIO $ setFunctionAttrs f attrs
+         setSection f (A.G.section g)
+         setAlignment f (A.G.alignment g)
+         forM blocks $ \(A.BasicBlock bName _ _) -> do
+           b <- liftIO $ withName bName $ \bName -> FFI.appendBasicBlockInContext c f bName
+           defineBasicBlock fName bName b
+         phase $ do
+           let nParams = length args
+           ps <- allocaArray nParams
+           liftIO $ FFI.getParams f ps
+           params <- peekArray nParams ps
+           forM (zip args params) $ \(A.Parameter _ n attrs, p) -> do
+             defineLocal n p
+             n <- encodeM n
+             liftIO $ FFI.setValueName (FFI.upCast p) n
+             unless (null attrs) $
+                    do attrs <- encodeM attrs
+                       liftIO $ FFI.addAttribute p attrs
+                       return ()
+             return ()
+           finishInstrs <- forM blocks $ \(A.BasicBlock bName namedInstrs term) -> do
+             b <- encodeM bName
+             (do
+               builder <- gets encodeStateBuilder
+               liftIO $ FFI.positionBuilderAtEnd builder b)
+             finishes <- mapM encodeM namedInstrs :: EncodeAST [EncodeAST ()]
+             (encodeM term :: EncodeAST (Ptr FFI.Instruction))
+             return (sequence_ finishes)
+           sequence_ finishInstrs
+           return (FFI.upCast f)
+     return $ do
+       g' <- eg'
+       setLinkage g' (A.G.linkage g)
+       setVisibility g' (A.G.visibility g)
+       return $ return ()
+
+  liftIO $ f (Module m)     
 
 -- | Get an LLVM.General.AST.'LLVM.General.AST.Module' from a LLVM.General.'Module' - i.e.
 -- raise C++ objects into an Haskell AST.

@@ -8,9 +8,9 @@
 module LLVM.General.Internal.Target where
 
 import Control.Monad
+import Control.Monad.Error
 import Control.Exception
 import Data.Functor
-import Control.Monad.IO.Class
 import Control.Monad.AnyCont
 
 import Foreign.Ptr
@@ -69,7 +69,7 @@ newtype Target = Target (Ptr FFI.Target)
 lookupTarget :: 
   Maybe String -- ^ arch
   -> String -- ^ \"triple\" - e.g. x86_64-unknown-linux-gnu
-  -> IO (Either String (Target, String))
+  -> ErrorT String IO (Target, String)
 lookupTarget arch triple = flip runAnyContT return $ do
   cErrorP <- alloca
   cNewTripleP <- alloca
@@ -81,10 +81,8 @@ lookupTarget arch triple = flip runAnyContT return $ do
         r <- decodeM s
         liftIO $ free s
         return r
-  if (target == nullPtr) then
-     Left <$> readString cErrorP
-   else
-     Right . (Target target, ) <$> readString cNewTripleP
+  when (target == nullPtr) $ fail =<< readString cErrorP
+  liftM (Target target, ) $ readString cNewTripleP
 
 -- | <http://llvm.org/doxygen/classllvm_1_1TargetOptions.html>
 newtype TargetOptions = TargetOptions (Ptr FFI.TargetOptions)

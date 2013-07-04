@@ -8,6 +8,8 @@ import Test.Framework
 import Test.Framework.Providers.HUnit
 import Test.HUnit
 
+import LLVM.General.Test.Support
+
 import Control.Monad
 import Data.Functor
 import Data.Maybe
@@ -47,11 +49,11 @@ testJIT withEE = withContext $ \context -> withEE context $ \executionEngine -> 
                ]
               ]
 
-  s <- withModuleFromAST context mAST $ \m -> do
+  s <- withModuleFromAST' context mAST $ \m -> do
         withModuleInEngine executionEngine m $ \em -> do
           Just p <- getFunction em (Name "_foo")
           (mkIO32Stub ((castFunPtr p) :: FunPtr (Word32 -> IO Word32))) 7
-  s @?= Right 42
+  s @?= 42
 
 tests = testGroup "ExecutionEngine" [
   testCase "run something with JIT" $ testJIT (\c -> withJIT c 2),

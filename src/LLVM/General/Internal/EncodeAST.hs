@@ -59,8 +59,8 @@ lookupNamedType n = do
 defineType :: A.Name -> Ptr FFI.Type -> EncodeAST ()
 defineType n t = modify $ \s -> s { encodeStateNamedTypes = Map.insert n t (encodeStateNamedTypes s) }
 
-runEncodeAST :: Context -> EncodeAST a -> IO (Either String a)
-runEncodeAST context@(Context ctx) (EncodeAST a) = 
+runEncodeAST :: Context -> EncodeAST a -> ErrorT String IO a
+runEncodeAST context@(Context ctx) (EncodeAST a) = ErrorT $ 
     bracket (FFI.createBuilderInContext ctx) FFI.disposeBuilder $ \builder -> do
       let initEncodeState = EncodeState { 
               encodeStateBuilder = builder,

@@ -575,8 +575,8 @@ tests = testGroup "Instructions" [
                \  %1 = load i32* @0, align 1\n\
                \  ret i32 %1\n\
                \}\n"
-    s <- withContext $ \context -> withModuleFromAST context mAST moduleString
-    s @?= Right mStr,
+    s <- withContext $ \context -> withModuleFromAST' context mAST moduleString
+    s @?= mStr,
     
   testGroup "terminators" [
     testCase name $ strCheck mAST mStr

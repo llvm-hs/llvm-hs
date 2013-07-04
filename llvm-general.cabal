@@ -184,7 +184,8 @@ test-suite test
     test-framework-quickcheck2 >= 0.3.0.1,
     QuickCheck >= 2.5.1.1,
     llvm-general >= 0.1,
-    containers >= 0.4.2.1
+    containers >= 0.4.2.1,
+    mtl >= 2.0.1.0
   hs-source-dirs: test
   main-is: Test.hs
   other-modules:
