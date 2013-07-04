@@ -90,9 +90,11 @@ emitToFile fileType (TargetMachine tm) path (Module m) = flip runAnyContT return
   result <- decodeM =<< (liftIO $ FFI.targetMachineEmitToFile tm m path fileType msgPtr)
   when result $ fail =<< decodeM =<< anyContToM (bracket (peek msgPtr) free)
 
+-- | write target-specific assembly directly into a file
 writeAssemblyToFile :: TargetMachine -> FilePath -> Module -> IO ()
 writeAssemblyToFile = emitToFile FFI.codeGenFileTypeAssembly
 
+-- | write target-specific object code directly into a file
 writeObjectToFile :: TargetMachine -> FilePath -> Module -> IO ()
 writeObjectToFile = emitToFile FFI.codeGenFileTypeObject
 
@@ -107,9 +109,11 @@ emitToByteString fileType (TargetMachine tm) (Module m) = flip runAnyContT retur
     else
         decodeM =<< anyContToM (bracket (peek memoryBufferPtr) FFI.disposeMemoryBuffer)
 
+-- | produce target-specific assembly as a 'String'
 moduleAssembly :: TargetMachine -> Module -> IO String
 moduleAssembly tm m = decodeM . UTF8ByteString =<< emitToByteString FFI.codeGenFileTypeAssembly tm m
 
+-- | produce target-specific object code as a 'ByteString'
 moduleObject :: TargetMachine -> Module -> IO ByteString
 moduleObject = emitToByteString FFI.codeGenFileTypeObject
 
