@@ -5,12 +5,12 @@
   #-}
 module Control.Monad.AnyCont (
     MonadAnyCont(..),
+    ScopeAnyCont(..),
     AnyContT(..),
-    LiftAnyCont(..),
+    MonadTransAnyCont(..),
     runAnyContT,
     withAnyContT,
-    mapAnyContT,
-    anyContT
+    mapAnyContT
   ) where
 
 import Control.Monad.Trans.AnyCont

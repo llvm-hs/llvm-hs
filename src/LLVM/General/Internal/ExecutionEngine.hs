@@ -68,14 +68,14 @@ withExecutionEngine c m createEngine f = flip runAnyContT return $ do
   liftIO initializeNativeTarget
   outExecutionEngine <- alloca
   outErrorCStringPtr <- alloca
-  Module dummyModule <- maybe (anyContT $ liftM (either undefined id)
+  Module dummyModule <- maybe (anyContToM $ liftM (either undefined id)
                                    . withModuleFromAST c (A.Module "" Nothing Nothing []))
                         (return . Module) m
   r <- liftIO $ createEngine outExecutionEngine dummyModule outErrorCStringPtr
   when (r /= 0) $ do
-    s <- anyContT $ bracket (peek outErrorCStringPtr) free
+    s <- anyContToM $ bracket (peek outErrorCStringPtr) free
     fail =<< decodeM s
-  executionEngine <- anyContT $ bracket (peek outExecutionEngine) FFI.disposeExecutionEngine
+  executionEngine <- anyContToM $ bracket (peek outExecutionEngine) FFI.disposeExecutionEngine
   liftIO $ removeModule executionEngine dummyModule
   liftIO $ f executionEngine
           

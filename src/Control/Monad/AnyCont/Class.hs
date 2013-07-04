@@ -1,7 +1,6 @@
 {-# LANGUAGE
   RankNTypes,
   MultiParamTypeClasses,
-  FunctionalDependencies,
   FlexibleInstances,
   UndecidableInstances
   #-}
@@ -13,30 +12,44 @@ import qualified Control.Monad.Trans.AnyCont as AnyCont
 import Control.Monad.Trans.Error as Error
 import Control.Monad.Trans.State as State
 
-class MonadAnyCont b m | m -> b where
-  anyContToM :: (forall r . (a -> b r) -> b r) -> m a
+class ScopeAnyCont m where
   scopeAnyCont :: m a -> m a
 
-instance Monad m => MonadAnyCont m (AnyContT m) where
-  anyContToM = AnyCont.anyContT
+class MonadAnyCont b m where
+  anyContToM :: (forall r . (a -> b r) -> b r) -> m a
+
+
+instance MonadTransAnyCont b m => MonadAnyCont b (AnyContT m) where
+  anyContToM c = AnyCont.anyContT (liftAnyCont c)
+
+instance Monad m => ScopeAnyCont (AnyContT m) where
   scopeAnyCont = lift . flip AnyCont.runAnyContT return
                                      
-instance (Error e, Monad m, MonadAnyCont b m) => MonadAnyCont b (ErrorT e m) where
-  anyContToM = lift . anyContToM
-  scopeAnyCont = mapErrorT scopeAnyCont
 
 instance (Monad m, MonadAnyCont b m) => MonadAnyCont b (StateT s m) where
   anyContToM = lift . anyContToM
+
+instance ScopeAnyCont m => ScopeAnyCont (StateT s m) where
   scopeAnyCont = StateT . (scopeAnyCont .) . runStateT
 
-class LiftAnyCont b m where
+
+instance (Error e, Monad m, MonadAnyCont b m) => MonadAnyCont b (ErrorT e m) where
+  anyContToM = lift . anyContToM
+
+instance ScopeAnyCont m => ScopeAnyCont (ErrorT e m) where
+  scopeAnyCont = mapErrorT scopeAnyCont
+
+
+
+
+class MonadTransAnyCont b m where
   liftAnyCont :: (forall r . (a -> b r) -> b r) -> (forall r . (a -> m r) -> m r)
 
-instance LiftAnyCont b b where
+instance MonadTransAnyCont b b where
   liftAnyCont c = c
 
-instance LiftAnyCont b m => LiftAnyCont b (StateT s m) where
-  liftAnyCont c = \q -> StateT $ \s -> (liftAnyCont c (($ s) . runStateT . q))
+instance MonadTransAnyCont b m => MonadTransAnyCont b (StateT s m) where
+  liftAnyCont c = (\c q -> StateT $ \s -> c $ ($ s) . runStateT . q) (liftAnyCont c)
 
-instance LiftAnyCont b m => LiftAnyCont b (ErrorT e m) where
-  liftAnyCont c = \q -> ErrorT (liftAnyCont c (runErrorT . q))
+instance MonadTransAnyCont b m => MonadTransAnyCont b (ErrorT e m) where
+  liftAnyCont c = (\c q -> ErrorT . c $ runErrorT . q) (liftAnyCont c)

@@ -61,12 +61,10 @@ newtype DecodeAST a = DecodeAST { unDecodeAST :: AnyContT (StateT DecodeState IO
     Functor,
     Monad,
     MonadIO,
-    MonadState DecodeState
+    MonadState DecodeState,
+    MonadAnyCont IO,
+    ScopeAnyCont
   )
-
-instance MonadAnyCont IO DecodeAST where
-  anyContToM c = DecodeAST (anyContToM (liftAnyCont c))
-  scopeAnyCont = DecodeAST . scopeAnyCont . unDecodeAST
 
 runDecodeAST :: DecodeAST a -> IO a
 runDecodeAST d = flip evalStateT initialDecode . flip runAnyContT return . unDecodeAST $ d

@@ -25,7 +25,7 @@ newtype UTF8ByteString = UTF8ByteString { utf8Bytes :: BS.ByteString }
 instance (Monad e) => EncodeM e String UTF8ByteString where
   encodeM = return . UTF8ByteString . T.encodeUtf8 . T.pack
 
-instance (MonadIO d) => DecodeM d String UTF8ByteString where
+instance (Monad d) => DecodeM d String UTF8ByteString where
   decodeM = return . T.unpack . T.decodeUtf8 . utf8Bytes
 
 

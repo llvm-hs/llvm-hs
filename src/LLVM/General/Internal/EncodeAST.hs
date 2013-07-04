@@ -46,12 +46,10 @@ newtype EncodeAST a = EncodeAST { unEncodeAST :: AnyContT (ErrorT String (StateT
        Monad,
        MonadIO,
        MonadState EncodeState,
-       MonadError String
+       MonadError String,
+       MonadAnyCont IO,
+       ScopeAnyCont
      )
-
-instance MonadAnyCont IO EncodeAST where
-  anyContToM c = EncodeAST (anyContToM (liftAnyCont c))
-  scopeAnyCont = EncodeAST . scopeAnyCont . unEncodeAST
 
 lookupNamedType :: A.Name -> EncodeAST (Ptr FFI.Type)
 lookupNamedType n = do

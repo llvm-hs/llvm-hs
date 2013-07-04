@@ -81,16 +81,14 @@ writeBitcodeToFile path (Module m) = flip runAnyContT return $ do
   msgPtr <- alloca
   path <- encodeM path
   result <- decodeM =<< (liftIO $ FFI.writeBitcodeToFile m path msgPtr)
-  when result $ do
-    msg <- anyContT $ bracket (peek msgPtr) free
-    fail =<< decodeM msg
+  when result $ fail =<< (decodeM =<< (anyContToM $ bracket (peek msgPtr) free))
 
 emitToFile :: FFI.CodeGenFileType -> TargetMachine -> FilePath -> Module -> IO ()
 emitToFile fileType (TargetMachine tm) path (Module m) = flip runAnyContT return $ do
   msgPtr <- alloca
   path <- encodeM path
   result <- decodeM =<< (liftIO $ FFI.targetMachineEmitToFile tm m path fileType msgPtr)
-  when result $ fail =<< decodeM =<< anyContT (bracket (peek msgPtr) free)
+  when result $ fail =<< decodeM =<< anyContToM (bracket (peek msgPtr) free)
 
 writeAssemblyToFile :: TargetMachine -> FilePath -> Module -> IO ()
 writeAssemblyToFile = emitToFile FFI.codeGenFileTypeAssembly
@@ -105,9 +103,9 @@ emitToByteString fileType (TargetMachine tm) (Module m) = flip runAnyContT retur
   result <- decodeM =<< (liftIO $ FFI.targetMachineEmitToMemoryBuffer tm m fileType msgPtr memoryBufferPtr)
   if result 
     then
-        fail =<< decodeM =<< anyContT (bracket (peek msgPtr) free)
+        fail =<< decodeM =<< anyContToM (bracket (peek msgPtr) free)
     else
-        decodeM =<< anyContT (bracket (peek memoryBufferPtr) FFI.disposeMemoryBuffer)
+        decodeM =<< anyContToM (bracket (peek memoryBufferPtr) FFI.disposeMemoryBuffer)
 
 moduleAssembly :: TargetMachine -> Module -> IO String
 moduleAssembly tm m = decodeM . UTF8ByteString =<< emitToByteString FFI.codeGenFileTypeAssembly tm m
