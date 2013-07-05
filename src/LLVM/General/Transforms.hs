@@ -1,6 +1,3 @@
-{-# LANGUAGE
-  DeriveDataTypeable
-  #-}
 -- | This module provides an enumeration of the various transformation (e.g. optimization) passes
 -- provided by LLVM. They can be used to create a 'LLVM.General.PassManager.PassManager' to, in turn,
 -- run the passes on 'LLVM.General.Module.Module's. If you don't know what passes you want, consider

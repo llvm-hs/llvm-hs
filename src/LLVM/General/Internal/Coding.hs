@@ -1,7 +1,5 @@
 {-# LANGUAGE
   TemplateHaskell,
-  FlexibleInstances,
-  FlexibleContexts,
   MultiParamTypeClasses,
   FunctionalDependencies,
   UndecidableInstances

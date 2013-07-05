@@ -1,8 +1,5 @@
 {-# LANGUAGE
   GeneralizedNewtypeDeriving,
-  FlexibleContexts,
-  FlexibleInstances,
-  TypeFamilies,
   MultiParamTypeClasses,
   UndecidableInstances
   #-}

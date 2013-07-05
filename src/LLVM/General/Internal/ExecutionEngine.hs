@@ -1,7 +1,6 @@
 {-# LANGUAGE
   MultiParamTypeClasses,
   FunctionalDependencies,
-  FlexibleInstances,
   RankNTypes
   #-}
 module LLVM.General.Internal.ExecutionEngine where

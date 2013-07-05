@@ -1,7 +1,6 @@
 {-# LANGUAGE
   RankNTypes,
   MultiParamTypeClasses,
-  FlexibleInstances,
   UndecidableInstances
   #-}
 module Control.Monad.AnyCont.Class where

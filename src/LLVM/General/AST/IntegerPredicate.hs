@@ -1,6 +1,3 @@
-{-# LANGUAGE
-  DeriveDataTypeable 
-  #-}  
 -- | Predicates for the 'LLVM.General.AST.Instruction.ICmp' instruction
 module LLVM.General.AST.IntegerPredicate where
 

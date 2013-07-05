@@ -1,6 +1,3 @@
-{-# LANGUAGE
-  DeriveDataTypeable
-  #-}
 -- | Module to allow importing 'CallingConvention' distinctly qualified.
 module LLVM.General.AST.CallingConvention where
 

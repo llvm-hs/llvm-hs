@@ -54,6 +54,13 @@ library
     setenv >= 0.1.0
   extra-libraries: stdc++
   hs-source-dirs: src
+  extensions:
+    TupleSections
+    DeriveDataTypeable
+    EmptyDataDecls
+    FlexibleContexts
+    FlexibleInstances
+    StandaloneDeriving
   exposed-modules:
     LLVM.General
     LLVM.General.AST
@@ -187,6 +194,10 @@ test-suite test
     containers >= 0.4.2.1,
     mtl >= 2.0.1.0
   hs-source-dirs: test
+  extensions:
+    TupleSections
+    FlexibleInstances
+    FlexibleContexts
   main-is: Test.hs
   other-modules:
     LLVM.General.Test.Constants
@@ -201,4 +212,3 @@ test-suite test
     LLVM.General.Test.Support
     LLVM.General.Test.Target
     LLVM.General.Test.Tests
-    

@@ -1,7 +1,6 @@
 {-# LANGUAGE
   TemplateHaskell,
-  ForeignFunctionInterface,
-  EmptyDataDecls
+  ForeignFunctionInterface
   #-}
 
 module LLVM.General.Internal.FFI.PassManager where

@@ -1,6 +1,5 @@
 {-# LANGUAGE
-  ForeignFunctionInterface,
-  EmptyDataDecls
+  ForeignFunctionInterface
   #-}
 
 -- | Functions for handling the LLVMContext class. In all other LLVM interfaces,

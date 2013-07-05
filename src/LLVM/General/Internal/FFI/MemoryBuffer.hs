@@ -1,6 +1,5 @@
 {-# LANGUAGE
-  ForeignFunctionInterface,
-  EmptyDataDecls
+  ForeignFunctionInterface
   #-}
 module LLVM.General.Internal.FFI.MemoryBuffer where
 

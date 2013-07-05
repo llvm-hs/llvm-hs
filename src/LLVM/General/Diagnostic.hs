@@ -1,6 +1,3 @@
-{-# LANGUAGE
-  DeriveDataTypeable
-  #-}
 -- | Diagnostics describe parse errors
 module LLVM.General.Diagnostic (
   DiagnosticKind(..),

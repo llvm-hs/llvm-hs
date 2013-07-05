@@ -1,7 +1,3 @@
-{-# LANGUAGE
-  DeriveDataTypeable
-  #-}
-  
 -- | Module to allow importing 'Linkage' distinctly qualified.
 module LLVM.General.AST.Linkage where
 

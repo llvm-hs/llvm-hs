@@ -1,9 +1,7 @@
 {-# LANGUAGE
   MultiParamTypeClasses,
-  TemplateHaskell,
-  FlexibleInstances
+  TemplateHaskell
   #-}
-
 module LLVM.General.Internal.FloatingPointPredicate where
 
 import LLVM.General.Internal.Coding

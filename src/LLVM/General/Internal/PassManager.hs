@@ -1,8 +1,6 @@
 {-# LANGUAGE
-  TemplateHaskell,
-  FlexibleInstances
+  TemplateHaskell
   #-}
-
 module LLVM.General.Internal.PassManager where
 
 import qualified Language.Haskell.TH as TH

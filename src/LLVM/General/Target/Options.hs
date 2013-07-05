@@ -1,6 +1,3 @@
-{-# LANGUAGE
-  DeriveDataTypeable 
-  #-}
 -- | <http://llvm.org/doxygen/classllvm_1_1TargetOptions.html>
 module LLVM.General.Target.Options where
 

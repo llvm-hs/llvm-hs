@@ -1,10 +1,8 @@
 {-# LANGUAGE
   TemplateHaskell,
   MultiParamTypeClasses,
-  ConstraintKinds,
-  FlexibleInstances
+  ConstraintKinds
   #-}
-
 module LLVM.General.Internal.Attribute where
 
 import Language.Haskell.TH

@@ -1,6 +1,3 @@
-{-# LANGUAGE
-  DeriveDataTypeable
-  #-}
 -- | Relocations, used in specifying TargetMachine
 module LLVM.General.Relocation where
 

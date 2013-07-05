@@ -1,10 +1,7 @@
 {-# LANGUAGE
   TemplateHaskell,
   QuasiQuotes,
-  TupleSections,
   MultiParamTypeClasses,
-  FlexibleInstances,
-  FlexibleContexts,
   ScopedTypeVariables
   #-}
 module LLVM.General.Internal.Constant where

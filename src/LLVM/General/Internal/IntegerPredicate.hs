@@ -1,9 +1,7 @@
 {-# LANGUAGE
   TemplateHaskell,
-  MultiParamTypeClasses,
-  FlexibleInstances
+  MultiParamTypeClasses
   #-}
-
 module LLVM.General.Internal.IntegerPredicate where
 
 import LLVM.General.Internal.Coding

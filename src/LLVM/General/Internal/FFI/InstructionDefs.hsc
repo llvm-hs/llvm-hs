@@ -1,4 +1,3 @@
-{-# LANGUAGE DeriveDataTypeable #-}
 -- This module translates the instruction data in "llvm/Instruction.def" into a Haskell data structure,
 -- so it may be accessed conveniently with Template Haskell code
 module LLVM.General.Internal.FFI.InstructionDefs where

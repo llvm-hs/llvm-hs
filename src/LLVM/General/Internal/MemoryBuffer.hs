@@ -1,6 +1,5 @@
 {-# LANGUAGE
   MultiParamTypeClasses,
-  FlexibleInstances,
   UndecidableInstances
   #-}
 module LLVM.General.Internal.MemoryBuffer where

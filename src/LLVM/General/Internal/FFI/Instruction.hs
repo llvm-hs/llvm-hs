@@ -1,13 +1,10 @@
 {-# LANGUAGE
   ForeignFunctionInterface,
-  EmptyDataDecls,
   MultiParamTypeClasses,
-  FlexibleInstances,
   UndecidableInstances,
   OverlappingInstances,
   TemplateHaskell
   #-}
-
 module LLVM.General.Internal.FFI.Instruction where
 
 import Control.Monad

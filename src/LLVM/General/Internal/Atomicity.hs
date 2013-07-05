@@ -1,9 +1,7 @@
 {-# LANGUAGE
   TemplateHaskell,
-  MultiParamTypeClasses,
-  FlexibleInstances
+  MultiParamTypeClasses
   #-}
-
 module LLVM.General.Internal.Atomicity where
 
 import Control.Monad

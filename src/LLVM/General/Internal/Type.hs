@@ -1,6 +1,5 @@
 {-# LANGUAGE
   QuasiQuotes,
-  FlexibleInstances,
   MultiParamTypeClasses
   #-}
 module LLVM.General.Internal.Type where

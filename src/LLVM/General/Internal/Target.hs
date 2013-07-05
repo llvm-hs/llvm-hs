@@ -1,8 +1,6 @@
 {-# LANGUAGE
   TemplateHaskell,
-  FlexibleInstances,
   MultiParamTypeClasses,
-  TupleSections,
   RecordWildCards
   #-}
 module LLVM.General.Internal.Target where

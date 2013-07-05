@@ -1,7 +1,6 @@
 {-# LANGUAGE
   ForeignFunctionInterface,
-  GeneralizedNewtypeDeriving,
-  EmptyDataDecls
+  GeneralizedNewtypeDeriving
   #-}
 module LLVM.General.Internal.FFI.Target where
 

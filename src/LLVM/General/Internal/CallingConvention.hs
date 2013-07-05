@@ -1,8 +1,7 @@
 {-# LANGUAGE
   MultiParamTypeClasses,
   TemplateHaskell,
-  QuasiQuotes,
-  FlexibleInstances
+  QuasiQuotes
   #-}
 module LLVM.General.Internal.CallingConvention where
 

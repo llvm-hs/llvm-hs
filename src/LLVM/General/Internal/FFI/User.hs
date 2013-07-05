@@ -1,12 +1,9 @@
 {-# LANGUAGE
   ForeignFunctionInterface,
-  EmptyDataDecls,
   MultiParamTypeClasses,
-  FlexibleInstances,
   UndecidableInstances,
   OverlappingInstances
   #-}
-
 -- | FFI functions for handling the LLVM User class
 module LLVM.General.Internal.FFI.User where
 

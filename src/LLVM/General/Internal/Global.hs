@@ -1,8 +1,6 @@
 {-# LANGUAGE
   TemplateHaskell,
-  FlexibleInstances,
-  MultiParamTypeClasses,
-  FlexibleContexts
+  MultiParamTypeClasses
   #-}
 module LLVM.General.Internal.Global where
 

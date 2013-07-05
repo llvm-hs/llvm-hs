@@ -1,6 +1,3 @@
-{-# LANGUAGE
-  DeriveDataTypeable
-  #-}
 -- | A representation of an LLVM inline assembly
 module LLVM.General.AST.InlineAssembly where
 

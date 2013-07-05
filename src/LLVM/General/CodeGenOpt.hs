@@ -1,6 +1,3 @@
-{-# LANGUAGE
-  DeriveDataTypeable
-  #-}
 -- | Code generation options, used in specifying TargetMachine
 module LLVM.General.CodeGenOpt where
 

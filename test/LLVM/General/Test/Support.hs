@@ -1,7 +1,3 @@
-{-# LANGUAGE
-  TypeSynonymInstances,
-  FlexibleInstances
-  #-}
 module LLVM.General.Test.Support where
 
 import Test.Framework

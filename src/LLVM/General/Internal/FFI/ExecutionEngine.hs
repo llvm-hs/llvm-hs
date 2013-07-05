@@ -1,6 +1,5 @@
 {-# LANGUAGE
-  ForeignFunctionInterface,
-  EmptyDataDecls
+  ForeignFunctionInterface
   #-}
 
 module LLVM.General.Internal.FFI.ExecutionEngine where

@@ -1,6 +1,4 @@
 {-# LANGUAGE
-  FlexibleContexts,
-  FlexibleInstances,
   MultiParamTypeClasses
   #-}
 module LLVM.General.Internal.Value where

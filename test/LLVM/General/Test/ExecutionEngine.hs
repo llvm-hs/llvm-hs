@@ -1,6 +1,5 @@
 {-# LANGUAGE
-  ForeignFunctionInterface,
-  FlexibleContexts
+  ForeignFunctionInterface
   #-}
 module LLVM.General.Test.ExecutionEngine where
 

@@ -1,8 +1,6 @@
 {-#
   LANGUAGE
-  TupleSections,
-  ScopedTypeVariables,
-  FlexibleInstances
+  ScopedTypeVariables
   #-}
 -- | This Haskell module is for/of functions for handling LLVM modules.
 module LLVM.General.Internal.Module where

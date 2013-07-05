@@ -1,6 +1,4 @@
 {-# LANGUAGE
-  DeriveDataTypeable,
-  StandaloneDeriving,
   GeneralizedNewtypeDeriving
   #-}
 -- | Define types which correspond cleanly with some simple types on the C/C++ side.

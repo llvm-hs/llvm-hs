@@ -1,8 +1,6 @@
 {-# LANGUAGE
-  ForeignFunctionInterface,
-  EmptyDataDecls
+  ForeignFunctionInterface
   #-}
-
 -- | Functions for handling the LLVM types
 module LLVM.General.Internal.FFI.Type where
 

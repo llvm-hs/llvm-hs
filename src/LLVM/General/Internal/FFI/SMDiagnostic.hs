@@ -1,8 +1,6 @@
 {-# LANGUAGE
-  ForeignFunctionInterface,
-  EmptyDataDecls
+  ForeignFunctionInterface
   #-}
-
 -- | FFI functions for handling the LLVM SMDiagnostic class
 module LLVM.General.Internal.FFI.SMDiagnostic where
 

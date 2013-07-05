@@ -1,13 +1,10 @@
 {-# LANGUAGE
   ForeignFunctionInterface,
   MultiParamTypeClasses,
-  EmptyDataDecls,
   FunctionalDependencies,
-  FlexibleInstances,
   UndecidableInstances,
   OverlappingInstances
   #-}
-
 -- | This module defines typeclasses to represent the relationships of an object-oriented inheritance hierarchy
 module LLVM.General.Internal.FFI.PtrHierarchy where
 

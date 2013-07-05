@@ -1,6 +1,5 @@
 {-# LANGUAGE
-  MultiParamTypeClasses,
-  FlexibleInstances
+  MultiParamTypeClasses
   #-}
 module LLVM.General.Internal.Operand where
 

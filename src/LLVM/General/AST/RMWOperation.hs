@@ -1,6 +1,3 @@
-{-# LANGUAGE
-  DeriveDataTypeable 
-  #-}  
 -- | Operations for the 'LLVM.General.AST.Instruction.AtomicRMW' instruction
 module LLVM.General.AST.RMWOperation where
 

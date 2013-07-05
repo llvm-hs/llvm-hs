@@ -1,13 +1,10 @@
 {-# LANGUAGE
   TemplateHaskell,
   ForeignFunctionInterface,
-  EmptyDataDecls,
   MultiParamTypeClasses,
-  FlexibleInstances,
   UndecidableInstances,
   OverlappingInstances
   #-}
-
 -- | FFI functions for handling the LLVM Constant class
 module LLVM.General.Internal.FFI.Constant where
 

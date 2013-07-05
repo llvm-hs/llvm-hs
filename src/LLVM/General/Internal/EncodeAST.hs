@@ -1,11 +1,8 @@
 {-# LANGUAGE
   GeneralizedNewtypeDeriving,
-  FlexibleContexts,
-  FlexibleInstances,
   MultiParamTypeClasses,
   UndecidableInstances
   #-}
-
 module LLVM.General.Internal.EncodeAST where
 
 import Control.Exception

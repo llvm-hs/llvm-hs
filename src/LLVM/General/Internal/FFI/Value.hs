@@ -1,13 +1,9 @@
 {-# LANGUAGE
   ForeignFunctionInterface,
-  EmptyDataDecls,
   MultiParamTypeClasses,
-  FlexibleContexts,
-  FlexibleInstances,
   UndecidableInstances,
   OverlappingInstances
   #-}
-
 -- | FFI functions for handling the LLVM Value class
 module LLVM.General.Internal.FFI.Value where
 

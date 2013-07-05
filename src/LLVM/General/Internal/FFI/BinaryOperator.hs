@@ -1,12 +1,9 @@
 {-# LANGUAGE
   ForeignFunctionInterface,
-  EmptyDataDecls,
   MultiParamTypeClasses,
-  FlexibleInstances,
   UndecidableInstances,
   OverlappingInstances
   #-}
-
 -- | FFI functions for handling the LLVM BinaryOperator class
 module LLVM.General.Internal.FFI.BinaryOperator where
 

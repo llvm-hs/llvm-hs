@@ -1,8 +1,6 @@
 {-# LANGUAGE
   TemplateHaskell,
-  DeriveDataTypeable,
-  MultiParamTypeClasses,
-  FlexibleInstances
+  MultiParamTypeClasses
   #-}  
 module LLVM.General.Internal.Diagnostic where
 

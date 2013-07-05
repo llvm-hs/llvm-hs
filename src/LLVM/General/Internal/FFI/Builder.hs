@@ -1,10 +1,8 @@
 {-#
   LANGUAGE
   ForeignFunctionInterface,
-  EmptyDataDecls,
   TemplateHaskell
   #-}
-
 -- | FFI glue for llvm::IRBuilder - llvm's IR construction state object
 module LLVM.General.Internal.FFI.Builder where
 

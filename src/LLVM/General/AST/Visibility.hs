@@ -1,6 +1,3 @@
-{-# LANGUAGE
-  DeriveDataTypeable
-  #-}
 -- | Module to allow importing 'Visibility' distinctly qualified.
 module LLVM.General.AST.Visibility where
 

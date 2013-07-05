@@ -1,10 +1,7 @@
 {-# LANGUAGE 
   TemplateHaskell,
   QuasiQuotes,
-  TupleSections,
   MultiParamTypeClasses,
-  FlexibleContexts,
-  FlexibleInstances,
   UndecidableInstances
   #-}
 module LLVM.General.Internal.Instruction where
