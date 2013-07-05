@@ -67,6 +67,7 @@ genCodingInstance' [t| TO.FloatingPointOperationFusionMode |] ''FFI.FPOpFusionMo
   (FFI.fpOpFusionModeStrict, TO.FloatingPointOperationFusionStrict)
  ]
 
+-- | <http://llvm.org/doxygen/classllvm_1_1Target.html>
 newtype Target = Target (Ptr FFI.Target)
 
 -- | e.g. an instruction set extension
@@ -234,6 +235,9 @@ newtype TargetLowering = TargetLowering (Ptr FFI.TargetLowering)
 getTargetLowering :: TargetMachine -> IO TargetLowering
 getTargetLowering (TargetMachine tm) = TargetLowering <$> FFI.getTargetLowering tm
 
+-- | Initialize the native target. This function is called automatically in these Haskell bindings
+-- when creating an 'LLVM.General.ExecutionEngine.ExecutionEngine' which will require it, and so it should
+-- not be necessary to call it separately.
 initializeNativeTarget :: IO ()
 initializeNativeTarget = do
   failure <- decodeM =<< liftIO FFI.initializeNativeTarget
@@ -258,8 +262,8 @@ getHostCPUFeatures = decodeM =<< FFI.getHostCPUFeatures
 -- | 'DataLayout' to use for the given 'TargetMachine'
 getTargetMachineDataLayout :: TargetMachine -> IO DataLayout
 getTargetMachineDataLayout (TargetMachine m) =
-    fromJust . parseDataLayout <$> (decodeM =<< (FFI.getTargetMachineDataLayout m))
--- if fromJust fails, it's a bug in parseDataLayout
+    fromMaybe (error "parseDataLayout failed") . parseDataLayout <$> (decodeM =<< (FFI.getTargetMachineDataLayout m))
+
 
 -- | Initialize all targets so they can be found by 'lookupTarget'
 initializeAllTargets :: IO ()
