@@ -13,7 +13,6 @@ import Control.Monad.AnyCont
 import Data.Maybe
 
 import Foreign.Ptr
-import Foreign.Marshal.Alloc (free)
 
 import LLVM.General.Internal.Coding
 import LLVM.General.Internal.String ()
@@ -79,11 +78,7 @@ lookupTarget arch triple = flip runAnyContT return $ do
   arch <- encodeM (maybe "" id arch)
   triple <- encodeM triple
   target <- liftIO $ FFI.lookupTarget arch triple cNewTripleP cErrorP
-  let readString p = do
-        s <- peek p
-        r <- decodeM s
-        liftIO $ free s
-        return r
+  let readString = decodeM <=< peek
   when (target == nullPtr) $ fail =<< readString cErrorP
   liftM (Target target, ) $ readString cNewTripleP
 
@@ -233,24 +228,24 @@ initializeNativeTarget = do
 
 -- | the default target triple that LLVM has been configured to produce code for
 getDefaultTargetTriple :: IO String
-getDefaultTargetTriple = bracket FFI.getDefaultTargetTriple free decodeM
+getDefaultTargetTriple = decodeM =<< FFI.getDefaultTargetTriple
 
 -- | a target triple suitable for loading code into the current process
 getProcessTargetTriple :: IO String
-getProcessTargetTriple = bracket FFI.getProcessTargetTriple free decodeM
+getProcessTargetTriple = decodeM =<< FFI.getProcessTargetTriple
 
 -- | the LLVM name for the host CPU
 getHostCPUName :: IO String
-getHostCPUName = bracket FFI.getHostCPUName free decodeM
+getHostCPUName = decodeM =<< FFI.getHostCPUName
 
 -- | a space-separated list of LLVM feature names supported by the host CPU
 getHostCPUFeatures :: IO String
-getHostCPUFeatures = bracket FFI.getHostCPUFeatures free decodeM
+getHostCPUFeatures = decodeM =<< FFI.getHostCPUFeatures
 
 -- | 'DataLayout' to use for the given 'TargetMachine'
 getTargetMachineDataLayout :: TargetMachine -> IO DataLayout
 getTargetMachineDataLayout (TargetMachine m) =
-    fromJust . parseDataLayout <$> bracket (FFI.getTargetMachineDataLayout m) free decodeM
+    fromJust . parseDataLayout <$> (decodeM =<< (FFI.getTargetMachineDataLayout m))
 -- if fromJust fails, it's a bug in parseDataLayout
 
 -- | Initialize all targets so they can be found by 'lookupTarget'

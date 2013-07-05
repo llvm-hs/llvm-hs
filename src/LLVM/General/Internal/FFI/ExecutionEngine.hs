@@ -14,16 +14,16 @@ import LLVM.General.Internal.FFI.LLVMCTypes
 data ExecutionEngine
 
 foreign import ccall unsafe "LLVMCreateExecutionEngineForModule" createExecutionEngineForModule ::
-  Ptr (Ptr ExecutionEngine) -> Ptr Module -> Ptr CString -> IO CUInt
+  Ptr (Ptr ExecutionEngine) -> Ptr Module -> Ptr MallocedCString -> IO CUInt
 
 foreign import ccall unsafe "LLVMCreateInterpreterForModule" createInterpreterForModule ::
-  Ptr (Ptr ExecutionEngine) -> Ptr Module -> Ptr CString -> IO CUInt
+  Ptr (Ptr ExecutionEngine) -> Ptr Module -> Ptr MallocedCString -> IO CUInt
 
 foreign import ccall unsafe "LLVMCreateJITCompilerForModule" createJITCompilerForModule ::
-  Ptr (Ptr ExecutionEngine) -> Ptr Module -> CUInt -> Ptr CString -> IO CUInt
+  Ptr (Ptr ExecutionEngine) -> Ptr Module -> CUInt -> Ptr MallocedCString -> IO CUInt
 
 foreign import ccall unsafe "LLVMCreateMCJITCompilerForModule" createMCJITCompilerForModule ::
-  Ptr (Ptr ExecutionEngine) -> Ptr Module -> Ptr MCJITCompilerOptions -> CSize -> Ptr CString -> IO CUInt
+  Ptr (Ptr ExecutionEngine) -> Ptr Module -> Ptr MCJITCompilerOptions -> CSize -> Ptr MallocedCString -> IO CUInt
 
 foreign import ccall unsafe "LLVMDisposeExecutionEngine" disposeExecutionEngine ::
   Ptr ExecutionEngine -> IO ()

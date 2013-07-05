@@ -17,7 +17,7 @@ foreign import ccall unsafe "LLVM_General_InitializeNativeTarget" initializeNati
     IO LLVMBool
 
 foreign import ccall unsafe "LLVM_General_LookupTarget" lookupTarget ::
-    CString -> CString -> Ptr CString -> Ptr CString -> IO (Ptr Target)
+    CString -> CString -> Ptr MallocedCString -> Ptr MallocedCString -> IO (Ptr Target)
 
 data TargetOptions
 
@@ -80,22 +80,34 @@ foreign import ccall unsafe "LLVMDisposeTargetMachine" disposeTargetMachine ::
   Ptr TargetMachine -> IO ()
 
 foreign import ccall unsafe "LLVMTargetMachineEmitToFile" targetMachineEmitToFile ::
-  Ptr TargetMachine -> Ptr Module -> CString -> CodeGenFileType -> Ptr CString -> IO LLVMBool
+  Ptr TargetMachine -> Ptr Module -> CString -> CodeGenFileType -> Ptr MallocedCString -> IO LLVMBool
 
 foreign import ccall unsafe "LLVMTargetMachineEmitToMemoryBuffer" targetMachineEmitToMemoryBuffer ::
-  Ptr TargetMachine -> Ptr Module -> CodeGenFileType -> Ptr CString -> Ptr (Ptr MemoryBuffer) -> IO LLVMBool
+  Ptr TargetMachine
+  -> Ptr Module
+  -> CodeGenFileType
+  -> Ptr MallocedCString
+  -> Ptr (Ptr MemoryBuffer)
+  -> IO LLVMBool
 
 data TargetLowering
 
 foreign import ccall unsafe "LLVM_General_GetTargetLowering" getTargetLowering ::
   Ptr TargetMachine -> IO (Ptr TargetLowering)
 
-foreign import ccall unsafe "LLVM_General_GetDefaultTargetTriple" getDefaultTargetTriple :: IO CString
-foreign import ccall unsafe "LLVM_General_GetProcessTargetTriple" getProcessTargetTriple :: IO CString
-foreign import ccall unsafe "LLVM_General_GetHostCPUName" getHostCPUName :: IO CString
-foreign import ccall unsafe "LLVM_General_GetHostCPUFeatures" getHostCPUFeatures :: IO CString
+foreign import ccall unsafe "LLVM_General_GetDefaultTargetTriple" getDefaultTargetTriple :: 
+  IO MallocedCString
+
+foreign import ccall unsafe "LLVM_General_GetProcessTargetTriple" getProcessTargetTriple :: 
+  IO MallocedCString
+
+foreign import ccall unsafe "LLVM_General_GetHostCPUName" getHostCPUName :: 
+  IO MallocedCString
+
+foreign import ccall unsafe "LLVM_General_GetHostCPUFeatures" getHostCPUFeatures :: 
+  IO MallocedCString
 
 foreign import ccall unsafe "LLVM_General_GetTargetMachineDataLayout" getTargetMachineDataLayout ::
-  Ptr TargetMachine -> IO CString
+  Ptr TargetMachine -> IO MallocedCString
 
 foreign import ccall unsafe "LLVM_General_InitializeAllTargets" initializeAllTargets :: IO ()

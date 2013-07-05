@@ -35,7 +35,7 @@ foreign import ccall unsafe "LLVMSetTarget" setTargetTriple ::
   Ptr Module -> CString -> IO ()
 
 foreign import ccall unsafe "LLVM_General_GetModuleIdentifier" getModuleIdentifier ::
-  Ptr Module -> IO CString
+  Ptr Module -> IO MallocedCString
 
 foreign import ccall unsafe "LLVMGetFirstGlobal" getFirstGlobal ::
   Ptr Module -> IO (Ptr GlobalVariable)
@@ -88,4 +88,4 @@ foreign import ccall unsafe "LLVM_General_ModuleGetInlineAsm" moduleGetInlineAsm
   Ptr Module -> IO (ModuleAsm CString)
 
 foreign import ccall unsafe "LLVM_General_WriteBitcodeToFile" writeBitcodeToFile ::
-  Ptr Module -> CString -> Ptr CString -> IO LLVMBool
+  Ptr Module -> CString -> Ptr MallocedCString -> IO LLVMBool

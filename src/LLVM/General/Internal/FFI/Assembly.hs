@@ -8,6 +8,7 @@ module LLVM.General.Internal.FFI.Assembly where
 import LLVM.General.Internal.FFI.Context 
 import LLVM.General.Internal.FFI.Module
 import LLVM.General.Internal.FFI.SMDiagnostic
+import LLVM.General.Internal.FFI.LLVMCTypes
 
 import Foreign.C
 import Foreign.Ptr
@@ -18,7 +19,7 @@ foreign import ccall unsafe "LLVM_General_GetModuleFromAssemblyInContext" getMod
 
 -- | LLVM's serializer to generate a string of llvm assembly from a module
 foreign import ccall unsafe "LLVM_General_GetModuleAssembly" getModuleAssembly ::
-    Ptr Module -> IO CString
+    Ptr Module -> IO MallocedCString
 
 
 

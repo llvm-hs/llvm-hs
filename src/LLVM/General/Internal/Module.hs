@@ -13,7 +13,6 @@ import Control.Applicative
 import Control.Exception
 
 import Foreign.Ptr
-import Foreign.Marshal.Alloc (free)
 import Data.ByteString (ByteString)
 
 import qualified LLVM.General.Internal.FFI.Assembly as FFI
@@ -73,7 +72,7 @@ withModuleFromString (Context c) s f = flip runAnyContT return $ do
 
 -- | generate LLVM assembly from a 'Module'
 moduleString :: Module -> IO String
-moduleString (Module m) = bracket (FFI.getModuleAssembly m) free $ decodeM
+moduleString (Module m) = decodeM =<< FFI.getModuleAssembly m
 
 -- | generate LLVM bitcode from a 'Module'
 writeBitcodeToFile :: FilePath -> Module -> ErrorT String IO ()
@@ -81,14 +80,14 @@ writeBitcodeToFile path (Module m) = flip runAnyContT return $ do
   msgPtr <- alloca
   path <- encodeM path
   result <- decodeM =<< (liftIO $ FFI.writeBitcodeToFile m path msgPtr)
-  when result $ fail =<< (decodeM =<< (anyContToM $ bracket (peek msgPtr) free))
+  when result $ fail =<< decodeM =<< peek msgPtr
 
 emitToFile :: FFI.CodeGenFileType -> TargetMachine -> FilePath -> Module -> ErrorT String IO ()
 emitToFile fileType (TargetMachine tm) path (Module m) = flip runAnyContT return $ do
   msgPtr <- alloca
   path <- encodeM path
   result <- decodeM =<< (liftIO $ FFI.targetMachineEmitToFile tm m path fileType msgPtr)
-  when result $ fail =<< decodeM =<< anyContToM (bracket (peek msgPtr) free)
+  when result $ fail =<< decodeM =<< peek msgPtr
 
 -- | write target-specific assembly directly into a file
 writeAssemblyToFile :: TargetMachine -> FilePath -> Module -> ErrorT String IO ()
@@ -105,7 +104,7 @@ emitToByteString fileType (TargetMachine tm) (Module m) = flip runAnyContT retur
   result <- decodeM =<< (liftIO $ FFI.targetMachineEmitToMemoryBuffer tm m fileType msgPtr memoryBufferPtr)
   if result 
     then
-        fail =<< decodeM =<< anyContToM (bracket (peek msgPtr) free)
+        fail =<< decodeM =<< peek msgPtr
     else
         decodeM =<< anyContToM (bracket (peek memoryBufferPtr) FFI.disposeMemoryBuffer)
 
@@ -258,7 +257,7 @@ moduleAST (Module mod) = runDecodeAST $ do
   c <- return Context `ap` liftIO (FFI.getModuleContext mod)
   getMetadataKindNames c
   return A.Module 
-   `ap` (liftIO $ bracket (FFI.getModuleIdentifier mod) free decodeM)
+   `ap` (liftIO $ decodeM =<< FFI.getModuleIdentifier mod)
    `ap` (liftIO $ getDataLayout mod)
    `ap` (liftIO $ do
            s <- decodeM <=< FFI.getTargetTriple $ mod
