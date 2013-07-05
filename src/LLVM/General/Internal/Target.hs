@@ -10,12 +10,16 @@ import Control.Monad.Error
 import Control.Exception
 import Data.Functor
 import Control.Monad.AnyCont
+import Data.Maybe
 
 import Foreign.Ptr
 import Foreign.Marshal.Alloc (free)
 
 import LLVM.General.Internal.Coding
 import LLVM.General.Internal.String ()
+import LLVM.General.Internal.DataLayout
+
+import LLVM.General.AST.DataLayout
 
 import qualified LLVM.General.Internal.FFI.LLVMCTypes as FFI
 import qualified LLVM.General.Internal.FFI.Target as FFI
@@ -62,8 +66,9 @@ genCodingInstance' [t| TO.FloatingPointOperationFusionMode |] ''FFI.FPOpFusionMo
 
 newtype Target = Target (Ptr FFI.Target)
 
--- | Find a Target given an architecture and/or a \"triple\".
+-- | Find a 'Target' given an architecture and/or a \"triple\".
 -- | <http://llvm.org/doxygen/structllvm_1_1TargetRegistry.html#a3105b45e546c9cc3cf78d0f2ec18ad89>
+-- | Be sure to run either 'initializeAllTargets' or 'initializeNativeTarget' before expecting this to succeed, depending on what target(s) you want to use.
 lookupTarget :: 
   Maybe String -- ^ arch
   -> String -- ^ \"triple\" - e.g. x86_64-unknown-linux-gnu
@@ -241,3 +246,24 @@ getHostCPUName = bracket FFI.getHostCPUName free decodeM
 -- | a space-separated list of LLVM feature names supported by the host CPU
 getHostCPUFeatures :: IO String
 getHostCPUFeatures = bracket FFI.getHostCPUFeatures free decodeM
+
+-- | 'DataLayout' to use for the given 'TargetMachine'
+getTargetMachineDataLayout :: TargetMachine -> IO DataLayout
+getTargetMachineDataLayout (TargetMachine m) =
+    fromJust . parseDataLayout <$> bracket (FFI.getTargetMachineDataLayout m) free decodeM
+-- if fromJust fails, it's a bug in parseDataLayout
+
+-- | Initialize all targets so they can be found by 'lookupTarget'
+initializeAllTargets :: IO ()
+initializeAllTargets = FFI.initializeAllTargets
+
+-- | Bracket creation and destruction of a TargetMachine configured for the host
+withDefaultTargetMachine :: (TargetMachine -> IO a) -> ErrorT String IO a
+withDefaultTargetMachine f = do
+  liftIO $ initializeAllTargets
+  triple <- liftIO $ getDefaultTargetTriple
+  cpu <- liftIO $ getHostCPUName
+  features <- liftIO $ getHostCPUFeatures
+  (target, _) <- lookupTarget Nothing triple
+  liftIO $ withTargetOptions $ \options ->
+      withTargetMachine target triple cpu features options Reloc.Default CodeModel.Default CodeGenOpt.Default f

@@ -5,6 +5,7 @@
 #include "llvm/Target/TargetMachine.h"
 #include "llvm/ADT/Triple.h"
 #include "llvm/ExecutionEngine/Interpreter.h"
+#include "llvm/IR/DataLayout.h"
 #include "llvm-c/Target.h"
 #include "llvm-c/TargetMachine.h"
 #include "llvm-c/Core.h"
@@ -234,6 +235,18 @@ char *LLVM_General_GetHostCPUFeatures() {
     }
   }
   return strdup(features.c_str());
+}
+
+char *LLVM_General_GetTargetMachineDataLayout(LLVMTargetMachineRef t) {
+  return strdup(unwrap(t)->getDataLayout()->getStringRepresentation().c_str());
+}
+
+void LLVM_General_InitializeAllTargets() {
+  InitializeAllTargetInfos();
+  InitializeAllTargets();
+  InitializeAllTargetMCs();
+  InitializeAllAsmPrinters();
+  // None of the other components are bound yet
 }
 
 }
