@@ -8,6 +8,7 @@ module LLVM.General.Internal.FFI.Type where
 
 import Foreign.Ptr
 import Foreign.C
+import Data.Word
 
 import LLVM.General.Internal.FFI.LLVMCTypes
 import LLVM.General.Internal.FFI.Context
@@ -69,7 +70,7 @@ foreign import ccall unsafe "LLVMVectorType" vectorType ::
 -- | what <http://llvm.org/doxygen/group__LLVMCCoreTypeSequential.html#gabd1666e080f693e1af0b4018005cd927>
 -- | would be if it supported 64-bit array sizes, as the C++ type does.
 foreign import ccall unsafe "LLVM_General_ArrayType" arrayType ::
-  Ptr Type -> CULong -> IO (Ptr Type)
+  Ptr Type -> Word64 -> IO (Ptr Type)
 
 -- | <http://llvm.org/doxygen/group__LLVMCCoreTypeStruct.html#gaff2af74740a22f7d18701f0d8c3e5a6f>
 foreign import ccall unsafe "LLVMStructTypeInContext" structTypeInContext' ::
@@ -112,7 +113,7 @@ foreign import ccall unsafe "LLVMGetVectorSize" getVectorSize ::
 -- | what <http://llvm.org/doxygen/group__LLVMCCoreTypeSequential.html#ga02dc08041a12265cb700ee469497df63>
 -- | would be if it supported 64 bit lengths
 foreign import ccall unsafe "LLVM_General_GetArrayLength" getArrayLength ::
-  Ptr Type -> IO CULong
+  Ptr Type -> IO Word64
 
 -- | <http://llvm.org/doxygen/group__LLVMCCoreTypeOther.html#ga1c78ca6d7bf279330b9195fa52f23828>
 foreign import ccall unsafe "LLVMVoidTypeInContext" voidTypeInContext ::

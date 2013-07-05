@@ -126,3 +126,8 @@ instance Monad m => DecodeM m Int32 CInt where
 instance Monad m => DecodeM m Int CInt where
   decodeM = return . fromIntegral
 
+instance Monad m => EncodeM m Word64 Word64 where
+  encodeM = return
+
+instance Monad m => DecodeM m Word64 Word64 where
+  decodeM = return

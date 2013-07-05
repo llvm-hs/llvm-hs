@@ -18,6 +18,7 @@ import qualified LLVM.General.AST.Constant as A.C
 import Control.Monad
 import Data.Function
 import qualified Data.Map as Map
+import Data.Word
 
 import Foreign.Ptr
 import Foreign.C
@@ -44,7 +45,7 @@ foreign import ccall unsafe "LLVMIsAConstantPointerNull" isAConstantPointerNull 
   Ptr Value -> IO (Ptr Constant)
 
 foreign import ccall unsafe "LLVM_General_GetConstantIntWords" getConstantIntWords ::
-  Ptr Constant -> Ptr CUInt -> IO (Ptr CULong)
+  Ptr Constant -> Ptr CUInt -> IO (Ptr Word64)
 
 foreign import ccall unsafe "LLVM_General_ConstFloatDoubleValue" constFloatDoubleValue ::
   Ptr Constant -> IO CDouble
@@ -61,15 +62,15 @@ foreign import ccall unsafe "LLVM_General_GetConstantDataSequentialElementAsCons
   Ptr Constant -> CUInt -> IO (Ptr Constant)
 
 foreign import ccall unsafe "LLVMConstIntOfArbitraryPrecision" constantIntOfArbitraryPrecision' ::
-  Ptr Type -> CUInt -> Ptr CULong -> IO (Ptr Constant)
+  Ptr Type -> CUInt -> Ptr Word64 -> IO (Ptr Constant)
 
 constantIntOfArbitraryPrecision t = uncurry (constantIntOfArbitraryPrecision' t)
 
 foreign import ccall unsafe "LLVM_General_ConstFloatOfArbitraryPrecision" constantFloatOfArbitraryPrecision ::
-  Ptr Context -> CUInt -> Ptr CULong -> FloatSemantics -> IO (Ptr Constant)
+  Ptr Context -> CUInt -> Ptr Word64 -> FloatSemantics -> IO (Ptr Constant)
 
 foreign import ccall unsafe "LLVM_General_GetConstantFloatWords" getConstantFloatWords ::
-  Ptr Constant -> Ptr CULong -> IO ()
+  Ptr Constant -> Ptr Word64 -> IO ()
 
 foreign import ccall unsafe "LLVMConstVector" constantVector' ::
   Ptr (Ptr Constant) -> CUInt -> IO (Ptr Constant)
