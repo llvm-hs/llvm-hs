@@ -7,6 +7,7 @@ import Test.HUnit
 import LLVM.General.Test.Support
 
 import Data.Functor
+import qualified Data.Set as Set
 import qualified Data.Map as Map
 
 import LLVM.General.Module
@@ -292,7 +293,7 @@ tests = testGroup "Optimization" [
         let triple = "x86_64-apple-darwin"
         (target, _) <- failInIO $ lookupTarget Nothing triple
         withTargetOptions $ \targetOptions -> do
-          withTargetMachine target triple "" "" targetOptions
+          withTargetMachine target triple "" Set.empty targetOptions
                             R.Default CM.Default CGO.Default $ \targetMachine -> do
             withPassManager ([LowerInvoke False], targetMachine) $ \passManager -> do
               let astIn = 

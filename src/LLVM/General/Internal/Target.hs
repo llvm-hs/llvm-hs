@@ -1,7 +1,8 @@
 {-# LANGUAGE
   TemplateHaskell,
   MultiParamTypeClasses,
-  RecordWildCards
+  RecordWildCards,
+  UndecidableInstances
   #-}
 module LLVM.General.Internal.Target where
 
@@ -13,6 +14,9 @@ import Control.Monad.AnyCont
 import Data.Maybe
 
 import Foreign.Ptr
+import Data.List (intercalate)
+import Data.Set (Set)
+import qualified Data.Set as Set
 
 import LLVM.General.Internal.Coding
 import LLVM.General.Internal.String ()
@@ -64,6 +68,16 @@ genCodingInstance' [t| TO.FloatingPointOperationFusionMode |] ''FFI.FPOpFusionMo
  ]
 
 newtype Target = Target (Ptr FFI.Target)
+
+-- | e.g. an instruction set extension
+newtype CPUFeature = CPUFeature String
+  deriving (Eq, Ord, Read, Show)
+
+instance EncodeM e String es => EncodeM e (Set CPUFeature) es where
+  encodeM = encodeM . intercalate " " . map (\(CPUFeature f) -> f) . Set.toList
+
+instance (Monad d, DecodeM d String es) => DecodeM d (Set CPUFeature) es where
+  decodeM = liftM (Set.fromList . map CPUFeature . words) . decodeM
 
 -- | Find a 'Target' given an architecture and/or a \"triple\".
 -- | <http://llvm.org/doxygen/structllvm_1_1TargetRegistry.html#a3105b45e546c9cc3cf78d0f2ec18ad89>
@@ -177,7 +191,7 @@ withTargetMachine ::
     Target
     -> String -- ^ triple
     -> String -- ^ cpu
-    -> String -- ^ features
+    -> Set CPUFeature -- ^ features
     -> TargetOptions
     -> Reloc.Model
     -> CodeModel.Model
@@ -238,9 +252,9 @@ getHostCPUName :: IO String
 getHostCPUName = decodeM =<< FFI.getHostCPUName
 
 -- | a space-separated list of LLVM feature names supported by the host CPU
-getHostCPUFeatures :: IO String
+getHostCPUFeatures :: IO (Set CPUFeature)
 getHostCPUFeatures = decodeM =<< FFI.getHostCPUFeatures
-
+  
 -- | 'DataLayout' to use for the given 'TargetMachine'
 getTargetMachineDataLayout :: TargetMachine -> IO DataLayout
 getTargetMachineDataLayout (TargetMachine m) =

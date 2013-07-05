@@ -5,6 +5,7 @@ module LLVM.General.Target (
    lookupTarget,
    TargetOptions,
    TargetMachine,
+   CPUFeature(..),
    withTargetOptions, peekTargetOptions, pokeTargetOptions,
    withTargetMachine, withDefaultTargetMachine,
    getTargetLowering,
