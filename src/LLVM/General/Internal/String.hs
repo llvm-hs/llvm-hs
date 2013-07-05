@@ -43,6 +43,9 @@ instance (MonadIO d) => DecodeM d String CString where
 instance (MonadIO d) => DecodeM d String MallocedCString where
   decodeM (MallocedCString s) = liftIO $ finally (decodeM s) (free s)
 
+instance (MonadIO d) => DecodeM d String (Ptr MallocedCString) where
+  decodeM = liftIO . decodeM <=< peek
+
 instance (Integral i, MonadIO d) => DecodeM d String (Ptr CChar, i) where
   decodeM = decodeM . UTF8ByteString <=< liftIO . BS.packCStringLen . second fromIntegral
 

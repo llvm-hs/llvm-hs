@@ -213,40 +213,40 @@ const TargetLowering *LLVM_General_GetTargetLowering(LLVMTargetMachineRef t) {
 }
 
 char *LLVM_General_GetDefaultTargetTriple() {
-  return strdup(sys::getDefaultTargetTriple().c_str());
+	return strdup(sys::getDefaultTargetTriple().c_str());
 }
 
 char *LLVM_General_GetProcessTargetTriple() {
-  return strdup(sys::getProcessTriple().c_str());
+	return strdup(sys::getProcessTriple().c_str());
 }
 
 char *LLVM_General_GetHostCPUName() {
-  return strdup(sys::getHostCPUName().c_str());
+	return strdup(sys::getHostCPUName().c_str());
 }
 
 char *LLVM_General_GetHostCPUFeatures() {
-  StringMap<bool> featureMap;
-  std::string features;
-  if(sys::getHostCPUFeatures(featureMap)) {
-    for(llvm::StringMap<bool>::const_iterator it = featureMap.begin(); it != featureMap.end(); ++it) {
-      if(it->second) {
-        features += it->first().str() + " ";
-      }
-    }
-  }
-  return strdup(features.c_str());
+	StringMap<bool> featureMap;
+	std::string features;
+	if (sys::getHostCPUFeatures(featureMap)) {
+		for(llvm::StringMap<bool>::const_iterator it = featureMap.begin(); it != featureMap.end(); ++it) {
+			if (it->second) {
+				features += it->first().str() + " ";
+			}
+		}
+	}
+	return strdup(features.c_str());
 }
 
 char *LLVM_General_GetTargetMachineDataLayout(LLVMTargetMachineRef t) {
-  return strdup(unwrap(t)->getDataLayout()->getStringRepresentation().c_str());
+	return strdup(unwrap(t)->getDataLayout()->getStringRepresentation().c_str());
 }
 
 void LLVM_General_InitializeAllTargets() {
-  InitializeAllTargetInfos();
-  InitializeAllTargets();
-  InitializeAllTargetMCs();
-  InitializeAllAsmPrinters();
-  // None of the other components are bound yet
+	InitializeAllTargetInfos();
+	InitializeAllTargets();
+	InitializeAllTargetMCs();
+	InitializeAllAsmPrinters();
+	// None of the other components are bound yet
 }
 
 }

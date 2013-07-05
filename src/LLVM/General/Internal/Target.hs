@@ -78,9 +78,8 @@ lookupTarget arch triple = flip runAnyContT return $ do
   arch <- encodeM (maybe "" id arch)
   triple <- encodeM triple
   target <- liftIO $ FFI.lookupTarget arch triple cNewTripleP cErrorP
-  let readString = decodeM <=< peek
-  when (target == nullPtr) $ fail =<< readString cErrorP
-  liftM (Target target, ) $ readString cNewTripleP
+  when (target == nullPtr) $ fail =<< decodeM cErrorP
+  liftM (Target target, ) $ decodeM cNewTripleP
 
 -- | <http://llvm.org/doxygen/classllvm_1_1TargetOptions.html>
 newtype TargetOptions = TargetOptions (Ptr FFI.TargetOptions)

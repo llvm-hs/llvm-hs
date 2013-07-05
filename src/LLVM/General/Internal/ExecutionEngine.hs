@@ -72,7 +72,7 @@ withExecutionEngine c m createEngine f = flip runAnyContT return $ do
                                    . withModuleFromAST c (A.Module "" Nothing Nothing []))
                         (return . Module) m
   r <- liftIO $ createEngine outExecutionEngine dummyModule outErrorCStringPtr
-  when (r /= 0) $ fail =<< decodeM =<< peek outErrorCStringPtr
+  when (r /= 0) $ fail =<< decodeM outErrorCStringPtr
   executionEngine <- anyContToM $ bracket (peek outExecutionEngine) FFI.disposeExecutionEngine
   liftIO $ removeModule executionEngine dummyModule
   liftIO $ f executionEngine
