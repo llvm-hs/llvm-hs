@@ -6,7 +6,9 @@ module LLVM.General.Target (
    TargetOptions,
    withTargetOptions, peekTargetOptions, pokeTargetOptions,
    TargetMachine,
-   withTargetMachine
+   withTargetMachine,
+   getTargetLowering,
+   getDefaultTargetTriple, getProcessTargetTriple, getHostCPUName, getHostCPUFeatures
  ) where
 
 import LLVM.General.Internal.Target

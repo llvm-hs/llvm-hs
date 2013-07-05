@@ -1,6 +1,7 @@
 #define __STDC_LIMIT_MACROS
 #include "llvm/Support/TargetRegistry.h"
 #include "llvm/Support/TargetSelect.h"
+#include "llvm/Support/Host.h"
 #include "llvm/Target/TargetMachine.h"
 #include "llvm/ADT/Triple.h"
 #include "llvm/ExecutionEngine/Interpreter.h"
@@ -210,5 +211,29 @@ const TargetLowering *LLVM_General_GetTargetLowering(LLVMTargetMachineRef t) {
 	return unwrap(t)->getTargetLowering();
 }
 
+char *LLVM_General_GetDefaultTargetTriple() {
+  return strdup(sys::getDefaultTargetTriple().c_str());
 }
 
+char *LLVM_General_GetProcessTargetTriple() {
+  return strdup(sys::getProcessTriple().c_str());
+}
+
+char *LLVM_General_GetHostCPUName() {
+  return strdup(sys::getHostCPUName().c_str());
+}
+
+char *LLVM_General_GetHostCPUFeatures() {
+  StringMap<bool> featureMap;
+  std::string features;
+  if(sys::getHostCPUFeatures(featureMap)) {
+    for(llvm::StringMap<bool>::const_iterator it = featureMap.begin(); it != featureMap.end(); ++it) {
+      if(it->second) {
+        features += it->first().str() + " ";
+      }
+    }
+  }
+  return strdup(features.c_str());
+}
+
+}

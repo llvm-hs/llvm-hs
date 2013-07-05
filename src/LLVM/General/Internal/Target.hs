@@ -225,3 +225,19 @@ initializeNativeTarget :: IO ()
 initializeNativeTarget = do
   failure <- decodeM =<< liftIO FFI.initializeNativeTarget
   when failure $ fail "native target initialization failed"
+
+-- | the default target triple that LLVM has been configured to produce code for
+getDefaultTargetTriple :: IO String
+getDefaultTargetTriple = bracket FFI.getDefaultTargetTriple free decodeM
+
+-- | a target triple suitable for loading code into the current process
+getProcessTargetTriple :: IO String
+getProcessTargetTriple = bracket FFI.getProcessTargetTriple free decodeM
+
+-- | the LLVM name for the host CPU
+getHostCPUName :: IO String
+getHostCPUName = bracket FFI.getHostCPUName free decodeM
+
+-- | a space-separated list of LLVM feature names supported by the host CPU
+getHostCPUFeatures :: IO String
+getHostCPUFeatures = bracket FFI.getHostCPUFeatures free decodeM
