@@ -22,11 +22,11 @@ foreign import ccall unsafe "LLVMIsABinaryOperator" isABinaryOperator ::
     Ptr Value -> IO (Ptr BinaryOperator)
 
 foreign import ccall unsafe "LLVM_General_HasNoSignedWrap" hasNoSignedWrap ::
-    Ptr BinaryOperator -> IO LLVMBool
+    Ptr Value -> IO LLVMBool
 
 foreign import ccall unsafe "LLVM_General_HasNoUnsignedWrap" hasNoUnsignedWrap ::
-    Ptr BinaryOperator -> IO LLVMBool
+    Ptr Value -> IO LLVMBool
 
 foreign import ccall unsafe "LLVM_General_IsExact" isExact ::
-    Ptr BinaryOperator -> IO LLVMBool
+    Ptr Value -> IO LLVMBool
 

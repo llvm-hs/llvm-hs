@@ -116,8 +116,13 @@ tests = testGroup "Constants" [
     ), (
       "binop/cast",
       IntegerType 64,
-      C.Add (C.PtrToInt (C.GlobalReference (UnName 1)) (IntegerType 64)) (C.Int 64 2),
+      C.Add False False (C.PtrToInt (C.GlobalReference (UnName 1)) (IntegerType 64)) (C.Int 64 2),
       "global i64 add (i64 ptrtoint (i32* @1 to i64), i64 2)"
+    ), (
+      "binop/cast nsw",
+      IntegerType 64,
+      C.Add True False (C.PtrToInt (C.GlobalReference (UnName 1)) (IntegerType 64)) (C.Int 64 2),
+      "global i64 add nsw (i64 ptrtoint (i32* @1 to i64), i64 2)"
     ), (
       "icmp",
       IntegerType 1,

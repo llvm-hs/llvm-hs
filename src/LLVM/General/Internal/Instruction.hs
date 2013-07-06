@@ -231,9 +231,9 @@ $(do
         nOps <- liftIO $ FFI.getNumOperands (FFI.upCast i)
         let op n = decodeM =<< (liftIO $ FFI.getOperand (FFI.upCast i) n)
             cop n = decodeM =<< (liftIO $ FFI.isAConstant =<< FFI.getOperand (FFI.upCast i) n)
-            get_nsw b = liftIO $ decodeM =<< FFI.hasNoSignedWrap b
-            get_nuw b = liftIO $ decodeM =<< FFI.hasNoUnsignedWrap b
-            get_exact b = liftIO $ decodeM =<< FFI.isExact b
+            get_nsw b = liftIO $ decodeM =<< FFI.hasNoSignedWrap (FFI.upCast b)
+            get_nuw b = liftIO $ decodeM =<< FFI.hasNoUnsignedWrap (FFI.upCast b)
+            get_exact b = liftIO $ decodeM =<< FFI.isExact (FFI.upCast b)
 
         n <- liftIO $ FFI.getInstructionDefOpcode i
         $(

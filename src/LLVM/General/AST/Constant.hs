@@ -31,6 +31,8 @@ data Constant
     | BlockAddress { blockAddressFunction :: Name, blockAddressBlock :: Name }
     | GlobalReference Name 
     | Add { 
+        nsw :: Bool,
+        nuw :: Bool,
         operand0 :: Constant,
         operand1 :: Constant
       }
@@ -39,6 +41,8 @@ data Constant
         operand1 :: Constant
       }
     | Sub {
+        nsw :: Bool,
+        nuw :: Bool,
         operand0 :: Constant,
         operand1 :: Constant
       }
@@ -47,6 +51,8 @@ data Constant
         operand1 :: Constant
       }
     | Mul { 
+        nsw :: Bool,
+        nuw :: Bool,
         operand0 :: Constant, 
         operand1 :: Constant
       }
@@ -55,10 +61,12 @@ data Constant
         operand1 :: Constant
       }
     | UDiv { 
+        exact :: Bool,
         operand0 :: Constant, 
         operand1 :: Constant
       }
     | SDiv { 
+        exact :: Bool,
         operand0 :: Constant, 
         operand1 :: Constant
       }
@@ -79,14 +87,18 @@ data Constant
         operand1 :: Constant
       }
     | Shl { 
+        nsw :: Bool,
+        nuw :: Bool,
         operand0 :: Constant, 
         operand1 :: Constant
       }
     | LShr { 
+        exact :: Bool,
         operand0 :: Constant, 
         operand1 :: Constant
       }
     | AShr { 
+        exact :: Bool,
         operand0 :: Constant, 
         operand1 :: Constant
       }

@@ -93,11 +93,15 @@ $(do
    let tm = fix tm' 
          where tm' _ (TH.ConT h) | h == ''A.C.Constant = [t| Ptr Constant |]
                tm' x t = typeMappingU x t
-               
-   liftM concat $ sequence [      
-     foreignDecl ("LLVMConst" ++ name) ("constant" ++ name) [tm t | (_, _, t) <- fs ] [t| Ptr Constant |]
-     | (name, ((TH.RecC _ fs,_), ID.InstructionDef { ID.instructionKind = ID.Other })) <- Map.toList constExprInfo
-    ]
+   liftM concat $ sequence $ do
+     (name, ((TH.RecC _ fs,_), ID.InstructionDef { ID.instructionKind = ik })) <- Map.toList constExprInfo
+     let hasFlags = any (== ''Bool) [ h | (_, _, TH.ConT h) <- fs ]
+     prefix <- case ik of
+                 ID.Other -> return "LLVM"
+                 ID.Binary | hasFlags -> return "LLVM_General_"
+                 _ -> []
+     return $
+       foreignDecl (prefix ++ "Const" ++ name) ("constant" ++ name) [tm t | (_, _, t) <- fs ] [t| Ptr Constant |]
   )
 
 foreign import ccall unsafe "LLVMConstGEP" constantGetElementPtr' ::

@@ -28,6 +28,7 @@ import LLVM.General.Internal.FFI.LLVMCTypes (valueSubclassIdP)
 import qualified LLVM.General.Internal.FFI.PtrHierarchy as FFI
 import qualified LLVM.General.Internal.FFI.User as FFI
 import qualified LLVM.General.Internal.FFI.Value as FFI
+import qualified LLVM.General.Internal.FFI.BinaryOperator as FFI
 
 import qualified LLVM.General.AST.Constant as A (Constant)
 import qualified LLVM.General.AST.Constant as A.C hiding (Constant)
@@ -99,23 +100,25 @@ instance EncodeM EncodeAST A.Constant (Ptr FFI.Constant) where
     o -> $(do
       let constExprInfo =  ID.outerJoin ID.astConstantRecs (ID.innerJoin ID.astInstructionRecs ID.instructionDefs)
       TH.caseE [| o |] $ do
-        (name, (Just (TH.RecC n fs'), instrInfo)) <- Map.toList constExprInfo
-        let fns = [ TH.mkName . TH.nameBase $ fn | (fn, _, _) <- fs' ]
+        (name, (Just (TH.RecC n fs), instrInfo)) <- Map.toList constExprInfo
+        let fns = [ TH.mkName . TH.nameBase $ fn | (fn, _, _) <- fs ]
             coreCall n = TH.dyn $ "FFI.constant" ++ n
             buildBody c = [ TH.bindS (TH.varP fn) [| encodeM $(TH.varE fn) |] | fn <- fns ]
                           ++ [ TH.noBindS [| liftIO $(foldl TH.appE c (map TH.varE fns)) |] ]
+            hasFlags = any (== ''Bool) [ h | (_, _, TH.ConT h) <- fs ]
         core <- case instrInfo of
           Just (_, iDef) -> do
             let opcode = TH.dataToExpQ (const Nothing) (ID.cppOpcode iDef)
             case ID.instructionKind iDef of
-              ID.Binary -> return [| $(coreCall "BinaryOperator") $(opcode) |]
+              ID.Binary | hasFlags -> return $ coreCall name
+                        | True -> return [| $(coreCall "BinaryOperator") $(opcode) |]
               ID.Cast -> return [| $(coreCall "Cast") $(opcode) |]
               _ -> return $ coreCall name
           Nothing -> if (name `elem` ["Vector", "Null", "Array", "Undef"])
                       then return $ coreCall name
                       else []
         return $ TH.match
-          (TH.recP n [(fn,) <$> (TH.varP . TH.mkName . TH.nameBase $ fn) | (fn, _, _) <- fs'])
+          (TH.recP n [(fn,) <$> (TH.varP . TH.mkName . TH.nameBase $ fn) | (fn, _, _) <- fs])
           (TH.normalB (TH.doE (buildBody core)))
           []
       )
@@ -196,6 +199,10 @@ instance DecodeM DecodeAST A.Constant (Ptr FFI.Constant) where
                                  return [| liftIO $ decodeM =<< FFI.getConstantFCmpPredicate c |]
                                | h == ''Bool -> case TH.nameBase fn of
                                                   "inBounds" -> return [| liftIO $ decodeM =<< FFI.getInBounds v |]
+                                                  "exact" -> return [| liftIO $ decodeM =<< FFI.isExact v |]
+                                                  "nsw" -> return [| liftIO $ decodeM =<< FFI.hasNoSignedWrap v |]
+                                                  "nuw" -> return [| liftIO $ decodeM =<< FFI.hasNoUnsignedWrap v |]
+                                                  x -> error $ "constant bool field " ++ show x ++ " not handled yet"
                              TH.AppT TH.ListT (TH.ConT h) 
                                | h == ''Word32 -> 
                                   return [|
