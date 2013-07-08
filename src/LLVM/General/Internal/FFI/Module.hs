@@ -9,7 +9,6 @@ import Foreign.C
 import LLVM.General.Internal.FFI.Context
 import LLVM.General.Internal.FFI.LLVMCTypes
 import LLVM.General.Internal.FFI.PtrHierarchy
-import LLVM.General.Internal.FFI.Type
 
 data Module
 

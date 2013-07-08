@@ -1,16 +1,17 @@
 {-#
   LANGUAGE
   ForeignFunctionInterface,
-  TemplateHaskell
+  TemplateHaskell,
+  ViewPatterns
   #-}
 -- | FFI glue for llvm::IRBuilder - llvm's IR construction state object
 module LLVM.General.Internal.FFI.Builder where
 
 import qualified Language.Haskell.TH as TH
 
+import Control.Monad
+
 import qualified LLVM.General.AST.Instruction as A
-import qualified LLVM.General.AST.Operand as A
-import qualified LLVM.General.AST.Type as A
 
 import LLVM.General.Internal.InstructionDefs as ID
 
@@ -19,10 +20,9 @@ import Foreign.C
 
 import qualified Data.Map as Map
 
-import LLVM.General.Internal.FFI.LLVMCTypes
+import LLVM.General.Internal.FFI.Cleanup
 import LLVM.General.Internal.FFI.Context
-import LLVM.General.Internal.FFI.BinaryOperator
-import LLVM.General.Internal.FFI.Type
+import LLVM.General.Internal.FFI.LLVMCTypes
 import LLVM.General.Internal.FFI.PtrHierarchy
 
 data Builder
@@ -64,29 +64,23 @@ foreign import ccall unsafe "LLVMBuildUnreachable" buildUnreachable ::
 
 
 $(do
-  sequence [
-     TH.forImpD TH.cCall TH.unsafe cName (TH.mkName ("build" ++ a)) [t| 
-       Ptr Builder -> $(foldr (\at rt -> [t| $(at) -> $(rt) |]) [t| CString -> IO (Ptr $(rt)) |] ats)
-       |]
-     | (lrn, ID.InstructionDef { ID.cAPIName = a, ID.instructionKind = k }) <- Map.toList ID.instructionDefs,
-       let fieldTypes = 
-             (\(TH.RecC _ fs) -> [ t | (_,_,t) <- fs]) $
-             Map.findWithDefault 
-                  (error $ "LLVM instruction not found in AST: " ++ show lrn)
-                  lrn ID.astInstructionRecs
-           ats = flip concatMap fieldTypes $ \ft ->
-                 case ft of
-                   TH.ConT h | h == ''Bool -> [[t| LLVMBool |]]
-                             | h == ''A.Operand -> [[t| Ptr Value |]]
-                             | h == ''A.Type -> [[t| Ptr Type |]]
-                             | h == ''A.InstructionMetadata -> []
-                   _ -> error $ "show ft = " ++ show ft
-           cName = (if TH.ConT ''Bool `elem` fieldTypes then "LLVM_General_" else "LLVM") ++ "Build" ++ a,
-       rt <- case k of
-               ID.Binary -> [[t| BinaryOperator |]]
-               ID.Cast -> [[t| Instruction |]]
-               _ -> []
-    ]
+  liftM concat $ sequence $ do
+    let instrInfo = ID.outerJoin ID.astInstructionRecs ID.instructionDefs
+    (lrn, ii) <- Map.toList instrInfo
+    (TH.RecC _ (unzip3 -> (_, _, fieldTypes)), ID.InstructionDef { ID.cAPIName = a, ID.instructionKind = k }) <- case ii of
+      (Just r, Just d) -> return (r,d)
+      (Just _, Nothing) -> error $ "An AST instruction was not found in the LLVM instruction defs"
+      (Nothing, Just ID.InstructionDef { ID.instructionKind = k }) | k /= ID.Terminator -> 
+        error $ "LLVM instruction def " ++ lrn ++ " not found in the AST"
+      _ -> []
+
+    let ats = map typeMapping [ t | t <- fieldTypes, t /= TH.ConT ''A.InstructionMetadata ]
+        cName = (if hasFlags fieldTypes then "LLVM_General_" else "LLVM") ++ "Build" ++ a
+    rt <- case k of
+            ID.Binary -> [[t| BinaryOperator |]]
+            ID.Cast -> [[t| Instruction |]]
+            _ -> []
+    return $ foreignDecl cName ("build" ++ a) ([[t| Ptr Builder |]] ++ ats ++ [[t| CString |]]) [t| Ptr $(rt) |]
  )
 
 foreign import ccall unsafe "LLVMBuildArrayAlloca" buildAlloca ::

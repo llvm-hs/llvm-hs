@@ -10,9 +10,7 @@ import Data.Word
 
 import LLVM.General.Internal.FFI.LLVMCTypes
 import LLVM.General.Internal.FFI.Context
-
--- | a blind type to correspond to llvm::Type
-data Type
+import LLVM.General.Internal.FFI.PtrHierarchy
 
 -- | <http://llvm.org/doxygen/group__LLVMCCoreType.html#ga112756467f0988613faa6043d674d843>
 foreign import ccall unsafe "LLVMGetTypeKind" getTypeKind ::

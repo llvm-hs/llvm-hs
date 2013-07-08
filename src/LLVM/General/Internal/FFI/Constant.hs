@@ -3,17 +3,16 @@
   ForeignFunctionInterface,
   MultiParamTypeClasses,
   UndecidableInstances,
-  OverlappingInstances
+  OverlappingInstances,
+  ViewPatterns
   #-}
 -- | FFI functions for handling the LLVM Constant class
 module LLVM.General.Internal.FFI.Constant where
 
 import qualified Language.Haskell.TH as TH
 import qualified LLVM.General.Internal.InstructionDefs as ID
-import qualified LLVM.General.AST.Constant as A.C
 
 import Control.Monad
-import Data.Function
 import qualified Data.Map as Map
 import Data.Word
 
@@ -23,7 +22,6 @@ import Foreign.C
 import LLVM.General.Internal.FFI.PtrHierarchy
 import LLVM.General.Internal.FFI.Context
 import LLVM.General.Internal.FFI.Cleanup
-import LLVM.General.Internal.FFI.Type
 import LLVM.General.Internal.FFI.LLVMCTypes
 
 foreign import ccall unsafe "LLVMIsConstant" isConstant ::
@@ -90,18 +88,14 @@ foreign import ccall unsafe "LLVM_General_ConstBinaryOperator" constantBinaryOpe
 
 $(do
    let constExprInfo = ID.innerJoin (ID.innerJoin ID.astConstantRecs ID.astInstructionRecs) ID.instructionDefs
-   let tm = fix tm' 
-         where tm' _ (TH.ConT h) | h == ''A.C.Constant = [t| Ptr Constant |]
-               tm' x t = typeMappingU x t
    liftM concat $ sequence $ do
-     (name, ((TH.RecC _ fs,_), ID.InstructionDef { ID.instructionKind = ik })) <- Map.toList constExprInfo
-     let hasFlags = any (== ''Bool) [ h | (_, _, TH.ConT h) <- fs ]
+     (name, ((TH.RecC _ (unzip3 -> (_, _, fieldTypes)),_), ID.InstructionDef { ID.instructionKind = ik })) <- Map.toList constExprInfo
      prefix <- case ik of
                  ID.Other -> return "LLVM"
-                 ID.Binary | hasFlags -> return "LLVM_General_"
+                 ID.Binary | hasFlags fieldTypes -> return "LLVM_General_"
                  _ -> []
      return $
-       foreignDecl (prefix ++ "Const" ++ name) ("constant" ++ name) [tm t | (_, _, t) <- fs ] [t| Ptr Constant |]
+       foreignDecl (prefix ++ "Const" ++ name) ("constant" ++ name) (map typeMapping fieldTypes) [t| Ptr Constant |]
   )
 
 foreign import ccall unsafe "LLVMConstGEP" constantGetElementPtr' ::

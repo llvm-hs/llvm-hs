@@ -68,6 +68,11 @@ data Instruction
 
 instance ChildOf User Instruction
 
+-- | <http://llvm.org/doxygen/classllvm_1_1BinaryOperator.html>
+data BinaryOperator
+
+instance ChildOf Instruction BinaryOperator
+
 -- | <http://llvm.org/doxygen/classllvm_1_1User.html>
 data User
 
@@ -90,3 +95,7 @@ data NamedMetadata
 data InlineAsm
 
 instance ChildOf Value InlineAsm
+
+-- | <http://llvm.org/doxygen/classllvm_1_1Type.html>
+data Type
+

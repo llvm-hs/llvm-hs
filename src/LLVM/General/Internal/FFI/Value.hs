@@ -11,7 +11,6 @@ import Foreign.Ptr
 import Foreign.C
 
 import LLVM.General.Internal.FFI.LLVMCTypes
-import LLVM.General.Internal.FFI.Type 
 import LLVM.General.Internal.FFI.PtrHierarchy
 
 -- | <http://llvm.org/doxygen/group__LLVMCCoreValueGeneral.html#ga12179f46b79de8436852a4189d4451e0>

@@ -13,11 +13,6 @@ import Foreign.C
 import LLVM.General.Internal.FFI.PtrHierarchy
 import LLVM.General.Internal.FFI.LLVMCTypes
 
--- | a blind type to correspond to llvm::BinaryOperator
-data BinaryOperator
-
-instance ChildOf Instruction BinaryOperator
-
 foreign import ccall unsafe "LLVMIsABinaryOperator" isABinaryOperator ::
     Ptr Value -> IO (Ptr BinaryOperator)
 

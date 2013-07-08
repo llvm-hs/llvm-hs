@@ -9,7 +9,6 @@ import Foreign.Ptr
 
 import LLVM.General.Internal.FFI.LLVMCTypes
 import LLVM.General.Internal.FFI.PtrHierarchy
-import LLVM.General.Internal.FFI.Type
 
 foreign import ccall unsafe "LLVMIsAInlineAsm" isAInlineAsm ::
   Ptr Value -> IO (Ptr InlineAsm)

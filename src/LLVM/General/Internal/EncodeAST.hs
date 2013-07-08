@@ -18,7 +18,6 @@ import qualified Data.Map as Map
 
 import qualified LLVM.General.Internal.FFI.PtrHierarchy as FFI
 import qualified LLVM.General.Internal.FFI.Builder as FFI
-import qualified LLVM.General.Internal.FFI.Type as FFI
 
 import qualified LLVM.General.AST as A
 

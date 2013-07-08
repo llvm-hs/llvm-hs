@@ -5,7 +5,7 @@
 
 module LLVM.General.Internal.FFI.PassManager where
 
-import Language.Haskell.TH
+import qualified Language.Haskell.TH as TH
 
 import Control.Monad
 
@@ -45,22 +45,22 @@ foreign import ccall unsafe "LLVMFinalizeFunctionPassManager" finalizeFunctionPa
     Ptr PassManager -> IO CUInt
 
 $(do
-  let declareForeign :: Name -> [Type] -> DecsQ
+  let declareForeign :: TH.Name -> [TH.Type] -> TH.DecsQ
       declareForeign hName extraParams = do
-        let n = nameBase hName
+        let n = TH.nameBase hName
         foreignDecl 
           (cName n)
           ("add" ++ n ++ "Pass")
           ([[t| Ptr PassManager |]] 
            ++ [[t| Ptr TargetMachine |] | needsTargetMachine n]
            ++ map typeMapping extraParams)
-          (tupleT 0)
+          (TH.tupleT 0)
 
-  TyConI (DataD _ _ _ cons _) <- reify ''G.Pass
+  TH.TyConI (TH.DataD _ _ _ cons _) <- TH.reify ''G.Pass
   liftM concat $ forM cons $ \con -> case con of
-    RecC n l -> declareForeign n [ t | (_,_,t) <- l ]
-    NormalC n [] -> declareForeign n []
-    NormalC n _ -> error "pass descriptor constructors with fields need to be records"
+    TH.RecC n l -> declareForeign n [ t | (_,_,t) <- l ]
+    TH.NormalC n [] -> declareForeign n []
+    TH.NormalC n _ -> error "pass descriptor constructors with fields need to be records"
  )
 
 data PassManagerBuilder

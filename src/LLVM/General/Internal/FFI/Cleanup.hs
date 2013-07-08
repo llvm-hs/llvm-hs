@@ -8,16 +8,19 @@ import Control.Monad
 import Data.Sequence as Seq
 import Data.Foldable (toList)
 
-import Data.Function
-
-import LLVM.General.Internal.FFI.LLVMCTypes
 import Data.Word
 import Data.Int
 import Foreign.C
 import Foreign.Ptr
 
+import LLVM.General.Internal.FFI.LLVMCTypes
+import qualified LLVM.General.Internal.FFI.PtrHierarchy as FFI
+
 import qualified LLVM.General.AST.IntegerPredicate as A (IntegerPredicate) 
 import qualified LLVM.General.AST.FloatingPointPredicate as A (FloatingPointPredicate) 
+import qualified LLVM.General.AST.Constant as A.C (Constant)
+import qualified LLVM.General.AST.Operand as A (Operand)
+import qualified LLVM.General.AST.Type as A (Type)
 
 foreignDecl :: String -> String -> [TypeQ] -> TypeQ -> DecsQ
 foreignDecl cName hName argTypeQs returnTypeQ = do
@@ -59,15 +62,22 @@ foreignDecl cName hName argTypeQs returnTypeQ = do
     ]
    ]
 
-typeMappingU :: (Type -> TypeQ) -> Type -> TypeQ
-typeMappingU typeMapping t = case t of
+-- | The LLVM C-API for instructions with boolean flags (e.g. nsw) is weak, so they get
+-- separated out for different handling. This check is an accurate but crude test for whether
+-- an instruction needs such handling. As such it may need revision in the future (if has-a-boolean-member
+-- is no longer the same as needs-special-handling).
+hasFlags :: [Type] -> Bool
+hasFlags = any (== ConT ''Bool)
+
+typeMapping :: Type -> TypeQ
+typeMapping t = case t of
   ConT h | h == ''Bool -> [t| LLVMBool |]
          | h == ''Int32 -> [t| CInt |]
          | h == ''Word32 -> [t| CUInt |]
          | h == ''String -> [t| CString |]
+         | h == ''A.Operand -> [t| Ptr FFI.Value |]
+         | h == ''A.Type -> [t| Ptr FFI.Type |]
+         | h == ''A.C.Constant -> [t| Ptr FFI.Constant |]
          | h == ''A.FloatingPointPredicate -> [t| FCmpPredicate |]
          | h == ''A.IntegerPredicate -> [t| ICmpPredicate |]
   AppT ListT x -> foldl1 appT [tupleT 2, [t| CUInt |], appT [t| Ptr |] (typeMapping x)]
-
-typeMapping :: Type -> TypeQ
-typeMapping = fix typeMappingU

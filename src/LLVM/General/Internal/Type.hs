@@ -15,6 +15,7 @@ import Foreign.Ptr
 import qualified LLVM.General.Internal.FFI.LLVMCTypes as FFI
 import LLVM.General.Internal.FFI.LLVMCTypes (typeKindP)
 import qualified LLVM.General.Internal.FFI.Type as FFI
+import qualified LLVM.General.Internal.FFI.PtrHierarchy as FFI
 
 import qualified LLVM.General.AST as A
 import qualified LLVM.General.AST.AddrSpace as A
