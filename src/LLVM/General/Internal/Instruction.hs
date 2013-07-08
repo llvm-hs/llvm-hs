@@ -59,6 +59,12 @@ meta i = do
           else return zip `ap` decodeM (n', ks) `ap` decodeM (n', ps)
   getMetadata 4
 
+setMD :: Ptr FFI.Instruction -> A.InstructionMetadata -> EncodeAST ()
+setMD i md = forM_ md $ \(kindName, anode) -> do
+               kindID <- encodeM kindName
+               node <- encodeM anode
+               liftIO $ FFI.setMetadata i kindID node
+
 instance DecodeM DecodeAST A.Terminator (Ptr FFI.Instruction) where
   decodeM i = scopeAnyCont $ do
     n <- liftIO $ FFI.getInstructionDefOpcode i
@@ -214,10 +220,7 @@ instance EncodeM EncodeAST A.Terminator (Ptr FFI.Instruction) where
       } -> do
         i <- liftIO $ FFI.buildUnreachable builder
         return $ FFI.upCast i
-    forM (A.metadata' t) $ \(k, mdn) -> do
-      k <- encodeM k
-      mdn <- encodeM mdn
-      liftIO $ FFI.setMetadata t' k mdn
+    setMD t' (A.metadata' t)
     return t'      
 
 $(do
@@ -336,14 +339,13 @@ $(do
         builder <- gets encodeStateBuilder
         let return' i = return (FFI.upCast i, return ())
         s <- encodeM ""
-        $(
+        (inst, act) <- $(
           [|
             case o of
               A.ICmp { 
-                A.iPredicate = pred, 
-                A.operand0 = op0, 
-                A.operand1 = op1, 
-                A.metadata = [] 
+                A.iPredicate = pred,
+                A.operand0 = op0,
+                A.operand1 = op1
               } -> do
                 op0' <- encodeM op0
                 op1' <- encodeM op1
@@ -351,10 +353,9 @@ $(do
                 i <- liftIO $ FFI.buildICmp builder pred op0' op1' s
                 return' i
               A.FCmp {
-                A.fpPredicate = pred, 
-                A.operand0 = op0, 
-                A.operand1 = op1, 
-                A.metadata = [] 
+                A.fpPredicate = pred,
+                A.operand0 = op0,
+                A.operand1 = op1
               } -> do
                 op0' <- encodeM op0
                 op1' <- encodeM op1
@@ -378,8 +379,7 @@ $(do
                 A.returnAttributes = rAttrs,
                 A.function = f,
                 A.arguments = args,
-                A.functionAttributes = fAttrs,
-                A.metadata = []
+                A.functionAttributes = fAttrs
               } -> do
                 fv <- encodeM f
                 let (argvs, argAttrs) = unzip args
@@ -470,8 +470,7 @@ $(do
                 A.volatile = vol,
                 A.address = a,
                 A.alignment = al,
-                A.maybeAtomicity = mat,
-                A.metadata = []
+                A.maybeAtomicity = mat
               } -> do
                  a' <- encodeM a
                  al <- encodeM al
@@ -484,8 +483,7 @@ $(do
                 A.address = a, 
                 A.value = v, 
                 A.maybeAtomicity = mat, 
-                A.alignment = al, 
-                A.metadata = []
+                A.alignment = al
               } -> do
                  a' <- encodeM a
                  v' <- encodeM v
@@ -507,8 +505,7 @@ $(do
               A.CmpXchg { 
                 A.volatile = vol, 
                 A.address = a, A.expected = e, A.replacement = r,
-                A.atomicity = at,
-                A.metadata = []
+                A.atomicity = at
               } -> do
                  a' <- encodeM a
                  e' <- encodeM e
@@ -522,8 +519,7 @@ $(do
                 A.rmwOperation = rmwOp,
                 A.address = a,
                 A.value = v,
-                A.atomicity = at,
-                A.metadata = []
+                A.atomicity = at
               } -> do
                  a' <- encodeM a
                  v' <- encodeM v
@@ -542,8 +538,7 @@ $(do
                          "nsw" -> [Left [| encodeM $(TH.dyn s) |] ]
                          "nuw" -> [Left [| encodeM $(TH.dyn s) |] ]
                          "exact" -> [Left [| encodeM $(TH.dyn s) |] ]
-                         "metadata" -> 
-                           [Right [| unless (List.null $(TH.dyn s)) $ error "can't handle metadata yet" |]]
+                         "metadata" -> [Right [| return () |] ]
                          _ -> error $ "unhandled instruction field " ++ show s
                      in
                      TH.caseE [| o |] [
@@ -591,6 +586,8 @@ $(do
 
            |]
          )
+        setMD inst (A.metadata o)
+        return (inst, act)
    |]
  )
 

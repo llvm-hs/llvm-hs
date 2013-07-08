@@ -98,6 +98,7 @@ instance EncodeM EncodeAST A.Type (Ptr FFI.Type) where
         packed <- encodeM packed
         liftIO $ FFI.structTypeInContext context ets packed
       A.NamedTypeReference n -> lookupNamedType n
+      A.MetadataType -> liftIO $ FFI.metadataTypeInContext context
 
 instance DecodeM DecodeAST A.Type (Ptr FFI.Type) where
   decodeM t = scopeAnyCont $ do

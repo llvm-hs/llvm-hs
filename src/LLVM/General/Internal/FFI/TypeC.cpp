@@ -32,5 +32,8 @@ uint64_t LLVM_General_GetArrayLength(LLVMTypeRef ArrayTy) {
 	return unwrap<ArrayType>(ArrayTy)->getNumElements();
 }
 
+LLVMTypeRef LLVM_General_MetadataTypeInContext(LLVMContextRef C) {
+  return wrap(Type::getMetadataTy(*unwrap(C)));
+}
 
 }
