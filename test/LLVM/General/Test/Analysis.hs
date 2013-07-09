@@ -62,6 +62,6 @@ tests = testGroup "Analysis" [
             \ i32  call void @foo(i8 1)\n\
             \Broken module found, compilation terminated.\n\
             \Broken module found, compilation terminated.\n"
-      | True -- this test will cause an assertion if LLVM is compiled with assertions on.
+      | False -- this test will cause an assertion if LLVM is compiled with assertions on.
    ]
  ]
