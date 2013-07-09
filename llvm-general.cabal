@@ -16,15 +16,16 @@ description:
 	handles almost all of the stateful complexities of using the LLVM API to build IR; and it supports moving IR not
 	only from Haskell into LLVM C++ objects, but the other direction - from LLVM C++ into Haskell.
 extra-source-files:
-  src/LLVM/General/Internal/FFI/Instruction.h
-  src/LLVM/General/Internal/FFI/Value.h
-  src/LLVM/General/Internal/FFI/SMDiagnostic.h
-  src/LLVM/General/Internal/FFI/InlineAssembly.h
-  src/LLVM/General/Internal/FFI/Target.h
+  src/LLVM/General/Internal/FFI/Analysis.h
+  src/LLVM/General/Internal/FFI/Constant.h
   src/LLVM/General/Internal/FFI/Function.h
   src/LLVM/General/Internal/FFI/GlobalValue.h
+  src/LLVM/General/Internal/FFI/InlineAssembly.h
+  src/LLVM/General/Internal/FFI/Instruction.h
+  src/LLVM/General/Internal/FFI/SMDiagnostic.h
+  src/LLVM/General/Internal/FFI/Target.h
   src/LLVM/General/Internal/FFI/Type.h
-  src/LLVM/General/Internal/FFI/Constant.h
+  src/LLVM/General/Internal/FFI/Value.h
    
 source-repository head
   type: git
@@ -81,6 +82,7 @@ library
     LLVM.General.AST.RMWOperation
     LLVM.General.AST.Type
     LLVM.General.AST.Visibility
+    LLVM.General.Analysis
     LLVM.General.CodeGenOpt
     LLVM.General.CodeModel
     LLVM.General.CommandLine
@@ -98,6 +100,7 @@ library
     Control.Monad.AnyCont
     Control.Monad.AnyCont.Class
     Control.Monad.Trans.AnyCont
+    LLVM.General.Internal.Analysis
     LLVM.General.Internal.Atomicity
     LLVM.General.Internal.Attribute
     LLVM.General.Internal.BasicBlock
@@ -128,6 +131,7 @@ library
     LLVM.General.Internal.Target
     LLVM.General.Internal.Type
     LLVM.General.Internal.Value
+    LLVM.General.Internal.FFI.Analysis
     LLVM.General.Internal.FFI.Assembly
     LLVM.General.Internal.FFI.BasicBlock
     LLVM.General.Internal.FFI.BinaryOperator
@@ -200,6 +204,7 @@ test-suite test
     FlexibleContexts
   main-is: Test.hs
   other-modules:
+    LLVM.General.Test.Analysis
     LLVM.General.Test.Constants
     LLVM.General.Test.DataLayout
     LLVM.General.Test.ExecutionEngine
