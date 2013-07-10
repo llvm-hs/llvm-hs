@@ -15,6 +15,8 @@ description:
 	it uses an ADT to represent LLVM IR (<http://llvm.org/docs/LangRef.html>), and so offers two advantages: it
 	handles almost all of the stateful complexities of using the LLVM API to build IR; and it supports moving IR not
 	only from Haskell into LLVM C++ objects, but the other direction - from LLVM C++ into Haskell.
+
+  For haddock, see <a href="http://bscarlet.github.io/llvm-general/3.4.0.0/doc/html/llvm-general/index.html">the github pages</a>.
 extra-source-files:
   src/LLVM/General/Internal/FFI/Analysis.h
   src/LLVM/General/Internal/FFI/Constant.h

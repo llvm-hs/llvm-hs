@@ -27,9 +27,10 @@ import System.Exit
 import Distribution.Verbosity
 import Distribution.Text (simpleParse)
 import Distribution.Compiler
-import Distribution.Package
+import Distribution.Package hiding (pkgName)
 import Distribution.PackageDescription
 import Distribution.PackageDescription.Parse
+import Distribution.PackageDescription.PrettyPrint
 import Distribution.PackageDescription.Configuration
 import Text.Parsec
 import Text.Parsec.String
@@ -37,6 +38,7 @@ import Data.Version
 
 llvmVersion = "3.4svn"
 llvmDir = "out" </> ("llvm-" ++ llvmVersion)
+pkgName = "llvm-general"
 
 wipedir :: FilePath -> Action ()
 wipedir d = do
@@ -56,23 +58,18 @@ needRecursive p = do
   files <- getDirectoryFiles p ["*"]
   need $ map (p </>) files
 
+touch f = do
+  let d = dropFileName f
+  dExists <- doesDirectoryExist d
+  unless dExists $ cmd "mkdir" ["-p", d]
+  cmd "touch" [ f ]
+
 systemCwdV p' c a = do
   p <- liftIO $ canonicalizePath p'
   putQuiet $ "Entering directory `" ++ p ++ "'"
-  systemCwd p c a
+  () <- cmd (Cwd p) c a
   putQuiet $ "Leaving directory `" ++ p ++ "'"
 
-{-
-getDirectoryFilesRecursive :: FilePath -> FilePattern -> Action [FilePath]
-getDirectoryFilesRecursive start pat = do
-  locals <- getDirectoryFiles start [pat]
-  dirs <- getDirectoryDirs start
-  deepers <- forM [ d | d <- dirs, d /= ".git" ] $ \d -> do
-    subs <- getDirectoryFilesRecursive (start </> d) pat
-    return $ map (d </>) subs
-  return $ concat (locals : deepers)
-
--}
 withAlteredEnvVar :: String -> (Maybe String -> Maybe String) -> Action () -> Action ()
 withAlteredEnvVar name modify action = do
   let alterEnvVar :: String -> Maybe String -> Action ()
@@ -86,20 +83,19 @@ setEnvVar = const . Just
 prefixPathVar entry = Just . maybe entry ((entry ++ ":") ++) 
 
 newtype BuildRoot = BuildRoot () deriving (Eq, Ord, Read, Show, Binary, Hashable, NFData, Typeable)
-newtype NoDoc = NoDoc () deriving (Eq, Ord, Read, Show, Binary, Hashable, NFData, Typeable)
 newtype LLVMConfig = LLVMConfig () deriving (Eq, Ord, Read, Show, Binary, Hashable, NFData, Typeable)
+newtype CabalVersion = CabalVersion String deriving (Eq, Ord, Read, Show, Binary, Hashable, NFData, Typeable)
 
 main = shake shakeOptions { 
          shakeVersion = "2",
          shakeVerbosity = Normal
        } $ do
 
-  getNoDoc <- addOracle $ \(NoDoc _) -> do
-    args <- liftIO getArgs
-    return ("--noDoc" `elem` args)
-
   getBuildRoot <- addOracle $ \(BuildRoot _) -> do
     liftIO $ getWorkingDirectory
+
+  getCabalVersion <- addOracle $ \(CabalVersion pkg) -> do
+    liftIO $ liftM (showVersion . pkgVersion . package . packageDescription) $ readPackageDescription silent (pkg ++ ".cabal")
 
   getLlvmConfig <- addOracle $ \(LLVMConfig _) -> do
     Exit exitCode <- command [] "which" ["llvm-config"]
@@ -109,26 +105,67 @@ main = shake shakeOptions {
       unless done $ need [ (llvmDir </> "install/bin/llvm-config") ]
     return x
 
+  let stamps = "out" </> "stamps"
+      [configured, built, documented, docPublished] = map (stamps </>) ["configured", "built", "documented", "docPublished"]
+
   action $ do
-    let pkgName = "llvm-general"
-    buildRoot <- getBuildRoot (BuildRoot ())
-    ownLLVM <- getLlvmConfig (LLVMConfig ())
-    let subBuildEnv = if ownLLVM 
-                       then withAlteredEnvVar "PATH" (prefixPathVar $ buildRoot </> llvmDir </> "install/bin")
-                       else id
-    let cabalStep args = subBuildEnv $ systemCwdV "." "cabal-dev" args
+    args <- liftIO getArgs
+    need args
+
+  let getCabalStep = do
+        buildRoot <- getBuildRoot (BuildRoot ())
+        ownLLVM <- getLlvmConfig (LLVMConfig ())
+        let subBuildEnv = if ownLLVM 
+                           then withAlteredEnvVar "PATH" (prefixPathVar $ buildRoot </> llvmDir </> "install/bin")
+                           else id
+        return $ subBuildEnv . systemCwdV "." "cabal-dev"
+
+  configured *> \stamp -> do
+    cabalStep <- getCabalStep
     need [ pkgName ++ ".cabal" ]
     let shared = [ "--enable-shared" | True ]
     cabalStep $ [ "install-deps", "--enable-tests" ] ++ shared
-    cabalStep $ [ "configure", "--enable-tests", "-fshared-llvm" ] ++ shared
+    cabalStep $ [ "configure", "--enable-tests" {- , "-fshared-llvm" -} ] ++ shared
+    touch stamp
+
+  phony "build" $ need [ built ]
+  built *> \stamp -> do
+    cabalStep <- getCabalStep
+    need [ configured ]
     needRecursive "src"
     cabalStep [ "build" ]
+    touch stamp
+
+  phony "test" $ do
+    need [ built ]
+    cabalStep <- getCabalStep
     needRecursive "test"              
     cabalStep [ "test" ]
-    noDoc <- getNoDoc (NoDoc ())
-    unless noDoc $ cabalStep [ "haddock", "--internal" ]
+
+  phony "doc" $ need [ documented ]
+  documented *> \stamp -> do
+    need [ built ]
+    cabalStep <- getCabalStep
+    cabalStep [ "haddock" ]
+    touch stamp
     
-    
+  let ghPages = "out" </> "gh-pages"
+
+  phony "pubdoc" $ need [ docPublished ]
+  docPublished *> \stamp -> do
+    need [ "doc" ]
+    buildRoot <- getBuildRoot (BuildRoot ())
+    ghPagesExists <- doesDirectoryExist ghPages
+    tag <- getCabalVersion (CabalVersion "llvm-general")
+    unless ghPagesExists $ cmd (Cwd "out") "git" ["clone", buildRoot, "-b", "gh-pages", "gh-pages"]
+    () <- cmd "rm" [ "-rf", ghPages </> tag </> "doc" ]
+    () <- cmd "mkdir" [ "-p", ghPages </> tag ]
+    () <- cmd "cp" [ "-r", "dist/doc", ghPages </> tag ]
+    () <- cmd (Cwd ghPages) "git" [ "add", "-A", "." ]
+    () <- cmd (Cwd ghPages) "git" [ "commit", "-m", "update " ++ tag ++ " doc" ]
+    () <- cmd (Cwd ghPages) "git" [ "push", "origin", "gh-pages" ]
+    touch stamp
+
   llvmDir </> "install/bin/llvm-config" *> \out -> do
     let tarball = "downloads/llvm-" ++ llvmVersion ++ ".src.tar.gz"
     buildRoot <- askOracle (BuildRoot ())
