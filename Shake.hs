@@ -146,14 +146,14 @@ main = shake shakeOptions {
   documented *> \stamp -> do
     need [ built ]
     cabalStep <- getCabalStep
-    cabalStep [ "haddock" ]
+    cabalStep [ "haddock", "--html-location=http://hackage.haskell.org/packages/archive/$pkg/$version/doc/html" ]
     touch stamp
     
   let ghPages = "out" </> "gh-pages"
 
   phony "pubdoc" $ need [ docPublished ]
   docPublished *> \stamp -> do
-    need [ "doc" ]
+    need [ documented ]
     buildRoot <- getBuildRoot (BuildRoot ())
     ghPagesExists <- doesDirectoryExist ghPages
     tag <- getCabalVersion (CabalVersion "llvm-general")
