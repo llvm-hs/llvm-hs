@@ -26,14 +26,14 @@ instance Monad m => ScopeAnyCont (AnyContT m) where
                                      
 
 instance (Monad m, MonadAnyCont b m) => MonadAnyCont b (StateT s m) where
-  anyContToM = lift . anyContToM
+  anyContToM x = lift $ anyContToM x
 
 instance ScopeAnyCont m => ScopeAnyCont (StateT s m) where
   scopeAnyCont = StateT . (scopeAnyCont .) . runStateT
 
 
 instance (Error e, Monad m, MonadAnyCont b m) => MonadAnyCont b (ErrorT e m) where
-  anyContToM = lift . anyContToM
+  anyContToM x = lift $ anyContToM x
 
 instance ScopeAnyCont m => ScopeAnyCont (ErrorT e m) where
   scopeAnyCont = mapErrorT scopeAnyCont
