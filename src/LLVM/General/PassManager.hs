@@ -1,5 +1,5 @@
 -- | A 'PassManager' holds collection of passes, to be run on 'Module's.
--- Build one with 'createPassManager':
+-- Build one with 'withPassManager':
 -- 
 --  * from a 'CuratedPassSetSpec' if you want optimization but not to play with your compiler
 --
