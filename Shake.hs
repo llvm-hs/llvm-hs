@@ -133,13 +133,13 @@ main = shake shakeOptions {
     cabalStep <- getCabalStep
     need [ configured ]
     needRecursive "src"
+    needRecursive "test"              
     cabalStep [ "build" ]
     touch stamp
 
   phony "test" $ do
     need [ built ]
     cabalStep <- getCabalStep
-    needRecursive "test"              
     cabalStep [ "test" ]
 
   phony "doc" $ need [ documented ]
