@@ -396,6 +396,35 @@ tests = testGroup "Module" [
             ]
            ]
       t <- runErrorT $ withModuleFromAST context badAST $ \_ -> return True
-      t @?= Left "reference to undefined block: Name \"not here\""
+      t @?= Left "reference to undefined block: Name \"not here\"",
+
+    testCase "multiple" $ withContext $ \context -> do
+      let badAST = Module "<string>" Nothing Nothing [
+           GlobalDefinition $ Function L.External V.Default CC.C [] (IntegerType 32) (Name "foo") ([
+              ],False)
+              [] Nothing 0 
+            [
+             BasicBlock (UnName 0) [
+              UnName 1 := Mul {
+                nsw = False,
+                nuw = False,
+                operand0 = LocalReference (Name "unknown"),
+                operand1 = ConstantOperand (C.Int 32 1),
+                metadata = []
+              },
+              UnName 2 := Mul {
+                nsw = False,
+                nuw = False,
+                operand0 = LocalReference (Name "unknown2"),
+                operand1 = LocalReference (UnName 1),
+                metadata = []
+              }
+              ] (
+                Do $ Ret (Just (LocalReference (UnName 2))) []
+              )
+            ]
+           ]
+      t <- runErrorT $ withModuleFromAST context badAST $ \_ -> return True
+      t @?= Left "reference to undefined local: Name \"unknown\""
    ]
  ]
