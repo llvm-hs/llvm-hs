@@ -151,7 +151,7 @@ tests = testGroup "Constants" [
       "global i32 extractelement (<2 x i32> bitcast (i64 ptrtoint (i32* @1 to i64) to <2 x i32>), i32 1)"
 {-
     ), (
---  This test make llvm abort, as of llvm-3.2.
+--  This test made llvm abort as of llvm-3.2.  Now, as a new feature in llvm-3.4, it makes it report a fatal error!
       "extractvalue",
       IntegerType 8,
       C.ExtractValue
