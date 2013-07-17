@@ -56,16 +56,16 @@ const char *LLVM_General_ModuleGetInlineAsm(LLVMModuleRef m) {
 }
 
 LLVMBool LLVM_General_WriteBitcodeToFile(LLVMModuleRef m, const char *path, char **error) {
-  std::string ErrorInfo;
-  raw_fd_ostream OS(path, ErrorInfo, raw_fd_ostream::F_Binary);
+	std::string ErrorInfo;
+	raw_fd_ostream OS(path, ErrorInfo, sys::fs::F_Binary);
 
-  if (!ErrorInfo.empty()) {
-    *error = strdup(ErrorInfo.c_str());
-    return -1;
-  }
+	if (!ErrorInfo.empty()) {
+		*error = strdup(ErrorInfo.c_str());
+		return -1;
+	}
 
-  WriteBitcodeToFile(unwrap(m), OS);
-  return 0;
+	WriteBitcodeToFile(unwrap(m), OS);
+	return 0;
 }
 
 }
