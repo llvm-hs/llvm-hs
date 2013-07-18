@@ -9,7 +9,7 @@ import Data.Int
 import Data.Word
 
 -- | <http://llvm.org/docs/Passes.html#transform-passes>
--- A few passes can make use of information in a 'LLVM.General.Target.TargetLowering' if one
+-- A few passes can make use of information in a 'LLVM.General.Target.TargetMachine' if one
 -- is provided to 'LLVM.General.PassManager.createPassManager'.
 -- <http://llvm.org/doxygen/classllvm_1_1Pass.html>
 data Pass
@@ -17,7 +17,7 @@ data Pass
   = AggressiveDeadCodeElimination
   | BlockPlacement
   | BreakCriticalEdges
-  -- | can use a 'LLVM.General.Target.TargetLowering'
+  -- | can use a 'LLVM.General.Target.TargetMachine'
   | CodeGenPrepare
   | ConstantPropagation
   | CorrelatedValuePropagation
@@ -40,7 +40,7 @@ data Pass
   | LoopUnroll { loopUnrollThreshold :: Int32, count :: Int32, allowPartial :: Int32 }
   | LoopUnswitch { optimizeForSize :: Bool }
   | LowerAtomic
-  -- | can use a 'LLVM.General.Target.TargetLowering'
+  -- | can use a 'LLVM.General.Target.TargetMachine'
   | LowerInvoke { useExpensiveExceptionHandlingSupport :: Bool } 
   | LowerSwitch
   | LowerExpectIntrinsic
