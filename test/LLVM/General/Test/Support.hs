@@ -27,8 +27,10 @@ instance FailInIO (Either String Diagnostic) where
 withModuleFromString' c s f  = failInIO $ withModuleFromString c s f
 withModuleFromAST' c a f = failInIO $ withModuleFromAST c a f
 
-strCheck mAST mStr = withContext $ \context -> do
+strCheckC mAST mStr mStrCanon = withContext $ \context -> do
   a <- withModuleFromString' context mStr moduleAST
   s <- withModuleFromAST' context mAST moduleString
-  (a,s) @?= (mAST, mStr)
+  (a,s) @?= (mAST, mStrCanon)
+
+strCheck mAST mStr = strCheckC mAST mStr mStr
 
