@@ -148,7 +148,11 @@ tests = testGroup "Optimization" [
            Do $ Br (Name "done") []
           ),
           BasicBlock (Name "done") [
-           Name "r" := Phi {type' = IntegerType 32, incomingValues = [(LocalReference (UnName 1),Name "take"),(ConstantOperand (C.Int 32 57), Name "here")], metadata = []}
+           Name "r" := Phi {
+             type' = IntegerType 32,
+             incomingValues = [(LocalReference (UnName 1),Name "take"),(ConstantOperand (C.Int 32 57), Name "here")],
+             metadata = []
+            }
           ] (
             Do $ Ret (Just (LocalReference (Name "r"))) []
           )
