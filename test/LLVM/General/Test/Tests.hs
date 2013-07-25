@@ -13,6 +13,7 @@ import qualified LLVM.General.Test.Module as Module
 import qualified LLVM.General.Test.Optimization as Optimization
 import qualified LLVM.General.Test.Target as Target
 import qualified LLVM.General.Test.Analysis as Analysis
+import qualified LLVM.General.Test.PrettyPrint as PrettyPrint
 
 tests = testGroup "llvm-general" [
     Constants.tests,
@@ -25,5 +26,6 @@ tests = testGroup "llvm-general" [
     Module.tests,
     Optimization.tests,
     Target.tests,
-    Analysis.tests
+    Analysis.tests,
+    PrettyPrint.tests
   ]

@@ -1,0 +1,99 @@
+module LLVM.General.Test.PrettyPrint where
+
+import Test.Framework
+import Test.Framework.Providers.HUnit
+import Test.HUnit
+
+import LLVM.General.Test.Support
+
+import LLVM.General.PrettyPrint
+
+import LLVM.General.AST
+import qualified LLVM.General.AST.Linkage as L
+import qualified LLVM.General.AST.Visibility as V
+import qualified LLVM.General.AST.CallingConvention as CC
+import qualified LLVM.General.AST.Constant as C
+
+tests = testGroup "PrettyPrint" [
+  testCase "basic" $ do
+    let ast = Module "<string>" Nothing Nothing [
+         GlobalDefinition $ Function L.External V.Default CC.C [] (IntegerType 32) (Name "foo") ([
+             Parameter (IntegerType 32) (Name "x") []
+            ],False)
+            [] Nothing 0 
+          [
+           BasicBlock (UnName 0) [
+            UnName 1 := Mul {
+              nsw = True,
+              nuw = False,
+              operand0 = ConstantOperand (C.Int 32 1),
+              operand1 = ConstantOperand (C.Int 32 1),
+              metadata = []
+            }
+            ] (
+              Do $ Br (Name "here") []
+            ),
+           BasicBlock (Name "here") [
+            ] (
+              Do $ Ret (Just (LocalReference (UnName 1))) []
+            )
+          ]
+         ]
+        s = "A.Module {\n\
+            \  A.moduleName = \"<string>\",\n\
+            \  A.moduleDataLayout = Nothing,\n\
+            \  A.moduleTargetTriple = Nothing,\n\
+            \  A.moduleDefinitions = [\n\
+            \    A.GlobalDefinition A.G.Function {\n\
+            \      A.G.linkage = A.L.External,\n\
+            \      A.G.visibility = A.V.Default,\n\
+            \      A.G.callingConvention = A.CC.C,\n\
+            \      A.G.returnAttributes = [],\n\
+            \      A.G.returnType = A.IntegerType {A.typeBits = 32},\n\
+            \      A.G.name = A.Name \"foo\",\n\
+            \      A.G.parameters = ([A.G.Parameter A.IntegerType { A.typeBits = 32 } (A.Name \"x\") []], False),\n\
+            \      A.G.functionAttributes = [],\n\
+            \      A.G.section = Nothing,\n\
+            \      A.G.alignment = 0,\n\
+            \      A.G.basicBlocks = [\n\
+            \        A.G.BasicBlock (A.UnName 0) [\n\
+            \          A.UnName 1 A.:= A.Mul {\n\
+            \            A.nsw = True,\n\
+            \            A.nuw = False,\n\
+            \            A.operand0 = A.ConstantOperand A.C.Int {A.C.integerBits = 32, A.C.integerValue = 1},\n\
+            \            A.operand1 = A.ConstantOperand A.C.Int {A.C.integerBits = 32, A.C.integerValue = 1},\n\
+            \            A.metadata = []\n\
+            \          }\n\
+            \        ] (A.Do A.Br { A.dest = A.Name \"here\", A.metadata' = [] }),\n\
+            \        A.G.BasicBlock (A.Name \"here\") [] (\n\
+            \          A.Do A.Ret {A.returnOperand = Just (A.LocalReference (A.UnName 1)), A.metadata' = []}\n\
+            \        )\n\
+            \      ]\n\
+            \    }\n\
+            \  ]\n\
+            \}"
+    showPretty ast @?= s,
+  testCase "imports" $ do
+    imports defaultPrefixScheme @?= 
+      "import qualified Data.Map as Map\n\
+      \import Data.Maybe\n\
+      \import qualified Data.Set as Set\n\
+      \import qualified LLVM.General.AST as A\n\
+      \import qualified LLVM.General.AST.AddrSpace as A\n\
+      \import qualified LLVM.General.AST.Attribute as A.A\n\
+      \import qualified LLVM.General.AST.CallingConvention as A.CC\n\
+      \import qualified LLVM.General.AST.Constant as A.C\n\
+      \import qualified LLVM.General.AST.DataLayout as A\n\
+      \import qualified LLVM.General.AST.Float as A\n\
+      \import qualified LLVM.General.AST.FloatingPointPredicate as A.FPred\n\
+      \import qualified LLVM.General.AST.Global as A.G\n\
+      \import qualified LLVM.General.AST.InlineAssembly as A\n\
+      \import qualified LLVM.General.AST.Instruction as A\n\
+      \import qualified LLVM.General.AST.IntegerPredicate as A.IPred\n\
+      \import qualified LLVM.General.AST.Linkage as A.L\n\
+      \import qualified LLVM.General.AST.Name as A\n\
+      \import qualified LLVM.General.AST.Operand as A\n\
+      \import qualified LLVM.General.AST.Type as A\n\
+      \import qualified LLVM.General.AST.Visibility as A.V\n"
+ ]
+  
