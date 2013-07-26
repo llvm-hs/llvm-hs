@@ -24,6 +24,7 @@ extra-source-files:
   src/LLVM/General/Internal/FFI/GlobalValue.h
   src/LLVM/General/Internal/FFI/InlineAssembly.h
   src/LLVM/General/Internal/FFI/Instruction.h
+  src/LLVM/General/Internal/FFI/Module.h
   src/LLVM/General/Internal/FFI/SMDiagnostic.h
   src/LLVM/General/Internal/FFI/Target.h
   src/LLVM/General/Internal/FFI/Type.h
@@ -216,6 +217,7 @@ test-suite test
     LLVM.General.Test.Global
     LLVM.General.Test.InlineAssembly
     LLVM.General.Test.Instructions
+    LLVM.General.Test.Linking
     LLVM.General.Test.Metadata
     LLVM.General.Test.Module
     LLVM.General.Test.Optimization

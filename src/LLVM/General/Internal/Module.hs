@@ -1,6 +1,8 @@
 {-#
   LANGUAGE
-  ScopedTypeVariables
+  TemplateHaskell,
+  ScopedTypeVariables,
+  MultiParamTypeClasses
   #-}
 -- | This Haskell module is for/of functions for handling LLVM modules.
 module LLVM.General.Internal.Module where
@@ -60,6 +62,26 @@ newtype Module = Module (Ptr FFI.Module)
 
 instance Error (Either String Diagnostic) where
     strMsg = Left
+
+genCodingInstance' [t| Bool |] ''FFI.LinkerMode [
+  (FFI.linkerModeDestroySource, False),
+  (FFI.linkerModePreserveSource, True)
+ ]
+
+-- | link LLVM modules - move or copy parts of a source module into a destination module.
+-- Note that this operation is not commutative - not only concretely (e.g. the destination module
+-- is modified, becoming the result) but abstractly (e.g. unused private globals in the source
+-- module do not appear in the result, but similar globals in the destination remain).
+linkModules :: 
+  Bool -- ^ True to leave the right module unmodified, False to cannibalize it (for efficiency's sake).
+  -> Module -- ^ The module into which to link
+  -> Module -- ^ The module to link into the other (and cannibalize or not)
+  -> ErrorT String IO ()
+linkModules preserveRight (Module m) (Module m') = flip runAnyContT return $ do
+  preserveRight <- encodeM preserveRight
+  msgPtr <- alloca
+  result <- decodeM =<< (liftIO $ FFI.linkModules m m' preserveRight msgPtr)
+  when result $ fail =<< decodeM msgPtr
 
 -- | parse 'Module' from LLVM assembly
 withModuleFromString :: Context -> String -> (Module -> IO a) -> ErrorT (Either String Diagnostic) IO a

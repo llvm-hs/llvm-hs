@@ -9,6 +9,7 @@ module LLVM.General.Internal.FFI.LLVMCTypes where
 #include "llvm-c/Core.h"
 #include "llvm-c/Target.h"
 #include "llvm-c/TargetMachine.h"
+#include "llvm-c/Linker.h"
 #include "LLVM/General/Internal/FFI/Instruction.h"
 #include "LLVM/General/Internal/FFI/Value.h"
 #include "LLVM/General/Internal/FFI/SMDiagnostic.h"
@@ -19,6 +20,7 @@ module LLVM.General.Internal.FFI.LLVMCTypes where
 #include "LLVM/General/Internal/FFI/Type.h"
 #include "LLVM/General/Internal/FFI/Constant.h"
 #include "LLVM/General/Internal/FFI/Analysis.h"
+#include "LLVM/General/Internal/FFI/Module.h"
 
 import Language.Haskell.TH.Quote
 
@@ -196,3 +198,8 @@ newtype VerifierFailureAction = VerifierFailureAction CUInt
   deriving (Eq, Read, Show, Bits, Typeable, Data, Num)
 #define VFA_Rec(n) { #n, LLVM ## n ## Action },
 #{inject VERIFIER_FAILURE_ACTION, VerifierFailureAction, VerifierFailureAction, verifierFailureAction, VFA_Rec}
+
+newtype LinkerMode = LinkerMode CUInt
+  deriving (Eq, Read, Show, Bits, Typeable, Data, Num)
+#define LM_Rec(n) { #n, LLVMLinker ## n },
+#{inject LINKER_MODE, LinkerMode, LinkerMode, linkerMode, LM_Rec}

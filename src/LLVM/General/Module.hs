@@ -12,7 +12,9 @@ module LLVM.General.Module (
 
     writeBitcodeToFile,
     writeAssemblyToFile,
-    writeObjectToFile
+    writeObjectToFile,
+
+    linkModules
   ) where
 
 import LLVM.General.Internal.Module
