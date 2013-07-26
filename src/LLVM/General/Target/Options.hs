@@ -23,7 +23,6 @@ data FloatingPointOperationFusionMode
 data Options = Options {
   printMachineCode :: Bool,
   noFramePointerElimination :: Bool,
-  noFramePointerEliminationNonLeaf :: Bool,
   lessPreciseFloatingPointMultiplyAddOption :: Bool,
   unsafeFloatingPointMath :: Bool,
   noInfinitiesFloatingPointMath :: Bool,
@@ -43,8 +42,7 @@ data Options = Options {
   stackAlignmentOverride :: Word32,
   trapFunctionName :: String,
   floatABIType :: FloatABI,
-  allowFloatingPointOperationFusion :: FloatingPointOperationFusionMode,
-  stackSmashingProtectionBufferSize :: Word32
+  allowFloatingPointOperationFusion :: FloatingPointOperationFusionMode
   }
   deriving (Eq, Ord, Read, Show)
 

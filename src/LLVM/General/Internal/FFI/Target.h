@@ -28,7 +28,6 @@
 #define LLVM_GENERAL_FOR_EACH_TARGET_OPTION_FLAG(macro)	\
 	macro(PrintMachineCode)																\
 	macro(NoFramePointerElim)															\
-	macro(NoFramePointerElimNonLeaf)											\
 	macro(LessPreciseFPMADOption)													\
 	macro(UnsafeFPMath)																		\
 	macro(NoInfsFPMath)																		\

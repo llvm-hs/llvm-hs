@@ -113,7 +113,6 @@ LLVMTargetRef LLVM_General_LookupTarget(
 
 TargetOptions *LLVM_General_CreateTargetOptions() {
 	TargetOptions *to = new TargetOptions();
-	to->SSPBufferSize = 0; // this field was left uninitialized in LLVM 3.2
 	return to;
 }
 
@@ -170,14 +169,6 @@ void LLVM_General_SetAllowFPOpFusion(TargetOptions *to, LLVM_General_FPOpFusionM
 
 LLVM_General_FPOpFusionMode LLVM_General_GetAllowFPOpFusion(TargetOptions *to) {
 	return wrap(to->AllowFPOpFusion);
-}
-
-void LLVM_General_SetSSPBufferSize(TargetOptions *to, unsigned v) {
-	to->SSPBufferSize = v;
-}
-
-unsigned LLVM_General_GetSSPBufferSize(TargetOptions *to) {
-	return to->SSPBufferSize;
 }
 
 void LLVM_General_DisposeTargetOptions(TargetOptions *t) {

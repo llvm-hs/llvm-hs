@@ -54,12 +54,6 @@ foreign import ccall unsafe "LLVM_General_SetAllowFPOpFusion" setAllowFPOpFusion
 foreign import ccall unsafe "LLVM_General_GetAllowFPOpFusion" getAllowFPOpFusion ::
   Ptr TargetOptions -> IO FPOpFusionMode
 
-foreign import ccall unsafe "LLVM_General_SetSSPBufferSize" setSSPBufferSize ::
-  Ptr TargetOptions -> CUInt -> IO ()
-
-foreign import ccall unsafe "LLVM_General_GetSSPBufferSize" getSSPBufferSize ::
-  Ptr TargetOptions -> IO CUInt
-
 foreign import ccall unsafe "LLVM_General_DisposeTargetOptions" disposeTargetOptions ::
   Ptr TargetOptions -> IO ()
 

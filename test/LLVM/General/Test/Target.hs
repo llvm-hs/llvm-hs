@@ -25,7 +25,6 @@ instance Arbitrary Options where
   arbitrary = do
     printMachineCode <- arbitrary
     noFramePointerElimination <- arbitrary
-    noFramePointerEliminationNonLeaf <- arbitrary
     lessPreciseFloatingPointMultiplyAddOption <- arbitrary
     unsafeFloatingPointMath <- arbitrary
     noInfinitiesFloatingPointMath <- arbitrary
@@ -46,7 +45,6 @@ instance Arbitrary Options where
     trapFunctionName <- elements [ "foo", "bar", "baz" ]
     floatABIType <- arbitrary
     allowFloatingPointOperationFusion <- arbitrary
-    stackSmashingProtectionBufferSize <- arbitrary
     return Options { .. }
 
 tests = testGroup "Target" [
@@ -54,7 +52,30 @@ tests = testGroup "Target" [
      testGroup "regressions" [
        testCase "hurm" $ do
          withTargetOptions $ \to -> do
-           let o = Options {printMachineCode = True, noFramePointerElimination = False, noFramePointerEliminationNonLeaf = True, lessPreciseFloatingPointMultiplyAddOption = True, unsafeFloatingPointMath = True, noInfinitiesFloatingPointMath = True, noNaNsFloatingPointMath = False, honorSignDependentRoundingFloatingPointMathOption = True, useSoftFloat = True, noZerosInBSS = False, jITEmitDebugInfo = True, jITEmitDebugInfoToDisk = False, guaranteedTailCallOptimization = False, disableTailCalls = False, realignStack = False, enableFastInstructionSelection = True, positionIndependentExecutable = True, enableSegmentedStacks = False, useInitArray = True, stackAlignmentOverride = 9432851444, trapFunctionName = "baz", floatABIType = FloatABISoft, allowFloatingPointOperationFusion = FloatingPointOperationFusionStrict, stackSmashingProtectionBufferSize = 2650013862}
+           let o = Options {
+                    printMachineCode = True,
+                    noFramePointerElimination = False,
+                    lessPreciseFloatingPointMultiplyAddOption = True,
+                    unsafeFloatingPointMath = True,
+                    noInfinitiesFloatingPointMath = True,
+                    noNaNsFloatingPointMath = False,
+                    honorSignDependentRoundingFloatingPointMathOption = True,
+                    useSoftFloat = True,
+                    noZerosInBSS = False,
+                    jITEmitDebugInfo = True,
+                    jITEmitDebugInfoToDisk = False,
+                    guaranteedTailCallOptimization = False,
+                    disableTailCalls = False,
+                    realignStack = False,
+                    enableFastInstructionSelection = True,
+                    positionIndependentExecutable = True,
+                    enableSegmentedStacks = False,
+                    useInitArray = True,
+                    stackAlignmentOverride = 9432851444,
+                    trapFunctionName = "baz",
+                    floatABIType = FloatABISoft,
+                    allowFloatingPointOperationFusion = FloatingPointOperationFusionStrict
+                   }
            pokeTargetOptions o to
            o' <- peekTargetOptions to
            o' @?= o

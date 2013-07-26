@@ -109,7 +109,6 @@ pokeTargetOptions hOpts (TargetOptions cOpts) = do
   mapM_ (\(c, ha) -> FFI.setTargetOptionFlag cOpts c =<< encodeM (ha hOpts)) [
     (FFI.targetOptionFlagPrintMachineCode, TO.printMachineCode),
     (FFI.targetOptionFlagNoFramePointerElim, TO.noFramePointerElimination),
-    (FFI.targetOptionFlagNoFramePointerElimNonLeaf, TO.noFramePointerEliminationNonLeaf),
     (FFI.targetOptionFlagLessPreciseFPMADOption, TO.lessPreciseFloatingPointMultiplyAddOption),
     (FFI.targetOptionFlagUnsafeFPMath, TO.unsafeFloatingPointMath),
     (FFI.targetOptionFlagNoInfsFPMath, TO.noInfinitiesFloatingPointMath),
@@ -133,7 +132,6 @@ pokeTargetOptions hOpts (TargetOptions cOpts) = do
     liftIO $ FFI.setTrapFuncName cOpts n
   FFI.setFloatABIType cOpts =<< encodeM (TO.floatABIType hOpts)
   FFI.setAllowFPOpFusion cOpts =<< encodeM (TO.allowFloatingPointOperationFusion hOpts)
-  FFI.setSSPBufferSize cOpts =<< encodeM (TO.stackSmashingProtectionBufferSize hOpts)
   
 -- | get all target options
 peekTargetOptions :: TargetOptions -> IO TO.Options
@@ -143,8 +141,6 @@ peekTargetOptions (TargetOptions tOpts) = do
     <- gof FFI.targetOptionFlagPrintMachineCode
   noFramePointerElimination
     <- gof FFI.targetOptionFlagNoFramePointerElim
-  noFramePointerEliminationNonLeaf
-    <- gof FFI.targetOptionFlagNoFramePointerElimNonLeaf
   lessPreciseFloatingPointMultiplyAddOption
     <- gof FFI.targetOptionFlagLessPreciseFPMADOption
   unsafeFloatingPointMath
@@ -181,7 +177,6 @@ peekTargetOptions (TargetOptions tOpts) = do
   trapFunctionName <- decodeM =<< FFI.getTrapFuncName tOpts
   floatABIType <- decodeM =<< FFI.getFloatABIType tOpts
   allowFloatingPointOperationFusion <- decodeM =<< FFI.getAllowFPOpFusion tOpts
-  stackSmashingProtectionBufferSize <- decodeM =<< FFI.getSSPBufferSize tOpts
   return TO.Options { .. }
 
 -- | <http://llvm.org/doxygen/classllvm_1_1TargetMachine.html>
