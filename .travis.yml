@@ -1,0 +1,5 @@
+language: haskell
+branches:
+  only:
+    - llvm-3.3
+    - llvm-3.2
