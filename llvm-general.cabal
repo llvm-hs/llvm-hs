@@ -66,6 +66,7 @@ library
     FlexibleContexts
     FlexibleInstances
     StandaloneDeriving
+    ConstraintKinds
   exposed-modules:
     LLVM.General
     LLVM.General.AST
