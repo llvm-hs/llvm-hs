@@ -1,5 +1,13 @@
 language: haskell
+before_install:
+  - sudo sudo sh -c "echo 'deb http://llvm.org/apt/precise/ llvm-toolchain-precise main' >> /etc/apt/sources.list"
+  - wget -O - http://llvm.org/apt/llvm-snapshot.gpg.key | sudo apt-key add -
+  - sudo apt-get update -qq
+  - sudo apt-get install -qq llvm-3.4
+install:
+  - cabal install --only-dependencies --enable-tests --force-reinstall
 branches:
   only:
+    - master
     - llvm-3.3
     - llvm-3.2
