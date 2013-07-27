@@ -1,5 +1,6 @@
 {-# LANGUAGE
-  TemplateHaskell
+  TemplateHaskell,
+  MultiParamTypeClasses
   #-}
 module LLVM.General.Internal.PassManager where
 
@@ -12,6 +13,8 @@ import Control.Applicative
 
 import Control.Monad.AnyCont
 
+import Data.Word (Word)
+import Foreign.C.Types (CInt)
 import Foreign.Ptr
 
 import qualified LLVM.General.Internal.FFI.PassManager as FFI
@@ -63,6 +66,12 @@ instance PassManagerSpecification CuratedPassSetSpec where
     return pm
 
 data PassSetSpec = PassSetSpec [Pass] (Maybe TargetMachine)
+
+instance Monad m => EncodeM m (Maybe Bool) (FFI.LLVMEncoded CInt (Maybe Bool)) where
+  encodeM mb = return $ FFI.LLVMEncoded ((maybe (-1) (\b -> if b then 1 else 0) mb) :: CInt)
+
+instance Monad m => EncodeM m (Maybe Word) (FFI.LLVMEncoded CInt (Maybe Word)) where
+  encodeM mw = return  $ FFI.LLVMEncoded ((maybe (-1) fromIntegral mw) :: CInt)
 
 instance PassManagerSpecification PassSetSpec where
   createPassManager (PassSetSpec ps tm') = flip runAnyContT return $ do
