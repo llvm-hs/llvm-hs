@@ -43,6 +43,7 @@ cName n =
 	 "DeadCodeElimination",
 	 "DeadInstructionElimination",
 	 "DemoteRegisterToMemory",
+         "EdgeProfiler",
 	 "LoopClosedSingleStaticAssignment",
 	 "LoopInstructionSimplify",
          "LoopStrengthReduce",

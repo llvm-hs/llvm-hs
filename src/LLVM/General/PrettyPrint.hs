@@ -4,6 +4,7 @@
   #-}
 -- | Tools for printing out AST.'LLVM.General.AST.Module' code so that it's actually useful.
 module LLVM.General.PrettyPrint (
+  PrettyShow(..),
   showPretty,
   showPrettyEx,
   PrefixScheme(..),
@@ -102,6 +103,7 @@ newtype PrefixScheme = PrefixScheme (Map String (Maybe String))
 basePrefixScheme :: PrefixScheme
 basePrefixScheme = PrefixScheme $ Map.fromList [
   ("Data.Maybe", Nothing),
+  ("Data.Either", Nothing),
   ("Data.Map", Just "Map"),
   ("Data.Set", Just "Set")
  ]

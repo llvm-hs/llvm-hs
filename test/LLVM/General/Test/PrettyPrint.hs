@@ -75,7 +75,8 @@ tests = testGroup "PrettyPrint" [
     showPretty ast @?= s,
   testCase "imports" $ do
     imports defaultPrefixScheme @?= 
-      "import qualified Data.Map as Map\n\
+      "import Data.Either\n\
+      \import qualified Data.Map as Map\n\
       \import Data.Maybe\n\
       \import qualified Data.Set as Set\n\
       \import qualified LLVM.General.AST as A\n\

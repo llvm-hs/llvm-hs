@@ -218,6 +218,7 @@ test-suite test
     LLVM.General.Test.Global
     LLVM.General.Test.InlineAssembly
     LLVM.General.Test.Instructions
+    LLVM.General.Test.Instrumentation
     LLVM.General.Test.Linking
     LLVM.General.Test.Metadata
     LLVM.General.Test.Module

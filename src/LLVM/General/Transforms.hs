@@ -106,6 +106,9 @@ data Pass
     fastDependencyAnalysis :: Bool
     }
   | LoopVectorize
+
+  -- here begin the instrumentation passes
+  | EdgeProfiler
   deriving (Eq, Ord, Read, Show, Typeable, Data)
 
 -- | Defaults for the 'BasicBlockVectorize' pass - copied from the C++ code to keep these defaults

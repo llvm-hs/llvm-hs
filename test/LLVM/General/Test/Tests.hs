@@ -15,6 +15,7 @@ import qualified LLVM.General.Test.Target as Target
 import qualified LLVM.General.Test.Analysis as Analysis
 import qualified LLVM.General.Test.PrettyPrint as PrettyPrint
 import qualified LLVM.General.Test.Linking as Linking
+import qualified LLVM.General.Test.Instrumentation as Instrumentation
 
 tests = testGroup "llvm-general" [
     Constants.tests,
@@ -29,5 +30,6 @@ tests = testGroup "llvm-general" [
     Target.tests,
     Analysis.tests,
     PrettyPrint.tests,
-    Linking.tests
+    Linking.tests,
+    Instrumentation.tests
   ]

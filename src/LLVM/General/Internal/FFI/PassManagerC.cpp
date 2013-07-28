@@ -3,6 +3,7 @@
 #include "llvm/Transforms/Scalar.h"
 #include "llvm/Transforms/IPO.h"
 #include "llvm/Transforms/Vectorize.h"
+#include "llvm/Transforms/Instrumentation.h"
 #include "llvm/PassManager.h"
 
 #include "llvm-c/Core.h"
@@ -134,6 +135,105 @@ void LLVM_General_AddBasicBlockVectorizePass(
 	vectorizeConfig.FastDep = fastDependencyAnalysis;	
 
 	unwrap(PM)->add(createBBVectorizePass(vectorizeConfig));
-}	
+}
+
+void LLVM_General_AddEdgeProfilerPass(LLVMPassManagerRef PM) {
+	unwrap(PM)->add(createEdgeProfilerPass());
+}
+
+void LLVM_General_AddOptimalEdgeProfilerPass(LLVMPassManagerRef PM) {
+	unwrap(PM)->add(createOptimalEdgeProfilerPass());
+}
+
+void LLVM_General_AddPathProfilerPass(LLVMPassManagerRef PM) {
+	unwrap(PM)->add(createPathProfilerPass());
+}
+
+void LLVM_General_AddGCOVProfilerPass(
+	LLVMPassManagerRef PM,
+	LLVMBool emitNotes,
+	LLVMBool emitData,
+	char version[4],
+	LLVMBool useCfgChecksum,
+	LLVMBool noRedZone,
+	LLVMBool functionNamesInData
+) {
+	struct GCOVOptions options;
+	options.EmitNotes = emitNotes;
+	options.EmitData = emitData;
+	std::copy(version, version+4, options.Version);
+	options.UseCfgChecksum = useCfgChecksum;
+	options.NoRedZone = noRedZone;
+	options.FunctionNamesInData = functionNamesInData;
+	unwrap(PM)->add(createGCOVProfilerPass(options));
+}
+
+void LLVM_General_AddAddressSanitizerFunctionPass(
+	LLVMPassManagerRef PM,
+	LLVMBool checkInitOrder,
+	LLVMBool checkUseAfterReturn,
+	LLVMBool checkLifetime,
+	char *blacklistFile,
+	LLVMBool zeroBaseShadow
+) {
+	unwrap(PM)->add(
+		createAddressSanitizerFunctionPass(
+			checkInitOrder,
+			checkUseAfterReturn,
+			checkLifetime,
+			blacklistFile,
+			zeroBaseShadow
+		)
+	);
+}
+
+void LLVM_General_AddAddressSanitizerModulePass(
+	LLVMPassManagerRef PM,
+	LLVMBool checkInitOrder,
+	const char *blacklistFile,
+	bool zeroBaseShadow
+) {
+	unwrap(PM)->add(createAddressSanitizerModulePass(checkInitOrder, blacklistFile, zeroBaseShadow));
+}
+
+void LLVM_General_AddMemorySanitizerPass(
+	LLVMPassManagerRef PM,
+	LLVMBool trackOrigins,
+	const char *blacklistFile
+) {
+	unwrap(PM)->add(createMemorySanitizerPass(trackOrigins, blacklistFile));
+}
+
+void LLVM_General_AddThreadSanitizerPass(
+	LLVMPassManagerRef PM,
+	const char *blacklistFile
+) {
+	unwrap(PM)->add(createThreadSanitizerPass(blacklistFile));
+}
+
+void LLVM_General_AddBoundsCheckingPass(LLVMPassManagerRef PM) {
+	unwrap(PM)->add(createBoundsCheckingPass());
+}
+
+void LLVM_General_AddDebugIRPassEmittingSource(
+	LLVMPassManagerRef PM,
+	LLVMBool hideDebugIntrinsics,
+	LLVMBool hideDebugMetadata,
+	const char *filename,
+	const char *directory
+) {
+	unwrap(PM)->add(
+		createDebugIRPass(
+			hideDebugIntrinsics,
+			hideDebugMetadata,
+			filename,
+			directory
+		)
+	);
+}
+
+void LLVM_General_AddDebugIRPassInMemory(LLVMPassManagerRef PM) {
+	unwrap(PM)->add(createDebugIRPass());
+}
 
 }
