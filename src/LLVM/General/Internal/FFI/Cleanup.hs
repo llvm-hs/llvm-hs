@@ -81,3 +81,4 @@ typeMapping t = case t of
          | h == ''A.FloatingPointPredicate -> [t| FCmpPredicate |]
          | h == ''A.IntegerPredicate -> [t| ICmpPredicate |]
   AppT ListT x -> foldl1 appT [tupleT 2, [t| CUInt |], appT [t| Ptr |] (typeMapping x)]
+  x -> error $ "type not handled in Cleanup typeMapping: " ++ show x

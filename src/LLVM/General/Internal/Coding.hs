@@ -9,6 +9,7 @@ module LLVM.General.Internal.Coding where
 import Language.Haskell.TH
 import Language.Haskell.TH.Quote
 
+import Control.Monad
 import Control.Monad.AnyCont
 import Control.Monad.IO.Class
 
@@ -99,6 +100,9 @@ instance Monad m => EncodeM m Bool FFI.LLVMBool where
 instance Monad m => DecodeM m Bool FFI.LLVMBool where
   decodeM (FFI.LLVMBool 0) = return $ False
   decodeM (FFI.LLVMBool 1) = return $ True
+
+instance (Monad m, EncodeM m h (Ptr c)) => EncodeM m (Maybe h) (FFI.NothingAsNull h c) where
+  encodeM = liftM FFI.NothingAsNull . maybe (return nullPtr) encodeM
 
 instance Monad m => EncodeM m Word CUInt where
   encodeM = return . fromIntegral

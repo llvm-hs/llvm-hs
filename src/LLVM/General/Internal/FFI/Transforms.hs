@@ -13,6 +13,7 @@ needsTargetMachine _ = False
 -- | as part of this Haskell package ("LLVM_General_" prefix).
 cName n = 
     let core = case n of
+            "AddressSanitizer" -> "AddressSanitizerFunction"
             "AggressiveDeadCodeElimination" -> "AggressiveDCE"
             "AlwaysInline" -> "AlwaysInliner"
             "DeadInstructionElimination" -> "DeadInstElimination"
@@ -34,6 +35,9 @@ cName n =
             "SparseConditionalConstantPropagation" -> "SCCP"
             h -> h
         patchImpls = [
+         "AddressSanitizer",
+         "AddressSanitizerModule",
+         "BoundsChecking",
          "CodeGenPrepare",
          "GlobalValueNumbering",
          "InternalizeFunctions",
@@ -44,19 +48,24 @@ cName n =
 	 "DeadInstructionElimination",
 	 "DemoteRegisterToMemory",
          "EdgeProfiler",
+         "GCOVProfiler",
 	 "LoopClosedSingleStaticAssignment",
 	 "LoopInstructionSimplify",
          "LoopStrengthReduce",
 	 "LowerAtomic",
 	 "LowerInvoke",
 	 "LowerSwitch",
+         "MemorySanitizer",
 	 "MergeFunctions",
+         "OptimalEdgeProfiler",
+         "PathProfiler",
 	 "PartialInlining",
          "ScalarReplacementOfAggregates",
 	 "Sinking",
 	 "StripDeadDebugInfo",
 	 "StripDebugDeclare",
-	 "StripNonDebugSymbols"
+	 "StripNonDebugSymbols",
+         "ThreadSanitizer"
          ]
     in
       (if (n `elem` patchImpls) then "LLVM_General_" else "LLVM") ++ "Add" ++ core ++ "Pass"

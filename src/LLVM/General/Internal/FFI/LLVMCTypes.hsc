@@ -27,6 +27,7 @@ import Language.Haskell.TH.Quote
 import Data.Data
 import Data.Bits
 import Foreign.C
+import Foreign.Ptr
 import Foreign.Storable
 
 #{
@@ -55,6 +56,15 @@ deriving instance Data CUInt
 newtype LLVMBool = LLVMBool CUInt
 
 newtype MallocedCString = MallocedCString CString
+  deriving (Storable)
+
+newtype NothingAsMinusOne h = NothingAsMinusOne CInt
+  deriving (Storable)
+
+newtype NothingAsNull h c = NothingAsNull (Ptr c)
+  deriving (Storable)
+
+newtype NothingAsEmptyString c = NothingAsEmptyString c
   deriving (Storable)
 
 newtype CPPOpcode = CPPOpcode CUInt

@@ -82,33 +82,63 @@ data Pass
 
   -- here begin the vectorization passes
   | BasicBlockVectorize { 
-    vectorBits :: Word,
-    vectorizeBools :: Bool,
-    vectorizeInts :: Bool,
-    vectorizeFloats :: Bool,
-    vectorizePointers :: Bool,
-    vectorizeCasts :: Bool,
-    vectorizeMath :: Bool,
-    vectorizeFusedMultiplyAdd :: Bool,
-    vectorizeSelect :: Bool,
-    vectorizeCmp :: Bool,
-    vectorizeGetElementPtr :: Bool,
-    vectorizeMemoryOperations :: Bool,
-    alignedOnly :: Bool,
-    requiredChainDepth :: Word,
-    searchLimit :: Word,
-    maxCandidatePairsForCycleCheck :: Word,
-    splatBreaksChain :: Bool,
-    maxInstructions :: Word,
-    maxIterations :: Word,
-    powerOfTwoLengthsOnly :: Bool,
-    noMemoryOperationBoost :: Bool,
-    fastDependencyAnalysis :: Bool
+      vectorBits :: Word,
+      vectorizeBools :: Bool,
+      vectorizeInts :: Bool,
+      vectorizeFloats :: Bool,
+      vectorizePointers :: Bool,
+      vectorizeCasts :: Bool,
+      vectorizeMath :: Bool,
+      vectorizeFusedMultiplyAdd :: Bool,
+      vectorizeSelect :: Bool,
+      vectorizeCmp :: Bool,
+      vectorizeGetElementPtr :: Bool,
+      vectorizeMemoryOperations :: Bool,
+      alignedOnly :: Bool,
+      requiredChainDepth :: Word,
+      searchLimit :: Word,
+      maxCandidatePairsForCycleCheck :: Word,
+      splatBreaksChain :: Bool,
+      maxInstructions :: Word,
+      maxIterations :: Word,
+      powerOfTwoLengthsOnly :: Bool,
+      noMemoryOperationBoost :: Bool,
+      fastDependencyAnalysis :: Bool
     }
   | LoopVectorize
 
   -- here begin the instrumentation passes
   | EdgeProfiler
+  | OptimalEdgeProfiler
+  | PathProfiler
+  | GCOVProfiler {
+      emitNotes :: Bool,
+      emitData :: Bool,
+      version :: GCOVVersion, -- ^ see <http://gcc.gnu.org/viewcvs/gcc/trunk/gcc/gcov-io.h?view=markup>
+      useCfgChecksum :: Bool,
+      noRedZone :: Bool,
+      functionNamesInData :: Bool
+    }
+  | AddressSanitizer {
+      checkInitOrder :: Bool,
+      checkUseAfterReturn :: Bool,
+      checkLifetime :: Bool,
+      blackListFile :: Maybe FilePath,
+      zeroBaseShadow :: Bool
+    }
+  | AddressSanitizerModule {
+      checkInitOrder :: Bool,
+      blackListFile :: Maybe FilePath,
+      zeroBaseShadow :: Bool
+    }
+  | MemorySanitizer {
+      trackOrigins :: Bool,
+      blackListFile :: Maybe FilePath
+    }
+  | ThreadSanitizer {
+      blackListFile :: Maybe FilePath
+    }
+  | BoundsChecking
   deriving (Eq, Ord, Read, Show, Typeable, Data)
 
 -- | Defaults for the 'BasicBlockVectorize' pass - copied from the C++ code to keep these defaults
@@ -139,3 +169,38 @@ defaultVectorizeBasicBlocks = BasicBlockVectorize {
     noMemoryOperationBoost = False,
     fastDependencyAnalysis = False
   }
+
+newtype GCOVVersion = GCOVVersion String
+  deriving (Eq, Ord, Read, Show, Typeable, Data)
+
+defaultGCOVProfiler = GCOVProfiler {
+    emitNotes = True,
+    emitData = True,
+    version = GCOVVersion "402*", 
+    useCfgChecksum = False,
+    noRedZone = False,
+    functionNamesInData = True
+  }
+
+defaultAddressSanitizer = AddressSanitizer {
+  checkInitOrder = True,
+  checkUseAfterReturn = False,
+  checkLifetime = False,
+  blackListFile = Nothing,
+  zeroBaseShadow = False
+}
+
+defaultAddressSanitizerModule = AddressSanitizerModule {
+  checkInitOrder = True,
+  blackListFile = Nothing,
+  zeroBaseShadow = False
+}
+
+defaultMemorySanitizer = MemorySanitizer {
+  trackOrigins = False,
+  blackListFile = Nothing
+}
+
+defaultThreadSanitizer = ThreadSanitizer {
+  blackListFile = Nothing
+}

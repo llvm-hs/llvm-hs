@@ -9,7 +9,7 @@ import qualified Language.Haskell.TH as TH
 
 import Control.Monad
 
-import Data.Word (Word)
+import Data.Word
 
 import Foreign.Ptr
 import Foreign.C
@@ -46,9 +46,6 @@ foreign import ccall unsafe "LLVMRunFunctionPassManager" runFunctionPassManager 
 foreign import ccall unsafe "LLVMFinalizeFunctionPassManager" finalizeFunctionPassManager ::
     Ptr PassManager -> IO CUInt
 
-newtype LLVMEncoded i a = LLVMEncoded i
-  deriving (Eq, Ord, Read, Show)
-
 $(do
   let declareForeign :: TH.Name -> [TH.Type] -> TH.DecsQ
       declareForeign hName extraParams = do
@@ -56,12 +53,14 @@ $(do
             passTypeMapping :: TH.Type -> TH.TypeQ
             passTypeMapping t = case t of
               TH.ConT h | h == ''Word -> [t| CUInt |]
+                        | h == ''G.GCOVVersion -> [t| CString |]
               -- some of the LLVM methods for making passes use "-1" as a special value
               -- handle those here
               TH.AppT (TH.ConT mby) t' | mby == ''Maybe ->
                 case t' of
-                  TH.ConT h | h == ''Bool -> [t| LLVMEncoded CInt (Maybe Bool) |]
-                            | h == ''Word -> [t| LLVMEncoded CInt (Maybe Word) |]
+                  TH.ConT h | h == ''Bool -> [t| NothingAsMinusOne Bool |]
+                            | h == ''Word -> [t| NothingAsMinusOne Word |]
+                            | h == ''FilePath -> [t| NothingAsEmptyString CString |]
                   _ -> typeMapping t
               _ -> typeMapping t
         foreignDecl 

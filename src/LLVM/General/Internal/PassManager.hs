@@ -14,11 +14,12 @@ import Control.Applicative
 import Control.Monad.AnyCont
 
 import Data.Word (Word)
-import Foreign.C.Types (CInt)
+import Foreign.C (CString)
 import Foreign.Ptr
 
 import qualified LLVM.General.Internal.FFI.PassManager as FFI
 import qualified LLVM.General.Internal.FFI.Transforms as FFI
+import qualified LLVM.General.Internal.FFI.LLVMCTypes as FFI
 
 import LLVM.General.Internal.Module
 import LLVM.General.Internal.Target
@@ -67,11 +68,14 @@ instance PassManagerSpecification CuratedPassSetSpec where
 
 data PassSetSpec = PassSetSpec [Pass] (Maybe TargetMachine)
 
-instance Monad m => EncodeM m (Maybe Bool) (FFI.LLVMEncoded CInt (Maybe Bool)) where
-  encodeM mb = return $ FFI.LLVMEncoded ((maybe (-1) (\b -> if b then 1 else 0) mb) :: CInt)
+instance Monad m => EncodeM m (Maybe Bool) (FFI.NothingAsMinusOne Bool) where
+  encodeM = return . FFI.NothingAsMinusOne . maybe (-1) (fromIntegral . fromEnum)
 
-instance Monad m => EncodeM m (Maybe Word) (FFI.LLVMEncoded CInt (Maybe Word)) where
-  encodeM mw = return  $ FFI.LLVMEncoded ((maybe (-1) fromIntegral mw) :: CInt)
+instance Monad m => EncodeM m (Maybe Word) (FFI.NothingAsMinusOne Word) where
+  encodeM = return . FFI.NothingAsMinusOne . maybe (-1) fromIntegral
+
+instance (Monad m, MonadAnyCont IO m) => EncodeM m GCOVVersion CString where
+  encodeM (GCOVVersion cs@[_,_,_,_]) = encodeM cs
 
 instance PassManagerSpecification PassSetSpec where
   createPassManager (PassSetSpec ps tm') = flip runAnyContT return $ do
