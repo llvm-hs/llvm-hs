@@ -7,12 +7,13 @@ module LLVM.General.Internal.PassManager where
 import qualified Language.Haskell.TH as TH
 
 import Control.Exception
-import Control.Monad
+import Control.Monad hiding (forM_)
 import Control.Monad.IO.Class
 import Control.Applicative
 
 import Control.Monad.AnyCont
 
+import Data.Foldable (forM_)
 import Data.Word (Word)
 import Foreign.C (CString)
 import Foreign.Ptr
@@ -24,7 +25,10 @@ import qualified LLVM.General.Internal.FFI.LLVMCTypes as FFI
 import LLVM.General.Internal.Module
 import LLVM.General.Internal.Target
 import LLVM.General.Internal.Coding
+import LLVM.General.Internal.DataLayout
 import LLVM.General.Transforms
+
+import LLVM.General.AST.DataLayout
 
 -- | <http://llvm.org/doxygen/classllvm_1_1PassManager.html>
 newtype PassManager = PassManager (Ptr FFI.PassManager)
@@ -66,7 +70,7 @@ instance PassManagerSpecification CuratedPassSetSpec where
     FFI.passManagerBuilderPopulateModulePassManager b pm
     return pm
 
-data PassSetSpec = PassSetSpec [Pass] (Maybe TargetMachine)
+data PassSetSpec = PassSetSpec [Pass] (Maybe TargetMachine) (Maybe DataLayout)
 
 instance Monad m => EncodeM m (Maybe Bool) (FFI.NothingAsMinusOne Bool) where
   encodeM = return . FFI.NothingAsMinusOne . maybe (-1) (fromIntegral . fromEnum)
@@ -78,9 +82,12 @@ instance (Monad m, MonadAnyCont IO m) => EncodeM m GCOVVersion CString where
   encodeM (GCOVVersion cs@[_,_,_,_]) = encodeM cs
 
 instance PassManagerSpecification PassSetSpec where
-  createPassManager (PassSetSpec ps tm') = flip runAnyContT return $ do
+  createPassManager (PassSetSpec ps tm' dl) = flip runAnyContT return $ do
     let tm = maybe nullPtr (\(TargetMachine tm) -> tm) tm'
     pm <- liftIO $ FFI.createPassManager
+    forM_ dl $ \dl -> do
+      dl <- encodeM (dataLayoutToString dl)
+      liftIO $ FFI.addDataLayoutPass pm dl
     forM ps $ \p -> $(
       do
         TH.TyConI (TH.DataD _ _ _ cons _) <- TH.reify ''Pass
@@ -107,10 +114,13 @@ instance PassManagerSpecification PassSetSpec where
     return pm
 
 instance PassManagerSpecification [Pass] where
-  createPassManager ps = createPassManager (PassSetSpec ps Nothing)
+  createPassManager ps = createPassManager (PassSetSpec ps Nothing Nothing)
 
 instance PassManagerSpecification ([Pass], TargetMachine) where
-  createPassManager (ps, tm) = createPassManager (PassSetSpec ps (Just tm))
+  createPassManager (ps, tm) = createPassManager (PassSetSpec ps (Just tm) Nothing)
+
+instance PassManagerSpecification ([Pass], DataLayout) where
+  createPassManager (ps, dl) = createPassManager (PassSetSpec ps Nothing (Just dl))
 
 -- | bracket the creation of a 'PassManager'
 withPassManager :: PassManagerSpecification s => s -> (PassManager -> IO a) -> IO a

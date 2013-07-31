@@ -46,6 +46,9 @@ foreign import ccall unsafe "LLVMRunFunctionPassManager" runFunctionPassManager 
 foreign import ccall unsafe "LLVMFinalizeFunctionPassManager" finalizeFunctionPassManager ::
     Ptr PassManager -> IO CUInt
 
+foreign import ccall unsafe "LLVM_General_AddDataLayoutPass" addDataLayoutPass ::
+  Ptr PassManager -> CString -> IO ()
+
 $(do
   let declareForeign :: TH.Name -> [TH.Type] -> TH.DecsQ
       declareForeign hName extraParams = do

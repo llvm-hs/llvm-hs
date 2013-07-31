@@ -8,6 +8,7 @@ import LLVM.General.Test.Support
 
 import Control.Monad.Error
 import Data.Functor
+import qualified Data.List as List
 import qualified Data.Set as Set
 import qualified Data.Map as Map
 
@@ -122,47 +123,21 @@ tests = testGroup "Instrumentation" [
     putStrLn s,
   testGroup "basic" [
     testCase n $ do
+      Right dl <- runErrorT $ withDefaultTargetMachine getTargetMachineDataLayout
       Right ast <- runErrorT ast
-      Module { moduleDefinitions = defs } <- instrument [p] ast
-      [ n | GlobalDefinition d <- defs, Name n <- return (G.name d) ]
-       @?= r
-    | (n,p,r) <- [
-     (
-       "EdgeProfiler", EdgeProfiler,
-       ["EdgeProfCounters","foo","main","llvm_start_edge_profiling"]
-     ), (
-       "OptimalEdgeProfiler", OptimalEdgeProfiler, 
-       ["OptEdgeProfCounters","foo","main","llvm_start_opt_edge_profiling"]
-     ), (
-       "PathProfiler", PathProfiler,
-       [
-        "functionPathTable",
-        "foo",
-        "main",
-        "llvm_increment_path_count",
-        "llvm_decrement_path_count",
-        "llvm_start_path_profiling"
-       ]
-     ), (
-       "GCOVProfiler", defaultGCOVProfiler,
-       ["foo", "main"]
-     ), {- this input causes opt -asan to segfault -} (
-       "AddressSanitizer",
-       defaultAddressSanitizer,
-       []
-     ), (
-       "AddressSanitizerModule", defaultAddressSanitizerModule,
-       ["foo", "main"]
-     ), {- (
-       "MemorySanitizer", defaultMemorySanitizer,
-       []
-     ), -} (
-       "ThreadSanitizer", defaultThreadSanitizer,
-       []
-     ){-, (
-       "BoundsChecking", BoundsChecking,
-       []
-     ) -}
+      ast' <- instrument ([p], dl) ast
+      let names ast = [ n | GlobalDefinition d <- moduleDefinitions ast, Name n <- return (G.name d) ]
+      (names ast') `List.intersect` (names ast) @?= names ast
+    | (n,p) <- [
+     ("EdgeProfiler", EdgeProfiler),
+     ("OptimalEdgeProfiler", OptimalEdgeProfiler),
+     ("PathProfiler", PathProfiler),
+     ("GCOVProfiler", defaultGCOVProfiler),
+     ("AddressSanitizer", defaultAddressSanitizer),
+     ("AddressSanitizerModule", defaultAddressSanitizerModule),
+     ("MemorySanitizer", defaultMemorySanitizer),
+     ("ThreadSanitizer", defaultThreadSanitizer) --,
+--     ("BoundsChecking", BoundsChecking)
     ]
    ]
  ]
