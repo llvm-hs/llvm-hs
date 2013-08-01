@@ -18,7 +18,6 @@ import qualified LLVM.General.Test.Linking as Linking
 import qualified LLVM.General.Test.Instrumentation as Instrumentation
 
 tests = testGroup "llvm-general" [
-{-
     Constants.tests,
     DataLayout.tests,
     ExecutionEngine.tests,
@@ -32,6 +31,5 @@ tests = testGroup "llvm-general" [
     Analysis.tests,
     PrettyPrint.tests,
     Linking.tests,
--}
     Instrumentation.tests
   ]

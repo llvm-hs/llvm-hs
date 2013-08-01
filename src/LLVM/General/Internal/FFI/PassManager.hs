@@ -19,6 +19,7 @@ import LLVM.General.Internal.FFI.PtrHierarchy
 import LLVM.General.Internal.FFI.Cleanup
 import LLVM.General.Internal.FFI.Module
 import LLVM.General.Internal.FFI.Target
+import LLVM.General.Internal.FFI.DataLayout
 import LLVM.General.Internal.FFI.Transforms
 
 import qualified LLVM.General.Transforms as G
@@ -26,28 +27,35 @@ import qualified LLVM.General.Transforms as G
 data PassManager
 
 foreign import ccall unsafe "LLVMCreatePassManager" createPassManager ::
-    IO (Ptr PassManager)
+  IO (Ptr PassManager)
 
 foreign import ccall unsafe "LLVMDisposePassManager" disposePassManager ::
-    Ptr PassManager -> IO ()
+  Ptr PassManager -> IO ()
 
 foreign import ccall unsafe "LLVMRunPassManager" runPassManager ::
-    Ptr PassManager -> Ptr Module -> IO CUInt
+  Ptr PassManager -> Ptr Module -> IO CUInt
 
 foreign import ccall unsafe "LLVMCreateFunctionPassManagerForModule" createFunctionPassManagerForModule ::
-    Ptr Module -> IO (Ptr PassManager)
+  Ptr Module -> IO (Ptr PassManager)
 
 foreign import ccall unsafe "LLVMInitializeFunctionPassManager" initializeFunctionPassManager ::
-    Ptr PassManager -> IO CUInt
+  Ptr PassManager -> IO CUInt
 
 foreign import ccall unsafe "LLVMRunFunctionPassManager" runFunctionPassManager ::
-    Ptr PassManager -> Ptr Value -> IO CUInt
+  Ptr PassManager -> Ptr Value -> IO CUInt
 
 foreign import ccall unsafe "LLVMFinalizeFunctionPassManager" finalizeFunctionPassManager ::
-    Ptr PassManager -> IO CUInt
+  Ptr PassManager -> IO CUInt
 
-foreign import ccall unsafe "LLVM_General_AddDataLayoutPass" addDataLayoutPass ::
-  Ptr PassManager -> CString -> IO ()
+foreign import ccall unsafe "LLVMAddTargetData" addDataLayoutPass' ::
+  Ptr DataLayout -> Ptr PassManager -> IO ()
+
+addDataLayoutPass = flip addDataLayoutPass'
+
+foreign import ccall unsafe "LLVMAddTargetLibraryInfo" addTargetLibraryInfoPass' ::
+  Ptr TargetLibraryInfo -> Ptr PassManager -> IO ()
+
+addTargetLibraryInfoPass = flip addTargetLibraryInfoPass'
 
 $(do
   let declareForeign :: TH.Name -> [TH.Type] -> TH.DecsQ

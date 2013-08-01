@@ -2,15 +2,31 @@ module LLVM.General.Internal.DataLayout where
 
 import Text.ParserCombinators.Parsec
 
+import Control.Monad.Error
+import Control.Monad.AnyCont
+import Control.Exception
+
 import Data.Word
 import Data.Functor
+
+import Foreign.Ptr
 
 import qualified Data.List as List
 import qualified Data.Map as Map
 import qualified Data.Set as Set
 
+import qualified LLVM.General.Internal.FFI.DataLayout as FFI
+
 import LLVM.General.AST.DataLayout
 import LLVM.General.AST.AddrSpace
+
+import LLVM.General.Internal.Coding
+import LLVM.General.Internal.String ()
+
+withFFIDataLayout :: DataLayout -> (Ptr FFI.DataLayout -> IO a) -> IO a
+withFFIDataLayout dl f = flip runAnyContT return $ do
+  dls <- encodeM (dataLayoutToString dl)
+  liftIO $ bracket (FFI.createDataLayout dls) FFI.disposeDataLayout f
 
 dataLayoutToString :: DataLayout -> String
 dataLayoutToString dl = 

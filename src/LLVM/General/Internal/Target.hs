@@ -259,7 +259,6 @@ getTargetMachineDataLayout :: TargetMachine -> IO DataLayout
 getTargetMachineDataLayout (TargetMachine m) =
     fromMaybe (error "parseDataLayout failed") . parseDataLayout <$> (decodeM =<< (FFI.getTargetMachineDataLayout m))
 
-
 -- | Initialize all targets so they can be found by 'lookupTarget'
 initializeAllTargets :: IO ()
 initializeAllTargets = FFI.initializeAllTargets
@@ -274,3 +273,15 @@ withDefaultTargetMachine f = do
   (target, _) <- lookupTarget Nothing triple
   liftIO $ withTargetOptions $ \options ->
       withTargetMachine target triple cpu features options Reloc.Default CodeModel.Default CodeGenOpt.Default f
+
+newtype TargetLibraryInfo = TargetLibraryInfo (Ptr FFI.TargetLibraryInfo)
+
+-- | look up information about the library functions available on a given platform
+withTargetLibraryInfo :: 
+  String -- ^ triple
+  -> (TargetLibraryInfo -> IO a)
+  -> IO a
+withTargetLibraryInfo triple f = flip runAnyContT return $ do
+  triple <- encodeM triple
+  liftIO $ bracket (FFI.createTargetLibraryInfo triple) FFI.disposeTargetLibraryInfo (f . TargetLibraryInfo)
+  

@@ -123,11 +123,13 @@ tests = testGroup "Instrumentation" [
     putStrLn s,
   testGroup "basic" [
     testCase n $ do
-      Right dl <- runErrorT $ withDefaultTargetMachine getTargetMachineDataLayout
-      Right ast <- runErrorT ast
-      ast' <- instrument ([p], dl) ast
-      let names ast = [ n | GlobalDefinition d <- moduleDefinitions ast, Name n <- return (G.name d) ]
-      (names ast') `List.intersect` (names ast) @?= names ast
+      triple <- getProcessTargetTriple
+      withTargetLibraryInfo triple $ \tli -> do
+        Right dl <- runErrorT $ withDefaultTargetMachine getTargetMachineDataLayout
+        Right ast <- runErrorT ast
+        ast' <- instrument ([p], dl, tli) ast
+        let names ast = [ n | GlobalDefinition d <- moduleDefinitions ast, Name n <- return (G.name d) ]
+        (names ast') `List.intersect` (names ast) @?= names ast
     | (n,p) <- [
      ("EdgeProfiler", EdgeProfiler),
      ("OptimalEdgeProfiler", OptimalEdgeProfiler),
@@ -136,8 +138,8 @@ tests = testGroup "Instrumentation" [
      ("AddressSanitizer", defaultAddressSanitizer),
      ("AddressSanitizerModule", defaultAddressSanitizerModule),
      ("MemorySanitizer", defaultMemorySanitizer),
-     ("ThreadSanitizer", defaultThreadSanitizer) --,
---     ("BoundsChecking", BoundsChecking)
+     ("ThreadSanitizer", defaultThreadSanitizer),
+     ("BoundsChecking", BoundsChecking)
     ]
    ]
  ]

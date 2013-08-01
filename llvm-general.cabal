@@ -147,6 +147,7 @@ library
     LLVM.General.Internal.FFI.CommandLine
     LLVM.General.Internal.FFI.Constant
     LLVM.General.Internal.FFI.Context
+    LLVM.General.Internal.FFI.DataLayout
     LLVM.General.Internal.FFI.ExecutionEngine
     LLVM.General.Internal.FFI.Function
     LLVM.General.Internal.FFI.GlobalAlias

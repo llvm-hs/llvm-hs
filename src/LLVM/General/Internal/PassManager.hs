@@ -70,7 +70,7 @@ instance PassManagerSpecification CuratedPassSetSpec where
     FFI.passManagerBuilderPopulateModulePassManager b pm
     return pm
 
-data PassSetSpec = PassSetSpec [Pass] (Maybe TargetMachine) (Maybe DataLayout)
+data PassSetSpec = PassSetSpec [Pass] (Maybe TargetMachine) (Maybe DataLayout) (Maybe TargetLibraryInfo)
 
 instance Monad m => EncodeM m (Maybe Bool) (FFI.NothingAsMinusOne Bool) where
   encodeM = return . FFI.NothingAsMinusOne . maybe (-1) (fromIntegral . fromEnum)
@@ -82,12 +82,12 @@ instance (Monad m, MonadAnyCont IO m) => EncodeM m GCOVVersion CString where
   encodeM (GCOVVersion cs@[_,_,_,_]) = encodeM cs
 
 instance PassManagerSpecification PassSetSpec where
-  createPassManager (PassSetSpec ps tm' dl) = flip runAnyContT return $ do
+  createPassManager (PassSetSpec ps tm' dl tli) = flip runAnyContT return $ do
     let tm = maybe nullPtr (\(TargetMachine tm) -> tm) tm'
     pm <- liftIO $ FFI.createPassManager
-    forM_ dl $ \dl -> do
-      dl <- encodeM (dataLayoutToString dl)
-      liftIO $ FFI.addDataLayoutPass pm dl
+    forM_ tli $ \(TargetLibraryInfo tli) -> do
+      liftIO $ FFI.addTargetLibraryInfoPass pm tli
+    forM_ dl $ \dl -> liftIO $ withFFIDataLayout dl $ FFI.addDataLayoutPass pm 
     forM ps $ \p -> $(
       do
         TH.TyConI (TH.DataD _ _ _ cons _) <- TH.reify ''Pass
@@ -114,13 +114,13 @@ instance PassManagerSpecification PassSetSpec where
     return pm
 
 instance PassManagerSpecification [Pass] where
-  createPassManager ps = createPassManager (PassSetSpec ps Nothing Nothing)
+  createPassManager ps = createPassManager (PassSetSpec ps Nothing Nothing Nothing)
 
 instance PassManagerSpecification ([Pass], TargetMachine) where
-  createPassManager (ps, tm) = createPassManager (PassSetSpec ps (Just tm) Nothing)
+  createPassManager (ps, tm) = createPassManager (PassSetSpec ps (Just tm) Nothing Nothing)
 
-instance PassManagerSpecification ([Pass], DataLayout) where
-  createPassManager (ps, dl) = createPassManager (PassSetSpec ps Nothing (Just dl))
+instance PassManagerSpecification ([Pass], DataLayout, TargetLibraryInfo) where
+  createPassManager (ps, dl, tli) = createPassManager (PassSetSpec ps Nothing (Just dl) (Just tli))
 
 -- | bracket the creation of a 'PassManager'
 withPassManager :: PassManagerSpecification s => s -> (PassManager -> IO a) -> IO a

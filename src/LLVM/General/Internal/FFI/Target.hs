@@ -104,4 +104,12 @@ foreign import ccall unsafe "LLVM_General_GetHostCPUFeatures" getHostCPUFeatures
 foreign import ccall unsafe "LLVM_General_GetTargetMachineDataLayout" getTargetMachineDataLayout ::
   Ptr TargetMachine -> IO MallocedCString
 
+data TargetLibraryInfo
+
+foreign import ccall unsafe "LLVM_General_CreateTargetLibraryInfo" createTargetLibraryInfo ::
+  CString -> IO (Ptr TargetLibraryInfo)
+
+foreign import ccall unsafe "LLVM_General_DisposeTargetLibraryInfo" disposeTargetLibraryInfo ::
+  Ptr TargetLibraryInfo -> IO ()
+
 foreign import ccall unsafe "LLVM_General_InitializeAllTargets" initializeAllTargets :: IO ()
