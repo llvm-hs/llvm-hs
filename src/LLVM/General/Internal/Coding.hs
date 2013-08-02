@@ -101,8 +101,12 @@ instance Monad m => DecodeM m Bool FFI.LLVMBool where
   decodeM (FFI.LLVMBool 0) = return $ False
   decodeM (FFI.LLVMBool 1) = return $ True
 
-instance (Monad m, EncodeM m h (Ptr c)) => EncodeM m (Maybe h) (FFI.NothingAsNull h c) where
-  encodeM = liftM FFI.NothingAsNull . maybe (return nullPtr) encodeM
+instance (Monad m, EncodeM m h (Ptr c)) => EncodeM m (Maybe h) (Ptr c) where
+  encodeM = maybe (return nullPtr) encodeM
+
+instance (Monad m, DecodeM m h (Ptr c)) => DecodeM m (Maybe h) (Ptr c) where
+  decodeM p | p == nullPtr = return Nothing
+            | otherwise = liftM Just $ decodeM p
 
 instance Monad m => EncodeM m Word CUInt where
   encodeM = return . fromIntegral

@@ -15,7 +15,7 @@ newtype MetadataNodeID = MetadataNodeID Word
 
 -- | <http://llvm.org/docs/LangRef.html#metadata>
 data MetadataNode 
-  = MetadataNode [Operand]
+  = MetadataNode [Maybe Operand]
   | MetadataNodeReference MetadataNodeID
   deriving (Eq, Ord, Read, Show)
 

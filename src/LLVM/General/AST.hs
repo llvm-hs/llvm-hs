@@ -27,7 +27,7 @@ import LLVM.General.AST.DataLayout
 data Definition 
   = GlobalDefinition Global
   | TypeDefinition Name (Maybe Type)
-  | MetadataNodeDefinition MetadataNodeID [Operand]
+  | MetadataNodeDefinition MetadataNodeID [Maybe Operand]
   | NamedMetadataDefinition String [MetadataNodeID]
   | ModuleInlineAssembly String
     deriving (Eq, Read, Show)

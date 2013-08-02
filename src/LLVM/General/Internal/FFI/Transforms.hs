@@ -46,6 +46,8 @@ cName n =
 	 "BreakCriticalEdges",
 	 "DeadCodeElimination",
 	 "DeadInstructionElimination",
+         "DebugExistingIR",
+         "DebugGeneratedIR",
 	 "DemoteRegisterToMemory",
          "EdgeProfiler",
          "GCOVProfiler",

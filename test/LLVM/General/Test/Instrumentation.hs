@@ -117,10 +117,6 @@ ast = do
   ]
 
 tests = testGroup "Instrumentation" [
-  testCase "print" $ do
-    Right ast <- runErrorT ast
-    s <- withContext $ \context -> withModuleFromAST' context ast moduleString
-    putStrLn s,
   testGroup "basic" [
     testCase n $ do
       triple <- getProcessTargetTriple
@@ -139,7 +135,9 @@ tests = testGroup "Instrumentation" [
      ("AddressSanitizerModule", defaultAddressSanitizerModule),
      ("MemorySanitizer", defaultMemorySanitizer),
      ("ThreadSanitizer", defaultThreadSanitizer),
-     ("BoundsChecking", BoundsChecking)
+     ("BoundsChecking", BoundsChecking),
+--     ("DebugGeneratedIR", defaultDebugGeneratedIR),
+     ("DebugExistingIR", DebugExistingIR)
     ]
    ]
  ]

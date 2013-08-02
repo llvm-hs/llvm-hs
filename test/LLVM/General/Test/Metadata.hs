@@ -35,8 +35,9 @@ tests = testGroup "Metadata" [
                 (
                   "my-metadatum", 
                   MetadataNode [
-                   LocalReference (UnName 1),
-                   MetadataStringOperand "super hyper"
+                   Just $ LocalReference (UnName 1),
+                   Just $ MetadataStringOperand "super hyper",
+                   Nothing
                   ]
                 )
               ]
@@ -49,7 +50,7 @@ tests = testGroup "Metadata" [
             \\n\
             \define i32 @foo() {\n\
             \  %1 = load i32* @0\n\
-            \  ret i32 0, !my-metadatum !{i32 %1, metadata !\"super hyper\"}\n\
+            \  ret i32 0, !my-metadatum !{i32 %1, metadata !\"super hyper\", null}\n\
             \}\n"
     strCheck ast s,
 
@@ -67,7 +68,7 @@ tests = testGroup "Metadata" [
               ]
             )
           ],
-          MetadataNodeDefinition (MetadataNodeID 0) [ ConstantOperand (C.Int 32 1) ]
+          MetadataNodeDefinition (MetadataNodeID 0) [ Just $ ConstantOperand (C.Int 32 1) ]
          ]
     let s = "; ModuleID = '<string>'\n\
             \\n\
@@ -80,8 +81,8 @@ tests = testGroup "Metadata" [
 
   testCase "named" $ do
     let ast = Module "<string>" Nothing Nothing [
-          NamedMetadataDefinition "my-module-metadata" [MetadataNodeID 0],
-          MetadataNodeDefinition (MetadataNodeID 0) [ ConstantOperand (C.Int 32 1) ]
+          NamedMetadataDefinition "my-module-metadata" [ MetadataNodeID 0 ],
+          MetadataNodeDefinition (MetadataNodeID 0) [ Just $ ConstantOperand (C.Int 32 1) ]
          ]
     let s = "; ModuleID = '<string>'\n\
             \\n\
@@ -90,15 +91,27 @@ tests = testGroup "Metadata" [
             \!0 = metadata !{i32 1}\n"
     strCheck ast s,
 
+  testCase "null" $ do
+    let ast = Module "<string>" Nothing Nothing [
+          NamedMetadataDefinition "my-module-metadata" [ MetadataNodeID 0 ],
+          MetadataNodeDefinition (MetadataNodeID 0) [ Nothing ]
+         ]
+    let s = "; ModuleID = '<string>'\n\
+            \\n\
+            \!my-module-metadata = !{!0}\n\
+            \\n\
+            \!0 = metadata !{null}\n"
+    strCheck ast s,
+
   testGroup "cyclic" [
     testCase "metadata-only" $ do
       let ast = Module "<string>" Nothing Nothing [
             NamedMetadataDefinition "my-module-metadata" [MetadataNodeID 0],
             MetadataNodeDefinition (MetadataNodeID 0) [
-              MetadataNodeOperand (MetadataNodeReference (MetadataNodeID 1)) 
+              Just $ MetadataNodeOperand (MetadataNodeReference (MetadataNodeID 1)) 
              ],
             MetadataNodeDefinition (MetadataNodeID 1) [
-              MetadataNodeOperand (MetadataNodeReference (MetadataNodeID 0)) 
+              Just $ MetadataNodeOperand (MetadataNodeReference (MetadataNodeID 0)) 
              ]
            ]
       let s = "; ModuleID = '<string>'\n\
@@ -122,7 +135,7 @@ tests = testGroup "Metadata" [
               )
             ],
             MetadataNodeDefinition (MetadataNodeID 0) [
-              ConstantOperand (C.GlobalReference (Name "foo"))
+              Just $ ConstantOperand (C.GlobalReference (Name "foo"))
              ]
            ]
       let s = "; ModuleID = '<string>'\n\

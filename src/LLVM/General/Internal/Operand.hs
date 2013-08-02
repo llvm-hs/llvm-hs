@@ -70,7 +70,7 @@ instance EncodeM EncodeAST A.MetadataNode (Ptr FFI.MDNode) where
     liftIO $ FFI.createMDNodeInContext c ops
   encodeM (A.MetadataNodeReference n) = referMDNode n
 
-instance DecodeM DecodeAST [A.Operand] (Ptr FFI.MDNode) where
+instance DecodeM DecodeAST [Maybe A.Operand] (Ptr FFI.MDNode) where
   decodeM p = scopeAnyCont $ do
     n <- liftIO $ FFI.getMDNodeNumOperands p
     ops <- allocaArray n
