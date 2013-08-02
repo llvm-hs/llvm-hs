@@ -22,7 +22,7 @@ import LLVM.General.Internal.EncodeAST
 import qualified LLVM.General.AST.Linkage as A.L
 import qualified LLVM.General.AST.Visibility as A.V
 
-genCodingInstance' [t| A.L.Linkage |] ''FFI.Linkage [
+genCodingInstance [t| A.L.Linkage |] ''FFI.Linkage [
   (FFI.linkageExternal, A.L.External),
   (FFI.linkageAvailableExternally, A.L.AvailableExternally),
   (FFI.linkageLinkOnceAny, A.L.LinkOnce),
@@ -46,7 +46,7 @@ getLinkage g = liftIO $ decodeM =<< FFI.getLinkage (FFI.upCast g)
 setLinkage :: FFI.DescendentOf FFI.GlobalValue v => Ptr v -> A.L.Linkage -> EncodeAST ()
 setLinkage g l = liftIO . FFI.setLinkage (FFI.upCast g) =<< encodeM l
                                                                        
-genCodingInstance' [t| A.V.Visibility |] ''FFI.Visibility [
+genCodingInstance [t| A.V.Visibility |] ''FFI.Visibility [
   (FFI.visibilityDefault, A.V.Default),
   (FFI.visibilityHidden, A.V.Hidden),
   (FFI.visibilityProtected, A.V.Protected)

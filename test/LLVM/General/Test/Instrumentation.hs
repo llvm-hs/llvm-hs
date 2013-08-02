@@ -31,7 +31,7 @@ import qualified LLVM.General.AST.Attribute as A
 import qualified LLVM.General.AST.Global as G
 import qualified LLVM.General.AST.Constant as C
 
-instrument :: PassManagerSpecification s => s -> A.Module -> IO A.Module
+instrument :: PassSetSpec -> A.Module -> IO A.Module
 instrument s m = withContext $ \context -> withModuleFromAST' context m $ \mIn' -> do
   withPassManager s $ \pm -> runPassManager pm mIn'
   moduleAST mIn'
@@ -123,7 +123,7 @@ tests = testGroup "Instrumentation" [
       withTargetLibraryInfo triple $ \tli -> do
         Right dl <- runErrorT $ withDefaultTargetMachine getTargetMachineDataLayout
         Right ast <- runErrorT ast
-        ast' <- instrument ([p], dl, tli) ast
+        ast' <- instrument (defaultPassSetSpec { transforms = [p], dataLayout = Just dl, targetLibraryInfo = Just tli }) ast
         let names ast = [ n | GlobalDefinition d <- moduleDefinitions ast, Name n <- return (G.name d) ]
         (names ast') `List.intersect` (names ast) @?= names ast
     | (n,p) <- [

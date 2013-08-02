@@ -24,7 +24,7 @@ import LLVM.General.Internal.EncodeAST
 import LLVM.General.Internal.DecodeAST
 import LLVM.General.Internal.Value
 
-genCodingInstance' [t| A.Dialect |] ''FFI.AsmDialect [
+genCodingInstance [t| A.Dialect |] ''FFI.AsmDialect [
    (FFI.asmDialectATT, A.ATTDialect),
    (FFI.asmDialectIntel, A.IntelDialect)
   ]

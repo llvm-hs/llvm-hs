@@ -15,7 +15,7 @@ import LLVM.General.Diagnostic
 import LLVM.General.Internal.Coding
 import LLVM.General.Internal.String ()
 
-genCodingInstance' [t| DiagnosticKind |] ''FFI.DiagnosticKind [
+genCodingInstance [t| DiagnosticKind |] ''FFI.DiagnosticKind [
     (FFI.diagnosticKindError, ErrorKind),
     (FFI.diagnosticKindWarning, WarningKind),
     (FFI.diagnosticKindNote, NoteKind)

@@ -31,24 +31,8 @@ class EncodeM e h c where
 class DecodeM d h c where
   decodeM :: c -> d h
 
-genCodingInstance :: Data h => TypeQ -> Name -> [(Integer, h)] -> Q [Dec]
-genCodingInstance ht ctn ihs = do
-  let n = const Nothing
-  TyConI (NewtypeD _ _ _ (NormalC ctcn _) _) <- reify ctn
-  [d| 
-    instance Monad m => EncodeM m $(ht) $(conT ctn) where
-      encodeM h = return $ $(
-        caseE [| h |] [ match (dataToPatQ n h) (normalB (appE (conE ctcn) (litE (integerL i)))) [] | (i,h) <- ihs ] 
-       )
-
-    instance Monad m => DecodeM m $(ht) $(conT ctn) where
-      decodeM i = return $ $(
-        caseE [| i |] [ match (conP ctcn [litP (integerL i)]) (normalB (dataToExpQ n h)) [] | (i,h) <- ihs ]
-       )
-   |]
-
-genCodingInstance' :: (Data c, Data h) => TypeQ -> Name -> [(c, h)] -> Q [Dec]
-genCodingInstance' ht ctn chs = do
+genCodingInstance :: (Data c, Data h) => TypeQ -> Name -> [(c, h)] -> Q [Dec]
+genCodingInstance ht ctn chs = do
   let n = const Nothing
   [d| 
     instance Monad m => EncodeM m $(ht) $(conT ctn) where
@@ -107,6 +91,12 @@ instance (Monad m, EncodeM m h (Ptr c)) => EncodeM m (Maybe h) (Ptr c) where
 instance (Monad m, DecodeM m h (Ptr c)) => DecodeM m (Maybe h) (Ptr c) where
   decodeM p | p == nullPtr = return Nothing
             | otherwise = liftM Just $ decodeM p
+
+instance Monad m => EncodeM m (Maybe Bool) (FFI.NothingAsMinusOne Bool) where
+  encodeM = return . FFI.NothingAsMinusOne . maybe (-1) (fromIntegral . fromEnum)
+
+instance Monad m => EncodeM m (Maybe Word) (FFI.NothingAsMinusOne Word) where
+  encodeM = return . FFI.NothingAsMinusOne . maybe (-1) fromIntegral
 
 instance Monad m => EncodeM m Word CUInt where
   encodeM = return . fromIntegral

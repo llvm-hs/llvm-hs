@@ -104,13 +104,13 @@ foreign import ccall unsafe "LLVMPassManagerBuilderSetSizeLevel" passManagerBuil
     Ptr PassManagerBuilder -> CUInt -> IO ()
 
 foreign import ccall unsafe "LLVMPassManagerBuilderSetDisableUnitAtATime" passManagerBuilderSetDisableUnitAtATime ::
-    Ptr PassManagerBuilder -> CUInt -> IO () 
+    Ptr PassManagerBuilder -> LLVMBool -> IO () 
 
 foreign import ccall unsafe "LLVMPassManagerBuilderSetDisableUnrollLoops" passManagerBuilderSetDisableUnrollLoops ::
     Ptr PassManagerBuilder -> CUInt -> IO ()
 
 foreign import ccall unsafe "LLVMPassManagerBuilderSetDisableSimplifyLibCalls" passManagerBuilderSetDisableSimplifyLibCalls ::
-    Ptr PassManagerBuilder -> CUInt -> IO () 
+    Ptr PassManagerBuilder -> LLVMBool -> IO () 
 
 foreign import ccall unsafe "LLVMPassManagerBuilderUseInlinerWithThreshold" passManagerBuilderUseInlinerWithThreshold ::
     Ptr PassManagerBuilder -> CUInt -> IO ()

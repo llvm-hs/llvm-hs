@@ -14,7 +14,7 @@ import LLVM.General.Internal.Coding
 
 import qualified LLVM.General.AST as A
 
-genCodingInstance' [t| Maybe A.MemoryOrdering |] ''FFI.MemoryOrdering [
+genCodingInstance [t| Maybe A.MemoryOrdering |] ''FFI.MemoryOrdering [
   (FFI.memoryOrderingNotAtomic, Nothing),
   (FFI.memoryOrderingUnordered, Just A.Unordered),
   (FFI.memoryOrderingMonotonic, Just A.Monotonic),

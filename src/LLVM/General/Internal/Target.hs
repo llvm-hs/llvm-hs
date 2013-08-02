@@ -32,14 +32,14 @@ import qualified LLVM.General.Target.Options as TO
 import qualified LLVM.General.CodeModel as CodeModel
 import qualified LLVM.General.CodeGenOpt as CodeGenOpt
 
-genCodingInstance' [t| Reloc.Model |] ''FFI.RelocModel [
+genCodingInstance [t| Reloc.Model |] ''FFI.RelocModel [
   (FFI.relocModelDefault, Reloc.Default),
   (FFI.relocModelStatic, Reloc.Static),
   (FFI.relocModelPIC, Reloc.PIC),
   (FFI.relocModelDynamicNoPic, Reloc.DynamicNoPIC)
  ]
 
-genCodingInstance' [t| CodeModel.Model |] ''FFI.CodeModel [
+genCodingInstance [t| CodeModel.Model |] ''FFI.CodeModel [
   (FFI.codeModelDefault,CodeModel.Default),
   (FFI.codeModelJITDefault, CodeModel.JITDefault),
   (FFI.codeModelSmall, CodeModel.Small),
@@ -48,20 +48,20 @@ genCodingInstance' [t| CodeModel.Model |] ''FFI.CodeModel [
   (FFI.codeModelLarge, CodeModel.Large)
  ]
 
-genCodingInstance' [t| CodeGenOpt.Level |] ''FFI.CodeGenOptLevel [
+genCodingInstance [t| CodeGenOpt.Level |] ''FFI.CodeGenOptLevel [
   (FFI.codeGenOptLevelNone, CodeGenOpt.None),
   (FFI.codeGenOptLevelLess, CodeGenOpt.Less),
   (FFI.codeGenOptLevelDefault, CodeGenOpt.Default),
   (FFI.codeGenOptLevelAggressive, CodeGenOpt.Aggressive)
  ]
 
-genCodingInstance' [t| TO.FloatABI |] ''FFI.FloatABIType [
+genCodingInstance [t| TO.FloatABI |] ''FFI.FloatABIType [
   (FFI.floatABIDefault, TO.FloatABIDefault),
   (FFI.floatABISoft, TO.FloatABISoft),
   (FFI.floatABIHard, TO.FloatABIHard)
  ]
 
-genCodingInstance' [t| TO.FloatingPointOperationFusionMode |] ''FFI.FPOpFusionMode [
+genCodingInstance [t| TO.FloatingPointOperationFusionMode |] ''FFI.FPOpFusionMode [
   (FFI.fpOpFusionModeFast, TO.FloatingPointOperationFusionFast),
   (FFI.fpOpFusionModeStandard, TO.FloatingPointOperationFusionStandard),
   (FFI.fpOpFusionModeStrict, TO.FloatingPointOperationFusionStrict)

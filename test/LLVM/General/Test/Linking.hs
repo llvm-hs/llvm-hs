@@ -30,11 +30,6 @@ import qualified LLVM.General.AST.Attribute as A
 import qualified LLVM.General.AST.Global as G
 import qualified LLVM.General.AST.Constant as C
 
-optimize :: PassManagerSpecification s => s -> A.Module -> IO A.Module
-optimize s m = withContext $ \context -> withModuleFromAST' context m $ \mIn' -> do
-  withPassManager s $ \pm -> runPassManager pm mIn'
-  moduleAST mIn'
-
 tests = testGroup "Linking" [
   testCase "basic" $ do
     let 

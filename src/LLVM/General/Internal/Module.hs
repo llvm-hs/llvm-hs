@@ -63,7 +63,7 @@ newtype Module = Module (Ptr FFI.Module)
 instance Error (Either String Diagnostic) where
     strMsg = Left
 
-genCodingInstance' [t| Bool |] ''FFI.LinkerMode [
+genCodingInstance [t| Bool |] ''FFI.LinkerMode [
   (FFI.linkerModeDestroySource, False),
   (FFI.linkerModePreserveSource, True)
  ]

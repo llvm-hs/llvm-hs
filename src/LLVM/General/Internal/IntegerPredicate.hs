@@ -9,7 +9,7 @@ import LLVM.General.Internal.Coding
 import qualified LLVM.General.Internal.FFI.LLVMCTypes as FFI
 import qualified LLVM.General.AST.IntegerPredicate as A.IPred
 
-genCodingInstance' [t| A.IPred.IntegerPredicate |] ''FFI.ICmpPredicate [
+genCodingInstance [t| A.IPred.IntegerPredicate |] ''FFI.ICmpPredicate [
   (FFI.iCmpPredEQ, A.IPred.EQ),
   (FFI.iCmpPredNE, A.IPred.NE),
   (FFI.iCmpPredUGT, A.IPred.UGT),

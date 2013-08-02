@@ -9,7 +9,7 @@ import LLVM.General.Internal.Coding
 import qualified LLVM.General.Internal.FFI.LLVMCTypes as FFI
 import qualified LLVM.General.AST.FloatingPointPredicate as A.FPPred
 
-genCodingInstance' [t| A.FPPred.FloatingPointPredicate |] ''FFI.FCmpPredicate [
+genCodingInstance [t| A.FPPred.FloatingPointPredicate |] ''FFI.FCmpPredicate [
   (FFI.fCmpPredFalse, A.FPPred.False),
   (FFI.fCmpPredOEQ, A.FPPred.OEQ),
   (FFI.fCmpPredOGT, A.FPPred.OGT),

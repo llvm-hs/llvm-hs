@@ -10,7 +10,7 @@ import qualified LLVM.General.Internal.FFI.LLVMCTypes as FFI
 
 import LLVM.General.Internal.Coding
 
-genCodingInstance' [t| RMWOperation |] ''FFI.RMWOperation [
+genCodingInstance [t| RMWOperation |] ''FFI.RMWOperation [
   (FFI.rmwOperationXchg, Xchg),
   (FFI.rmwOperationAdd, Add),
   (FFI.rmwOperationSub, Sub),
