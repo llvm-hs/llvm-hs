@@ -123,8 +123,7 @@ pokeTargetOptions hOpts (TargetOptions cOpts) = do
     (FFI.targetOptionFlagEnableFastISel, TO.enableFastInstructionSelection),
     (FFI.targetOptionFlagPositionIndependentExecutable, TO.positionIndependentExecutable),
     (FFI.targetOptionFlagEnableSegmentedStacks, TO.enableSegmentedStacks),
-    (FFI.targetOptionFlagUseInitArray, TO.useInitArray),
-    (FFI.targetOptionFlagRealignStack, TO.realignStack) 
+    (FFI.targetOptionFlagUseInitArray, TO.useInitArray)
    ]
   FFI.setStackAlignmentOverride cOpts =<< encodeM (TO.stackAlignmentOverride hOpts)
   flip runAnyContT return $ do
@@ -171,8 +170,6 @@ peekTargetOptions (TargetOptions tOpts) = do
     <- gof FFI.targetOptionFlagEnableSegmentedStacks
   useInitArray
     <- gof FFI.targetOptionFlagUseInitArray
-  realignStack
-    <- decodeM =<< FFI.getTargetOptionsFlag tOpts FFI.targetOptionFlagRealignStack
   stackAlignmentOverride <- decodeM =<< FFI.getStackAlignmentOverride tOpts
   trapFunctionName <- decodeM =<< FFI.getTrapFuncName tOpts
   floatABIType <- decodeM =<< FFI.getFloatABIType tOpts

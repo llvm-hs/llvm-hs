@@ -36,7 +36,6 @@ instance Arbitrary Options where
     jITEmitDebugInfoToDisk <- arbitrary
     guaranteedTailCallOptimization <- arbitrary
     disableTailCalls <- arbitrary
-    realignStack <- arbitrary
     enableFastInstructionSelection <- arbitrary
     positionIndependentExecutable <- arbitrary
     enableSegmentedStacks <- arbitrary
@@ -66,7 +65,6 @@ tests = testGroup "Target" [
                     jITEmitDebugInfoToDisk = False,
                     guaranteedTailCallOptimization = False,
                     disableTailCalls = False,
-                    realignStack = False,
                     enableFastInstructionSelection = True,
                     positionIndependentExecutable = True,
                     enableSegmentedStacks = False,

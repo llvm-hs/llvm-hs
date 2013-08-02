@@ -34,7 +34,6 @@ data Options = Options {
   jITEmitDebugInfoToDisk :: Bool,
   guaranteedTailCallOptimization :: Bool,
   disableTailCalls :: Bool,
-  realignStack :: Bool,
   enableFastInstructionSelection :: Bool,
   positionIndependentExecutable :: Bool,
   enableSegmentedStacks :: Bool,
