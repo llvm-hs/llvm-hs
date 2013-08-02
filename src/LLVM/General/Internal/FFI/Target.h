@@ -39,7 +39,6 @@
 	macro(JITEmitDebugInfoToDisk)													\
 	macro(GuaranteedTailCallOpt)													\
 	macro(DisableTailCalls)																\
-	macro(RealignStack)																		\
 	macro(EnableFastISel)																	\
 	macro(PositionIndependentExecutable)									\
 	macro(EnableSegmentedStacks)													\
