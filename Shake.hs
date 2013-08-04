@@ -67,7 +67,10 @@ touch f = do
 systemCwdV p' c a = do
   p <- liftIO $ canonicalizePath p'
   putQuiet $ "Entering directory `" ++ p ++ "'"
-  () <- cmd (Cwd p) c a
+  (Stdout out, Stderr err) <- cmd (Cwd p) c a
+  liftIO $ do
+    putStrLn $ "out:\n" ++ out
+    putStrLn $ "err:\n" ++ err
   putQuiet $ "Leaving directory `" ++ p ++ "'"
 
 withAlteredEnvVar :: String -> (Maybe String -> Maybe String) -> Action () -> Action ()
