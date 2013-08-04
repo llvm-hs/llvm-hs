@@ -114,7 +114,7 @@ data Pass
   | GCOVProfiler {
       emitNotes :: Bool,
       emitData :: Bool,
-      version :: GCOVVersion, -- ^ see <http://gcc.gnu.org/viewcvs/gcc/trunk/gcc/gcov-io.h?view=markup>
+      version :: GCOVVersion, 
       useCfgChecksum :: Bool,
       noRedZone :: Bool,
       functionNamesInData :: Bool
@@ -177,9 +177,11 @@ defaultVectorizeBasicBlocks = BasicBlockVectorize {
     fastDependencyAnalysis = False
   }
 
+-- | See <http://gcc.gnu.org/viewcvs/gcc/trunk/gcc/gcov-io.h?view=markup>.
 newtype GCOVVersion = GCOVVersion String
   deriving (Eq, Ord, Read, Show, Typeable, Data)
 
+-- | Defaults for 'GCOVProfiler'.
 defaultGCOVProfiler = GCOVProfiler {
     emitNotes = True,
     emitData = True,
@@ -189,6 +191,7 @@ defaultGCOVProfiler = GCOVProfiler {
     functionNamesInData = True
   }
 
+-- | Defaults for 'AddressSanitizer'.
 defaultAddressSanitizer = AddressSanitizer {
   checkInitOrder = True,
   checkUseAfterReturn = False,
@@ -197,21 +200,25 @@ defaultAddressSanitizer = AddressSanitizer {
   zeroBaseShadow = False
 }
 
+-- | Defaults for 'AddressSanitizerModule'.
 defaultAddressSanitizerModule = AddressSanitizerModule {
   checkInitOrder = True,
   blackListFile = Nothing,
   zeroBaseShadow = False
 }
 
+-- | Defaults for 'MemorySanitizer'.
 defaultMemorySanitizer = MemorySanitizer {
   trackOrigins = False,
   blackListFile = Nothing
 }
 
+-- | Defaults for 'ThreadSanitizer'.
 defaultThreadSanitizer = ThreadSanitizer {
   blackListFile = Nothing
 }
 
+-- | Defaults for 'DebugGeneratedIR'.
 defaultDebugGeneratedIR = DebugGeneratedIR {
   hideDebugIntrinsics = False,
   hideDebugMetadata = False,

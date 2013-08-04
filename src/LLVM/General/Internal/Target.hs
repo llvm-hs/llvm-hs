@@ -271,6 +271,7 @@ withDefaultTargetMachine f = do
   liftIO $ withTargetOptions $ \options ->
       withTargetMachine target triple cpu features options Reloc.Default CodeModel.Default CodeGenOpt.Default f
 
+-- | <http://llvm.org/docs/doxygen/html/classllvm_1_1TargetLibraryInfo.html>
 newtype TargetLibraryInfo = TargetLibraryInfo (Ptr FFI.TargetLibraryInfo)
 
 -- | look up information about the library functions available on a given platform

@@ -99,6 +99,7 @@ ctor name fields = do
   p <- asks precedence
   parensIfNeeded appPrec (foldl (<+>) name fields)
 
+-- | a class for simple pretty-printing with indentation a function only of syntactic depth.
 class Show a => PrettyShow a where
   prettyShow :: a -> QTree
   prettyShowList :: [a] -> QTree
