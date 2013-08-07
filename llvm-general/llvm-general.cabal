@@ -55,8 +55,7 @@ library
     containers >= 0.4.2.1,
     parsec >= 3.1.3,
     array >= 0.4.0.0,
-    setenv >= 0.1.0,
-    pretty >= 1.1.1.0
+    setenv >= 0.1.0
   extra-libraries: stdc++
   hs-source-dirs: src
   extensions:
