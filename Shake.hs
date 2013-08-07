@@ -4,9 +4,9 @@
   GeneralizedNewtypeDeriving,
   StandaloneDeriving,
   DeriveDataTypeable,
-  FlexibleInstances
+  FlexibleInstances,
+  ViewPatterns
   #-}
-import Debug.Trace
 import Control.Exception
 import Control.Monad
 import Control.DeepSeq
@@ -98,7 +98,7 @@ main = shake shakeOptions {
     liftIO $ getWorkingDirectory
 
   getCabalVersion <- addOracle $ \(CabalVersion pkg) -> do
-    liftIO $ liftM (showVersion . pkgVersion . package . packageDescription) $ readPackageDescription silent (pkg ++ ".cabal")
+    liftIO $ liftM (showVersion . pkgVersion . package . packageDescription) $ readPackageDescription silent (pkg </> pkg ++ ".cabal")
 
   getLlvmConfig <- addOracle $ \(LLVMConfig _) -> do
     Exit exitCode <- command [] "which" ["llvm-config"]
@@ -108,8 +108,8 @@ main = shake shakeOptions {
       unless done $ need [ (llvmDir </> "install/bin/llvm-config") ]
     return x
 
-  let stamps = "out" </> "stamps"
-      [configured, built, documented, docPublished] = map (stamps </>) ["configured", "built", "documented", "docPublished"]
+  let stamp p s = "out" </> "stamps" </> p </> s
+      stampPkg = takeFileName . takeDirectory
 
   action $ do
     args <- liftIO getArgs
@@ -121,53 +121,61 @@ main = shake shakeOptions {
         let subBuildEnv = if ownLLVM 
                            then withAlteredEnvVar "PATH" (prefixPathVar $ buildRoot </> llvmDir </> "install/bin")
                            else id
-        return $ subBuildEnv . systemCwdV "." "cabal-dev"
+        return $ \pkg args -> subBuildEnv (systemCwdV pkg "cabal-dev" $ [ "--sandbox", buildRoot </> "cabal-dev"] ++ args)
 
-  configured *> \stamp -> do
+  stamp "*" "configured" *> \(stamp'@(stampPkg -> pkg)) -> do
     cabalStep <- getCabalStep
-    need [ pkgName ++ ".cabal" ]
+    need [ pkg </> pkg ++ ".cabal" ]
     let shared = [ "--enable-shared" | True ]
-    cabalStep $ [ "install-deps", "--enable-tests" ] ++ shared
-    cabalStep $ [ "configure", "--enable-tests" {- , "-fshared-llvm" -} ] ++ shared
-    touch stamp
+    cabalStep pkg $ [ "install-deps", "--enable-tests" ] ++ shared
+    cabalStep pkg $ [ "configure", "--enable-tests" {- , "-fshared-llvm" -} ] ++ shared
+    touch stamp'
 
-  phony "build" $ need [ built ]
-  built *> \stamp -> do
+  phony "llvm-general/local-deps" $ do
+--    need [ stamp "llvm-general-pure" "installed" ]
+    return ()
+
+  phony "llvm-general-pure/local-deps" $ do
+    return ()
+
+  phony "build" $ need [ stamp "llvm-general" "built" ]
+  stamp "*" "built" *> \(stamp'@(stampPkg -> pkg)) -> do
     cabalStep <- getCabalStep
-    need [ configured ]
-    needRecursive "src"
-    needRecursive "test"              
-    cabalStep [ "build" ]
-    touch stamp
+    need [ stamp pkg "configured" ]
+    need [ pkg </> "local-deps" ]
+    needRecursive "llvm-general/src"
+    needRecursive "llvm-general/test"              
+    cabalStep pkg [ "build" ]
+    touch stamp'
 
   phony "test" $ do
-    need [ built ]
+    let pkg = "llvm-general"
+    need [ stamp pkg  "built" ]
     cabalStep <- getCabalStep
-    cabalStep [ "test" ]
+    cabalStep pkg [ "test" ]
 
-  phony "doc" $ need [ documented ]
-  documented *> \stamp -> do
-    need [ built ]
+  phony "doc" $ need [ stamp "llvm-general" "documented" ]
+  stamp "*" "documented" *> \(stamp'@(stampPkg -> pkg)) -> do
+    need [ stamp pkg "built" ]
     cabalStep <- getCabalStep
-    cabalStep [ "haddock", "--html-location=http://hackage.haskell.org/packages/archive/$pkg/$version/doc/html" ]
-    touch stamp
+    cabalStep pkg [ "haddock", "--html-location=http://hackage.haskell.org/packages/archive/$pkg/$version/doc/html" ]
+    touch stamp'
     
   let ghPages = "out" </> "gh-pages"
 
-  phony "pubdoc" $ need [ docPublished ]
-  docPublished *> \stamp -> do
-    need [ documented ]
+  phony "pubdoc" $ need [ stamp "llvm-general" "docPublished" ]
+  stamp "*" "docPublished" *> \(stamp'@(stampPkg -> pkg)) -> do
+    need [ stamp pkg "documented" ]
     buildRoot <- getBuildRoot (BuildRoot ())
     ghPagesExists <- doesDirectoryExist ghPages
-    tag <- getCabalVersion (CabalVersion "llvm-general")
+    tag <- getCabalVersion (CabalVersion pkg)
     unless ghPagesExists $ cmd (Cwd "out") "git" ["clone", buildRoot, "-b", "gh-pages", "gh-pages"]
-    () <- cmd "rm" [ "-rf", ghPages </> tag </> "doc" ]
-    () <- cmd "mkdir" [ "-p", ghPages </> tag ]
-    () <- cmd "cp" [ "-r", "dist/doc", ghPages </> tag ]
+    () <- cmd "rm" [ "-rf", ghPages </> tag </> "doc" </> "html" </> pkg ]
+    () <- cmd "mkdir" [ "-p", ghPages </> tag </> "doc" </> "html" ]
+    () <- cmd "cp" [ "-r", "llvm-general/dist/doc/html" </> pkg, ghPages </> tag </> "doc" </> "html" ]
     () <- cmd (Cwd ghPages) "git" [ "add", "-A", "." ]
-    () <- cmd (Cwd ghPages) "git" [ "commit", "-m", "update " ++ tag ++ " doc" ]
-    () <- cmd (Cwd ghPages) "git" [ "push", "origin", "gh-pages" ]
-    touch stamp
+    () <- cmd (Cwd ghPages) "git" [ "commit", "-m", "update " ++ tag ++ " " ++ pkg ++ " doc" ]
+    touch stamp'
 
   llvmDir </> "install/bin/llvm-config" *> \out -> do
     let tarball = "downloads/llvm-" ++ llvmVersion ++ ".src.tar.gz"
