@@ -38,6 +38,7 @@ llvmProgram = (simpleProgram "llvm-config") {
         case x' of
           Nothing -> findJustBy f xs
           j -> return j
+      findJustBy _ [] = return Nothing
     in 
       \v -> findJustBy (findProgramLocation v) llvmConfigNames,
   programFindVersion = 
