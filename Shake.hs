@@ -172,7 +172,7 @@ main = shake shakeOptions {
         "--html-location=http://hackage.haskell.org/packages/archive/$pkg/$version/doc/html"
       ] ++ [
         "--haddock-options=--read-interface="
-        ++ ("http://bscarlet.github.io/llvm-general" </> tag </> "doc/html" </> dpkg)
+        ++ ("/llvm-general" </> tag </> "doc/html" </> dpkg)
         ++ ","
         ++ (buildRoot </> dpkg </> "dist/doc/html" </> dpkg </> dpkg <.> "haddock")
         | dpkg <- localPackageDeps pkg
