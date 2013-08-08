@@ -124,12 +124,13 @@ main = shake shakeOptions {
         return $ \pkg args -> subBuildEnv (systemCwdV pkg "cabal-dev" $ [ "--sandbox", buildRoot </> "cabal-dev"] ++ args)
 
   let shared = [ "--enable-shared" | True ]
+  let ghPages = "out" </> "gh-pages"
+  let localPackageDeps "llvm-general" = [ "llvm-general-pure" ]
+      localPackageDeps _ = []
 
   stamp "*" "configured" *> \(stamp'@(stampPkg -> pkg)) -> do
     cabalStep <- getCabalStep
-    case pkg of
-      "llvm-general" -> need [ stamp "llvm-general-pure" "installed" ]
-      _ -> return ()
+    need [ stamp dpkg "installed" | dpkg <- localPackageDeps pkg ]
     need [ pkg </> pkg ++ ".cabal" ]
     cabalStep pkg $ [ "install-deps", "--enable-tests" ] ++ shared
     cabalStep pkg $ [ "configure", "--enable-tests" {- , "-fshared-llvm" -} ] ++ shared
@@ -161,14 +162,24 @@ main = shake shakeOptions {
 
   phony "doc" $ need [ stamp "llvm-general" "documented" ]
   stamp "*" "documented" *> \(stamp'@(stampPkg -> pkg)) -> do
+    buildRoot <- getBuildRoot (BuildRoot ())
+    tag <- getCabalVersion (CabalVersion pkg)
     need [ stamp pkg "built" ]
+    need [ stamp dpkg "documented" | dpkg <- localPackageDeps pkg ]
     cabalStep <- getCabalStep
-    cabalStep pkg [ "haddock", "--html-location=http://hackage.haskell.org/packages/archive/$pkg/$version/doc/html" ]
+    cabalStep pkg $ [
+        "haddock",
+        "--html-location=http://hackage.haskell.org/packages/archive/$pkg/$version/doc/html"
+      ] ++ [
+        "--haddock-options=--read-interface="
+        ++ ("http://bscarlet.github.io/llvm-general" </> tag </> "doc/html" </> dpkg)
+        ++ ","
+        ++ (buildRoot </> dpkg </> "dist/doc/html" </> dpkg </> dpkg <.> "haddock")
+        | dpkg <- localPackageDeps pkg
+      ]
     touch stamp'
     
-  let ghPages = "out" </> "gh-pages"
-
-  phony "pubdoc" $ need [ stamp "llvm-general" "docPublished" ]
+  phony "pubdoc" $ need [ stamp pkg "docPublished" | pkg <- ["llvm-general-pure", "llvm-general"] ]
   stamp "*" "docPublished" *> \(stamp'@(stampPkg -> pkg)) -> do
     need [ stamp pkg "documented" ]
     buildRoot <- getBuildRoot (BuildRoot ())
@@ -177,9 +188,10 @@ main = shake shakeOptions {
     unless ghPagesExists $ cmd (Cwd "out") "git" ["clone", buildRoot, "-b", "gh-pages", "gh-pages"]
     () <- cmd "rm" [ "-rf", ghPages </> tag </> "doc" </> "html" </> pkg ]
     () <- cmd "mkdir" [ "-p", ghPages </> tag </> "doc" </> "html" ]
-    () <- cmd "cp" [ "-r", "llvm-general/dist/doc/html" </> pkg, ghPages </> tag </> "doc" </> "html" ]
+    () <- cmd "cp" [ "-r", pkg </> "dist/doc/html" </> pkg, ghPages </> tag </> "doc" </> "html" ]
     () <- cmd (Cwd ghPages) "git" [ "add", "-A", "." ]
     () <- cmd (Cwd ghPages) "git" [ "commit", "-m", "update " ++ tag ++ " " ++ pkg ++ " doc" ]
+    () <- cmd (Cwd ghPages) "git" [ "push" ]
     touch stamp'
 
   llvmDir </> "install/bin/llvm-config" *> \out -> do
