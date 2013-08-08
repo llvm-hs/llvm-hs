@@ -190,7 +190,7 @@ main = shake shakeOptions {
     () <- cmd "mkdir" [ "-p", ghPages </> tag </> "doc" </> "html" ]
     () <- cmd "cp" [ "-r", pkg </> "dist/doc/html" </> pkg, ghPages </> tag </> "doc" </> "html" ]
     () <- cmd (Cwd ghPages) "git" [ "add", "-A", "." ]
-    () <- cmd (Cwd ghPages) "git" [ "commit", "-m", "update " ++ tag ++ " " ++ pkg ++ " doc" ]
+    () <- cmd (Cwd ghPages) "git" [ "commit", "-m", show ("update " ++ tag ++ " " ++ pkg ++ " doc") ]
     () <- cmd (Cwd ghPages) "git" [ "push" ]
     touch stamp'
 
