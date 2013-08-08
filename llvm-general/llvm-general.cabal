@@ -55,7 +55,8 @@ library
     containers >= 0.4.2.1,
     parsec >= 3.1.3,
     array >= 0.4.0.0,
-    setenv >= 0.1.0
+    setenv >= 0.1.0,
+    llvm-general-pure == 3.4.0.0
   extra-libraries: stdc++
   hs-source-dirs: src
   extensions:
@@ -68,24 +69,6 @@ library
     ConstraintKinds
   exposed-modules:
     LLVM.General
-    LLVM.General.AST
-    LLVM.General.AST.AddrSpace
-    LLVM.General.AST.InlineAssembly
-    LLVM.General.AST.Attribute
-    LLVM.General.AST.CallingConvention
-    LLVM.General.AST.Constant
-    LLVM.General.AST.DataLayout
-    LLVM.General.AST.Float
-    LLVM.General.AST.FloatingPointPredicate
-    LLVM.General.AST.Global
-    LLVM.General.AST.Instruction
-    LLVM.General.AST.IntegerPredicate
-    LLVM.General.AST.Linkage
-    LLVM.General.AST.Name
-    LLVM.General.AST.Operand
-    LLVM.General.AST.RMWOperation
-    LLVM.General.AST.Type
-    LLVM.General.AST.Visibility
     LLVM.General.Analysis
     LLVM.General.CodeGenOpt
     LLVM.General.CodeModel
@@ -95,7 +78,6 @@ library
     LLVM.General.ExecutionEngine
     LLVM.General.Module
     LLVM.General.PassManager
-    LLVM.General.PrettyPrint
     LLVM.General.Relocation
     LLVM.General.Target
     LLVM.General.Target.Options
@@ -131,7 +113,6 @@ library
     LLVM.General.Internal.Module
     LLVM.General.Internal.Operand
     LLVM.General.Internal.PassManager
-    LLVM.General.Internal.PrettyPrint
     LLVM.General.Internal.RMWOperation
     LLVM.General.Internal.String
     LLVM.General.Internal.Target
@@ -201,7 +182,8 @@ test-suite test
     HUnit >= 1.2.4.2,
     test-framework-quickcheck2 >= 0.3.0.1,
     QuickCheck >= 2.5.1.1,
-    llvm-general >= 0.1,
+    llvm-general == 3.4.0.0,
+    llvm-general-pure == 3.4.0.0,
     containers >= 0.4.2.1,
     mtl >= 2.0.1.0
   hs-source-dirs: test
@@ -223,7 +205,6 @@ test-suite test
     LLVM.General.Test.Metadata
     LLVM.General.Test.Module
     LLVM.General.Test.Optimization
-    LLVM.General.Test.PrettyPrint
     LLVM.General.Test.Support
     LLVM.General.Test.Target
     LLVM.General.Test.Tests

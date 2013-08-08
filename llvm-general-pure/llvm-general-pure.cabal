@@ -1,0 +1,89 @@
+name: llvm-general-pure
+version: 3.4.0.0
+license: BSD3
+license-file: LICENSE
+author: Benjamin S.Scarlet <fgthb0@greynode.net>
+maintainer: Benjamin S. Scarlet <fgthb0@greynode.net>
+copyright: Benjamin S. Scarlet 2013
+build-type: Custom
+stability: experimental
+cabal-version: >= 1.8
+category: Compilers/Interpreters, Code Generation
+synopsis: Pure Haskell LLVM functionality (no FFI).
+description:
+  llvm-general-pure is a set of pure Haskell types and functions for interacting with LLVM <http://llvm.org/>.
+        It includes an ADT to represent LLVM IR (<http://llvm.org/docs/LangRef.html>). The llvm-general package
+	builds on this one with FFI bindings to LLVM, but llvm-general-pure does not require LLVM to be available.
+  .
+  For haddock, see <http://bscarlet.github.io/llvm-general/3.4.0.0/doc/html/llvm-general-pure/index.html>.
+   
+source-repository head
+  type: git
+  location: git://github.com/bscarlet/llvm-general.git
+
+library
+  ghc-options: -fwarn-unused-imports
+  build-depends: 
+    base >= 4.5.0.0 && < 5,
+    text >= 0.11.2.1,
+    bytestring >= 0.9.1.10,
+    transformers >= 0.3.0.0,
+    mtl >= 2.0.1.0,
+    template-haskell >= 2.5.0.0,
+    containers >= 0.4.2.1,
+    parsec >= 3.1.3,
+    array >= 0.4.0.0,
+    setenv >= 0.1.0
+  hs-source-dirs: src
+  extensions:
+    TupleSections
+    DeriveDataTypeable
+    EmptyDataDecls
+    FlexibleContexts
+    FlexibleInstances
+    StandaloneDeriving
+    ConstraintKinds
+  exposed-modules:
+    LLVM.General.AST
+    LLVM.General.AST.AddrSpace
+    LLVM.General.AST.InlineAssembly
+    LLVM.General.AST.Attribute
+    LLVM.General.AST.CallingConvention
+    LLVM.General.AST.Constant
+    LLVM.General.AST.DataLayout
+    LLVM.General.AST.Float
+    LLVM.General.AST.FloatingPointPredicate
+    LLVM.General.AST.Global
+    LLVM.General.AST.Instruction
+    LLVM.General.AST.IntegerPredicate
+    LLVM.General.AST.Linkage
+    LLVM.General.AST.Name
+    LLVM.General.AST.Operand
+    LLVM.General.AST.RMWOperation
+    LLVM.General.AST.Type
+    LLVM.General.AST.Visibility
+    LLVM.General.PrettyPrint
+
+  other-modules:
+    LLVM.General.Internal.PrettyPrint
+
+test-suite test
+  type: exitcode-stdio-1.0
+  build-depends:  
+    base >= 3 && < 5,
+    test-framework >= 0.5,
+    test-framework-hunit >= 0.2.7,
+    HUnit >= 1.2.4.2,
+    test-framework-quickcheck2 >= 0.3.0.1,
+    QuickCheck >= 2.5.1.1,
+    llvm-general-pure == 3.4.0.0,
+    containers >= 0.4.2.1,
+    mtl >= 2.0.1.0
+  hs-source-dirs: test
+  extensions:
+    TupleSections
+    FlexibleInstances
+    FlexibleContexts
+  main-is: Test.hs
+  other-modules:
+    LLVM.General.Test.PrettyPrint

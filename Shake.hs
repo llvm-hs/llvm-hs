@@ -123,36 +123,41 @@ main = shake shakeOptions {
                            else id
         return $ \pkg args -> subBuildEnv (systemCwdV pkg "cabal-dev" $ [ "--sandbox", buildRoot </> "cabal-dev"] ++ args)
 
+  let shared = [ "--enable-shared" | True ]
+
   stamp "*" "configured" *> \(stamp'@(stampPkg -> pkg)) -> do
     cabalStep <- getCabalStep
+    case pkg of
+      "llvm-general" -> need [ stamp "llvm-general-pure" "installed" ]
+      _ -> return ()
     need [ pkg </> pkg ++ ".cabal" ]
-    let shared = [ "--enable-shared" | True ]
     cabalStep pkg $ [ "install-deps", "--enable-tests" ] ++ shared
     cabalStep pkg $ [ "configure", "--enable-tests" {- , "-fshared-llvm" -} ] ++ shared
     touch stamp'
-
-  phony "llvm-general/local-deps" $ do
---    need [ stamp "llvm-general-pure" "installed" ]
-    return ()
-
-  phony "llvm-general-pure/local-deps" $ do
-    return ()
 
   phony "build" $ need [ stamp "llvm-general" "built" ]
   stamp "*" "built" *> \(stamp'@(stampPkg -> pkg)) -> do
     cabalStep <- getCabalStep
     need [ stamp pkg "configured" ]
-    need [ pkg </> "local-deps" ]
     needRecursive "llvm-general/src"
     needRecursive "llvm-general/test"              
     cabalStep pkg [ "build" ]
     touch stamp'
 
-  phony "test" $ do
-    let pkg = "llvm-general"
-    need [ stamp pkg  "built" ]
+  stamp "*" "installed" *> \(stamp'@(stampPkg -> pkg)) -> do
     cabalStep <- getCabalStep
+    need [ stamp pkg "built" ]
+    cabalStep pkg $ [ "install" ] ++ shared
+    touch stamp'
+
+  phony "test" $ do
+    need [ stamp pkg "tested" | pkg <- ["llvm-general-pure", "llvm-general"] ]
+
+  stamp "*" "tested" *> \(stamp'@(stampPkg -> pkg)) -> do
+    cabalStep <- getCabalStep
+    need [ stamp pkg  "built" ]
     cabalStep pkg [ "test" ]
+    touch stamp'
 
   phony "doc" $ need [ stamp "llvm-general" "documented" ]
   stamp "*" "documented" *> \(stamp'@(stampPkg -> pkg)) -> do

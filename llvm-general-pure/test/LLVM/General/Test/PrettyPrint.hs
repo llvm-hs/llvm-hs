@@ -4,8 +4,6 @@ import Test.Framework
 import Test.Framework.Providers.HUnit
 import Test.HUnit
 
-import LLVM.General.Test.Support
-
 import LLVM.General.PrettyPrint
 
 import LLVM.General.AST

@@ -13,7 +13,6 @@ import qualified LLVM.General.Test.Module as Module
 import qualified LLVM.General.Test.Optimization as Optimization
 import qualified LLVM.General.Test.Target as Target
 import qualified LLVM.General.Test.Analysis as Analysis
-import qualified LLVM.General.Test.PrettyPrint as PrettyPrint
 import qualified LLVM.General.Test.Linking as Linking
 import qualified LLVM.General.Test.Instrumentation as Instrumentation
 
@@ -29,7 +28,6 @@ tests = testGroup "llvm-general" [
     Optimization.tests,
     Target.tests,
     Analysis.tests,
-    PrettyPrint.tests,
     Linking.tests,
     Instrumentation.tests
   ]
