@@ -5,7 +5,9 @@ before_install:
   - sudo apt-get update -qq
   - sudo apt-get install -qq llvm-3.4
 install:
-  - cabal install --enable-tests --force-reinstall llvm-general-pure/ llvm-general/
+  - cabal install --only-dependencies --enable-tests --force-reinstall llvm-general-pure/ llvm-general/
+script:
+  - cabal install --enable-tests llvm-general-pure/ llvm-general/
 branches:
   only:
     - master
