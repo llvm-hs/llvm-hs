@@ -195,7 +195,6 @@ test-suite test
   other-modules:
     LLVM.General.Test.Analysis
     LLVM.General.Test.Constants
-    LLVM.General.Test.DataLayout
     LLVM.General.Test.ExecutionEngine
     LLVM.General.Test.Global
     LLVM.General.Test.InlineAssembly

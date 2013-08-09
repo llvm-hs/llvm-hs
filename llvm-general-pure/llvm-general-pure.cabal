@@ -87,4 +87,5 @@ test-suite test
     FlexibleContexts
   main-is: Test.hs
   other-modules:
+    LLVM.General.Test.DataLayout
     LLVM.General.Test.PrettyPrint
