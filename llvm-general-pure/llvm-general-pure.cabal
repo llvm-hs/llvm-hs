@@ -62,6 +62,7 @@ library
     LLVM.General.AST.RMWOperation
     LLVM.General.AST.Type
     LLVM.General.AST.Visibility
+    LLVM.General.DataLayout
     LLVM.General.PrettyPrint
 
   other-modules:

@@ -35,7 +35,6 @@ import qualified LLVM.General.Internal.FFI.Value as FFI
 import LLVM.General.Internal.BasicBlock
 import LLVM.General.Internal.Coding
 import LLVM.General.Internal.Context
-import LLVM.General.Internal.DataLayout
 import LLVM.General.Internal.DecodeAST
 import LLVM.General.Internal.Diagnostic
 import LLVM.General.Internal.EncodeAST
@@ -50,6 +49,7 @@ import LLVM.General.Internal.Target
 import LLVM.General.Internal.Type
 import LLVM.General.Internal.Value
 
+import LLVM.General.DataLayout
 import LLVM.General.Diagnostic
 
 import qualified LLVM.General.AST as A

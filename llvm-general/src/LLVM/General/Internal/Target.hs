@@ -20,7 +20,7 @@ import qualified Data.Set as Set
 
 import LLVM.General.Internal.Coding
 import LLVM.General.Internal.String ()
-import LLVM.General.Internal.DataLayout
+import LLVM.General.DataLayout
 
 import LLVM.General.AST.DataLayout
 
