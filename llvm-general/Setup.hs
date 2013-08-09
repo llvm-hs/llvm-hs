@@ -32,7 +32,6 @@ llvmProgram = (simpleProgram "llvm-config") {
   programFindLocation = 
     let
       findJustBy :: Monad m => (a -> m (Maybe b)) -> [a] -> m (Maybe b)
-      findJustBy _ [] = return Nothing
       findJustBy f (x:xs) = do
         x' <- f x
         case x' of
