@@ -140,15 +140,19 @@ main = shake shakeOptions {
   stamp "*" "built" *> \(stamp'@(stampPkg -> pkg)) -> do
     cabalStep <- getCabalStep
     need [ stamp pkg "configured" ]
-    needRecursive "llvm-general/src"
-    needRecursive "llvm-general/test"              
+    needRecursive $ pkg </> "src"
+    needRecursive $ pkg </> "test"
     cabalStep pkg [ "build" ]
     touch stamp'
 
   stamp "*" "installed" *> \(stamp'@(stampPkg -> pkg)) -> do
     cabalStep <- getCabalStep
     need [ stamp pkg "built" ]
+    () <- cmd "mv" [ pkg </> "dist", pkg </> "dist-hold" ]
+    () <- cmd "cp" [ "-r", pkg </> "dist-hold", pkg </> "dist" ]
     cabalStep pkg $ [ "install" ] ++ shared
+    () <- cmd "rm" [ "-r", pkg </> "dist" ]
+    () <- cmd "mv" [ pkg </> "dist-hold", pkg </> "dist" ]
     touch stamp'
 
   phony "test" $ do
