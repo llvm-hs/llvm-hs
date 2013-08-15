@@ -92,7 +92,7 @@ LLVMValueRef LLVM_General_BuildLoad(
 ) {
 	LoadInst *i = unwrap(b)->CreateAlignedLoad(unwrap(p), align, isVolatile, name);
 	i->setOrdering(unwrap(atomicOrdering));
-	i->setSynchScope(unwrap(synchScope));
+	if (atomicOrdering != LLVMAtomicOrderingNotAtomic) i->setSynchScope(unwrap(synchScope));
 	return wrap(i);
 }
 
@@ -109,7 +109,7 @@ LLVMValueRef LLVM_General_BuildStore(
 	StoreInst *i = unwrap(b)->CreateAlignedStore(unwrap(v), unwrap(p), align, isVolatile);
 	i->setName(name);
 	i->setOrdering(unwrap(atomicOrdering));
-	i->setSynchScope(unwrap(synchScope));
+	if (atomicOrdering != LLVMAtomicOrderingNotAtomic) i->setSynchScope(unwrap(synchScope));
 	return wrap(i);
 }
 
