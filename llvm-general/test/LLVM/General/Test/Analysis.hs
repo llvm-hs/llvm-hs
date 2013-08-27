@@ -78,27 +78,32 @@ tests = testGroup "Analysis" [
                  \}\n"
            ast = 
              Module "<string>" Nothing Nothing [
-               GlobalDefinition $ Function L.External V.Default CC.C [] (FloatingPointType 64 IEEE) (Name "my_function2") ([
-                 Parameter (PointerType (FloatingPointType 64 IEEE) (AddrSpace 0)) (Name "input_0") []
-                ],False) [] Nothing 0 [
-                 BasicBlock (Name "foo") [ 
-                  Name "tmp_input_w0" := GetElementPtr {
-                    inBounds = True,
-                    address = LocalReference (Name "input_0"),
-                    indices = [ConstantOperand (C.Int 64 0)],
-                    metadata = []
-                  },
-                  UnName 0 := Load {
-                    volatile = False,
-                    address = LocalReference (Name "tmp_input_w0"),
-                    maybeAtomicity = Nothing,
-                    alignment = 8,
-                    metadata = []
-                  }
-                 ] (
-                   Do $ Ret (Just (LocalReference (UnName 0))) []
-                 )
-                ]
+               GlobalDefinition $ functionDefaults {
+                 G.returnType = FloatingPointType 64 IEEE,
+                 G.name = Name "my_function2",
+                 G.parameters = ([
+                   Parameter (PointerType (FloatingPointType 64 IEEE) (AddrSpace 0)) (Name "input_0") []
+                  ],False),
+                 G.basicBlocks = [
+                   BasicBlock (Name "foo") [ 
+                    Name "tmp_input_w0" := GetElementPtr {
+                      inBounds = True,
+                      address = LocalReference (Name "input_0"),
+                      indices = [ConstantOperand (C.Int 64 0)],
+                      metadata = []
+                    },
+                    UnName 0 := Load {
+                      volatile = False,
+                      address = LocalReference (Name "tmp_input_w0"),
+                      maybeAtomicity = Nothing,
+                      alignment = 8,
+                      metadata = []
+                    }
+                   ] (
+                     Do $ Ret (Just (LocalReference (UnName 0))) []
+                   )
+                  ]
+                }
               ]
        strCheck ast str
        s <- withContext $ \context -> withModuleFromAST' context ast $ runErrorT . verify

@@ -45,10 +45,11 @@ data Global
         returnAttributes :: [A.ParameterAttribute],
         returnType :: Type,
         name :: Name,
-        parameters :: ([Parameter],Bool),
+        parameters :: ([Parameter],Bool), -- ^ snd indicates varargs
         functionAttributes :: [A.FunctionAttribute],
         section :: Maybe String,
         alignment :: Word32,
+        garbageCollectorName :: Maybe String,
         basicBlocks :: [BasicBlock]
       }
   deriving (Eq, Read, Show)
@@ -105,5 +106,6 @@ functionDefaults =
     functionAttributes = [],
     section = Nothing,
     alignment = 0,
+    garbageCollectorName = Nothing,
     basicBlocks = []
   }

@@ -16,33 +16,33 @@ import LLVM.General.AST.Global as G
 tests = testGroup "Metadata" [
   testCase "local" $ do
     let ast = Module "<string>" Nothing Nothing [
-         GlobalDefinition $ globalVariableDefaults { G.name = UnName 0, G.type' = IntegerType 32 },
-         GlobalDefinition $ Function L.External V.Default CC.C [] (IntegerType 32) (Name "foo") ([
-            ],False)
-          [] 
-          Nothing 0         
-          [
-           BasicBlock (UnName 0) [
-              UnName 1 := Load {
-                         volatile = False,
-                         address = ConstantOperand (C.GlobalReference (UnName 0)),
-                         maybeAtomicity = Nothing,
-                         A.alignment = 0,
-                         metadata = []
-                       }
-              ] (
-              Do $ Ret (Just (ConstantOperand (C.Int 32 0))) [
-                (
-                  "my-metadatum", 
-                  MetadataNode [
-                   Just $ LocalReference (UnName 1),
-                   Just $ MetadataStringOperand "super hyper",
-                   Nothing
-                  ]
-                )
-              ]
-            )
-          ]
+          GlobalDefinition $ globalVariableDefaults { G.name = UnName 0, G.type' = IntegerType 32 },
+          GlobalDefinition $ functionDefaults {
+            G.returnType = IntegerType 32,
+            G.name = Name "foo",
+            G.basicBlocks = [
+              BasicBlock (UnName 0) [
+                 UnName 1 := Load {
+                            volatile = False,
+                            address = ConstantOperand (C.GlobalReference (UnName 0)),
+                            maybeAtomicity = Nothing,
+                            A.alignment = 0,
+                            metadata = []
+                          }
+                 ] (
+                 Do $ Ret (Just (ConstantOperand (C.Int 32 0))) [
+                   (
+                     "my-metadatum", 
+                     MetadataNode [
+                      Just $ LocalReference (UnName 1),
+                      Just $ MetadataStringOperand "super hyper",
+                      Nothing
+                     ]
+                   )
+                 ]
+               )
+             ]
+           }
          ]
     let s = "; ModuleID = '<string>'\n\
             \\n\
@@ -56,18 +56,18 @@ tests = testGroup "Metadata" [
 
   testCase "global" $ do
     let ast = Module "<string>" Nothing Nothing [
-         GlobalDefinition $ Function L.External V.Default CC.C [] (IntegerType 32) (Name "foo") ([
-            ],False)
-          [] 
-          Nothing 0         
-          [
-           BasicBlock (UnName 0) [
+          GlobalDefinition $ functionDefaults {
+            G.returnType = IntegerType 32,
+            G.name = Name "foo",
+            G.basicBlocks = [
+              BasicBlock (UnName 0) [
               ] (
-              Do $ Ret (Just (ConstantOperand (C.Int 32 0))) [
-                ("my-metadatum", MetadataNodeReference (MetadataNodeID 0))
-              ]
-            )
-          ],
+                Do $ Ret (Just (ConstantOperand (C.Int 32 0))) [
+                  ("my-metadatum", MetadataNodeReference (MetadataNodeID 0))
+                ]
+              )
+             ]
+            },
           MetadataNodeDefinition (MetadataNodeID 0) [ Just $ ConstantOperand (C.Int 32 1) ]
          ]
     let s = "; ModuleID = '<string>'\n\
@@ -124,16 +124,16 @@ tests = testGroup "Metadata" [
 
     testCase "metadata-global" $ do
       let ast = Module "<string>" Nothing Nothing [
-           GlobalDefinition $ Function L.External V.Default CC.C [] VoidType (Name "foo") ([
-              ],False)
-            [] 
-            Nothing 0         
-            [
-             BasicBlock (UnName 0) [
-              ] (
-                Do $ Ret Nothing [ ("my-metadatum", MetadataNodeReference (MetadataNodeID 0)) ]
-              )
-            ],
+            GlobalDefinition $ functionDefaults {
+              G.returnType = VoidType,
+              G.name = Name "foo",
+              G.basicBlocks = [
+                BasicBlock (UnName 0) [
+                 ] (
+                   Do $ Ret Nothing [ ("my-metadatum", MetadataNodeReference (MetadataNodeID 0)) ]
+                 )
+               ]
+             },
             MetadataNodeDefinition (MetadataNodeID 0) [
               Just $ ConstantOperand (C.GlobalReference (Name "foo"))
              ]

@@ -33,7 +33,10 @@ tests = testGroup "Instructions" [
   testGroup "regular" [
     testCase name $ do
       let mAST = Module "<string>" Nothing Nothing [
-            GlobalDefinition $ Function L.External V.Default CC.C [] (VoidType) (UnName 0) ([
+            GlobalDefinition $ functionDefaults {
+              G.returnType = VoidType,
+              G.name = UnName 0,
+              G.parameters = ([
                   Parameter (IntegerType 32) (UnName 0) [],
                   Parameter (FloatingPointType 32 IEEE) (UnName 1) [],
                   Parameter (PointerType (IntegerType 32) (AddrSpace 0)) (UnName 2) [],
@@ -41,14 +44,16 @@ tests = testGroup "Instructions" [
                   Parameter (IntegerType 1) (UnName 4) [],
                   Parameter (VectorType 2 (IntegerType 32)) (UnName 5) [],
                   Parameter (StructureType False [IntegerType 32, IntegerType 32]) (UnName 6) []
-                 ],False) [] Nothing 0 [
-              BasicBlock (UnName 7) [
-                namedInstr
-               ] (
-                Do $ Ret Nothing []
-               )
-             ]
-            ]
+                 ], False),
+              G.basicBlocks = [
+                BasicBlock (UnName 7) [
+                  namedInstr
+                 ] (
+                  Do $ Ret Nothing []
+                 )
+               ]
+            }
+           ]
           mStr = "; ModuleID = '<string>'\n\
                  \\n\
                  \define void @0(i32, float, i32*, i64, i1, <2 x i32>, { i32, i32 }) {\n\
@@ -546,27 +551,30 @@ tests = testGroup "Instructions" [
             G.isConstant = True,
             G.initializer = Just $ C.Int 32 42
           },
-          GlobalDefinition $ Function L.External V.Default CC.C [] (IntegerType 32) (UnName 0) ([
-            ],False) [] Nothing 0 [
+          GlobalDefinition $ functionDefaults {
+            G.returnType = IntegerType 32,
+            G.name = UnName 0,
+            G.basicBlocks = [
               BasicBlock (UnName 1) [
-                 UnName 2 := GetElementPtr {
-                   inBounds = True,
-                   address = ConstantOperand (C.GlobalReference (Name "fortytwo")),
-                   indices = [ ConstantOperand (C.Int 32 0) ],
-                   metadata = []
-                 },
-                 UnName 3 := Load {
-                   volatile = False,
-                   address = LocalReference (UnName 2),
-                   maybeAtomicity = Nothing,
-                   alignment = 1,
-                   metadata = []
-                 }
-               ] (
+                UnName 2 := GetElementPtr {
+                  inBounds = True,
+                  address = ConstantOperand (C.GlobalReference (Name "fortytwo")),
+                  indices = [ ConstantOperand (C.Int 32 0) ],
+                  metadata = []
+                },
+                UnName 3 := Load {
+                  volatile = False,
+                  address = LocalReference (UnName 2),
+                  maybeAtomicity = Nothing,
+                  alignment = 1,
+                  metadata = []
+                }
+              ] (
                 Do $ Ret (Just (LocalReference (UnName 3))) []
-               )
+              )
              ]
-            ]
+           }
+          ]
         mStr = "; ModuleID = '<string>'\n\
                \\n\
                \@0 = constant i32 42\n\
@@ -584,14 +592,16 @@ tests = testGroup "Instructions" [
      (
        "ret",
        Module "<string>" Nothing Nothing [
-        GlobalDefinition $ Function L.External V.Default CC.C [] (VoidType) (UnName 0) ([
-             ],False) [] Nothing 0
-         [
-          BasicBlock (UnName 0) [
-           ] (
-            Do $ Ret Nothing []
-           )
-         ]
+        GlobalDefinition $ functionDefaults {
+          G.returnType = VoidType,
+          G.name = UnName 0,
+          G.basicBlocks = [
+            BasicBlock (UnName 0) [
+             ] (
+              Do $ Ret Nothing []
+             )
+           ]
+         }
         ],
        "; ModuleID = '<string>'\n\
        \\n\
@@ -601,16 +611,18 @@ tests = testGroup "Instructions" [
      ), (
        "br",
        Module "<string>" Nothing Nothing [
-        GlobalDefinition $ Function L.External V.Default CC.C [] (VoidType) (UnName 0) ([
-             ],False) [] Nothing 0
-         [
-          BasicBlock (UnName 0) [] (
-            Do $ Br (Name "foo") []
-           ),
-          BasicBlock (Name "foo") [] (
-            Do $ Ret Nothing []
-           )
-         ]
+        GlobalDefinition $ functionDefaults {
+          G.returnType = VoidType,
+          G.name = UnName 0,
+          G.basicBlocks = [
+            BasicBlock (UnName 0) [] (
+              Do $ Br (Name "foo") []
+             ),
+            BasicBlock (Name "foo") [] (
+              Do $ Ret Nothing []
+             )
+           ]
+         }
         ],
        "; ModuleID = '<string>'\n\
        \\n\
@@ -623,16 +635,18 @@ tests = testGroup "Instructions" [
      ), (
        "condbr",
        Module "<string>" Nothing Nothing [
-        GlobalDefinition $ Function L.External V.Default CC.C [] (VoidType) (UnName 0) ([
-             ],False) [] Nothing 0
-         [
-          BasicBlock (Name "bar") [] (
-            Do $ CondBr (ConstantOperand (C.Int 1 1)) (Name "foo") (Name "bar") []
-           ),
-          BasicBlock (Name "foo") [] (
-            Do $ Ret Nothing []
-           )
-         ]
+        GlobalDefinition $ functionDefaults {
+          G.returnType = VoidType,
+          G.name = UnName 0,
+          G.basicBlocks = [
+            BasicBlock (Name "bar") [] (
+              Do $ CondBr (ConstantOperand (C.Int 1 1)) (Name "foo") (Name "bar") []
+             ),
+            BasicBlock (Name "foo") [] (
+              Do $ Ret Nothing []
+             )
+           ]
+          }
         ],
        "; ModuleID = '<string>'\n\
        \\n\
@@ -646,25 +660,27 @@ tests = testGroup "Instructions" [
      ), (
        "switch",
        Module "<string>" Nothing Nothing [
-        GlobalDefinition $ Function L.External V.Default CC.C [] (VoidType) (UnName 0) ([
-             ],False) [] Nothing 0
-         [
-          BasicBlock (UnName 0) [] (
-            Do $ Switch {
-              operand0' = ConstantOperand (C.Int 16 2),
-              defaultDest = Name "foo",
-              dests = [
-               (C.Int 16 0, UnName 0),
-               (C.Int 16 2, Name "foo"),
-               (C.Int 16 3, UnName 0)
-              ],
-              metadata' = []
-           }
-          ),
-          BasicBlock (Name "foo") [] (
-            Do $ Ret Nothing []
-           )
-         ]
+         GlobalDefinition $ functionDefaults {
+           G.returnType = VoidType,
+           G.name = UnName 0,
+           G.basicBlocks = [
+             BasicBlock (UnName 0) [] (
+               Do $ Switch {
+                 operand0' = ConstantOperand (C.Int 16 2),
+                 defaultDest = Name "foo",
+                 dests = [
+                  (C.Int 16 0, UnName 0),
+                  (C.Int 16 2, Name "foo"),
+                  (C.Int 16 3, UnName 0)
+                 ],
+                 metadata' = []
+              }
+             ),
+             BasicBlock (Name "foo") [] (
+               Do $ Ret Nothing []
+              )
+            ]
+          }
         ],
        "; ModuleID = '<string>'\n\
        \\n\
@@ -687,28 +703,30 @@ tests = testGroup "Instructions" [
           G.type' = PointerType (IntegerType 8) (AddrSpace 0),
           G.initializer = Just (C.BlockAddress (Name "foo") (UnName 2))
         },
-        GlobalDefinition $ Function L.External V.Default CC.C [] (VoidType) (Name "foo") ([
-             ],False) [] Nothing 0
-         [
-          BasicBlock (UnName 0) [
-            UnName 1 := Load {
-                     volatile = False,
-                     address = ConstantOperand (C.GlobalReference (UnName 0)),
-                     maybeAtomicity = Nothing,
-                     alignment = 0,
-                     metadata = [] 
-                   }
-          ] (
-            Do $ IndirectBr {
-              operand0' = LocalReference (UnName 1),
-              possibleDests = [UnName 2],
-              metadata' = []
-           }
-          ),
-          BasicBlock (UnName 2) [] (
-            Do $ Ret Nothing []
-           )
-         ]
+        GlobalDefinition $ functionDefaults {
+          G.returnType = VoidType,
+          G.name = Name "foo",
+          G.basicBlocks = [
+            BasicBlock (UnName 0) [
+              UnName 1 := Load {
+                       volatile = False,
+                       address = ConstantOperand (C.GlobalReference (UnName 0)),
+                       maybeAtomicity = Nothing,
+                       alignment = 0,
+                       metadata = [] 
+                     }
+            ] (
+              Do $ IndirectBr {
+                operand0' = LocalReference (UnName 1),
+                possibleDests = [UnName 2],
+                metadata' = []
+             }
+            ),
+            BasicBlock (UnName 2) [] (
+              Do $ Ret Nothing []
+             )
+           ]
+         }
         ],
 --       \  indirectbr i8* null, [label %foo]\n\
        "; ModuleID = '<string>'\n\
@@ -725,44 +743,48 @@ tests = testGroup "Instructions" [
      ), (
        "invoke",
        Module "<string>" Nothing Nothing [
-        GlobalDefinition $ Function L.External V.Default CC.C [] (VoidType) (UnName 0) ([
-                  Parameter (IntegerType 32) (UnName 0) [],
-                  Parameter (IntegerType 16) (UnName 1) []
-             ],False) [] Nothing 0
-         [
-          BasicBlock (UnName 2) [] (
-            Do $ Invoke {
-             callingConvention' = CC.C,
-             returnAttributes' = [],
-             function' = Right (ConstantOperand (C.GlobalReference (UnName 0))),
-             arguments' = [
-              (ConstantOperand (C.Int 32 4), []),
-              (ConstantOperand (C.Int 16 8), [])
-             ],
-             functionAttributes' = [],
-             returnDest = Name "foo",
-             exceptionDest = Name "bar",
-             metadata' = []
-            }
-           ),
-          BasicBlock (Name "foo") [] (
-            Do $ Ret Nothing []
-           ),
-          BasicBlock (Name "bar") [
-           UnName 3 := LandingPad {
-             type' = StructureType False [ 
-                PointerType (IntegerType 8) (AddrSpace 0),
-                IntegerType 32
+        GlobalDefinition $ functionDefaults {
+          G.returnType = VoidType,
+          G.name = UnName 0,
+          G.parameters = ([
+            Parameter (IntegerType 32) (UnName 0) [],
+            Parameter (IntegerType 16) (UnName 1) []
+           ], False),
+          G.basicBlocks = [
+            BasicBlock (UnName 2) [] (
+              Do $ Invoke {
+               callingConvention' = CC.C,
+               returnAttributes' = [],
+               function' = Right (ConstantOperand (C.GlobalReference (UnName 0))),
+               arguments' = [
+                (ConstantOperand (C.Int 32 4), []),
+                (ConstantOperand (C.Int 16 8), [])
                ],
-             personalityFunction = ConstantOperand (C.GlobalReference (UnName 0)),
-             cleanup = True,
-             clauses = [Catch (C.Null (PointerType (IntegerType 8) (AddrSpace 0)))],
-             metadata = []
-           }
-           ] (
-            Do $ Ret Nothing []
-           )
-         ]
+               functionAttributes' = [],
+               returnDest = Name "foo",
+               exceptionDest = Name "bar",
+               metadata' = []
+              }
+             ),
+            BasicBlock (Name "foo") [] (
+              Do $ Ret Nothing []
+             ),
+            BasicBlock (Name "bar") [
+             UnName 3 := LandingPad {
+               type' = StructureType False [ 
+                  PointerType (IntegerType 8) (AddrSpace 0),
+                  IntegerType 32
+                 ],
+               personalityFunction = ConstantOperand (C.GlobalReference (UnName 0)),
+               cleanup = True,
+               clauses = [Catch (C.Null (PointerType (IntegerType 8) (AddrSpace 0)))],
+               metadata = []
+             }
+             ] (
+              Do $ Ret Nothing []
+             )
+           ]
+         }
         ],
        "; ModuleID = '<string>'\n\
        \\n\
@@ -782,13 +804,15 @@ tests = testGroup "Instructions" [
      ), (
        "resume",
        Module "<string>" Nothing Nothing [
-        GlobalDefinition $ Function L.External V.Default CC.C [] (VoidType) (UnName 0) ([
-             ],False) [] Nothing 0
-         [
-          BasicBlock (UnName 0) [] (
-            Do $ Resume (ConstantOperand (C.Int 32 1)) []
-           )
-         ]
+         GlobalDefinition $ functionDefaults {
+           G.returnType = VoidType,
+           G.name = UnName 0,
+           G.basicBlocks = [
+             BasicBlock (UnName 0) [] (
+               Do $ Resume (ConstantOperand (C.Int 32 1)) []
+              )
+            ]
+          }
         ],
        "; ModuleID = '<string>'\n\
        \\n\
@@ -798,13 +822,15 @@ tests = testGroup "Instructions" [
      ), (
        "unreachable",
        Module "<string>" Nothing Nothing [
-        GlobalDefinition $ Function L.External V.Default CC.C [] (VoidType) (UnName 0) ([
-             ],False) [] Nothing 0
-         [
-          BasicBlock (UnName 0) [] (
-            Do $ Unreachable []
-           )
-         ]
+        GlobalDefinition $ functionDefaults {
+          G.returnType = VoidType,
+          G.name = UnName 0,
+          G.basicBlocks = [
+            BasicBlock (UnName 0) [] (
+              Do $ Unreachable []
+             )
+           ]
+         }
         ],
        "; ModuleID = '<string>'\n\
        \\n\

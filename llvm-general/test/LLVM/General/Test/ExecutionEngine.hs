@@ -37,15 +37,16 @@ foreign import ccall "dynamic" mkIO32Stub :: FunPtr (Word32 -> IO Word32) -> (Wo
 testJIT :: ExecutionEngine e (FunPtr ()) => (Context -> (e -> IO ()) -> IO ()) -> Assertion
 testJIT withEE = withContext $ \context -> withEE context $ \executionEngine -> do
   let mAST = Module "runSomethingModule" Nothing Nothing [
-              GlobalDefinition $ Function L.External V.Default CC.C [] (IntegerType 32) (Name "_foo") ([
-                            Parameter (IntegerType 32) (Name "bar") []
-                           ],False) [] 
-               Nothing 0
-               [
-                BasicBlock (UnName 0) [] (
-                  Do $ Ret (Just (ConstantOperand (C.Int 32 42))) []
-                 )
-               ]
+              GlobalDefinition $ functionDefaults {
+                G.returnType = IntegerType 32,
+                G.name = Name "_foo",
+                G.parameters = ([Parameter (IntegerType 32) (Name "bar") []],False),
+                G.basicBlocks = [
+                  BasicBlock (UnName 0) [] (
+                    Do $ Ret (Just (ConstantOperand (C.Int 32 42))) []
+                  )
+                ]
+               }
               ]
 
   s <- withModuleFromAST' context mAST $ \m -> do

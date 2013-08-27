@@ -123,80 +123,89 @@ handAST = Module "<string>" Nothing Nothing [
         G.type' = PointerType (IntegerType 32) (AddrSpace 3),
         G.aliasee = C.GlobalReference (Name "three")
       },
-      GlobalDefinition $ Function L.External V.Default CC.C [] (IntegerType 32) (Name "bar") ([],False) [] Nothing 0 [
-        BasicBlock (UnName 0) [
-         UnName 1 := Call {
-           isTailCall = False,
-           callingConvention = CC.C,
-           returnAttributes = [A.ZeroExt],
-           function = Right (ConstantOperand (C.GlobalReference (Name "foo"))),
-           arguments = [
-            (ConstantOperand (C.Int 32 1), [A.InReg]),
-            (ConstantOperand (C.Int 8 4), [A.SignExt])
-           ],
-           functionAttributes = [A.NoUnwind, A.ReadNone, A.UWTable],
-           metadata = []
-         }
-       ] (
-         Do $ Ret (Just (LocalReference (UnName 1))) []
-       )
-      ],
-      GlobalDefinition $ Function L.External V.Default CC.C [A.ZeroExt] (IntegerType 32) (Name "foo") ([
+      GlobalDefinition $ functionDefaults {
+        G.returnType = IntegerType 32,
+        G.name = Name "bar",
+        G.basicBlocks = [
+          BasicBlock (UnName 0) [
+           UnName 1 := Call {
+             isTailCall = False,
+             callingConvention = CC.C,
+             returnAttributes = [A.ZeroExt],
+             function = Right (ConstantOperand (C.GlobalReference (Name "foo"))),
+             arguments = [
+              (ConstantOperand (C.Int 32 1), [A.InReg]),
+              (ConstantOperand (C.Int 8 4), [A.SignExt])
+             ],
+             functionAttributes = [A.NoUnwind, A.ReadNone, A.UWTable],
+             metadata = []
+           }
+         ] (
+           Do $ Ret (Just (LocalReference (UnName 1))) []
+         )
+        ]
+      },
+      GlobalDefinition $ functionDefaults {
+        G.returnAttributes = [A.ZeroExt],
+        G.returnType = IntegerType 32,
+        G.name = Name "foo",
+        G.parameters = ([
           Parameter (IntegerType 32) (Name "x") [A.InReg],
           Parameter (IntegerType 8) (Name "y") [A.SignExt]
-         ],False)
-         [A.NoUnwind, A.ReadNone, A.UWTable] Nothing 0 
-       [
-        BasicBlock (UnName 0) [
-         UnName 1 := Mul {
-           nsw = True,
-           nuw = False,
-           operand0 = LocalReference (Name "x"),
-           operand1 = LocalReference (Name "x"),
-           metadata = []
-         }
-         ] (
-           Do $ Br (Name "here") []
-         ),
-        BasicBlock (Name "here") [
-         Name "go" := ICmp {
-           iPredicate = IPred.EQ,
-           operand0 = LocalReference (UnName 1),
-           operand1 = LocalReference (Name "x"),
-           metadata = []
-         }
-         ] (
-            Do $ CondBr {
-              condition = LocalReference (Name "go"),
-              trueDest = Name "there",
-              falseDest = Name "elsewhere",
-              metadata' = []
-            }
-         ),
-        BasicBlock (Name "there") [
-         UnName 2 := Add {
-           nsw = True,
-           nuw = False,
-           operand0 = LocalReference (UnName 1),
-           operand1 = ConstantOperand (C.Int 32 3),
-           metadata = []
-         }
-         ] (
-           Do $ Br (Name "elsewhere") []
-         ),
-        BasicBlock (Name "elsewhere") [
-         Name "r" := Phi {
-           type' = IntegerType 32,
-           incomingValues = [
-             (ConstantOperand (C.Int 32 2), Name "there"),
-             (ConstantOperand (C.Int 32 57), Name "here")
-           ],
-           metadata = []
-         }
-         ] (
-           Do $ Ret (Just (LocalReference (Name "r"))) []
-         )
-       ]
+         ], False),
+        G.functionAttributes = [A.NoUnwind, A.ReadNone, A.UWTable],
+        G.basicBlocks = [
+          BasicBlock (UnName 0) [
+           UnName 1 := Mul {
+             nsw = True,
+             nuw = False,
+             operand0 = LocalReference (Name "x"),
+             operand1 = LocalReference (Name "x"),
+             metadata = []
+           }
+           ] (
+             Do $ Br (Name "here") []
+           ),
+          BasicBlock (Name "here") [
+           Name "go" := ICmp {
+             iPredicate = IPred.EQ,
+             operand0 = LocalReference (UnName 1),
+             operand1 = LocalReference (Name "x"),
+             metadata = []
+           }
+           ] (
+              Do $ CondBr {
+                condition = LocalReference (Name "go"),
+                trueDest = Name "there",
+                falseDest = Name "elsewhere",
+                metadata' = []
+              }
+           ),
+          BasicBlock (Name "there") [
+           UnName 2 := Add {
+             nsw = True,
+             nuw = False,
+             operand0 = LocalReference (UnName 1),
+             operand1 = ConstantOperand (C.Int 32 3),
+             metadata = []
+           }
+           ] (
+             Do $ Br (Name "elsewhere") []
+           ),
+          BasicBlock (Name "elsewhere") [
+           Name "r" := Phi {
+             type' = IntegerType 32,
+             incomingValues = [
+               (ConstantOperand (C.Int 32 2), Name "there"),
+               (ConstantOperand (C.Int 32 57), Name "here")
+             ],
+             metadata = []
+           }
+           ] (
+             Do $ Ret (Just (LocalReference (Name "r"))) []
+           )
+         ]
+        }
       ]
 
 tests = testGroup "Module" [
@@ -263,63 +272,65 @@ tests = testGroup "Module" [
   testGroup "regression" [
     testCase "set flag on constant expr" $ withContext $ \context -> do
       let ast = Module "<string>" Nothing Nothing [
-           GlobalDefinition $ Function L.External V.Default CC.C [] (IntegerType 32) (Name "foo") ([
-               Parameter (IntegerType 32) (Name "x") []
-              ],False)
-              [] Nothing 0 
-            [
-             BasicBlock (UnName 0) [
-              UnName 1 := Mul {
-                nsw = True,
-                nuw = False,
-                operand0 = ConstantOperand (C.Int 32 1),
-                operand1 = ConstantOperand (C.Int 32 1),
-                metadata = []
-              }
-              ] (
-                Do $ Br (Name "here") []
-              ),
-             BasicBlock (Name "here") [
-              ] (
-                Do $ Ret (Just (LocalReference (UnName 1))) []
-              )
-            ]
+             GlobalDefinition $ functionDefaults {
+               G.returnType = IntegerType 32,
+               G.name = Name "foo",
+               G.parameters = ([Parameter (IntegerType 32) (Name "x") []], False),
+               G.basicBlocks = [
+                 BasicBlock (UnName 0) [
+                  UnName 1 := Mul {
+                    nsw = True,
+                    nuw = False,
+                    operand0 = ConstantOperand (C.Int 32 1),
+                    operand1 = ConstantOperand (C.Int 32 1),
+                    metadata = []
+                  }
+                  ] (
+                    Do $ Br (Name "here") []
+                  ),
+                 BasicBlock (Name "here") [
+                  ] (
+                    Do $ Ret (Just (LocalReference (UnName 1))) []
+                  )
+                ]
+             }
            ]
       t <- withModuleFromAST' context ast $ \_ -> return True
       t @?= True,
 
     testCase "Phi node finishes" $ withContext $ \context -> do
       let ast = Module "<string>" Nothing Nothing [
-           GlobalDefinition $ Function L.External V.Default CC.C [] (IntegerType 32) (Name "foo") ([
-               Parameter (IntegerType 32) (Name "x") []
-              ],False)
-              [] Nothing 0 
-            [
-             BasicBlock (UnName 0) [
-              UnName 1 := Mul {
-                nsw = True,
-                nuw = False,
-                operand0 = LocalReference (Name "x"),
-                operand1 = LocalReference (Name "x"),
-                metadata = []
-              }
-              ] (
-                Do $ Br (Name "here") []
-              ),
-             BasicBlock (Name "here") [
-              UnName 2 := Phi (IntegerType 32) [ (ConstantOperand (C.Int 32 42), UnName 0) ] []
-              ] (
-                Do $ Br (Name "elsewhere") []
-              ),
-             BasicBlock (Name "elsewhere") [             
-              ] (
-                Do $ Br (Name "there") []
-              ),
-             BasicBlock (Name "there") [
-              ] (
-                Do $ Ret (Just (LocalReference (UnName 1))) []
-              )
-            ]
+            GlobalDefinition $ functionDefaults {
+              G.returnType = IntegerType 32,
+              G.name = Name "foo",
+              G.parameters = ([Parameter (IntegerType 32) (Name "x") []], False),
+              G.basicBlocks = [
+                BasicBlock (UnName 0) [
+                 UnName 1 := Mul {
+                   nsw = True,
+                   nuw = False,
+                   operand0 = LocalReference (Name "x"),
+                   operand1 = LocalReference (Name "x"),
+                   metadata = []
+                 }
+                 ] (
+                   Do $ Br (Name "here") []
+                 ),
+                BasicBlock (Name "here") [
+                 UnName 2 := Phi (IntegerType 32) [ (ConstantOperand (C.Int 32 42), UnName 0) ] []
+                 ] (
+                   Do $ Br (Name "elsewhere") []
+                 ),
+                BasicBlock (Name "elsewhere") [             
+                 ] (
+                   Do $ Br (Name "there") []
+                 ),
+                BasicBlock (Name "there") [
+                 ] (
+                   Do $ Ret (Just (LocalReference (UnName 1))) []
+                 )
+               ]
+             }
            ]
           s = "; ModuleID = '<string>'\n\
               \\n\
@@ -373,56 +384,58 @@ tests = testGroup "Module" [
   testGroup "failures" [
     testCase "bad block reference" $ withContext $ \context -> do
       let badAST = Module "<string>" Nothing Nothing [
-           GlobalDefinition $ Function L.External V.Default CC.C [] (IntegerType 32) (Name "foo") ([
-               Parameter (IntegerType 32) (Name "x") []
-              ],False)
-              [] Nothing 0 
-            [
-             BasicBlock (UnName 0) [
-              UnName 1 := Mul {
-                nsw = True,
-                nuw = False,
-                operand0 = ConstantOperand (C.Int 32 1),
-                operand1 = ConstantOperand (C.Int 32 1),
-                metadata = []
-              }
-              ] (
-                Do $ Br (Name "not here") []
-              ),
-             BasicBlock (Name "here") [
-              ] (
-                Do $ Ret (Just (LocalReference (UnName 1))) []
-              )
-            ]
+            GlobalDefinition $ functionDefaults {
+              G.returnType = IntegerType 32,
+              G.name = Name "foo",
+              G.parameters = ([Parameter (IntegerType 32) (Name "x") []], False),
+              G.basicBlocks = [
+                BasicBlock (UnName 0) [
+                 UnName 1 := Mul {
+                   nsw = True,
+                   nuw = False,
+                   operand0 = ConstantOperand (C.Int 32 1),
+                   operand1 = ConstantOperand (C.Int 32 1),
+                   metadata = []
+                 }
+                 ] (
+                   Do $ Br (Name "not here") []
+                 ),
+                BasicBlock (Name "here") [
+                 ] (
+                   Do $ Ret (Just (LocalReference (UnName 1))) []
+                 )
+               ]
+             }
            ]
       t <- runErrorT $ withModuleFromAST context badAST $ \_ -> return True
       t @?= Left "reference to undefined block: Name \"not here\"",
 
     testCase "multiple" $ withContext $ \context -> do
       let badAST = Module "<string>" Nothing Nothing [
-           GlobalDefinition $ Function L.External V.Default CC.C [] (IntegerType 32) (Name "foo") ([
-              ],False)
-              [] Nothing 0 
-            [
-             BasicBlock (UnName 0) [
-              UnName 1 := Mul {
-                nsw = False,
-                nuw = False,
-                operand0 = LocalReference (Name "unknown"),
-                operand1 = ConstantOperand (C.Int 32 1),
-                metadata = []
-              },
-              UnName 2 := Mul {
-                nsw = False,
-                nuw = False,
-                operand0 = LocalReference (Name "unknown2"),
-                operand1 = LocalReference (UnName 1),
-                metadata = []
-              }
-              ] (
-                Do $ Ret (Just (LocalReference (UnName 2))) []
-              )
-            ]
+            GlobalDefinition $ functionDefaults {
+              G.returnType = IntegerType 32,
+              G.name = Name "foo",
+              G.basicBlocks = [
+                BasicBlock (UnName 0) [
+                 UnName 1 := Mul {
+                   nsw = False,
+                   nuw = False,
+                   operand0 = LocalReference (Name "unknown"),
+                   operand1 = ConstantOperand (C.Int 32 1),
+                   metadata = []
+                 },
+                 UnName 2 := Mul {
+                   nsw = False,
+                   nuw = False,
+                   operand0 = LocalReference (Name "unknown2"),
+                   operand1 = LocalReference (UnName 1),
+                   metadata = []
+                 }
+                 ] (
+                   Do $ Ret (Just (LocalReference (UnName 2))) []
+                 )
+               ]
+             }
            ]
       t <- runErrorT $ withModuleFromAST context badAST $ \_ -> return True
       t @?= Left "reference to undefined local: Name \"unknown\""

@@ -10,6 +10,7 @@ import qualified LLVM.General.Internal.FFI.Function as FFI
 import qualified LLVM.General.Internal.FFI.PtrHierarchy as FFI
 
 import LLVM.General.Internal.DecodeAST
+import LLVM.General.Internal.EncodeAST
 import LLVM.General.Internal.Value
 import LLVM.General.Internal.Coding
 import LLVM.General.Internal.Attribute ()
@@ -38,3 +39,8 @@ getParameters f = scopeAnyCont $ do
        `ap` getLocalName param
        `ap` (liftIO $ getParameterAttrs param)
   
+getGC :: Ptr FFI.Function -> DecodeAST (Maybe String)
+getGC f = scopeAnyCont $ decodeM =<< liftIO (FFI.getGC f)
+
+setGC :: Ptr FFI.Function -> Maybe String -> EncodeAST ()
+setGC f gc = scopeAnyCont $ liftIO . FFI.setGC f =<< encodeM gc 

@@ -55,5 +55,8 @@ foreign import ccall unsafe "LLVM_General_GetFunctionRetAttr" getFunctionRetAttr
 foreign import ccall unsafe "LLVM_General_AddFunctionRetAttr" addFunctionRetAttr ::
     Ptr Function -> ParamAttr -> IO ()
 
+foreign import ccall unsafe "LLVMGetGC" getGC ::
+  Ptr Function -> IO CString
 
-
+foreign import ccall unsafe "LLVMSetGC" setGC ::
+  Ptr Function -> CString -> IO ()

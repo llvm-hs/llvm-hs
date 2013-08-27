@@ -21,9 +21,11 @@ tests = testGroup "InlineAssembly" [
   testCase "expression" $ do
     let ast = Module "<string>" Nothing Nothing [
                 GlobalDefinition $ 
-                  Function L.External V.Default CC.C [] (IntegerType 32) (Name "foo")
-                    ([Parameter (IntegerType 32) (Name "x") []],False)
-                    [] Nothing 0 [
+                  functionDefaults {
+                    G.returnType = IntegerType 32,
+                    G.name = Name "foo",
+                    G.parameters = ([Parameter (IntegerType 32) (Name "x") []],False),
+                    G.basicBlocks = [
                       BasicBlock (UnName 0) [
                         UnName 1 := Call {
                           isTailCall = False,
@@ -47,6 +49,7 @@ tests = testGroup "InlineAssembly" [
                         Do $ Ret (Just (LocalReference (UnName 1))) []
                       )
                     ]
+                }
 
               ]
         s = "; ModuleID = '<string>'\n\

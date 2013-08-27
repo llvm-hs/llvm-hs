@@ -24,6 +24,7 @@ import System.Posix.Env hiding (getEnv)
 import System.Directory hiding (doesDirectoryExist, doesFileExist)
 import System.Environment (getArgs)
 import System.Exit
+import System.IO
 import Distribution.Verbosity
 import Distribution.Text (simpleParse)
 import Distribution.Compiler
@@ -67,10 +68,12 @@ touch f = do
 systemCwdV p' c a = do
   p <- liftIO $ canonicalizePath p'
   putQuiet $ "Entering directory `" ++ p ++ "'"
-  (Stdout out, Stderr err) <- cmd (Cwd p) c a
+  () <- cmd (Cwd p) c a
+{-
   liftIO $ do
     putStrLn $ "out:\n" ++ out
     putStrLn $ "err:\n" ++ err
+-}
   putQuiet $ "Leaving directory `" ++ p ++ "'"
 
 withAlteredEnvVar :: String -> (Maybe String -> Maybe String) -> Action () -> Action ()
@@ -89,10 +92,23 @@ newtype BuildRoot = BuildRoot () deriving (Eq, Ord, Read, Show, Binary, Hashable
 newtype LLVMConfig = LLVMConfig () deriving (Eq, Ord, Read, Show, Binary, Hashable, NFData, Typeable)
 newtype CabalVersion = CabalVersion String deriving (Eq, Ord, Read, Show, Binary, Hashable, NFData, Typeable)
 
+stamp :: ((String, String)) -> String
+stamp (stage, pkg) = pkg </> "dist/shake/stamps" </> stage
+
+parseStamp :: String -> (String, String)
+parseStamp s = (takeFileName s, takeDirectory1 s)
+
+needStamps :: [(String,String)] -> Action ()
+needStamps ls = need (map stamp ls)
+
 main = shake shakeOptions { 
          shakeVersion = "2",
          shakeVerbosity = Normal
        } $ do
+
+  action $ do
+    liftIO $ hSetBuffering stdout NoBuffering
+    liftIO $ hSetBuffering stderr NoBuffering
 
   getBuildRoot <- addOracle $ \(BuildRoot _) -> do
     liftIO $ getWorkingDirectory
@@ -107,9 +123,6 @@ main = shake shakeOptions {
       done <- doesFileExist (llvmDir </> "install/bin/llvm-config")
       unless done $ need [ (llvmDir </> "install/bin/llvm-config") ]
     return x
-
-  let stamp p s = "out" </> "stamps" </> p </> s
-      stampPkg = takeFileName . takeDirectory
 
   action $ do
     args <- liftIO getArgs
@@ -127,76 +140,69 @@ main = shake shakeOptions {
   let ghPages = "out" </> "gh-pages"
   let localPackageDeps "llvm-general" = [ "llvm-general-pure" ]
       localPackageDeps _ = []
+      allPkgs = [ "llvm-general-pure", "llvm-general"]
+      needStage stage pkgs = needStamps [ (stage, pkg) | pkg <- pkgs ]
 
-  stamp "*" "configured" *> \(stamp'@(stampPkg -> pkg)) -> do
+  phony "build" $ needStage "built" allPkgs
+  phony "test" $ needStage "tested" allPkgs
+  phony "doc" $ needStage "documented" allPkgs
+  phony "pubdoc" $ needStage "docPublished" allPkgs
+
+  stamp ("*","*") *> \(stmp@(parseStamp -> (stage, pkg))) -> (>> touch stmp) $ do
     cabalStep <- getCabalStep
-    need [ stamp dpkg "installed" | dpkg <- localPackageDeps pkg ]
-    need [ pkg </> pkg ++ ".cabal" ]
-    cabalStep pkg $ [ "install-deps", "--enable-tests" ] ++ shared
-    cabalStep pkg $ [ "configure", "--enable-tests" {- , "-fshared-llvm" -} ] ++ shared
-    touch stamp'
-
-  phony "build" $ need [ stamp "llvm-general" "built" ]
-  stamp "*" "built" *> \(stamp'@(stampPkg -> pkg)) -> do
-    cabalStep <- getCabalStep
-    need [ stamp pkg "configured" ]
-    needRecursive $ pkg </> "src"
-    needRecursive $ pkg </> "test"
-    cabalStep pkg [ "build" ]
-    touch stamp'
-
-  stamp "*" "installed" *> \(stamp'@(stampPkg -> pkg)) -> do
-    cabalStep <- getCabalStep
-    need [ stamp pkg "built" ]
-    () <- cmd "mv" [ pkg </> "dist", pkg </> "dist-hold" ]
-    () <- cmd "cp" [ "-r", pkg </> "dist-hold", pkg </> "dist" ]
-    cabalStep pkg $ [ "install" ] ++ shared
-    () <- cmd "rm" [ "-r", pkg </> "dist" ]
-    () <- cmd "mv" [ pkg </> "dist-hold", pkg </> "dist" ]
-    touch stamp'
-
-  phony "test" $ do
-    need [ stamp pkg "tested" | pkg <- ["llvm-general-pure", "llvm-general"] ]
-
-  stamp "*" "tested" *> \(stamp'@(stampPkg -> pkg)) -> do
-    cabalStep <- getCabalStep
-    need [ stamp pkg  "built" ]
-    cabalStep pkg [ "test" ]
-    touch stamp'
-
-  phony "doc" $ need [ stamp "llvm-general" "documented" ]
-  stamp "*" "documented" *> \(stamp'@(stampPkg -> pkg)) -> do
-    buildRoot <- getBuildRoot (BuildRoot ())
     tag <- getCabalVersion (CabalVersion pkg)
-    need [ stamp pkg "built" ]
-    need [ stamp dpkg "documented" | dpkg <- localPackageDeps pkg ]
-    cabalStep <- getCabalStep
-    cabalStep pkg $ [
-        "haddock",
-        "--html-location=http://hackage.haskell.org/packages/archive/$pkg/$version/doc/html"
-      ] ++ [
-        "--haddock-options=--read-interface="
-        ++ ("/llvm-general" </> tag </> "doc/html" </> dpkg)
-        ++ ","
-        ++ (buildRoot </> dpkg </> "dist/doc/html" </> dpkg </> dpkg <.> "haddock")
-        | dpkg <- localPackageDeps pkg
-      ]
-    touch stamp'
+    buildRoot <- getBuildRoot (BuildRoot ())
+    case stage of
+      "configured" -> do
+        needStage "installed" (localPackageDeps pkg)
+        need [ pkg </> pkg ++ ".cabal" ]
+        cabalStep pkg $ [ "install-deps", "--enable-tests" ] ++ shared
+        cabalStep pkg $ [ "configure", "--enable-tests" {- , "-fshared-llvm" -} ] ++ shared
+
+      "built" -> do
+        needStage "configured" [pkg]
+        needRecursive $ pkg </> "src"
+        needRecursive $ pkg </> "test"
+        cabalStep pkg [ "build" ]
+
+      "installed" -> do
+        needStage "built" [pkg]
+        () <- cmd "mv" [ pkg </> "dist", pkg </> "dist-hold" ]
+        () <- cmd "cp" [ "-r", pkg </> "dist-hold", pkg </> "dist" ]
+        cabalStep pkg $ [ "install", "--reinstall" ] ++ shared
+        () <- cmd "rm" [ "-r", pkg </> "dist" ]
+        () <- cmd "mv" [ pkg </> "dist-hold", pkg </> "dist" ]
+        return ()
+
+      "tested" -> do
+        needStage "built" [pkg]
+        cabalStep pkg [ "test" ]
+
+      "documented" -> do
+        needStage "built" [pkg]
+        needStage "documented" (localPackageDeps pkg)
+        cabalStep pkg $ [
+          "haddock",
+          "--html-location=http://hackage.haskell.org/packages/archive/$pkg/$version/doc/html"
+         ] ++ [
+          "--haddock-options=--read-interface="
+          ++ ("/llvm-general" </> tag </> "doc/html" </> dpkg)
+          ++ ","
+          ++ (buildRoot </> dpkg </> "dist/doc/html" </> dpkg </> dpkg <.> "haddock")
+          | dpkg <- localPackageDeps pkg
+         ]
     
-  phony "pubdoc" $ need [ stamp pkg "docPublished" | pkg <- ["llvm-general-pure", "llvm-general"] ]
-  stamp "*" "docPublished" *> \(stamp'@(stampPkg -> pkg)) -> do
-    need [ stamp pkg "documented" ]
-    buildRoot <- getBuildRoot (BuildRoot ())
-    ghPagesExists <- doesDirectoryExist ghPages
-    tag <- getCabalVersion (CabalVersion pkg)
-    unless ghPagesExists $ cmd (Cwd "out") "git" ["clone", buildRoot, "-b", "gh-pages", "gh-pages"]
-    () <- cmd "rm" [ "-rf", ghPages </> tag </> "doc" </> "html" </> pkg ]
-    () <- cmd "mkdir" [ "-p", ghPages </> tag </> "doc" </> "html" ]
-    () <- cmd "cp" [ "-r", pkg </> "dist/doc/html" </> pkg, ghPages </> tag </> "doc" </> "html" ]
-    () <- cmd (Cwd ghPages) "git" [ "add", "-A", "." ]
-    () <- cmd (Cwd ghPages) "git" [ "commit", "-m", show ("update " ++ tag ++ " " ++ pkg ++ " doc") ]
-    () <- cmd (Cwd ghPages) "git" [ "push" ]
-    touch stamp'
+      "docPublished" -> do
+        needStage "documented" [pkg]
+        ghPagesExists <- doesDirectoryExist ghPages
+        unless ghPagesExists $ cmd (Cwd "out") "git" ["clone", buildRoot, "-b", "gh-pages", "gh-pages"]
+        () <- cmd "rm" [ "-rf", ghPages </> tag </> "doc" </> "html" </> pkg ]
+        () <- cmd "mkdir" [ "-p", ghPages </> tag </> "doc" </> "html" ]
+        () <- cmd "cp" [ "-r", pkg </> "dist/doc/html" </> pkg, ghPages </> tag </> "doc" </> "html" ]
+        () <- cmd (Cwd ghPages) "git" [ "add", "-A", "." ]
+        () <- cmd (Cwd ghPages) "git" [ "commit", "-m", show ("update " ++ tag ++ " " ++ pkg ++ " doc") ]
+        () <- cmd (Cwd ghPages) "git" [ "push" ]
+        return ()
 
   llvmDir </> "install/bin/llvm-config" *> \out -> do
     let tarball = "downloads/llvm-" ++ llvmVersion ++ ".src.tar.gz"

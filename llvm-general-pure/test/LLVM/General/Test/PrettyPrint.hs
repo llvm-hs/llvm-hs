@@ -18,7 +18,7 @@ tests = testGroup "PrettyPrint" [
          GlobalDefinition $ Function L.External V.Default CC.C [] (IntegerType 32) (Name "foo") ([
              Parameter (IntegerType 32) (Name "x") []
             ],False)
-            [] Nothing 0 
+            [] Nothing 0 Nothing
           [
            BasicBlock (UnName 0) [
             UnName 1 := Mul {
@@ -53,6 +53,7 @@ tests = testGroup "PrettyPrint" [
             \      A.G.functionAttributes = [],\n\
             \      A.G.section = Nothing,\n\
             \      A.G.alignment = 0,\n\
+            \      A.G.garbageCollectorName = Nothing,\n\
             \      A.G.basicBlocks = [\n\
             \        A.G.BasicBlock (A.UnName 0) [\n\
             \          A.UnName 1 A.:= A.Mul {\n\
