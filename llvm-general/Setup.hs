@@ -1,3 +1,4 @@
+{-# LANGUAGE FlexibleInstances #-}
 import Control.Exception (SomeException, try)
 import Control.Monad
 import Data.Maybe
@@ -28,18 +29,27 @@ llvmConfigNames = [
   "llvm-config"
  ]
 
+findJustBy :: Monad m => (a -> m (Maybe b)) -> [a] -> m (Maybe b)
+findJustBy f (x:xs) = do
+  x' <- f x
+  case x' of
+    Nothing -> findJustBy f xs
+    j -> return j
+findJustBy _ [] = return Nothing
+
+class ProgramSearch a where
+  programSearch :: (String -> a) -> a
+
+-- this instance is used before Cabal-1.18.0, when programFindLocation took one argument
+instance Monad m => ProgramSearch (v -> m (Maybe b)) where
+  programSearch checkName = \v -> findJustBy (\n -> checkName n v) llvmConfigNames
+
+-- this instance is used for and after Cabal-1.18.0, when programFindLocation took two arguments
+instance Monad m => ProgramSearch (v -> p -> m (Maybe b)) where
+  programSearch checkName = \v p -> findJustBy (\n -> checkName n v p) llvmConfigNames
+
 llvmProgram = (simpleProgram "llvm-config") {
-  programFindLocation = 
-    let
-      findJustBy :: Monad m => (a -> m (Maybe b)) -> [a] -> m (Maybe b)
-      findJustBy f (x:xs) = do
-        x' <- f x
-        case x' of
-          Nothing -> findJustBy f xs
-          j -> return j
-      findJustBy _ [] = return Nothing
-    in 
-      \v -> findJustBy (findProgramLocation v) llvmConfigNames,
+  programFindLocation = programSearch (programFindLocation . simpleProgram),
   programFindVersion = 
     let
       stripSuffix suf str = let r = reverse in liftM r (stripPrefix (r suf) (r str))

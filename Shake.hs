@@ -155,6 +155,7 @@ main = shake shakeOptions {
     case stage of
       "configured" -> do
         needStage "installed" (localPackageDeps pkg)
+        need [ pkg </> "Setup.hs" ]
         need [ pkg </> pkg ++ ".cabal" ]
         cabalStep pkg $ [ "install-deps", "--enable-tests" ] ++ shared
         cabalStep pkg $ [ "configure", "--enable-tests" {- , "-fshared-llvm" -} ] ++ shared
