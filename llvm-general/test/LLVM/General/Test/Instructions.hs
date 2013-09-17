@@ -230,7 +230,6 @@ tests = testGroup "Instructions" [
              metadata = [] 
            },
            "xor i32 %0, %0"),
-
           ("alloca",
            Alloca {
              allocatedType = IntegerType 32,
@@ -239,6 +238,14 @@ tests = testGroup "Instructions" [
              metadata = [] 
            },
            "alloca i32"),
+          ("alloca tricky",
+           Alloca {
+             allocatedType = IntegerType 7,
+             numElements = Just (ConstantOperand (C.Int 32 2)),
+             alignment = 128,
+             metadata = [] 
+           },
+           "alloca i7, i32 2, align 128"),
           ("load",
            Load {
              volatile = False,

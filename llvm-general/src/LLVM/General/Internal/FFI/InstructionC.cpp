@@ -114,7 +114,7 @@ unsigned LLVM_General_GetInstrAlignment(LLVMValueRef l) {
 
 void LLVM_General_SetInstrAlignment(LLVMValueRef l, unsigned a) {
 	switch(unwrap<Instruction>(l)->getOpcode()) {
-#define ENUM_CASE(n) case Instruction::n: unwrap<n ## Inst>(l)->setAlignment(a);
+#define ENUM_CASE(n) case Instruction::n: unwrap<n ## Inst>(l)->setAlignment(a); break;
 		LLVM_GENERAL_FOR_EACH_ALIGNMENT_INST(ENUM_CASE)
 #undef ENUM_CASE
 	}
