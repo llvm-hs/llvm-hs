@@ -170,7 +170,7 @@ main = shake shakeOptions {
         needStage "built" [pkg]
         () <- cmd "mv" [ pkg </> "dist", pkg </> "dist-hold" ]
         () <- cmd "cp" [ "-r", pkg </> "dist-hold", pkg </> "dist" ]
-        cabalStep pkg $ [ "install", "--reinstall" ] ++ shared
+        cabalStep pkg $ [ "install", "--reinstall", "--force-reinstalls" ] ++ shared
         () <- cmd "rm" [ "-r", pkg </> "dist" ]
         () <- cmd "mv" [ pkg </> "dist-hold", pkg </> "dist" ]
         return ()
