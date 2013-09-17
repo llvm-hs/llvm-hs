@@ -42,7 +42,6 @@ void LLVM_General_AddDataLayoutPass(LLVMPassManagerRef PM, const char *dl) {
 }
 
 #define LLVM_GENERAL_FOR_EACH_PASS_WITHOUT_LLVM_C_BINDING(macro) \
-	macro(BlockPlacement)			\
 	macro(BreakCriticalEdges) \
 	macro(DeadCodeElimination) \
 	macro(DeadInstElimination) \

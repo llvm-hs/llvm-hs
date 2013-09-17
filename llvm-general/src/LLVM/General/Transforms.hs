@@ -14,7 +14,6 @@ import Data.Word
 data Pass
   -- here begin the Scalar passes
   = AggressiveDeadCodeElimination
-  | BlockPlacement
   | BreakCriticalEdges
   -- | can use a 'LLVM.General.Target.TargetMachine'
   | CodeGenPrepare
