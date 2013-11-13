@@ -107,9 +107,6 @@ data Pass
   | LoopVectorize
 
   -- here begin the instrumentation passes
-  | EdgeProfiler
-  | OptimalEdgeProfiler
-  | PathProfiler
   | GCOVProfiler {
       emitNotes :: Bool,
       emitData :: Bool,

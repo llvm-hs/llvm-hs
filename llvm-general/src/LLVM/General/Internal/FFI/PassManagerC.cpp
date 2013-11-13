@@ -141,18 +141,6 @@ void LLVM_General_AddBasicBlockVectorizePass(
 	unwrap(PM)->add(createBBVectorizePass(vectorizeConfig));
 }
 
-void LLVM_General_AddEdgeProfilerPass(LLVMPassManagerRef PM) {
-	unwrap(PM)->add(createEdgeProfilerPass());
-}
-
-void LLVM_General_AddOptimalEdgeProfilerPass(LLVMPassManagerRef PM) {
-	unwrap(PM)->add(createOptimalEdgeProfilerPass());
-}
-
-void LLVM_General_AddPathProfilerPass(LLVMPassManagerRef PM) {
-	unwrap(PM)->add(createPathProfilerPass());
-}
-
 void LLVM_General_AddGCOVProfilerPass(
 	LLVMPassManagerRef PM,
 	LLVMBool emitNotes,

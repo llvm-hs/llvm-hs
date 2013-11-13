@@ -129,9 +129,6 @@ tests = testGroup "Instrumentation" [
         let names ast = [ n | GlobalDefinition d <- moduleDefinitions ast, Name n <- return (G.name d) ]
         (names ast') `List.intersect` (names ast) @?= names ast
     | (n,p) <- [
-     ("EdgeProfiler", EdgeProfiler),
-     ("OptimalEdgeProfiler", OptimalEdgeProfiler),
-     ("PathProfiler", PathProfiler),
      ("GCOVProfiler", defaultGCOVProfiler),
      ("AddressSanitizer", defaultAddressSanitizer),
      ("AddressSanitizerModule", defaultAddressSanitizerModule),
