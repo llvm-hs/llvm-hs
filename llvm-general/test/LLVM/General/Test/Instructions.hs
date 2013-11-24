@@ -403,6 +403,13 @@ tests = testGroup "Instructions" [
              metadata = [] 
            },
            "bitcast i32 %0 to float"),
+          ("addrspacecast",
+           AddrSpaceCast {
+             operand0 = a 2,
+             type' = PointerType (IntegerType 32) (AddrSpace 2),
+             metadata = [] 
+           },
+           "addrspacecast i32* %2 to i32 addrspace(2)*"),
           ("select",
            Select {
              condition' = a 4,

@@ -304,6 +304,11 @@ data Instruction
       type' :: Type,
       metadata :: InstructionMetadata
     }
+  | AddrSpaceCast {
+      operand0 :: Operand,
+      type' :: Type,
+      metadata :: InstructionMetadata
+    }
   | ICmp {
       iPredicate :: IntegerPredicate,
       operand0 :: Operand,
