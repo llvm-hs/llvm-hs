@@ -113,7 +113,7 @@ LLVMValueRef LLVM_General_BuildStore(
 	return wrap(i);
 }
 
-LLVMValueRef LLVMBuildFence(
+LLVMValueRef LLVM_General_BuildFence(
 	LLVMBuilderRef b, LLVMAtomicOrdering lao, LLVMSynchronizationScope lss, const char *name
 ) {
 	FenceInst *i = unwrap(b)->CreateFence(unwrap(lao), unwrap(lss));

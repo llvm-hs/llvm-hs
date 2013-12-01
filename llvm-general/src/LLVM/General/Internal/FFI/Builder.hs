@@ -102,7 +102,7 @@ buildGetElementPtr :: Ptr Builder -> LLVMBool -> Ptr Value -> Ptr (Ptr Value) ->
 buildGetElementPtr builder (LLVMBool 1) = buildInBoundsGetElementPtr' builder
 buildGetElementPtr builder (LLVMBool 0) = buildGetElementPtr' builder
 
-foreign import ccall unsafe "LLVMBuildFence" buildFence ::
+foreign import ccall unsafe "LLVM_General_BuildFence" buildFence ::
   Ptr Builder -> MemoryOrdering -> LLVMBool -> CString -> IO (Ptr Instruction)
 
 foreign import ccall unsafe "LLVM_General_BuildAtomicCmpXchg" buildCmpXchg ::
