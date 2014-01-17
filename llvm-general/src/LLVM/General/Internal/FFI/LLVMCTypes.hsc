@@ -54,7 +54,7 @@ deriving instance Data CUInt
 
 newtype LLVMBool = LLVMBool CUInt
 
-newtype MallocedCString = MallocedCString CString
+newtype OwnerTransfered a = OwnerTransfered a
   deriving (Storable)
 
 newtype NothingAsMinusOne h = NothingAsMinusOne CInt

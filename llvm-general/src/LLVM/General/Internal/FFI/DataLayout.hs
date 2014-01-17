@@ -21,4 +21,4 @@ foreign import ccall unsafe "LLVMDisposeTargetData" disposeDataLayout ::
   Ptr DataLayout -> IO ()
 
 foreign import ccall unsafe "LLVMCopyStringRepOfTargetData" dataLayoutToString ::
-  Ptr DataLayout -> IO MallocedCString
+  Ptr DataLayout -> IO (OwnerTransfered CString)

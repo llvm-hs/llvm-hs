@@ -14,7 +14,7 @@ import Control.Monad.Error
 import Data.Word
 import Data.IORef
 import Foreign.Ptr
-import Foreign.C.Types (CUInt)
+import Foreign.C (CUInt, CString)
 import Foreign.Marshal.Alloc (allocaBytes)
 
 import qualified LLVM.General.Internal.FFI.PtrHierarchy as FFI
@@ -61,7 +61,7 @@ instance ExecutionEngine (Ptr FFI.ExecutionEngine) (FunPtr ()) where
 withExecutionEngine :: 
   Context ->
   Maybe (Ptr FFI.Module) -> 
-  (Ptr (Ptr FFI.ExecutionEngine) -> Ptr FFI.Module -> Ptr FFI.MallocedCString -> IO CUInt) ->
+  (Ptr (Ptr FFI.ExecutionEngine) -> Ptr FFI.Module -> Ptr (FFI.OwnerTransfered CString) -> IO CUInt) ->
   (Ptr FFI.ExecutionEngine -> IO a) ->
   IO a
 withExecutionEngine c m createEngine f = flip runAnyContT return $ do

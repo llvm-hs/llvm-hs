@@ -20,6 +20,7 @@ import LLVM.General.Internal.FFI.LLVMCTypes
 import LLVM.General.Internal.Coding
 
 import qualified Data.ByteString as BS
+import qualified Data.ByteString.Unsafe as BS
 import qualified Data.ByteString.UTF8 as BSUTF8
 
 newtype UTF8ByteString = UTF8ByteString { utf8Bytes :: BS.ByteString }
@@ -32,7 +33,7 @@ instance (Monad d) => DecodeM d String UTF8ByteString where
 
 
 instance (MonadAnyCont IO e) => EncodeM e String CString where
-  encodeM s = anyContToM (BS.useAsCString . utf8Bytes =<< encodeM s)
+  encodeM s = anyContToM (BS.unsafeUseAsCString . utf8Bytes =<< encodeM (s ++ "\0"))
 
 instance (Integral i, MonadAnyCont IO e) => EncodeM e String (Ptr CChar, i) where
   encodeM s = anyContToM ((. (. second fromIntegral)) $ BS.useAsCStringLen . utf8Bytes =<< encodeM s)
@@ -40,10 +41,10 @@ instance (Integral i, MonadAnyCont IO e) => EncodeM e String (Ptr CChar, i) wher
 instance (MonadIO d) => DecodeM d String CString where
   decodeM = decodeM . UTF8ByteString <=< liftIO . BS.packCString
 
-instance (MonadIO d) => DecodeM d String MallocedCString where
-  decodeM (MallocedCString s) = liftIO $ finally (decodeM s) (free s)
+instance (MonadIO d) => DecodeM d String (OwnerTransfered CString) where
+  decodeM (OwnerTransfered s) = liftIO $ finally (decodeM s) (free s)
 
-instance (MonadIO d) => DecodeM d String (Ptr MallocedCString) where
+instance (MonadIO d) => DecodeM d String (Ptr (OwnerTransfered CString)) where
   decodeM = liftIO . decodeM <=< peek
 
 instance (Integral i, MonadIO d) => DecodeM d String (Ptr CChar, i) where

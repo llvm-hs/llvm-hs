@@ -122,6 +122,7 @@ library
     LLVM.General.Internal.FFI.Assembly
     LLVM.General.Internal.FFI.BasicBlock
     LLVM.General.Internal.FFI.BinaryOperator
+    LLVM.General.Internal.FFI.Bitcode
     LLVM.General.Internal.FFI.Builder
     LLVM.General.Internal.FFI.Cleanup
     LLVM.General.Internal.FFI.CommandLine
@@ -153,6 +154,7 @@ library
   include-dirs: src
   c-sources: 
     src/LLVM/General/Internal/FFI/AssemblyC.cpp
+    src/LLVM/General/Internal/FFI/BitcodeC.cpp
     src/LLVM/General/Internal/FFI/BuilderC.cpp
     src/LLVM/General/Internal/FFI/ConstantC.cpp
     src/LLVM/General/Internal/FFI/CommandLineC.cpp

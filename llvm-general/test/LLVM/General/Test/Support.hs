@@ -27,6 +27,7 @@ instance FailInIO (Either String Diagnostic) where
 
 withModuleFromString' c s f  = failInIO $ withModuleFromString c s f
 withModuleFromAST' c a f = failInIO $ withModuleFromAST c a f
+withModuleFromBitcode' c a f = failInIO $ withModuleFromBitcode c "<string>" a f
 
 assertEqPretty :: (Eq a, PrettyShow a) => a -> a -> Assertion
 assertEqPretty actual expected = do

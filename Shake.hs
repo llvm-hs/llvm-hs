@@ -126,7 +126,7 @@ main = shake shakeOptions {
 
   action $ do
     args <- liftIO getArgs
-    need args
+    need (if null args then [ stamp ("tested", "llvm-general") ] else args)
 
   let getCabalStep = do
         buildRoot <- getBuildRoot (BuildRoot ())

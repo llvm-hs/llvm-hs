@@ -10,4 +10,4 @@ import LLVM.General.Internal.FFI.LLVMCTypes
 import LLVM.General.Internal.FFI.Module
 
 foreign import ccall unsafe "LLVMVerifyModule" verifyModule ::
-  Ptr Module -> VerifierFailureAction -> Ptr MallocedCString -> IO LLVMBool
+  Ptr Module -> VerifierFailureAction -> Ptr (OwnerTransfered CString) -> IO LLVMBool

@@ -83,7 +83,7 @@ instance Monad m => EncodeM m Bool FFI.LLVMBool where
 
 instance Monad m => DecodeM m Bool FFI.LLVMBool where
   decodeM (FFI.LLVMBool 0) = return $ False
-  decodeM (FFI.LLVMBool 1) = return $ True
+  decodeM (FFI.LLVMBool _) = return $ True
 
 instance (Monad m, EncodeM m h (Ptr c)) => EncodeM m (Maybe h) (Ptr c) where
   encodeM = maybe (return nullPtr) encodeM

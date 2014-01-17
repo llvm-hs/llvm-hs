@@ -6,12 +6,21 @@
 #include "llvm/Pass.h"
 #include "llvm/Support/SourceMgr.h"
 #include "llvm/Support/raw_ostream.h"
+#include "llvm/Support/MemoryBuffer.h"
 
 #include "llvm-c/Core.h"
 
 using namespace llvm;
 
 extern "C" {
+
+LLVMModuleRef LLVM_General_ParseAssembly(
+	LLVMContextRef context,
+	LLVMMemoryBufferRef memoryBuffer,
+	SMDiagnostic *error
+) {
+	return wrap(ParseAssembly(unwrap(memoryBuffer), NULL, *error, *unwrap(context)));
+}
 
 LLVMModuleRef LLVM_General_GetModuleFromAssemblyInContext(
 	LLVMContextRef context,

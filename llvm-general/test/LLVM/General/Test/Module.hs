@@ -260,8 +260,13 @@ tests = testGroup "Module" [
     ast @?= handAST,
     
   testCase "withModuleFromAST" $ withContext $ \context -> do
-   s <- withModuleFromAST' context handAST moduleString
-   s @?= handString,
+    s <- withModuleFromAST' context handAST moduleString
+    s @?= handString,
+
+  testCase "bitcode" $ withContext $ \context -> do
+    bs <- withModuleFromAST' context handAST moduleBitcode
+    s <- withModuleFromBitcode' context bs moduleString
+    s @?= handString,
 
   testCase "triple" $ withContext $ \context -> do
    let hAST = "; ModuleID = '<string>'\n\

@@ -6,6 +6,8 @@ module LLVM.General.Module (
     moduleAST,
     withModuleFromString,
     moduleString,
+    withModuleFromBitcode,
+    moduleBitcode,
 
     moduleAssembly,
     moduleObject,

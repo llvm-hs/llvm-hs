@@ -3,10 +3,18 @@
   #-}
 module LLVM.General.Internal.FFI.MemoryBuffer where
 
+import LLVM.General.Internal.FFI.LLVMCTypes
+
 import Foreign.Ptr
 import Foreign.C
 
 data MemoryBuffer
+
+foreign import ccall unsafe "LLVMCreateMemoryBufferWithContentsOfFile" createMemoryBufferWithContentsOfFile ::
+  Ptr CChar -> Ptr (Ptr MemoryBuffer) -> Ptr (OwnerTransfered CString) -> IO LLVMBool
+
+foreign import ccall unsafe "LLVMCreateMemoryBufferWithMemoryRange" createMemoryBufferWithMemoryRange ::
+  Ptr CChar -> CSize -> CString -> LLVMBool -> IO (Ptr MemoryBuffer)
 
 foreign import ccall unsafe "LLVMGetBufferStart" getBufferStart ::
   Ptr MemoryBuffer -> IO (Ptr CChar)
