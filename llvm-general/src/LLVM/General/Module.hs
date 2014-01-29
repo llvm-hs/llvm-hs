@@ -2,18 +2,22 @@
 -- added to an 'LLVM.General.ExecutionEngine.ExecutionEngine' and so JIT compiled to get function pointers.
 module LLVM.General.Module (
     Module,
+
     withModuleFromAST,
     moduleAST,
-    withModuleFromString,
-    moduleString,
+
+    withModuleFromLLVMAssembly,
+    moduleLLVMAssembly,
+    writeLLVMAssemblyToFile,
+
     withModuleFromBitcode,
     moduleBitcode,
-
-    moduleAssembly,
-    moduleObject,
-
     writeBitcodeToFile,
-    writeAssemblyToFile,
+
+    moduleTargetAssembly,
+    writeTargetAssemblyToFile,
+
+    moduleObject,
     writeObjectToFile,
 
     linkModules

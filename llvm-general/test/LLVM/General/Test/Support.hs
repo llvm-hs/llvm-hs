@@ -25,9 +25,9 @@ instance FailInIO String where
 instance FailInIO (Either String Diagnostic) where
   errorToString = either id diagnosticDisplay
 
-withModuleFromString' c s f  = failInIO $ withModuleFromString c s f
+withModuleFromLLVMAssembly' c s f  = failInIO $ withModuleFromLLVMAssembly c s f
 withModuleFromAST' c a f = failInIO $ withModuleFromAST c a f
-withModuleFromBitcode' c a f = failInIO $ withModuleFromBitcode c "<string>" a f
+withModuleFromBitcode' c a f = failInIO $ withModuleFromBitcode c ("<string>", a) f
 
 assertEqPretty :: (Eq a, PrettyShow a) => a -> a -> Assertion
 assertEqPretty actual expected = do
@@ -37,8 +37,8 @@ assertEqPretty actual expected = do
    (expected == actual)
 
 strCheckC mAST mStr mStrCanon = withContext $ \context -> do
-  a <- withModuleFromString' context mStr moduleAST
-  s <- withModuleFromAST' context mAST moduleString
+  a <- withModuleFromLLVMAssembly' context mStr moduleAST
+  s <- withModuleFromAST' context mAST moduleLLVMAssembly
   (a,s) `assertEqPretty` (mAST, mStrCanon)
 
 strCheck mAST mStr = strCheckC mAST mStr mStr

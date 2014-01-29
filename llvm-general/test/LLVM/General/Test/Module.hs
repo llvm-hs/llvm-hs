@@ -211,7 +211,7 @@ handAST = Module "<string>" Nothing Nothing [
 tests = testGroup "Module" [
   testGroup "withModuleFromString" [
     testCase "basic" $ withContext $ \context -> do
-      z <- withModuleFromString' context handString (const $ return 0)
+      z <- withModuleFromLLVMAssembly' context handString (const $ return 0)
       z @?= 0,
     testCase "numbering" $ withContext $ \context -> do
       let s = "@0 = global i32 3\
@@ -220,7 +220,7 @@ tests = testGroup "Module" [
               \  %2 = add i32 %1, 3\n\
               \  ret i32 %2\n\
               \}\n"
-      z <- withModuleFromString' context s (const $ return 0)
+      z <- withModuleFromLLVMAssembly' context s (const $ return 0)
       z @?= 0
    ],
 
@@ -229,11 +229,11 @@ tests = testGroup "Module" [
       let s = "define i32 @main(i32 %argc, i8** %argv) {\n\
               \  ret i32 0\n\
               \}\n"
-      a <- withModuleFromString' context s $ \m -> do
+      a <- withModuleFromLLVMAssembly' context s $ \m -> do
         (t, _) <- failInIO $ lookupTarget Nothing "x86_64-unknown-linux"
         withTargetOptions $ \to -> do
           withTargetMachine t "" "" Set.empty to R.Default CM.Default CGO.Default $ \tm -> do
-            failInIO $ moduleAssembly tm m
+            failInIO $ moduleTargetAssembly tm m
       a @?= "\t.file\t\"<string>\"\n\
             \\t.text\n\
             \\t.globl\tmain\n\
@@ -252,26 +252,26 @@ tests = testGroup "Module" [
    ],
 
   testCase "handStringIsCanonical" $ withContext $ \context -> do
-    s <- withModuleFromString' context handString moduleString
+    s <- withModuleFromLLVMAssembly' context handString moduleLLVMAssembly
     s @?= handString,
 
   testCase "moduleAST" $ withContext $ \context -> do
-    ast <- withModuleFromString' context handString moduleAST
+    ast <- withModuleFromLLVMAssembly' context handString moduleAST
     ast @?= handAST,
     
   testCase "withModuleFromAST" $ withContext $ \context -> do
-    s <- withModuleFromAST' context handAST moduleString
+    s <- withModuleFromAST' context handAST moduleLLVMAssembly
     s @?= handString,
 
   testCase "bitcode" $ withContext $ \context -> do
     bs <- withModuleFromAST' context handAST moduleBitcode
-    s <- withModuleFromBitcode' context bs moduleString
+    s <- withModuleFromBitcode' context bs moduleLLVMAssembly
     s @?= handString,
 
   testCase "triple" $ withContext $ \context -> do
    let hAST = "; ModuleID = '<string>'\n\
               \target triple = \"x86_64-unknown-linux\"\n"
-   ast <- withModuleFromString' context hAST moduleAST
+   ast <- withModuleFromLLVMAssembly' context hAST moduleAST
    ast @?= defaultModule { moduleTargetTriple = Just "x86_64-unknown-linux" },
 
   testGroup "regression" [
@@ -381,8 +381,8 @@ tests = testGroup "Module" [
                   ]
                 }
                ]
-          s <- withModuleFromAST' context ast moduleString
-          m <- withModuleFromString' context s moduleAST
+          s <- withModuleFromAST' context ast moduleLLVMAssembly
+          m <- withModuleFromLLVMAssembly' context s moduleAST
           m @?= ast
    ],
         

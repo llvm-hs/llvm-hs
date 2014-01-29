@@ -22,26 +22,8 @@ LLVMModuleRef LLVM_General_ParseBitcode(
 	return wrap(m);
 }
 
-LLVMBool LLVM_General_WriteBitcodeToFile(LLVMModuleRef m, const char *path, char **error) {
-	std::string ErrorInfo;
-	raw_fd_ostream OS(path, ErrorInfo, sys::fs::F_Binary);
-
-	if (!ErrorInfo.empty()) {
-		*error = strdup(ErrorInfo.c_str());
-		return 1;
-	}
-
-	WriteBitcodeToFile(unwrap(m), OS);
-	return 0;
-}
-
-void LLVM_General_GetModuleBitcode(LLVMModuleRef m, void (*callback)(const char *start, size_t length)) {
-	std::string buf;
-	{
-		raw_string_ostream OS(buf);
-		WriteBitcodeToFile(unwrap(m), OS);
-	}
-	(*callback)(buf.data(), buf.length());
+void LLVM_General_WriteBitcode(LLVMModuleRef m, raw_ostream &os) {
+	WriteBitcodeToFile(unwrap(m), os);
 }
 
 }

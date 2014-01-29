@@ -8,8 +8,8 @@ import Foreign.Ptr
 import Foreign.C
 
 import LLVM.General.Internal.FFI.LLVMCTypes
-import LLVM.General.Internal.FFI.MemoryBuffer
 import LLVM.General.Internal.FFI.Module
+import LLVM.General.Internal.FFI.RawOStream
 
 data Target
 
@@ -73,15 +73,12 @@ foreign import ccall unsafe "LLVM_General_CreateTargetMachine" createTargetMachi
 foreign import ccall unsafe "LLVMDisposeTargetMachine" disposeTargetMachine ::
   Ptr TargetMachine -> IO ()
 
-foreign import ccall unsafe "LLVMTargetMachineEmitToFile" targetMachineEmitToFile ::
-  Ptr TargetMachine -> Ptr Module -> CString -> CodeGenFileType -> Ptr (OwnerTransfered CString) -> IO LLVMBool
-
-foreign import ccall unsafe "LLVMTargetMachineEmitToMemoryBuffer" targetMachineEmitToMemoryBuffer ::
+foreign import ccall unsafe "LLVM_General_TargetMachineEmit" targetMachineEmit ::
   Ptr TargetMachine
   -> Ptr Module
   -> CodeGenFileType
   -> Ptr (OwnerTransfered CString)
-  -> Ptr (Ptr MemoryBuffer)
+  -> Ptr RawOStream
   -> IO LLVMBool
 
 data TargetLowering

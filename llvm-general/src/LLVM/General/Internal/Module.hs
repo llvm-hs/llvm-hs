@@ -15,6 +15,7 @@ import Control.Applicative
 import Control.Exception
 
 import Foreign.Ptr
+import Foreign.C
 import Data.IORef
 import qualified Data.ByteString as BS
 
@@ -31,6 +32,7 @@ import qualified LLVM.General.Internal.FFI.MemoryBuffer as FFI
 import qualified LLVM.General.Internal.FFI.Metadata as FFI
 import qualified LLVM.General.Internal.FFI.Module as FFI
 import qualified LLVM.General.Internal.FFI.PtrHierarchy as FFI
+import qualified LLVM.General.Internal.FFI.RawOStream as FFI
 import qualified LLVM.General.Internal.FFI.Target as FFI
 import qualified LLVM.General.Internal.FFI.Value as FFI
 
@@ -46,6 +48,7 @@ import LLVM.General.Internal.Instruction ()
 import qualified LLVM.General.Internal.MemoryBuffer as MB 
 import LLVM.General.Internal.Metadata
 import LLVM.General.Internal.Operand
+import LLVM.General.Internal.RawOStream
 import LLVM.General.Internal.String
 import LLVM.General.Internal.Target
 import LLVM.General.Internal.Type
@@ -61,6 +64,9 @@ import qualified LLVM.General.AST.Global as A.G
 
 -- | <http://llvm.org/doxygen/classllvm_1_1Module.html>
 newtype Module = Module (Ptr FFI.Module)
+
+newtype File = File FilePath
+  deriving (Eq, Ord, Read, Show)
 
 instance Error (Either String Diagnostic) where
     strMsg = Left
@@ -85,32 +91,59 @@ linkModules preserveRight (Module m) (Module m') = flip runAnyContT return $ do
   result <- decodeM =<< (liftIO $ FFI.linkModules m m' preserveRight msgPtr)
   when result $ fail =<< decodeM msgPtr
 
+class LLVMAssemblyInput s where
+  llvmAssemblyMemoryBuffer :: (MonadIO e, MonadAnyCont IO e) => s -> e (FFI.OwnerTransfered (Ptr FFI.MemoryBuffer))
+
+instance LLVMAssemblyInput (String, String) where
+  llvmAssemblyMemoryBuffer (id, s) = do
+    UTF8ByteString bs <- encodeM s
+    encodeM (MB.Bytes id bs)
+
+instance LLVMAssemblyInput String where
+  llvmAssemblyMemoryBuffer s = llvmAssemblyMemoryBuffer ("<string>", s)
+
+instance LLVMAssemblyInput File where
+  llvmAssemblyMemoryBuffer (File p) = encodeM (MB.File p)
+
 -- | parse 'Module' from LLVM assembly
-withModuleFromString :: Context -> String -> (Module -> IO a) -> ErrorT (Either String Diagnostic) IO a
-withModuleFromString (Context c) s f = flip runAnyContT return $ do
-  UTF8ByteString bs <- encodeM s
-  mb <- encodeM (MB.Bytes "<string>" bs)
+withModuleFromLLVMAssembly :: LLVMAssemblyInput s => Context -> s -> (Module -> IO a) -> ErrorT (Either String Diagnostic) IO a
+withModuleFromLLVMAssembly (Context c) s f = flip runAnyContT return $ do
+  mb <- llvmAssemblyMemoryBuffer s
   smDiag <- anyContToM withSMDiagnostic
-  m <- anyContToM $ bracket (FFI.parseAssembly c mb smDiag) FFI.disposeModule
+  m <- anyContToM $ bracket (FFI.parseLLVMAssembly c mb smDiag) FFI.disposeModule
   when (m == nullPtr) $ throwError . Right =<< liftIO (getDiagnostic smDiag)
   liftIO $ f (Module m)
 
 -- | generate LLVM assembly from a 'Module'
-moduleString :: Module -> IO String
-moduleString (Module m) = decodeM =<< FFI.getModuleAssembly m
+moduleLLVMAssembly :: Module -> IO String
+moduleLLVMAssembly (Module m) = do
+  resultRef <- newIORef Nothing
+  let saveBuffer :: Ptr CChar -> CSize -> IO ()
+      saveBuffer start size = do
+        r <- decodeM (start, fromIntegral size)
+        writeIORef resultRef (Just r)
+  FFI.withBufferRawOStream saveBuffer $ FFI.writeLLVMAssembly m
+  Just s <- readIORef resultRef
+  return s
+
+-- | write LLVM assembly for a 'Module' to a file
+writeLLVMAssemblyToFile :: File -> Module -> ErrorT String IO ()
+writeLLVMAssemblyToFile (File path) (Module m) = flip runAnyContT return $ do
+  withFileRawOStream path False False $ liftIO . FFI.writeLLVMAssembly m
+
+class BitcodeInput b where
+  bitcodeMemoryBuffer :: (MonadIO e, MonadAnyCont IO e) => b -> e (Ptr FFI.MemoryBuffer)
+
+instance BitcodeInput (String, BS.ByteString) where
+  bitcodeMemoryBuffer (s, bs) = encodeM (MB.Bytes s bs)
+
+instance BitcodeInput File where
+  bitcodeMemoryBuffer (File p) = encodeM (MB.File p)
 
 -- | parse 'Module' from LLVM bitcode
-withModuleFromBitcode :: Context -> String -> BS.ByteString -> (Module -> IO a) -> ErrorT String IO a
-withModuleFromBitcode (Context c) s bs f = flip runAnyContT return $ do
-  mb <- encodeM (MB.Bytes s bs)
-  msgPtr <- alloca
-  m <- anyContToM $ bracket (FFI.parseBitcode c mb msgPtr) FFI.disposeModule
-  when (m == nullPtr) $ fail =<< decodeM msgPtr
-  liftIO $ f (Module m)
-
-withModuleFromBitcodeFile :: Context -> String -> (Module -> IO a) -> ErrorT String IO a
-withModuleFromBitcodeFile (Context c) p f = flip runAnyContT return $ do
-  mb <- encodeM (MB.File p)
+withModuleFromBitcode :: BitcodeInput b => Context -> b -> (Module -> IO a) -> ErrorT String IO a
+withModuleFromBitcode (Context c) b f = flip runAnyContT return $ do
+  mb <- bitcodeMemoryBuffer b
   msgPtr <- alloca
   m <- anyContToM $ bracket (FFI.parseBitcode c mb msgPtr) FFI.disposeModule
   when (m == nullPtr) $ fail =<< decodeM msgPtr
@@ -118,55 +151,42 @@ withModuleFromBitcodeFile (Context c) p f = flip runAnyContT return $ do
 
 -- | generate LLVM bitcode from a 'Module'
 moduleBitcode :: Module -> IO BS.ByteString
-moduleBitcode (Module m) = do
-  resultRef <- newIORef Nothing
-  FFI.getModuleBitcode m $ \start size -> do
-    r <- BS.packCStringLen (start, fromIntegral size)
-    writeIORef resultRef (Just r)
-  Just bs <- readIORef resultRef
-  return bs
+moduleBitcode (Module m) = withBufferRawOStream (liftIO . FFI.writeBitcode m)
 
 -- | write LLVM bitcode from a 'Module' into a file
-writeBitcodeToFile :: FilePath -> Module -> ErrorT String IO ()
-writeBitcodeToFile path (Module m) = flip runAnyContT return $ do
+writeBitcodeToFile :: File -> Module -> ErrorT String IO ()
+writeBitcodeToFile (File path) (Module m) = flip runAnyContT return $ do
+  withFileRawOStream path False True $ liftIO . FFI.writeBitcode m
+
+targetMachineEmit :: FFI.CodeGenFileType -> TargetMachine -> Module -> Ptr FFI.RawOStream -> ErrorT String IO ()
+targetMachineEmit fileType (TargetMachine tm) (Module m) os = flip runAnyContT return $ do
   msgPtr <- alloca
-  path <- encodeM path
-  result <- decodeM =<< (liftIO $ FFI.writeBitcodeToFile m path msgPtr)
-  when result $ fail =<< decodeM msgPtr
+  r <- decodeM =<< (liftIO $ FFI.targetMachineEmit tm m fileType msgPtr os)
+  when r $ fail =<< decodeM msgPtr
 
-emitToFile :: FFI.CodeGenFileType -> TargetMachine -> FilePath -> Module -> ErrorT String IO ()
-emitToFile fileType (TargetMachine tm) path (Module m) = flip runAnyContT return $ do
-  msgPtr <- alloca
-  path <- encodeM path
-  result <- decodeM =<< (liftIO $ FFI.targetMachineEmitToFile tm m path fileType msgPtr)
-  when result $ fail =<< decodeM msgPtr
-
--- | write target-specific assembly directly into a file
-writeAssemblyToFile :: TargetMachine -> FilePath -> Module -> ErrorT String IO ()
-writeAssemblyToFile = emitToFile FFI.codeGenFileTypeAssembly
-
--- | write target-specific object code directly into a file
-writeObjectToFile :: TargetMachine -> FilePath -> Module -> ErrorT String IO ()
-writeObjectToFile = emitToFile FFI.codeGenFileTypeObject
+emitToFile :: FFI.CodeGenFileType -> TargetMachine -> File -> Module -> ErrorT String IO ()
+emitToFile fileType tm (File path) m = flip runAnyContT return $ do
+  withFileRawOStream path False True $ targetMachineEmit fileType tm m
 
 emitToByteString :: FFI.CodeGenFileType -> TargetMachine -> Module -> ErrorT String IO BS.ByteString
-emitToByteString fileType (TargetMachine tm) (Module m) = flip runAnyContT return $ do
-  msgPtr <- alloca
-  memoryBufferPtr <- alloca
-  result <- decodeM =<< (liftIO $ FFI.targetMachineEmitToMemoryBuffer tm m fileType msgPtr memoryBufferPtr)
-  if result 
-    then
-        fail =<< decodeM msgPtr
-    else
-        decodeM =<< anyContToM (bracket (peek memoryBufferPtr) FFI.disposeMemoryBuffer)
+emitToByteString fileType tm m = flip runAnyContT return $ do
+  withBufferRawOStream $ targetMachineEmit fileType tm m
+
+-- | write target-specific assembly directly into a file
+writeTargetAssemblyToFile :: TargetMachine -> File -> Module -> ErrorT String IO ()
+writeTargetAssemblyToFile = emitToFile FFI.codeGenFileTypeAssembly
 
 -- | produce target-specific assembly as a 'String'
-moduleAssembly :: TargetMachine -> Module -> ErrorT String IO String
-moduleAssembly tm m = decodeM . UTF8ByteString =<< emitToByteString FFI.codeGenFileTypeAssembly tm m
+moduleTargetAssembly :: TargetMachine -> Module -> ErrorT String IO String
+moduleTargetAssembly tm m = decodeM . UTF8ByteString =<< emitToByteString FFI.codeGenFileTypeAssembly tm m
 
 -- | produce target-specific object code as a 'ByteString'
 moduleObject :: TargetMachine -> Module -> ErrorT String IO BS.ByteString
 moduleObject = emitToByteString FFI.codeGenFileTypeObject
+
+-- | write target-specific object code directly into a file
+writeObjectToFile :: TargetMachine -> File -> Module -> ErrorT String IO ()
+writeObjectToFile = emitToFile FFI.codeGenFileTypeObject
 
 setTargetTriple :: Ptr FFI.Module -> String -> EncodeAST ()
 setTargetTriple m t = do

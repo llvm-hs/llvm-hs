@@ -31,7 +31,6 @@ instance (Monad e) => EncodeM e String UTF8ByteString where
 instance (Monad d) => DecodeM d String UTF8ByteString where
   decodeM = return . BSUTF8.toString . utf8Bytes
 
-
 instance (MonadAnyCont IO e) => EncodeM e String CString where
   encodeM s = anyContToM (BS.unsafeUseAsCString . utf8Bytes =<< encodeM (s ++ "\0"))
 
@@ -49,6 +48,9 @@ instance (MonadIO d) => DecodeM d String (Ptr (OwnerTransfered CString)) where
 
 instance (Integral i, MonadIO d) => DecodeM d String (Ptr CChar, i) where
   decodeM = decodeM . UTF8ByteString <=< liftIO . BS.packCStringLen . second fromIntegral
+
+instance (Integral i, MonadIO d) => DecodeM d BS.ByteString (Ptr CChar, i) where
+  decodeM = liftIO . BS.packCStringLen . second fromIntegral
 
 instance (Integral i, Storable i, MonadIO d) => DecodeM d String (Ptr i -> IO (Ptr CChar)) where
   decodeM f = decodeM =<< (liftIO $ F.M.alloca $ \p -> (,) `liftM` f p `ap` peek p)

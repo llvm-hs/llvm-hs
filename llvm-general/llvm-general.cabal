@@ -113,6 +113,7 @@ library
     LLVM.General.Internal.Module
     LLVM.General.Internal.Operand
     LLVM.General.Internal.PassManager
+    LLVM.General.Internal.RawOStream
     LLVM.General.Internal.RMWOperation
     LLVM.General.Internal.String
     LLVM.General.Internal.Target
@@ -124,6 +125,7 @@ library
     LLVM.General.Internal.FFI.BinaryOperator
     LLVM.General.Internal.FFI.Bitcode
     LLVM.General.Internal.FFI.Builder
+    LLVM.General.Internal.FFI.ByteRangeCallback
     LLVM.General.Internal.FFI.Cleanup
     LLVM.General.Internal.FFI.CommandLine
     LLVM.General.Internal.FFI.Constant
@@ -144,6 +146,7 @@ library
     LLVM.General.Internal.FFI.Module
     LLVM.General.Internal.FFI.PassManager
     LLVM.General.Internal.FFI.PtrHierarchy
+    LLVM.General.Internal.FFI.RawOStream
     LLVM.General.Internal.FFI.SMDiagnostic
     LLVM.General.Internal.FFI.Target
     LLVM.General.Internal.FFI.Transforms
@@ -166,6 +169,7 @@ library
     src/LLVM/General/Internal/FFI/InstructionC.cpp
     src/LLVM/General/Internal/FFI/MetadataC.cpp
     src/LLVM/General/Internal/FFI/ModuleC.cpp
+    src/LLVM/General/Internal/FFI/RawOStreamC.cpp
     src/LLVM/General/Internal/FFI/PassManagerC.cpp
     src/LLVM/General/Internal/FFI/SMDiagnosticC.cpp
     src/LLVM/General/Internal/FFI/TargetC.cpp

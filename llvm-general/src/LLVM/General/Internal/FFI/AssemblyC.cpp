@@ -14,7 +14,7 @@ using namespace llvm;
 
 extern "C" {
 
-LLVMModuleRef LLVM_General_ParseAssembly(
+LLVMModuleRef LLVM_General_ParseLLVMAssembly(
 	LLVMContextRef context,
 	LLVMMemoryBufferRef memoryBuffer,
 	SMDiagnostic *error
@@ -22,21 +22,8 @@ LLVMModuleRef LLVM_General_ParseAssembly(
 	return wrap(ParseAssembly(unwrap(memoryBuffer), NULL, *error, *unwrap(context)));
 }
 
-LLVMModuleRef LLVM_General_GetModuleFromAssemblyInContext(
-	LLVMContextRef context,
-	const char *assembly,
-	SMDiagnostic *error
-) {
-	return wrap(ParseAssemblyString(assembly, NULL, *error, *unwrap(context))); 
-}
-
-char *LLVM_General_GetModuleAssembly(LLVMModuleRef module) {
-	std::string s;
-	raw_string_ostream buf(s);
-	ModulePass *printPass = createPrintModulePass(&buf);
-	printPass->runOnModule(*unwrap(module));
-	delete printPass;
-	return strdup(buf.str().c_str());
+void LLVM_General_WriteLLVMAssembly(LLVMModuleRef module, raw_ostream &os) {
+	os << *unwrap(module);
 }
 
 }

@@ -2,11 +2,14 @@
 #include "llvm/Support/TargetRegistry.h"
 #include "llvm/Support/TargetSelect.h"
 #include "llvm/Support/Host.h"
+#include "llvm/Support/FormattedStream.h"
 #include "llvm/Target/TargetMachine.h"
 #include "llvm/Target/TargetLibraryInfo.h"
+#include "llvm/PassManager.h"
 #include "llvm/ADT/Triple.h"
 #include "llvm/ExecutionEngine/Interpreter.h"
 #include "llvm/IR/DataLayout.h"
+#include "llvm/IR/Module.h"
 #include "llvm-c/Target.h"
 #include "llvm-c/TargetMachine.h"
 #include "llvm-c/Core.h"
@@ -95,6 +98,15 @@ static LLVM_General_FPOpFusionMode wrap(FPOpFusion::FPOpFusionMode x) {
 LLVM_GENERAL_FOR_EACH_FP_OP_FUSION_MODE(ENUM_CASE)
 #undef ENUM_CASE
 	default: return  LLVM_General_FPOpFusionMode(0);
+	}
+}
+
+static TargetMachine::CodeGenFileType unwrap(LLVMCodeGenFileType x) {
+	switch(x) {
+#define ENUM_CASE(x) case LLVM ## x ## File: return TargetMachine::CGFT_ ## x ## File;
+		LLVM_GENERAL_FOR_EACH_CODE_GEN_FILE_TYPE(ENUM_CASE)
+#undef ENUM_CASE
+	default: return TargetMachine::CodeGenFileType(0);
 	}
 }
 }
@@ -261,5 +273,31 @@ void LLVM_General_InitializeAllTargets() {
 	InitializeAllAsmPrinters();
 	// None of the other components are bound yet
 }
+
+LLVMBool LLVM_General_TargetMachineEmit(
+	LLVMTargetMachineRef TM,
+	LLVMModuleRef M,
+	LLVMCodeGenFileType codeGenFileType,
+	char **ErrorMessage,
+	raw_ostream &dest
+) {
+	formatted_raw_ostream destf(dest);
+	TargetMachine &tm = *unwrap(TM);
+	const DataLayout *td = tm.getDataLayout();
+	if (!td) {
+		*ErrorMessage = strdup("No DataLayout in TargetMachine");
+		return true;
+	}
+	PassManager passManager;
+	passManager.add(new DataLayout(*td));
+	if (tm.addPassesToEmitFile(passManager, destf, unwrap(codeGenFileType))) {
+		*ErrorMessage = strdup("TargetMachine can't emit a file of this type");
+		return true;
+	}
+
+	passManager.run(*unwrap(M));
+	return false;
+}
+
 
 }
