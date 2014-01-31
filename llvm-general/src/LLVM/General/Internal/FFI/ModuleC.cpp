@@ -1,6 +1,4 @@
 #define __STDC_LIMIT_MACROS
-//#include "llvm/Config/llvm-config.h"
-//#include "llvm/IR/LLVMContext.h"
 #include "llvm/IR/Module.h"
 #include "llvm-c/Core.h"
 
