@@ -2,6 +2,7 @@
 -- added to an 'LLVM.General.ExecutionEngine.ExecutionEngine' and so JIT compiled to get function pointers.
 module LLVM.General.Module (
     Module,
+    File(..),
 
     withModuleFromAST,
     moduleAST,
