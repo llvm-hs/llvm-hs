@@ -124,6 +124,8 @@ main = shake shakeOptions {
       unless done $ need [ (llvmDir </> "install/bin/llvm-config") ]
     return x
 
+  ghPagesLock <- newResource "gh-pages lock" 1
+
   action $ do
     args <- liftIO getArgs
     need (if null args then [ stamp ("tested", "llvm-general") ] else args)
@@ -195,15 +197,16 @@ main = shake shakeOptions {
     
       "docPublished" -> do
         needStage "documented" [pkg]
-        ghPagesExists <- doesDirectoryExist ghPages
-        unless ghPagesExists $ cmd (Cwd "out") "git" ["clone", buildRoot, "-b", "gh-pages", "gh-pages"]
-        () <- cmd "rm" [ "-rf", ghPages </> tag </> "doc" </> "html" </> pkg ]
-        () <- cmd "mkdir" [ "-p", ghPages </> tag </> "doc" </> "html" ]
-        () <- cmd "cp" [ "-r", pkg </> "dist/doc/html" </> pkg, ghPages </> tag </> "doc" </> "html" ]
-        () <- cmd (Cwd ghPages) "git" [ "add", "-A", "." ]
-        () <- cmd (Cwd ghPages) "git" [ "commit", "-m", show ("update " ++ tag ++ " " ++ pkg ++ " doc") ]
-        () <- cmd (Cwd ghPages) "git" [ "push" ]
-        return ()
+        withResource ghPagesLock 1 $ do
+          ghPagesExists <- doesDirectoryExist ghPages
+          unless ghPagesExists $ cmd (Cwd "out") "git" ["clone", buildRoot, "-b", "gh-pages", "gh-pages"]
+          () <- cmd "rm" [ "-rf", ghPages </> tag </> "doc" </> "html" </> pkg ]
+          () <- cmd "mkdir" [ "-p", ghPages </> tag </> "doc" </> "html" ]
+          () <- cmd "cp" [ "-r", pkg </> "dist/doc/html" </> pkg, ghPages </> tag </> "doc" </> "html" ]
+          () <- cmd (Cwd ghPages) "git" [ "add", "-A", "." ]
+          () <- cmd (Cwd ghPages) "git" [ "commit", "-m", show ("update " ++ tag ++ " " ++ pkg ++ " doc") ]
+          () <- cmd (Cwd ghPages) "git" [ "push" ]
+          return ()
 
   llvmDir </> "install/bin/llvm-config" *> \out -> do
     let tarball = "downloads/llvm-" ++ llvmVersion ++ ".src.tar.gz"
