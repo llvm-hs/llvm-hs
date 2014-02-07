@@ -26,6 +26,7 @@ import qualified LLVM.General.Internal.FFI.Instruction as FFI
 import qualified LLVM.General.Internal.FFI.LLVMCTypes as FFI
 import LLVM.General.Internal.FFI.LLVMCTypes (valueSubclassIdP)
 import qualified LLVM.General.Internal.FFI.PtrHierarchy as FFI
+import qualified LLVM.General.Internal.FFI.Type as FFI
 import qualified LLVM.General.Internal.FFI.User as FFI
 import qualified LLVM.General.Internal.FFI.Value as FFI
 import qualified LLVM.General.Internal.FFI.BinaryOperator as FFI
@@ -127,7 +128,8 @@ instance DecodeM DecodeAST A.Constant (Ptr FFI.Constant) where
   decodeM c = scopeAnyCont $ do
     let v = FFI.upCast c :: Ptr FFI.Value
         u = FFI.upCast c :: Ptr FFI.User
-    t <- decodeM =<< liftIO (FFI.typeOf v)
+    ft <- liftIO (FFI.typeOf v)
+    t <- decodeM ft
     valueSubclassId <- liftIO $ FFI.getValueSubclassId v
     nOps <- liftIO $ FFI.getNumOperands u
     let globalRef = return A.C.GlobalReference `ap` (getGlobalName =<< liftIO (FFI.isAGlobalValue v))
@@ -172,7 +174,7 @@ instance DecodeM DecodeAST A.Constant (Ptr FFI.Constant) where
                `ap` (getGlobalName =<< do liftIO $ FFI.isAGlobalValue =<< FFI.getBlockAddressFunction c)
                `ap` (getLocalName =<< do liftIO $ FFI.getBlockAddressBlock c)
       [valueSubclassIdP|ConstantStruct|] -> 
-            return A.C.Struct `ap` (return $ A.isPacked t) `ap` getConstantOperands
+            return A.C.Struct `ap` (decodeM =<< liftIO (FFI.isPackedStruct ft)) `ap` getConstantOperands
       [valueSubclassIdP|ConstantDataArray|] -> 
             return A.C.Array `ap` (return $ A.elementType t) `ap` getConstantData
       [valueSubclassIdP|ConstantArray|] -> 
