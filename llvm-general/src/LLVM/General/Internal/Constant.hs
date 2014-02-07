@@ -93,11 +93,16 @@ instance EncodeM EncodeAST A.Constant (Ptr FFI.Constant) where
       f' <- referGlobal f
       b' <- getBlockForAddress f b
       liftIO $ FFI.blockAddress (FFI.upCast f') b'
-    A.C.Struct p ms -> do
-      Context context <- gets encodeStateContext
+    A.C.Struct nm p ms -> do
       p <- encodeM p
       ms <- encodeM ms
-      liftIO $ FFI.constStructInContext context ms p
+      case nm of
+        Nothing -> do
+          Context context <- gets encodeStateContext
+          liftIO $ FFI.constStructInContext context ms p
+        Just nm -> do
+          t <- lookupNamedType nm
+          liftIO $ FFI.constNamedStruct t ms
     o -> $(do
       let constExprInfo =  ID.outerJoin ID.astConstantRecs (ID.innerJoin ID.astInstructionRecs ID.instructionDefs)
       TH.caseE [| o |] $ do
@@ -173,8 +178,11 @@ instance DecodeM DecodeAST A.Constant (Ptr FFI.Constant) where
             return A.C.BlockAddress 
                `ap` (getGlobalName =<< do liftIO $ FFI.isAGlobalValue =<< FFI.getBlockAddressFunction c)
                `ap` (getLocalName =<< do liftIO $ FFI.getBlockAddressBlock c)
-      [valueSubclassIdP|ConstantStruct|] -> 
-            return A.C.Struct `ap` (decodeM =<< liftIO (FFI.isPackedStruct ft)) `ap` getConstantOperands
+      [valueSubclassIdP|ConstantStruct|] -> do
+            return A.C.Struct
+               `ap` (return $ case t of A.NamedTypeReference n -> Just n; _ -> Nothing)
+               `ap` (decodeM =<< liftIO (FFI.isPackedStruct ft))
+               `ap` getConstantOperands
       [valueSubclassIdP|ConstantDataArray|] -> 
             return A.C.Array `ap` (return $ A.elementType t) `ap` getConstantData
       [valueSubclassIdP|ConstantArray|] -> 

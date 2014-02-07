@@ -383,7 +383,25 @@ tests = testGroup "Module" [
                ]
           s <- withModuleFromAST' context ast moduleLLVMAssembly
           m <- withModuleFromLLVMAssembly' context s moduleAST
-          m @?= ast
+          m @?= ast,
+
+      testCase "struct constant" $ do
+        let s = "; ModuleID = '<string>'\n\
+                \\n\
+                \%0 = type { i32 }\n\
+                \\n\
+                \@0 = constant %0 { i32 1 }, align 4\n"
+            ast = Module "<string>" Nothing Nothing [
+              TypeDefinition (UnName 0) (Just $ StructureType False [IntegerType 32]),
+              GlobalDefinition $ globalVariableDefaults {
+                G.name = UnName 0,
+                G.isConstant = True,
+                G.type' = NamedTypeReference (UnName 0),
+                G.initializer = Just $ C.Struct (Just $ UnName 0) False [ C.Int 32 1 ],
+                G.alignment = 4
+              }
+             ]
+        strCheck ast s
    ],
         
   testGroup "failures" [

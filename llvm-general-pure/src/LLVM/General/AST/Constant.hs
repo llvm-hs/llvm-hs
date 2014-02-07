@@ -24,7 +24,7 @@ data Constant
     = Int { integerBits :: Word32, integerValue :: Integer }
     | Float { floatValue :: F.SomeFloat }
     | Null { constantType :: Type }
-    | Struct { isPacked :: Bool, memberValues :: [ Constant ] }
+    | Struct { structName :: Maybe Name, isPacked :: Bool, memberValues :: [ Constant ] }
     | Array { memberType :: Type, memberValues :: [ Constant ] }
     | Vector { memberValues :: [ Constant ] }
     | Undef { constantType :: Type }

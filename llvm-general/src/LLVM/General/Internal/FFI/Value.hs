@@ -32,3 +32,6 @@ foreign import ccall unsafe "LLVM_General_GetValueSubclassId" getValueSubclassId
 
 foreign import ccall unsafe "LLVMReplaceAllUsesWith" replaceAllUsesWith ::
   Ptr Value -> Ptr Value -> IO ()
+
+foreign import ccall unsafe "LLVMDumpValue" dumpValue ::
+  Ptr Value -> IO ()

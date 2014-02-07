@@ -91,7 +91,7 @@ tests = testGroup "Constants" [
     ), (
       "struct",
       StructureType False (replicate 2 (IntegerType 32)),
-      C.Struct False (replicate 2 (C.Int 32 1)),
+      C.Struct Nothing False (replicate 2 (C.Int 32 1)),
       "global { i32, i32 } { i32 1, i32 1 }"
     ), (
       "dataarray",
@@ -101,7 +101,7 @@ tests = testGroup "Constants" [
     ), (
       "array",
       ArrayType 3 (StructureType False [IntegerType 32]),
-      C.Array (StructureType False [IntegerType 32]) [C.Struct False [C.Int 32 i] | i <- [1,2,1]],
+      C.Array (StructureType False [IntegerType 32]) [C.Struct Nothing False [C.Int 32 i] | i <- [1,2,1]],
       "global [3 x { i32 }] [{ i32 } { i32 1 }, { i32 } { i32 2 }, { i32 } { i32 1 }]"
     ), (
       "datavector",

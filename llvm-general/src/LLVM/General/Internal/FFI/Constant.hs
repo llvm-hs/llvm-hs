@@ -53,6 +53,11 @@ foreign import ccall unsafe "LLVMConstStructInContext" constStructInContext' ::
 
 constStructInContext ctx (n, cs) p = constStructInContext' ctx cs n p
 
+foreign import ccall unsafe "LLVMConstNamedStruct" constNamedStruct' ::
+  Ptr Type -> Ptr (Ptr Constant) -> CUInt -> IO (Ptr Constant)
+
+constNamedStruct ty (n, cs) = constNamedStruct' ty cs n 
+
 foreign import ccall unsafe "LLVM_General_GetConstantDataSequentialElementAsConstant" getConstantDataSequentialElementAsConstant ::
   Ptr Constant -> CUInt -> IO (Ptr Constant)
 
