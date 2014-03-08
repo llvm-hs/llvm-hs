@@ -95,6 +95,7 @@ createPassManager pss = flip runAnyContT return $ do
       forM_ tli $ \(TargetLibraryInfo tli) -> do
         liftIO $ FFI.addTargetLibraryInfoPass pm tli
       forM_ dl $ \dl -> liftIO $ withFFIDataLayout dl $ FFI.addDataLayoutPass pm 
+      forM_ tm' $ \(TargetMachine tm) -> liftIO $ FFI.addAnalysisPasses tm pm
       forM_ ps $ \p -> $(
         do
           TH.TyConI (TH.DataD _ _ _ cons _) <- TH.reify ''Pass

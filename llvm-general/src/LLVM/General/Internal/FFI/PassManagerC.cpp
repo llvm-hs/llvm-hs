@@ -6,6 +6,7 @@
 #include "llvm/Transforms/Vectorize.h"
 #include "llvm/Transforms/Instrumentation.h"
 #include "llvm/PassManager.h"
+#include "llvm/Target/TargetMachine.h"
 
 #include "llvm-c/Core.h"
 
@@ -39,6 +40,10 @@ extern "C" {
 
 void LLVM_General_AddDataLayoutPass(LLVMPassManagerRef PM, const char *dl) {
 	unwrap(PM)->add(new DataLayout(dl));
+}
+
+void LLVM_General_LLVMAddAnalysisPasses(LLVMTargetMachineRef T, LLVMPassManagerRef PM) {
+    unwrap(T)->addAnalysisPasses(*unwrap(PM));
 }
 
 #define LLVM_GENERAL_FOR_EACH_PASS_WITHOUT_LLVM_C_BINDING(macro) \
