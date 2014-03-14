@@ -65,6 +65,7 @@ import qualified LLVM.General.AST.Global as A.G
 -- | <http://llvm.org/doxygen/classllvm_1_1Module.html>
 newtype Module = Module (Ptr FFI.Module)
 
+-- | A newtype to distinguish strings used for paths from other strings
 newtype File = File FilePath
   deriving (Eq, Ord, Read, Show)
 

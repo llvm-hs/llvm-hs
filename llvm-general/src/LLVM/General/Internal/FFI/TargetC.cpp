@@ -292,7 +292,17 @@ LLVMBool LLVM_General_GetLibFunc(
 	return result;
 }
 
-void LLVM_General_SetAvailableWithName(
+const char *LLVM_General_LibFuncGetName(
+	LLVMTargetLibraryInfoRef l,
+	LLVMLibFunc f,
+	size_t *nameSize
+) {
+	StringRef s = unwrap(l)->getName(unwrap(f));
+	*nameSize = s.size();
+	return s.data();
+}
+
+void LLVM_General_LibFuncSetAvailableWithName(
 	LLVMTargetLibraryInfoRef l,
 	LLVMLibFunc f,
 	const char *name

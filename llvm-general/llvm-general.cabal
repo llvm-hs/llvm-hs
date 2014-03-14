@@ -76,11 +76,11 @@ library
     LLVM.General.Context
     LLVM.General.Diagnostic
     LLVM.General.ExecutionEngine
-    LLVM.General.LibraryFunction
     LLVM.General.Module
     LLVM.General.PassManager
     LLVM.General.Relocation
     LLVM.General.Target
+    LLVM.General.Target.LibraryFunction
     LLVM.General.Target.Options
     LLVM.General.Transforms
 

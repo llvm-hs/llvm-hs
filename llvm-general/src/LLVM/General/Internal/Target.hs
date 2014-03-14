@@ -6,10 +6,11 @@
   #-}
 module LLVM.General.Internal.Target where
 
-import Control.Monad
-import Control.Monad.Error
+import Control.Monad hiding (forM)
+import Control.Monad.Error hiding (forM)
 import Control.Exception
 import Data.Functor
+import Data.Traversable (forM)
 import Control.Monad.AnyCont
 import Data.Maybe
 
@@ -20,6 +21,7 @@ import qualified Data.Set as Set
 
 import LLVM.General.Internal.Coding
 import LLVM.General.Internal.String ()
+import LLVM.General.Internal.LibraryFunction
 import LLVM.General.DataLayout
 
 import LLVM.General.AST.DataLayout
@@ -260,7 +262,7 @@ getTargetMachineDataLayout (TargetMachine m) =
 initializeAllTargets :: IO ()
 initializeAllTargets = FFI.initializeAllTargets
 
--- | Bracket creation and destruction of a TargetMachine configured for the host
+-- | Bracket creation and destruction of a 'TargetMachine' configured for the host
 withDefaultTargetMachine :: (TargetMachine -> IO a) -> ErrorT String IO a
 withDefaultTargetMachine f = do
   liftIO $ initializeAllTargets
@@ -274,21 +276,30 @@ withDefaultTargetMachine f = do
 -- | <http://llvm.org/docs/doxygen/html/classllvm_1_1TargetLibraryInfo.html>
 newtype TargetLibraryInfo = TargetLibraryInfo (Ptr FFI.TargetLibraryInfo)
 
--- | Set the name of the function on the target platform that corresponds to funcName
-setAvailableWithName ::
-  TargetLibraryInfo ->
-  String -> -- ^ The LibFunc::Func name
-  String -> -- ^ The actual function name
-  IO Bool -- ^ Was there a LibFunc::Func with that name?
-setAvailableWithName (TargetLibraryInfo f) funcName name = flip runAnyContT return $ do
+-- | Look up a 'LibraryFunction' by its standard name
+getLibraryFunction :: TargetLibraryInfo -> String -> IO (Maybe LibraryFunction)
+getLibraryFunction (TargetLibraryInfo f) name = flip runAnyContT return $ do
   libFuncP <- alloca
-  funcName <- encodeM funcName
-  r <- decodeM =<< (liftIO $ FFI.getLibFunc f funcName libFuncP)
-  when r $ do
-    name <- encodeM name
-    libFunc <- peek libFuncP
-    liftIO $ FFI.setAvailableWithName f libFunc name
-  return r
+  name <- encodeM name
+  r <- decodeM =<< (liftIO $ FFI.getLibFunc f name libFuncP)
+  forM (if r then Just libFuncP else Nothing) $ decodeM <=< peek
+
+-- | Get a the current name to be emitted for a 'LibraryFunction'
+getLibraryFunctionName :: TargetLibraryInfo -> LibraryFunction -> IO String
+getLibraryFunctionName (TargetLibraryInfo f) l = flip runAnyContT return $ do
+  l <- encodeM l
+  decodeM $ FFI.libFuncGetName f l
+
+-- | Set the name of the function on the target platform that corresponds to funcName
+setLibraryFunctionAvailableWithName ::
+  TargetLibraryInfo
+  -> LibraryFunction
+  -> String -- ^ The function name to be emitted
+  -> IO ()
+setLibraryFunctionAvailableWithName (TargetLibraryInfo f) libraryFunction name = flip runAnyContT return $ do
+  name <- encodeM name
+  libraryFunction <- encodeM libraryFunction
+  liftIO $ FFI.libFuncSetAvailableWithName f libraryFunction name
 
 -- | look up information about the library functions available on a given platform
 withTargetLibraryInfo :: 

@@ -14,6 +14,7 @@ import Control.Monad
 
 import LLVM.General.Target
 import LLVM.General.Target.Options
+import LLVM.General.Target.LibraryFunction
 
 instance Arbitrary FloatABI where
   arbitrary = elements [minBound .. maxBound]
@@ -83,5 +84,21 @@ tests = testGroup "Target" [
          pokeTargetOptions options to
          options' <- peekTargetOptions to
          return $ options == options'
+   ],
+  testGroup "LibraryFunction" [
+    testGroup "set-get" [
+       testCase (show lf) $ do
+         triple <- getDefaultTargetTriple
+         withTargetLibraryInfo triple $ \tli -> do
+           setLibraryFunctionAvailableWithName tli lf "foo"
+           nm <- getLibraryFunctionName tli lf
+           nm @?= "foo"
+       | lf <- [minBound, maxBound]
+     ],
+    testCase "get" $ do
+      triple <- getDefaultTargetTriple
+      withTargetLibraryInfo triple $ \tli -> do
+        lf <- getLibraryFunction tli "printf"
+        lf @?= Just LF__printf
    ]
  ]
