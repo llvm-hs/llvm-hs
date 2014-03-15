@@ -6,6 +6,9 @@
 #include "llvm/Transforms/Vectorize.h"
 #include "llvm/Transforms/Instrumentation.h"
 #include "llvm/PassManager.h"
+#include "llvm-c/Target.h"
+#include "llvm-c/Transforms/PassManagerBuilder.h"
+#include "llvm/Target/TargetLibraryInfo.h"
 
 #include "llvm-c/Core.h"
 
@@ -32,6 +35,16 @@ inline TargetMachine *unwrap(LLVMTargetMachineRef P) {
 
 inline LLVMTargetMachineRef wrap(const TargetMachine *P) {
 	return reinterpret_cast<LLVMTargetMachineRef>(const_cast<TargetMachine *>(P));
+}
+
+// Taken from llvm/lib/Target/Target.cpp
+inline TargetLibraryInfo *unwrap(LLVMTargetLibraryInfoRef P) {
+  return reinterpret_cast<TargetLibraryInfo*>(P);
+}
+
+// Taken from llvm/lib/Transforms/IPO/PassManagerBuilder.cpp
+inline PassManagerBuilder *unwrap(LLVMPassManagerBuilderRef P) {
+    return reinterpret_cast<PassManagerBuilder*>(P);
 }
 }
 
@@ -226,6 +239,16 @@ void LLVM_General_AddDebugGeneratedIRPass(
 
 void LLVM_General_AddDebugExistingIRPass(LLVMPassManagerRef PM) {
 	unwrap(PM)->add(createDebugIRPass());
+}
+
+void
+LLVM_General_PassManagerBuilderSetLibraryInfo(
+    LLVMPassManagerBuilderRef PMB,
+    LLVMTargetLibraryInfoRef l
+) {
+  // The PassManager frees the TargetLibraryInfo when done,
+  // but we also free our ref, so give it a new copy.
+  unwrap(PMB)->LibraryInfo = new TargetLibraryInfo(*unwrap(l));
 }
 
 }

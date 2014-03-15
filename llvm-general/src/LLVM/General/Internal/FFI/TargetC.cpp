@@ -262,6 +262,19 @@ LLVMTargetLibraryInfoRef LLVM_General_CreateTargetLibraryInfo(
 	return wrap(new TargetLibraryInfo(Triple(triple)));
 }
 
+LLVMBool LLVM_General_SetAvailableWithName(
+    LLVMTargetLibraryInfoRef l,
+    const char *funcName,
+    const char *name
+) {
+    TargetLibraryInfo *wrapped = unwrap(l);
+    LibFunc::Func f;
+    if (!wrapped->getLibFunc(funcName, f))
+        return false;
+    wrapped->setAvailableWithName(f, name);
+    return true;
+}
+
 void LLVM_General_DisposeTargetLibraryInfo(LLVMTargetLibraryInfoRef l) {
 	delete unwrap(l);
 }

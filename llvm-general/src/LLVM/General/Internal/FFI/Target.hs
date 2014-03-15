@@ -106,6 +106,9 @@ data TargetLibraryInfo
 foreign import ccall unsafe "LLVM_General_CreateTargetLibraryInfo" createTargetLibraryInfo ::
   CString -> IO (Ptr TargetLibraryInfo)
 
+foreign import ccall unsafe "LLVM_General_SetAvailableWithName" setAvailableWithName ::
+  Ptr TargetLibraryInfo -> CString -> CString -> IO LLVMBool
+
 foreign import ccall unsafe "LLVM_General_DisposeTargetLibraryInfo" disposeTargetLibraryInfo ::
   Ptr TargetLibraryInfo -> IO ()
 

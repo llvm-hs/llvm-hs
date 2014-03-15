@@ -12,6 +12,7 @@ module LLVM.General.Target (
    getDefaultTargetTriple, getProcessTargetTriple, getHostCPUName, getHostCPUFeatures,
    getTargetMachineDataLayout, initializeNativeTarget, initializeAllTargets,
    TargetLibraryInfo,
+   setAvailableWithName,
    withTargetLibraryInfo
  ) where
 

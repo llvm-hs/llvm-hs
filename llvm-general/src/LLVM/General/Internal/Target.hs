@@ -2,7 +2,8 @@
   TemplateHaskell,
   MultiParamTypeClasses,
   RecordWildCards,
-  UndecidableInstances
+  UndecidableInstances,
+  LambdaCase
   #-}
 module LLVM.General.Internal.Target where
 
@@ -273,6 +274,17 @@ withDefaultTargetMachine f = do
 
 -- | <http://llvm.org/docs/doxygen/html/classllvm_1_1TargetLibraryInfo.html>
 newtype TargetLibraryInfo = TargetLibraryInfo (Ptr FFI.TargetLibraryInfo)
+
+-- | Set the name of the function on the target platform that corresponds to funcName
+setAvailableWithName ::
+  TargetLibraryInfo ->
+  String -> -- ^ The LibFunc::Func name
+  String -> -- ^ The actual function name
+  IO Bool -- ^ Was there a LibFunc::Func with that name?
+setAvailableWithName (TargetLibraryInfo f) funcName name = flip runAnyContT return $ do
+  funcName <- encodeM funcName
+  encodeM name >>= liftIO . FFI.setAvailableWithName f funcName >>= \case
+    (FFI.LLVMBool b) -> return . toEnum $ fromIntegral b
 
 -- | look up information about the library functions available on a given platform
 withTargetLibraryInfo :: 

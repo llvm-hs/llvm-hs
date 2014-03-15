@@ -54,7 +54,8 @@ data PassSetSpec
       sizeLevel :: Maybe Word,
       unitAtATime :: Maybe Bool,
       simplifyLibCalls :: Maybe Bool,
-      useInlinerWithThreshold :: Maybe Word
+      useInlinerWithThreshold :: Maybe Word,
+      curatedTargetLibraryInfo :: Maybe TargetLibraryInfo
     }
 
 -- | Helper to make a curated 'PassSetSpec'
@@ -63,7 +64,8 @@ defaultCuratedPassSetSpec = CuratedPassSetSpec {
   sizeLevel = Nothing,
   unitAtATime = Nothing,
   simplifyLibCalls = Nothing,
-  useInlinerWithThreshold = Nothing
+  useInlinerWithThreshold = Nothing,
+  curatedTargetLibraryInfo = Nothing
 }
 
 -- | an empty 'PassSetSpec'
@@ -89,6 +91,9 @@ createPassManager pss = flip runAnyContT return $ do
         handleOption FFI.passManagerBuilderSetDisableUnitAtATime (liftM not . unitAtATime)
         handleOption FFI.passManagerBuilderSetDisableSimplifyLibCalls (liftM not . simplifyLibCalls)
         handleOption FFI.passManagerBuilderUseInlinerWithThreshold useInlinerWithThreshold
+        case (curatedTargetLibraryInfo s) of
+          (Just (TargetLibraryInfo tl)) -> FFI.passManagerBuilderSetLibraryInfo b tl
+          Nothing -> return ()
         FFI.passManagerBuilderPopulateModulePassManager b pm
     PassSetSpec ps dl tli tm' -> do
       let tm = maybe nullPtr (\(TargetMachine tm) -> tm) tm'
