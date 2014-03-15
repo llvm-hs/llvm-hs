@@ -21,6 +21,7 @@ module LLVM.General.Internal.FFI.LLVMCTypes where
 #include "LLVM/General/Internal/FFI/Constant.h"
 #include "LLVM/General/Internal/FFI/Analysis.h"
 #include "LLVM/General/Internal/FFI/Module.h"
+#include "LLVM/General/Internal/FFI/LibFunc.h"
 
 import Language.Haskell.TH.Quote
 
@@ -209,3 +210,8 @@ newtype LinkerMode = LinkerMode CUInt
   deriving (Eq, Read, Show, Bits, Typeable, Data, Num)
 #define LM_Rec(n) { #n, LLVMLinker ## n },
 #{inject LINKER_MODE, LinkerMode, LinkerMode, linkerMode, LM_Rec}
+
+newtype LibFunc = LibFunc CUInt
+  deriving (Eq, Read, Show, Bits, Typeable, Data, Num, Storable)
+#define LF_Rec(n) { #n, LLVMLibFunc__ ## n },
+#{inject LIB_FUNC, LibFunc, LibFunc, libFunc__, LF_Rec}

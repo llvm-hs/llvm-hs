@@ -14,6 +14,7 @@
 #include "llvm-c/TargetMachine.h"
 #include "llvm-c/Core.h"
 #include "LLVM/General/Internal/FFI/Target.h"
+#include "LLVM/General/Internal/FFI/LibFunc.h"
 
 using namespace llvm;
 
@@ -71,6 +72,24 @@ static FloatABI::ABIType unwrap(LLVM_General_FloatABI x) {
 LLVM_GENERAL_FOR_EACH_FLOAT_ABI(ENUM_CASE)
 #undef ENUM_CASE
 	default: return FloatABI::ABIType(0);
+	}
+}
+
+static LibFunc::Func unwrap(LLVMLibFunc x) {
+	switch(x) {
+#define ENUM_CASE(x) case LLVMLibFunc__ ## x: return LibFunc::x;
+LLVM_GENERAL_FOR_EACH_LIB_FUNC(ENUM_CASE)
+#undef ENUM_CASE
+	default: return LibFunc::Func(0);
+	}
+}
+
+static LLVMLibFunc wrap(LibFunc::Func x) {
+	switch(x) {
+#define ENUM_CASE(x) case LibFunc::x : return LLVMLibFunc__ ## x;
+LLVM_GENERAL_FOR_EACH_LIB_FUNC(ENUM_CASE)
+#undef ENUM_CASE
+	default: return LLVMLibFunc(0);
 	}
 }
 
@@ -262,17 +281,23 @@ LLVMTargetLibraryInfoRef LLVM_General_CreateTargetLibraryInfo(
 	return wrap(new TargetLibraryInfo(Triple(triple)));
 }
 
-LLVMBool LLVM_General_SetAvailableWithName(
-    LLVMTargetLibraryInfoRef l,
-    const char *funcName,
-    const char *name
+LLVMBool LLVM_General_GetLibFunc(
+	LLVMTargetLibraryInfoRef l,
+	const char *funcName,
+	LLVMLibFunc *f
 ) {
-    TargetLibraryInfo *wrapped = unwrap(l);
-    LibFunc::Func f;
-    if (!wrapped->getLibFunc(funcName, f))
-        return false;
-    wrapped->setAvailableWithName(f, name);
-    return true;
+	LibFunc::Func func;
+	LLVMBool result = unwrap(l)->getLibFunc(funcName, func);
+	*f = wrap(func);
+	return result;
+}
+
+void LLVM_General_SetAvailableWithName(
+	LLVMTargetLibraryInfoRef l,
+	LLVMLibFunc f,
+	const char *name
+) {
+	unwrap(l)->setAvailableWithName(unwrap(f), name);
 }
 
 void LLVM_General_DisposeTargetLibraryInfo(LLVMTargetLibraryInfoRef l) {

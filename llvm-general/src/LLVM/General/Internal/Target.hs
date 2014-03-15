@@ -2,8 +2,7 @@
   TemplateHaskell,
   MultiParamTypeClasses,
   RecordWildCards,
-  UndecidableInstances,
-  LambdaCase
+  UndecidableInstances
   #-}
 module LLVM.General.Internal.Target where
 
@@ -282,9 +281,14 @@ setAvailableWithName ::
   String -> -- ^ The actual function name
   IO Bool -- ^ Was there a LibFunc::Func with that name?
 setAvailableWithName (TargetLibraryInfo f) funcName name = flip runAnyContT return $ do
+  libFuncP <- alloca
   funcName <- encodeM funcName
-  encodeM name >>= liftIO . FFI.setAvailableWithName f funcName >>= \case
-    (FFI.LLVMBool b) -> return . toEnum $ fromIntegral b
+  r <- decodeM =<< (liftIO $ FFI.getLibFunc f funcName libFuncP)
+  when r $ do
+    name <- encodeM name
+    libFunc <- peek libFuncP
+    liftIO $ FFI.setAvailableWithName f libFunc name
+  return r
 
 -- | look up information about the library functions available on a given platform
 withTargetLibraryInfo :: 
