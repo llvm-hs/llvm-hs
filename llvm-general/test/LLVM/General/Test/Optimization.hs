@@ -94,6 +94,14 @@ handAST =
        }
      ]
 
+isVectory :: A.Module -> Assertion
+isVectory Module { moduleDefinitions = ds } =
+  (@? "Module is not vectory") $ not $ null [ i 
+    | GlobalDefinition (Function { G.basicBlocks = b }) <- ds,
+      BasicBlock _ is _ <- b,
+      _ := i@(InsertElement {}) <- is
+   ]
+
 optimize :: PassSetSpec -> A.Module -> IO A.Module
 optimize pss m = withContext $ \context -> withModuleFromAST' context m $ \mIn' -> do
   withPassManager pss $ \pm -> runPassManager pm mIn'
@@ -169,127 +177,86 @@ tests = testGroup "Optimization" [
            G.returnType = FloatingPointType 64 IEEE,
             G.name = Name "foo",
             G.parameters = ([
-              Parameter (FloatingPointType 64 IEEE) (Name "a1") [],
-              Parameter (FloatingPointType 64 IEEE) (Name "a2") [],
-              Parameter (FloatingPointType 64 IEEE) (Name "b1") [],
-              Parameter (FloatingPointType 64 IEEE) (Name "b2") []
+              Parameter (FloatingPointType 64 IEEE) (Name (l ++ n)) []
+                | l <- [ "a", "b" ], n <- ["1", "2"]
              ], False),
             G.basicBlocks = [
-              BasicBlock (UnName 0) [
-                Name "x1" := FSub { 
-                           operand0 = LocalReference (Name "a1"), 
-                           operand1 = LocalReference (Name "b1"),
-                           metadata = []
-                         },
-                Name "x2" := FSub { 
-                           operand0 = LocalReference (Name "a2"), 
-                           operand1 = LocalReference (Name "b2"),
-                           metadata = []
-                         },
-                Name "y1" := FMul { 
-                           operand0 = LocalReference (Name "x1"), 
-                           operand1 = LocalReference (Name "a1"),
-                           metadata = []
-                         },
-                Name "y2" := FMul { 
-                           operand0 = LocalReference (Name "x2"), 
-                           operand1 = LocalReference (Name "a2"),
-                           metadata = []
-                         },
-                Name "z1" := FAdd { 
-                           operand0 = LocalReference (Name "y1"), 
-                           operand1 = LocalReference (Name "b1"),
-                           metadata = []
-                         },
-                Name "z2" := FAdd { 
-                           operand0 = LocalReference (Name "y2"), 
-                           operand1 = LocalReference (Name "b2"),
-                           metadata = []
-                         },
-                Name "r" := FMul {
-                           operand0 = LocalReference (Name "z1"), 
-                           operand1 = LocalReference (Name "z2"),
-                           metadata = []
-                         }
-              ] (Do $ Ret (Just (LocalReference (Name "r"))) [])
+              BasicBlock (UnName 0) ([
+                Name (l ++ n) := op (LocalReference (Name (o1 ++ n))) (LocalReference (Name (o2 ++ n))) []
+                | (l, op, o1, o2) <- [
+                   ("x", FSub, "a", "b"),
+                   ("y", FMul, "x", "a"),
+                   ("z", FAdd, "y", "b")],
+                  n <- ["1", "2"]
+               ] ++ [
+                Name "r" := FMul (LocalReference (Name "z1")) (LocalReference (Name "z2")) []
+              ]) (Do $ Ret (Just (LocalReference (Name "r"))) [])
              ]
           }
          ]
-      mOut <- 
-        optimize (defaultPassSetSpec { transforms = [ defaultVectorizeBasicBlocks { requiredChainDepth = 3 }, InstructionCombining, GlobalValueNumbering False ] }) mIn
-      mOut @?= Module "<string>" Nothing Nothing [
-        GlobalDefinition $ functionDefaults {
-          G.returnType = FloatingPointType 64 IEEE,
-          G.name = Name "foo",
-          G.parameters = ([
-            Parameter (FloatingPointType 64 IEEE) (Name "a1") [],
-            Parameter (FloatingPointType 64 IEEE) (Name "a2") [],
-            Parameter (FloatingPointType 64 IEEE) (Name "b1") [],
-            Parameter (FloatingPointType 64 IEEE) (Name "b2") []
-           ], False),
-          G.basicBlocks = [
-            BasicBlock (UnName 0) [
-              Name "x1.v.i1.1" := InsertElement {
-                vector = ConstantOperand (C.Undef (VectorType 2 (FloatingPointType 64 IEEE))),
-                element = LocalReference (Name "b1"),
-                index = ConstantOperand (C.Int 32 0),
-                metadata = []
-               },
-              Name "x1.v.i1.2" := InsertElement {
-                vector = LocalReference (Name "x1.v.i1.1"),
-                element = LocalReference (Name "b2"),
-                index = ConstantOperand (C.Int 32 1),
-                metadata = []
-               },
-              Name "x1.v.i0.1" := InsertElement {
-                vector = ConstantOperand (C.Undef (VectorType 2 (FloatingPointType 64 IEEE))),
-                element = LocalReference (Name "a1"),
-                index = ConstantOperand (C.Int 32 0),
-                metadata = []
-               },
-              Name "x1.v.i0.2" := InsertElement {
-                vector = LocalReference (Name "x1.v.i0.1"),
-                element = LocalReference (Name "a2"),
-                index = ConstantOperand (C.Int 32 1),
-                metadata = []
-               },
-              Name "x1" := FSub {
-                operand0 = LocalReference (Name "x1.v.i0.2"),
-                operand1 = LocalReference (Name "x1.v.i1.2"),
-                metadata = []
-               },
-              Name "y1" := FMul {
-                operand0 = LocalReference (Name "x1"),
-                operand1 = LocalReference (Name "x1.v.i0.2"),
-                metadata = []
-               },
-              Name "z1" := FAdd {
-                operand0 = LocalReference (Name "y1"),
-                operand1 = LocalReference (Name "x1.v.i1.2"),
-                metadata = []
-               },
-              Name "z1.v.r1" := ExtractElement {
-                vector = LocalReference (Name "z1"),
-                index = ConstantOperand (C.Int 32 0),
-                metadata = []
-               },
-              Name "z1.v.r2" := ExtractElement {
-                vector = LocalReference (Name "z1"),
-                index = ConstantOperand (C.Int 32 1),
-                metadata = []
-               },
-              Name "r" := FMul {
-                operand0 = LocalReference (Name "z1.v.r1"),
-                operand1 = LocalReference (Name "z1.v.r2"),
-                metadata = []
-               }
-             ] (
-              Do $ Ret (Just (LocalReference (Name "r"))) []
-             )
-           ]
-         }
-       ],
+      mOut <- optimize (defaultPassSetSpec {
+                    transforms = [
+                     defaultVectorizeBasicBlocks { requiredChainDepth = 3 },
+                     InstructionCombining, 
+                     GlobalValueNumbering False
+                    ] }) mIn
+      isVectory mOut,
       
+    testCase "LoopVectorize" $ do
+      let
+        mIn = 
+          Module {
+            moduleName = "<string>",
+            moduleDataLayout = Just $ defaultDataLayout { 
+              typeLayouts = Map.singleton (VectorAlign, 128) (AlignmentInfo 128 Nothing)
+             },
+            moduleTargetTriple = Just "x86_64",
+            moduleDefinitions = [
+              GlobalDefinition $ functionDefaults {
+                G.returnType = VoidType,
+                G.name = Name "foo",
+                G.parameters = ([Parameter (PointerType (IntegerType 32) (AddrSpace 0)) (Name "x") []], False),
+                G.basicBlocks = [
+                  BasicBlock (UnName 0) [] (Do $ Br (UnName 1) []),
+                  BasicBlock (UnName 1) [
+                    Name "i.0" := Phi (IntegerType 32) [ 
+                      (ConstantOperand (C.Int 32 0), UnName 0),
+                      (LocalReference (UnName 8), UnName 7)
+                     ] [],
+                    Name ".0" := Phi (PointerType (IntegerType 32) (AddrSpace 0)) [ 
+                      (LocalReference (Name "x"), UnName 0),
+                      (LocalReference (UnName 4), UnName 7)
+                     ] [],
+                    UnName 2 := ICmp IPred.SLT (LocalReference (Name "i.0")) (ConstantOperand (C.Int 32 2048)) []
+                   ] (Do $ CondBr (LocalReference (UnName 2)) (UnName 3) (UnName 9) []),
+                  BasicBlock (UnName 3) [
+                    UnName 4 := GetElementPtr True (LocalReference (Name ".0")) [ 
+                      ConstantOperand (C.Int 32 1)
+                     ] [],
+                    UnName 5 := Load False (LocalReference (Name ".0")) Nothing 4 [],
+                    UnName 6 := Add True False (LocalReference (UnName 5)) (ConstantOperand (C.Int 32 1)) [],
+                    Do $ Store False (LocalReference (Name ".0")) (LocalReference (UnName 6)) Nothing 4 []  
+                   ] (Do $ Br (UnName 7) []),
+                  BasicBlock (UnName 7) [
+                    UnName 8 := Add True False (LocalReference (Name "i.0")) (ConstantOperand (C.Int 32 1)) []
+                   ] (Do $ Br (UnName 1) []),
+                  BasicBlock (UnName 9) [] (Do $ Ret Nothing [])
+                 ]
+               }
+             ]
+           }
+      mOut <- do
+        let triple = "x86_64"
+        (target, _) <- failInIO $ lookupTarget Nothing triple
+        withTargetOptions $ \targetOptions -> do
+          withTargetMachine target triple "" Set.empty targetOptions R.Default CM.Default CGO.Default $ \tm -> do
+            optimize (defaultPassSetSpec { 
+                        transforms = [ LoopVectorize ],
+                        dataLayout = moduleDataLayout mIn,
+                        targetMachine = Just tm
+                      }) mIn
+      isVectory mOut,
+
     testCase "LowerInvoke" $ do
       -- This test doesn't test much about what LowerInvoke does, just that it seems to work.
       -- The pass seems to be quite deeply dependent on weakly documented presumptions about
