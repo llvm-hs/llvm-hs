@@ -2,6 +2,7 @@
 module LLVM.General.AST.Global where
 
 import Data.Word
+import Data.Data
 
 import LLVM.General.AST.Name
 import LLVM.General.AST.Type
@@ -52,17 +53,17 @@ data Global
         garbageCollectorName :: Maybe String,
         basicBlocks :: [BasicBlock]
       }
-  deriving (Eq, Read, Show)
+  deriving (Eq, Read, Show, Typeable, Data)
 
 -- | 'Parameter's for 'Function's
 data Parameter = Parameter Type Name [A.ParameterAttribute]
-  deriving (Eq, Read, Show)
+  deriving (Eq, Read, Show, Typeable, Data)
 
 -- | <http://llvm.org/doxygen/classllvm_1_1BasicBlock.html>
 -- LLVM code in a function is a sequence of 'BasicBlock's each with a label,
 -- some instructions, and a terminator.
 data BasicBlock = BasicBlock Name [Named Instruction] (Named Terminator)
-  deriving (Eq, Read, Show)
+  deriving (Eq, Read, Show, Typeable, Data)
 
 -- | helper for making 'GlobalVariable's
 globalVariableDefaults :: Global

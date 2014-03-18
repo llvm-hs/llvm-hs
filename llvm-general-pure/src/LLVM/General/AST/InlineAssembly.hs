@@ -24,4 +24,4 @@ data InlineAssembly
       alignStack :: Bool,
       dialect :: Dialect
     }
-  deriving (Eq, Read, Show)
+  deriving (Eq, Read, Show, Typeable, Data)

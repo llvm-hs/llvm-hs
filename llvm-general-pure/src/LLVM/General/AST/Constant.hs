@@ -3,6 +3,7 @@ module LLVM.General.AST.Constant where
 
 import Data.Word (Word32)
 import Data.Bits ((.|.), (.&.), complement, testBit, shiftL)
+import Data.Data
 
 import LLVM.General.AST.Type
 import LLVM.General.AST.Name
@@ -205,7 +206,7 @@ data Constant
         element :: Constant,
         indices' :: [Word32]
       }
-    deriving (Eq, Ord, Read, Show)
+    deriving (Eq, Ord, Read, Show, Typeable, Data)
 
 
 -- | Since LLVM types don't include signedness, there's ambiguity in interpreting

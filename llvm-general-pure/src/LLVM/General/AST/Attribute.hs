@@ -1,6 +1,7 @@
 -- | Module to allow importing 'Attribute' distinctly qualified.
 module LLVM.General.AST.Attribute where
 
+import Data.Data
 import Data.Word
 
 -- | <http://llvm.org/docs/LangRef.html#parameter-attributes>
@@ -13,7 +14,7 @@ data ParameterAttribute
     | ByVal
     | NoCapture
     | Nest
-  deriving (Eq, Read, Show)
+  deriving (Eq, Read, Show, Typeable, Data)
 
 -- | <http://llvm.org/docs/LangRef.html#function-attributes>
 data FunctionAttribute
@@ -35,4 +36,4 @@ data FunctionAttribute
     | ReturnsTwice
     | UWTable
     | NonLazyBind
-  deriving (Eq, Read, Show)
+  deriving (Eq, Read, Show, Typeable, Data)

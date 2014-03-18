@@ -16,6 +16,8 @@ module LLVM.General.AST (
   module LLVM.General.AST.Type
   ) where
 
+import Data.Data
+
 import LLVM.General.AST.Name
 import LLVM.General.AST.Type
 import LLVM.General.AST.Global
@@ -30,7 +32,7 @@ data Definition
   | MetadataNodeDefinition MetadataNodeID [Maybe Operand]
   | NamedMetadataDefinition String [MetadataNodeID]
   | ModuleInlineAssembly String
-    deriving (Eq, Read, Show)
+    deriving (Eq, Read, Show, Typeable, Data)
 
 -- | <http://llvm.org/docs/LangRef.html#modulestructure>
 data Module = 
@@ -41,7 +43,7 @@ data Module =
     moduleTargetTriple :: Maybe String,
     moduleDefinitions :: [Definition]
   } 
-  deriving (Eq, Read, Show)
+  deriving (Eq, Read, Show, Typeable, Data)
 
 -- | helper for making 'Module's
 defaultModule = 

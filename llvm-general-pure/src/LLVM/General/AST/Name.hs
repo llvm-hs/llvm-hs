@@ -1,6 +1,8 @@
 -- | Names as used in LLVM IR
 module LLVM.General.AST.Name where
 
+import Data.Data
+
 import Data.Word
 
 {- |
@@ -27,5 +29,5 @@ which they are used.
 data Name 
     = Name String -- ^ a string name 
     | UnName Word -- ^ a number for a nameless thing
-   deriving (Eq, Ord, Read, Show)
+   deriving (Eq, Ord, Read, Show, Typeable, Data)
 

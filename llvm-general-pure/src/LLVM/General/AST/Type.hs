@@ -6,6 +6,8 @@ import LLVM.General.AST.Name
 
 import Data.Word (Word32, Word64)
 
+import Data.Data
+
 -- | LLVM supports some special formats floating point format. This type is to distinguish those format.
 -- I believe it's treated as a format for "a" float, as opposed to a vector of two floats, because
 -- its intended usage is to represent a single number with a combined significand.
@@ -13,7 +15,7 @@ data FloatingPointFormat
   = IEEE
   | DoubleExtended
   | PairOfFloats
-  deriving (Eq, Ord, Read, Show)
+  deriving (Eq, Ord, Read, Show, Typeable, Data)
 
 -- | <http://llvm.org/docs/LangRef.html#type-system>
 data Type
@@ -37,4 +39,4 @@ data Type
   | NamedTypeReference Name
   -- | <http://llvm.org/docs/LangRef.html#metadata-type>
   | MetadataType -- only to be used as a parameter type for a few intrinsics
-  deriving (Eq, Ord, Read, Show)
+  deriving (Eq, Ord, Read, Show, Typeable, Data)

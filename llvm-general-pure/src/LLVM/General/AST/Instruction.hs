@@ -63,7 +63,7 @@ data Terminator
   | Unreachable {
       metadata' :: InstructionMetadata
     }
-  deriving (Eq, Read, Show)
+  deriving (Eq, Read, Show, Typeable, Data)
 
 -- | <http://llvm.org/docs/LangRef.html#atomic-memory-ordering-constraints>
 -- <http://llvm.org/docs/Atomics.html>
@@ -81,13 +81,13 @@ data Atomicity = Atomicity {
   crossThread :: Bool, -- ^ <http://llvm.org/docs/LangRef.html#singlethread>
   memoryOrdering :: MemoryOrdering
  }
- deriving (Eq, Ord, Read, Show)
+ deriving (Eq, Ord, Read, Show, Typeable, Data)
 
 -- | For the redoubtably complex 'LandingPad' instruction
 data LandingPadClause
     = Catch Constant
     | Filter Constant
-    deriving (Eq, Ord, Read, Show)
+    deriving (Eq, Ord, Read, Show, Typeable, Data)
 
 -- | non-terminator instructions:
 -- <http://llvm.org/docs/LangRef.html#binaryops>
@@ -381,11 +381,11 @@ data Instruction
       clauses :: [LandingPadClause],
       metadata :: InstructionMetadata 
     }
-  deriving (Eq, Read, Show)
+  deriving (Eq, Read, Show, Typeable, Data)
 
 -- | Instances of instructions may be given a name, allowing their results to be referenced as 'Operand's.
 -- Sometimes instructions - e.g. a call to a function returning void - don't need names.
 data Named a 
   = Name := a
   | Do a
-  deriving (Eq, Read, Show)
+  deriving (Eq, Read, Show, Typeable, Data)
