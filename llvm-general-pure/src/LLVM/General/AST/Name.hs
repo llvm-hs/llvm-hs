@@ -2,7 +2,6 @@
 module LLVM.General.AST.Name where
 
 import Data.Data
-
 import Data.Word
 
 {- |

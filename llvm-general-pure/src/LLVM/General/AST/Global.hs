@@ -1,8 +1,8 @@
 -- | 'Global's - top-level values in 'Module's - and supporting structures.
 module LLVM.General.AST.Global where
 
-import Data.Word
 import Data.Data
+import Data.Word
 
 import LLVM.General.AST.Name
 import LLVM.General.AST.Type

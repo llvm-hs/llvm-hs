@@ -2,7 +2,6 @@
 module LLVM.General.AST.Operand where
 
 import Data.Data
-
 import Data.Word
 
 import LLVM.General.AST.Name

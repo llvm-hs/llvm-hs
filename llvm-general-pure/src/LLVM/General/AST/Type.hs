@@ -1,12 +1,11 @@
 -- | A representation of an LLVM type
 module LLVM.General.AST.Type where
 
-import LLVM.General.AST.AddrSpace
-import LLVM.General.AST.Name
-
+import Data.Data
 import Data.Word (Word32, Word64)
 
-import Data.Data
+import LLVM.General.AST.AddrSpace
+import LLVM.General.AST.Name
 
 -- | LLVM supports some special formats floating point format. This type is to distinguish those format.
 -- I believe it's treated as a format for "a" float, as opposed to a vector of two floats, because

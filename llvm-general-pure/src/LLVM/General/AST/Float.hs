@@ -3,8 +3,8 @@
 module LLVM.General.AST.Float where
 
 import Prelude as P
-import Data.Word (Word16, Word64)
 import Data.Data
+import Data.Word (Word16, Word64)
 
 -- | A type summing up the various float types.
 -- N.B. Note that in the constructors with multiple fields, the lower significance bits are on the right

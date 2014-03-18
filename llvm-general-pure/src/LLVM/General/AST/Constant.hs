@@ -1,9 +1,9 @@
 -- | A representation of LLVM constants
 module LLVM.General.AST.Constant where
 
+import Data.Data
 import Data.Word (Word32)
 import Data.Bits ((.|.), (.&.), complement, testBit, shiftL)
-import Data.Data
 
 import LLVM.General.AST.Type
 import LLVM.General.AST.Name
