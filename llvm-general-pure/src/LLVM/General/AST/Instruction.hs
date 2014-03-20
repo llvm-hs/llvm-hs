@@ -103,6 +103,7 @@ data Instruction
       metadata :: InstructionMetadata
     }
   | FAdd {
+      fast :: Bool,
       operand0 :: Operand,
       operand1 :: Operand,
       metadata :: InstructionMetadata
@@ -115,6 +116,7 @@ data Instruction
       metadata :: InstructionMetadata
     }
   | FSub { 
+      fast :: Bool,
       operand0 :: Operand, 
       operand1 :: Operand, 
       metadata :: InstructionMetadata
@@ -127,6 +129,7 @@ data Instruction
       metadata :: InstructionMetadata 
     }
   | FMul { 
+      fast :: Bool,
       operand0 :: Operand, 
       operand1 :: Operand, 
       metadata :: InstructionMetadata
@@ -144,6 +147,7 @@ data Instruction
       metadata :: InstructionMetadata
     }
   | FDiv { 
+      fast :: Bool,
       operand0 :: Operand, 
       operand1 :: Operand, 
       metadata :: InstructionMetadata
@@ -159,6 +163,7 @@ data Instruction
       metadata :: InstructionMetadata
     }
   | FRem { 
+      fast :: Bool,
       operand0 :: Operand, 
       operand1 :: Operand, 
       metadata :: InstructionMetadata

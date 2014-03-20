@@ -237,6 +237,7 @@ $(do
             get_nsw b = liftIO $ decodeM =<< FFI.hasNoSignedWrap (FFI.upCast b)
             get_nuw b = liftIO $ decodeM =<< FFI.hasNoUnsignedWrap (FFI.upCast b)
             get_exact b = liftIO $ decodeM =<< FFI.isExact (FFI.upCast b)
+            get_fast b = liftIO $ decodeM =<< FFI.isFast (FFI.upCast b)
 
         n <- liftIO $ FFI.getInstructionDefOpcode i
         $(
@@ -246,6 +247,7 @@ $(do
                 "nsw" -> (["b"], [| get_nsw $(TH.dyn "b") |])
                 "nuw" -> (["b"], [| get_nuw $(TH.dyn "b") |])
                 "exact" -> (["b"], [| get_exact $(TH.dyn "b") |])
+                "fast" -> (["b"], [| get_fast $(TH.dyn "b") |])
                 "operand0" -> ([], [| op 0 |])
                 "operand1" -> ([], [| op 1 |])
                 "address" -> ([], case lrn of "Store" -> [| op 1 |]; _ -> [| op 0 |])
@@ -538,6 +540,7 @@ $(do
                          "nsw" -> [Left [| encodeM $(TH.dyn s) |] ]
                          "nuw" -> [Left [| encodeM $(TH.dyn s) |] ]
                          "exact" -> [Left [| encodeM $(TH.dyn s) |] ]
+                         "fast" -> [Left [| encodeM $(TH.dyn s) |] ]
                          "metadata" -> [Right [| return () |] ]
                          _ -> error $ "unhandled instruction field " ++ show s
                      in

@@ -63,6 +63,10 @@ int LLVM_General_IsExact(LLVMValueRef val) {
 	return unwrap<PossiblyExactOperator>(val)->isExact();
 }
 
+int LLVM_General_IsFast(LLVMValueRef val) {
+	return unwrap<Instruction>(val)->getFastMathFlags().unsafeAlgebra();
+}
+
 LLVMValueRef LLVM_General_GetCallInstCalledValue(
 	LLVMValueRef callInst
 ) {
