@@ -6,6 +6,7 @@
 #include "llvm-c/Core.h"
 #include "LLVM/General/Internal/FFI/Value.h"
 #include "LLVM/General/Internal/FFI/Constant.h"
+#include "LLVM/General/Internal/FFI/BinaryOperator.h"
 
 using namespace llvm;
 
@@ -52,24 +53,12 @@ LLVMValueRef LLVM_General_ConstBinaryOperator(unsigned opcode, LLVMValueRef o0, 
 	return wrap(ConstantExpr::get(opcode, unwrap<Constant>(o0), unwrap<Constant>(o1)));
 }
 
-#define LLVM_GENERAL_FOR_EACH_OVERFLOWING_BINARY_OPERATOR(macro) \
-  macro(Add) \
-  macro(Sub) \
-  macro(Mul) \
-  macro(Shl)
-
 #define CASE_CODE(op)																										\
 LLVMValueRef LLVM_General_Const ## op(unsigned nsw, unsigned nuw, LLVMValueRef o0, LLVMValueRef o1) { \
 	return wrap(ConstantExpr::get ## op(unwrap<Constant>(o0), unwrap<Constant>(o1), nuw != 0, nsw != 0)); \
 }
 LLVM_GENERAL_FOR_EACH_OVERFLOWING_BINARY_OPERATOR(CASE_CODE)
 #undef CASE_CODE
-
-#define LLVM_GENERAL_FOR_EACH_POSSIBLY_EXACT_BINARY_OPERATOR(macro) \
-  macro(UDiv) \
-  macro(SDiv) \
-  macro(LShr) \
-  macro(AShr)
 
 #define CASE_CODE(op)																										\
 LLVMValueRef LLVM_General_Const ## op(unsigned isExact, LLVMValueRef o0, LLVMValueRef o1) {	\

@@ -5,6 +5,7 @@
 #include "llvm-c/Core.h"
 
 #include "LLVM/General/Internal/FFI/Instruction.h"
+#include "LLVM/General/Internal/FFI/BinaryOperator.h"
 
 using namespace llvm;
 
@@ -41,12 +42,6 @@ LLVM_GENERAL_FOR_EACH_RMW_OPERATION(ENUM_CASE)
 
 extern "C" {
 
-#define LLVM_GENERAL_FOR_ALL_OVERFLOWING_BINARY_OPERATORS(macro) \
-	macro(Add) \
-	macro(Mul) \
-	macro(Shl) \
-	macro(Sub) \
-
 #define ENUM_CASE(Op)																										\
 LLVMValueRef LLVM_General_Build ## Op(																	\
 	LLVMBuilderRef b,																											\
@@ -58,14 +53,8 @@ LLVMValueRef LLVM_General_Build ## Op(																	\
 ) {																																			\
 	return wrap(unwrap(b)->Create ## Op(unwrap(o0), unwrap(o1), s, nuw, nsw)); \
 }
-LLVM_GENERAL_FOR_ALL_OVERFLOWING_BINARY_OPERATORS(ENUM_CASE)
+LLVM_GENERAL_FOR_EACH_OVERFLOWING_BINARY_OPERATOR(ENUM_CASE)
 #undef ENUM_CASE
-
-#define LLVM_GENERAL_FOR_ALL_POSSIBLY_EXACT_OPERATORS(macro) \
-	macro(AShr) \
-	macro(LShr) \
-	macro(SDiv) \
-	macro(UDiv) \
 
 #define ENUM_CASE(Op)																										\
 LLVMValueRef LLVM_General_Build ## Op(																	\
@@ -77,34 +66,27 @@ LLVMValueRef LLVM_General_Build ## Op(																	\
 ) {																																			\
 	return wrap(unwrap(b)->Create ## Op(unwrap(o0), unwrap(o1), s, exact)); \
 }
-LLVM_GENERAL_FOR_ALL_POSSIBLY_EXACT_OPERATORS(ENUM_CASE)
+LLVM_GENERAL_FOR_EACH_POSSIBLY_EXACT_BINARY_OPERATOR(ENUM_CASE)
 #undef ENUM_CASE
 
-#define LLVM_GENERAL_FOR_ALL_FAST_MATH_OPERATORS(macro) \
-	macro(FAdd) \
-	macro(FSub) \
-	macro(FMul) \
-	macro(FDiv) \
-	macro(FRem) \
-
-#define ENUM_CASE(Op) \
-LLVMValueRef LLVM_General_Build ## Op( \
-	LLVMBuilderRef b, \
-	LLVMBool fast, \
-	LLVMValueRef o0, \
-	LLVMValueRef o1, \
-	const char *s \
-) {	\
-    if (fast) { \
-        FastMathFlags ff = FastMathFlags(); \
-	    ff.setUnsafeAlgebra(); \
-	    unwrap(b)->SetFastMathFlags(ff); \
-	} \
-	Value *i = unwrap(b)->Create ## Op(unwrap(o0), unwrap(o1), s); \
-	unwrap(b)->clearFastMathFlags(); \
-	return wrap(i); \
+#define ENUM_CASE(Op)																							\
+LLVMValueRef LLVM_General_Build ## Op(														\
+	LLVMBuilderRef b,																								\
+	LLVMBool fast,																									\
+	LLVMValueRef o0,																								\
+	LLVMValueRef o1,																								\
+	const char *s																										\
+) {																																\
+	if (fast) {																											\
+		FastMathFlags ff = FastMathFlags();														\
+		ff.setUnsafeAlgebra();																				\
+		unwrap(b)->SetFastMathFlags(ff);															\
+	}																																\
+	Value *i = unwrap(b)->Create ## Op(unwrap(o0), unwrap(o1), s);	\
+	unwrap(b)->clearFastMathFlags();																\
+	return wrap(i);																									\
 }
-LLVM_GENERAL_FOR_ALL_FAST_MATH_OPERATORS(ENUM_CASE)
+LLVM_GENERAL_FOR_EACH_FAST_MATH_BINARY_OPERATOR(ENUM_CASE)
 #undef ENUM_CASE
 
 

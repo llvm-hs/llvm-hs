@@ -19,6 +19,7 @@ description:
   For haddock, see <http://bscarlet.github.io/llvm-general/3.5.0.0/doc/html/llvm-general/index.html>.
 extra-source-files:
   src/LLVM/General/Internal/FFI/Analysis.h
+  src/LLVM/General/Internal/FFI/BinaryOperator.h
   src/LLVM/General/Internal/FFI/Constant.h
   src/LLVM/General/Internal/FFI/Function.h
   src/LLVM/General/Internal/FFI/GlobalValue.h

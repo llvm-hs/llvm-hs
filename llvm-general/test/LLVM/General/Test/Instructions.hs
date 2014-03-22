@@ -95,6 +95,7 @@ tests = testGroup "Instructions" [
            "add nuw i32 %0, %0"),
           ("fadd",
            FAdd {
+             fast = False,
              operand0 = a 1,
              operand1 = a 1,
              metadata = [] 
@@ -111,6 +112,7 @@ tests = testGroup "Instructions" [
            "sub i32 %0, %0"),
           ("fsub",
            FSub {
+             fast = False,
              operand0 = a 1,
              operand1 = a 1,
              metadata = [] 
@@ -127,6 +129,7 @@ tests = testGroup "Instructions" [
            "mul i32 %0, %0"),
           ("fmul",
            FMul {
+             fast = False,
              operand0 = a 1,
              operand1 = a 1,
              metadata = [] 
@@ -158,6 +161,7 @@ tests = testGroup "Instructions" [
            "sdiv i32 %0, %0"),
           ("fdiv",
            FDiv {
+             fast = False,
              operand0 = a 1,
              operand1 = a 1,
              metadata = [] 
@@ -179,6 +183,7 @@ tests = testGroup "Instructions" [
            "srem i32 %0, %0"),
           ("frem",
            FRem {
+             fast = False,
              operand0 = a 1,
              operand1 = a 1,
              metadata = [] 
