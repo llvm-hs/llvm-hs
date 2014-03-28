@@ -189,6 +189,14 @@ tests = testGroup "Instructions" [
              metadata = [] 
            },
            "frem float %1, %1"),
+          ("frem fast",
+           FRem {
+             fast = True,
+             operand0 = a 1,
+             operand1 = a 1,
+             metadata = [] 
+           },
+           "frem fast float %1, %1"),
           ("shl",
            Shl {
              nsw = False,
