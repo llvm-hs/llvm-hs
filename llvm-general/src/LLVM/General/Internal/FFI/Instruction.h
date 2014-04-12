@@ -35,4 +35,23 @@ LLVM_GENERAL_FOR_EACH_SYNCRONIZATION_SCOPE(ENUM_CASE)
 #undef ENUM_CASE
 } LLVMSynchronizationScope;
 
+#define LLVM_GENERAL_FOR_EACH_FAST_MATH_FLAG(macro) \
+	macro(UnsafeAlgebra, unsafeAlgebra)								\
+	macro(NoNaNs, noNaNs)															\
+	macro(NoInfs, noInfs)															\
+	macro(NoSignedZeros, noSignedZeros)								\
+	macro(AllowReciprocal, allowReciprocal)
+
+typedef enum {
+#define ENUM_CASE(x,l) LLVM ## x ## Bit,
+LLVM_GENERAL_FOR_EACH_FAST_MATH_FLAG(ENUM_CASE)
+#undef ENUM_CASE
+} LLVMFastMathFlagBit;
+
+typedef enum {
+#define ENUM_CASE(x,l) LLVM ## x = (1 << LLVM ## x ## Bit),
+LLVM_GENERAL_FOR_EACH_FAST_MATH_FLAG(ENUM_CASE)
+#undef ENUM_CASE
+} LLVMFastMathFlags;
+
 #endif

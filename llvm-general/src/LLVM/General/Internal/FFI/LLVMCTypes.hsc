@@ -106,6 +106,11 @@ newtype FCmpPredicate = FCmpPredicate CUInt
 newtype MDKindID = MDKindID CUInt
   deriving (Storable)
 
+newtype FastMathFlags = FastMathFlags CUInt
+  deriving (Eq, Ord, Show, Typeable, Data, Num, Bits)
+#define FMF_Rec(n,l) { #n, LLVM ## n, },
+#{inject FAST_MATH_FLAG, FastMathFlags, FastMathFlags, fastMathFlags, FMF_Rec}
+
 newtype MemoryOrdering = MemoryOrdering CUInt
   deriving (Eq, Typeable, Data)
 #define MO_Rec(n) { #n, LLVMAtomicOrdering ## n },

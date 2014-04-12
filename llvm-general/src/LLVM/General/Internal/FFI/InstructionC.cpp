@@ -43,6 +43,14 @@ LLVM_GENERAL_FOR_EACH_RMW_OPERATION(ENUM_CASE)
 	}
 }
 
+LLVMFastMathFlags wrap(FastMathFlags f) {
+	unsigned r = 0;
+#define ENUM_CASE(u,l) if (f.l()) r |= unsigned(LLVM ## u);
+LLVM_GENERAL_FOR_EACH_FAST_MATH_FLAG(ENUM_CASE)
+#undef ENUM_CASE
+	return LLVMFastMathFlags(r);
+}
+
 }
 
 extern "C" {
@@ -63,8 +71,8 @@ int LLVM_General_IsExact(LLVMValueRef val) {
 	return unwrap<PossiblyExactOperator>(val)->isExact();
 }
 
-int LLVM_General_IsFast(LLVMValueRef val) {
-	return unwrap<Instruction>(val)->getFastMathFlags().unsafeAlgebra();
+LLVMFastMathFlags LLVM_General_GetFastMathFlags(LLVMValueRef val) {
+	return wrap(unwrap<Instruction>(val)->getFastMathFlags());
 }
 
 LLVMValueRef LLVM_General_GetCallInstCalledValue(

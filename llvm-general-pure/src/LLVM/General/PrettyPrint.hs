@@ -73,6 +73,7 @@ liftM concat $ mapM makePrettyShowInstance [
   ''A.RMWOperation,
   ''A.Atomicity,
   ''A.Dialect,
+  ''A.FastMathFlags,
   ''A.MemoryOrdering,
   ''Either,
   ''Maybe

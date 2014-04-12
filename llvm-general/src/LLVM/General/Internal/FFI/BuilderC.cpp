@@ -38,6 +38,14 @@ LLVM_GENERAL_FOR_EACH_RMW_OPERATION(ENUM_CASE)
 	}
 }
 
+static FastMathFlags unwrap(LLVMFastMathFlags f) {
+	FastMathFlags r = FastMathFlags();
+#define ENUM_CASE(x,l) if (f & LLVM ## x) r.set ## x();
+LLVM_GENERAL_FOR_EACH_FAST_MATH_FLAG(ENUM_CASE)
+#undef ENUM_CASE
+	return r;
+}
+
 }
 
 extern "C" {
@@ -69,34 +77,17 @@ LLVMValueRef LLVM_General_Build ## Op(																	\
 LLVM_GENERAL_FOR_EACH_POSSIBLY_EXACT_BINARY_OPERATOR(ENUM_CASE)
 #undef ENUM_CASE
 
-#define ENUM_CASE(Op)																							\
-LLVMValueRef LLVM_General_Build ## Op(														\
-	LLVMBuilderRef b,																								\
-	LLVMBool fast,																									\
-	LLVMValueRef o0,																								\
-	LLVMValueRef o1,																								\
-	const char *s																										\
-) {																																\
-	if (fast) {																											\
-		FastMathFlags ff = FastMathFlags();														\
-		ff.setUnsafeAlgebra();																				\
-		unwrap(b)->SetFastMathFlags(ff);															\
-	}																																\
-	Value *i = unwrap(b)->Create ## Op(unwrap(o0), unwrap(o1), s);	\
-	unwrap(b)->clearFastMathFlags();																\
-	return wrap(i);																									\
+void LLVM_General_SetFastMathFlags(LLVMBuilderRef b, LLVMFastMathFlags f) {
+	unwrap(b)->SetFastMathFlags(unwrap(f));
 }
-LLVM_GENERAL_FOR_EACH_FAST_MATH_BINARY_OPERATOR(ENUM_CASE)
-#undef ENUM_CASE
-
 
 LLVMValueRef LLVM_General_BuildLoad(
 	LLVMBuilderRef b,
-	LLVMValueRef p,
-	unsigned align,
 	LLVMBool isVolatile,
+	LLVMValueRef p,
 	LLVMAtomicOrdering atomicOrdering,
 	LLVMSynchronizationScope synchScope,
+	unsigned align,
 	const char *name
 ) {
 	LoadInst *i = unwrap(b)->CreateAlignedLoad(unwrap(p), align, isVolatile, name);
@@ -107,12 +98,12 @@ LLVMValueRef LLVM_General_BuildLoad(
 
 LLVMValueRef LLVM_General_BuildStore(
 	LLVMBuilderRef b,
-	LLVMValueRef v,
-	LLVMValueRef p,
-	unsigned align,
 	LLVMBool isVolatile,
+	LLVMValueRef p,
+	LLVMValueRef v,
 	LLVMAtomicOrdering atomicOrdering,
 	LLVMSynchronizationScope synchScope,
+	unsigned align,
 	const char *name
 ) {
 	StoreInst *i = unwrap(b)->CreateAlignedStore(unwrap(v), unwrap(p), align, isVolatile);
@@ -132,10 +123,10 @@ LLVMValueRef LLVM_General_BuildFence(
 
 LLVMValueRef LLVM_General_BuildAtomicCmpXchg(
 	LLVMBuilderRef b,
+	LLVMBool v,
 	LLVMValueRef ptr, 
 	LLVMValueRef cmp, 
 	LLVMValueRef n, 
-	LLVMBool v,
 	LLVMAtomicOrdering lao,
 	LLVMSynchronizationScope lss,
 	const char *name
@@ -150,10 +141,10 @@ LLVMValueRef LLVM_General_BuildAtomicCmpXchg(
 
 LLVMValueRef LLVM_General_BuildAtomicRMW(
 	LLVMBuilderRef b,
+	LLVMBool v,
 	LLVMAtomicRMWBinOp rmwOp,
 	LLVMValueRef ptr, 
 	LLVMValueRef val, 
-	LLVMBool v,
 	LLVMAtomicOrdering lao,
 	LLVMSynchronizationScope lss,
 	const char *name

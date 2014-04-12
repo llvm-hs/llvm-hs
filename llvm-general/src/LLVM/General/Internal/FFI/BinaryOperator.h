@@ -13,11 +13,4 @@
 	macro(Shl) \
 	macro(Sub) \
 
-#define LLVM_GENERAL_FOR_EACH_FAST_MATH_BINARY_OPERATOR(macro) \
-	macro(FAdd) \
-	macro(FSub) \
-	macro(FMul) \
-	macro(FDiv) \
-	macro(FRem) \
-
 #endif

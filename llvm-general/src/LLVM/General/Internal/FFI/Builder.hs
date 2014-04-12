@@ -18,6 +18,7 @@ import LLVM.General.Internal.InstructionDefs as ID
 import Foreign.Ptr
 import Foreign.C
 
+import qualified Data.List as List
 import qualified Data.Map as Map
 
 import LLVM.General.Internal.FFI.Cleanup
@@ -74,7 +75,7 @@ $(do
         error $ "LLVM instruction def " ++ lrn ++ " not found in the AST"
       _ -> []
 
-    let ats = map typeMapping [ t | t <- fieldTypes, t /= TH.ConT ''A.InstructionMetadata ]
+    let ats = map typeMapping (fieldTypes List.\\ [TH.ConT ''A.InstructionMetadata, TH.ConT ''A.FastMathFlags])
         cName = (if hasFlags fieldTypes then "LLVM_General_" else "LLVM") ++ "Build" ++ a
     rt <- case k of
             ID.Binary -> [[t| BinaryOperator |]]
@@ -86,11 +87,15 @@ $(do
 foreign import ccall unsafe "LLVMBuildArrayAlloca" buildAlloca ::
   Ptr Builder -> Ptr Type -> Ptr Value -> CString -> IO (Ptr Instruction)
 
-foreign import ccall unsafe "LLVM_General_BuildLoad" buildLoad ::
-  Ptr Builder -> Ptr Value -> CUInt -> LLVMBool -> MemoryOrdering -> LLVMBool -> CString -> IO (Ptr Instruction)
+foreign import ccall unsafe "LLVM_General_BuildLoad" buildLoad' ::
+  Ptr Builder -> LLVMBool -> Ptr Value -> MemoryOrdering -> LLVMBool -> CUInt -> CString -> IO (Ptr Instruction)
 
-foreign import ccall unsafe "LLVM_General_BuildStore" buildStore ::
-  Ptr Builder -> Ptr Value -> Ptr Value -> CUInt -> LLVMBool -> MemoryOrdering -> LLVMBool -> CString -> IO (Ptr Instruction)
+buildLoad builder vol a' (ss, mo) al s = buildLoad' builder vol a' mo ss al s
+
+foreign import ccall unsafe "LLVM_General_BuildStore" buildStore' ::
+  Ptr Builder -> LLVMBool -> Ptr Value -> Ptr Value -> MemoryOrdering -> LLVMBool -> CUInt -> CString -> IO (Ptr Instruction)
+
+buildStore builder vol a' v' (ss, mo) al s = buildStore' builder vol a' v' mo ss al s
 
 foreign import ccall unsafe "LLVMBuildGEP" buildGetElementPtr' ::
   Ptr Builder -> Ptr Value -> Ptr (Ptr Value) -> CUInt -> CString -> IO (Ptr Instruction)
@@ -98,19 +103,24 @@ foreign import ccall unsafe "LLVMBuildGEP" buildGetElementPtr' ::
 foreign import ccall unsafe "LLVMBuildInBoundsGEP" buildInBoundsGetElementPtr' ::
   Ptr Builder -> Ptr Value -> Ptr (Ptr Value) -> CUInt -> CString -> IO (Ptr Instruction)
 
-buildGetElementPtr :: Ptr Builder -> LLVMBool -> Ptr Value -> Ptr (Ptr Value) -> CUInt -> CString -> IO (Ptr Instruction)
-buildGetElementPtr builder (LLVMBool 1) = buildInBoundsGetElementPtr' builder
-buildGetElementPtr builder (LLVMBool 0) = buildGetElementPtr' builder
+buildGetElementPtr :: Ptr Builder -> LLVMBool -> Ptr Value -> (CUInt, Ptr (Ptr Value)) -> CString -> IO (Ptr Instruction)
+buildGetElementPtr builder (LLVMBool 1) a (n, is) s = buildInBoundsGetElementPtr' builder a is n s
+buildGetElementPtr builder (LLVMBool 0) a (n, is) s = buildGetElementPtr' builder a is n s
 
-foreign import ccall unsafe "LLVM_General_BuildFence" buildFence ::
+foreign import ccall unsafe "LLVM_General_BuildFence" buildFence' ::
   Ptr Builder -> MemoryOrdering -> LLVMBool -> CString -> IO (Ptr Instruction)
 
-foreign import ccall unsafe "LLVM_General_BuildAtomicCmpXchg" buildCmpXchg ::
-  Ptr Builder -> Ptr Value -> Ptr Value -> Ptr Value -> LLVMBool -> MemoryOrdering -> LLVMBool -> CString -> IO (Ptr Instruction)
+buildFence builder (ss, mo) s = buildFence' builder mo ss s
 
-foreign import ccall unsafe "LLVM_General_BuildAtomicRMW" buildAtomicRMW ::
-  Ptr Builder -> RMWOperation -> Ptr Value -> Ptr Value -> LLVMBool -> MemoryOrdering -> LLVMBool -> CString -> IO (Ptr Instruction)
+foreign import ccall unsafe "LLVM_General_BuildAtomicCmpXchg" buildCmpXchg' ::
+  Ptr Builder -> LLVMBool -> Ptr Value -> Ptr Value -> Ptr Value -> MemoryOrdering -> LLVMBool -> CString -> IO (Ptr Instruction)
 
+buildCmpXchg builder vol a e r (ss, mo) s =  buildCmpXchg' builder vol a e r mo ss s
+
+foreign import ccall unsafe "LLVM_General_BuildAtomicRMW" buildAtomicRMW' ::
+  Ptr Builder -> LLVMBool -> RMWOperation -> Ptr Value -> Ptr Value -> MemoryOrdering -> LLVMBool -> CString -> IO (Ptr Instruction)
+
+buildAtomicRMW builder vol rmwOp a v (ss, mo) s = buildAtomicRMW' builder vol rmwOp a v mo ss s 
 
 foreign import ccall unsafe "LLVMBuildICmp" buildICmp ::
   Ptr Builder -> ICmpPredicate -> Ptr Value -> Ptr Value -> CString -> IO (Ptr Instruction)
@@ -148,4 +158,5 @@ foreign import ccall unsafe "LLVM_General_BuildInsertValue" buildInsertValue ::
 foreign import ccall unsafe "LLVMBuildLandingPad" buildLandingPad ::
   Ptr Builder -> Ptr Type -> Ptr Value -> CUInt -> CString -> IO (Ptr Instruction)
 
-
+foreign import ccall unsafe "LLVM_General_SetFastMathFlags" setFastMathFlags ::
+  Ptr Builder -> FastMathFlags -> IO ()

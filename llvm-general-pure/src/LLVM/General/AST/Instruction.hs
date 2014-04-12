@@ -65,6 +65,18 @@ data Terminator
     }
   deriving (Eq, Read, Show, Typeable, Data)
 
+-- | <http://llvm.org/docs/LangRef.html#fast-math-flags>
+data FastMathFlags 
+  = NoFastMathFlags
+  | UnsafeAlgebra
+  | FastMathFlags {
+      noNaNs :: Bool,
+      noInfs :: Bool,
+      noSignedZeros :: Bool,
+      allowReciprocal :: Bool
+    }
+  deriving (Eq, Ord, Read, Show, Data, Typeable)
+
 -- | <http://llvm.org/docs/LangRef.html#atomic-memory-ordering-constraints>
 -- <http://llvm.org/docs/Atomics.html>
 data MemoryOrdering
@@ -103,7 +115,7 @@ data Instruction
       metadata :: InstructionMetadata
     }
   | FAdd {
-      fast :: Bool,
+      fastMathFlags :: FastMathFlags,
       operand0 :: Operand,
       operand1 :: Operand,
       metadata :: InstructionMetadata
@@ -116,7 +128,7 @@ data Instruction
       metadata :: InstructionMetadata
     }
   | FSub { 
-      fast :: Bool,
+      fastMathFlags :: FastMathFlags,
       operand0 :: Operand, 
       operand1 :: Operand, 
       metadata :: InstructionMetadata
@@ -129,7 +141,7 @@ data Instruction
       metadata :: InstructionMetadata 
     }
   | FMul { 
-      fast :: Bool,
+      fastMathFlags :: FastMathFlags,
       operand0 :: Operand, 
       operand1 :: Operand, 
       metadata :: InstructionMetadata
@@ -147,7 +159,7 @@ data Instruction
       metadata :: InstructionMetadata
     }
   | FDiv { 
-      fast :: Bool,
+      fastMathFlags :: FastMathFlags,
       operand0 :: Operand, 
       operand1 :: Operand, 
       metadata :: InstructionMetadata
@@ -163,7 +175,7 @@ data Instruction
       metadata :: InstructionMetadata
     }
   | FRem { 
-      fast :: Bool,
+      fastMathFlags :: FastMathFlags,
       operand0 :: Operand, 
       operand1 :: Operand, 
       metadata :: InstructionMetadata

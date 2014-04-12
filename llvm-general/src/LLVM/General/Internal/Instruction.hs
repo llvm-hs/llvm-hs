@@ -2,7 +2,8 @@
   TemplateHaskell,
   QuasiQuotes,
   MultiParamTypeClasses,
-  UndecidableInstances
+  UndecidableInstances,
+  ViewPatterns
   #-}
 module LLVM.General.Internal.Instruction where
 
@@ -37,6 +38,7 @@ import LLVM.General.Internal.CallingConvention ()
 import LLVM.General.Internal.Coding
 import LLVM.General.Internal.DecodeAST
 import LLVM.General.Internal.EncodeAST
+import LLVM.General.Internal.FastMathFlags ()
 import LLVM.General.Internal.Metadata ()
 import LLVM.General.Internal.Operand ()
 import LLVM.General.Internal.RMWOperation ()
@@ -237,7 +239,7 @@ $(do
             get_nsw b = liftIO $ decodeM =<< FFI.hasNoSignedWrap (FFI.upCast b)
             get_nuw b = liftIO $ decodeM =<< FFI.hasNoUnsignedWrap (FFI.upCast b)
             get_exact b = liftIO $ decodeM =<< FFI.isExact (FFI.upCast b)
-            get_fast b = liftIO $ decodeM =<< FFI.isFast (FFI.upCast b)
+            get_fastMathFlags b = liftIO $ decodeM =<< FFI.getFastMathFlags (FFI.upCast b)
 
         n <- liftIO $ FFI.getInstructionDefOpcode i
         $(
@@ -247,7 +249,7 @@ $(do
                 "nsw" -> (["b"], [| get_nsw $(TH.dyn "b") |])
                 "nuw" -> (["b"], [| get_nuw $(TH.dyn "b") |])
                 "exact" -> (["b"], [| get_exact $(TH.dyn "b") |])
-                "fast" -> (["b"], [| get_fast $(TH.dyn "b") |])
+                "fastMathFlags" -> (["b"], [| get_fastMathFlags $(TH.dyn "b") |])
                 "operand0" -> ([], [| op 0 |])
                 "operand1" -> ([], [| op 1 |])
                 "address" -> ([], case lrn of "Store" -> [| op 1 |]; _ -> [| op 0 |])
@@ -464,127 +466,37 @@ $(do
                 return' i
               A.Alloca { A.allocatedType = alt, A.numElements = n, A.alignment = alignment } -> do 
                  alt' <- encodeM alt
-                 n' <- maybe (return nullPtr) encodeM n
+                 n' <- encodeM n
                  i <- liftIO $ FFI.buildAlloca builder alt' n' s
                  unless (alignment == 0) $ liftIO $ FFI.setInstrAlignment i (fromIntegral alignment)
                  return' i
-              A.Load {
-                A.volatile = vol,
-                A.address = a,
-                A.alignment = al,
-                A.maybeAtomicity = mat
-              } -> do
-                 a' <- encodeM a
-                 al <- encodeM al
-                 vol <- encodeM vol
-                 (ss, mo) <- encodeM mat
-                 i <- liftIO $ FFI.buildLoad builder a' al vol mo ss s
-                 return' i
-              A.Store { 
-                A.volatile = vol, 
-                A.address = a, 
-                A.value = v, 
-                A.maybeAtomicity = mat, 
-                A.alignment = al
-              } -> do
-                 a' <- encodeM a
-                 v' <- encodeM v
-                 al <- encodeM al
-                 vol <- encodeM vol
-                 (ss, mo) <- encodeM mat
-                 i <- liftIO $ FFI.buildStore builder v' a' al vol mo ss s
-                 return' i
-              A.GetElementPtr { A.address = a, A.indices = is, A.inBounds = ib } -> do
-                 a' <- encodeM a
-                 (n, is') <- encodeM is
-                 ib <- encodeM ib 
-                 i <- liftIO $ FFI.buildGetElementPtr builder ib a' is' n s
-                 return' i
-              A.Fence { A.atomicity = at } -> do
-                 (ss, mo) <- encodeM at
-                 i <- liftIO $ FFI.buildFence builder mo ss s
-                 return' i
-              A.CmpXchg { 
-                A.volatile = vol, 
-                A.address = a, A.expected = e, A.replacement = r,
-                A.atomicity = at
-              } -> do
-                 a' <- encodeM a
-                 e' <- encodeM e
-                 r' <- encodeM r
-                 vol <- encodeM vol
-                 (ss, mo) <- encodeM at
-                 i <- liftIO $ FFI.buildCmpXchg builder a' e' r' vol mo ss s
-                 return' i
-              A.AtomicRMW {
-                A.volatile = vol,
-                A.rmwOperation = rmwOp,
-                A.address = a,
-                A.value = v,
-                A.atomicity = at
-              } -> do
-                 a' <- encodeM a
-                 v' <- encodeM v
-                 rmwOp <- encodeM rmwOp
-                 vol <- encodeM vol
-                 (ss, mo) <- encodeM at
-                 i <- liftIO $ FFI.buildAtomicRMW builder rmwOp a' v' vol mo ss s
-                 return' i
-              o -> $(
-                     let
-                       fieldData :: String -> [Either TH.ExpQ TH.ExpQ]
-                       fieldData s = case s of
-                         "operand0" -> [Left [| encodeM $(TH.dyn s) |] ]
-                         "operand1" -> [Left [| encodeM $(TH.dyn s) |] ]
-                         "type'" -> [Left [| encodeM $(TH.dyn s) |] ]
-                         "nsw" -> [Left [| encodeM $(TH.dyn s) |] ]
-                         "nuw" -> [Left [| encodeM $(TH.dyn s) |] ]
-                         "exact" -> [Left [| encodeM $(TH.dyn s) |] ]
-                         "fast" -> [Left [| encodeM $(TH.dyn s) |] ]
-                         "metadata" -> [Right [| return () |] ]
-                         _ -> error $ "unhandled instruction field " ++ show s
-                     in
-                     TH.caseE [| o |] [
+              o -> $(TH.caseE [| o |] [
                        TH.match 
                        (TH.recP fullName [ (f,) <$> (TH.varP . TH.mkName . TH.nameBase $ f) | f <- fieldNames ])
                        (TH.normalB (TH.doE handlerBody))
                        []
                        |
-                       (name, ID.InstructionDef { ID.instructionKind = k }) <- Map.toList ID.instructionDefs,
-                       k `List.elem` [ID.Binary, ID.Cast],
+                       (name, ID.instructionKind -> k) <- Map.toList ID.instructionDefs,
+                       case (k, name) of
+                         (ID.Binary, _) -> True
+                         (ID.Cast, _) -> True
+                         (ID.Memory, "Alloca") -> False
+                         (ID.Memory, _) -> True
+                         _ -> False,
                        let
-                         TH.RecC fullName fields = findInstrFields name
-                         (fieldNames, _, _) = unzip3 fields
-                         cTorFields = [
-                            (s, binding)
-                            | f <- fieldNames,
-                            let s = TH.nameBase f,
-                            Left binding <- fieldData s
-                           ]
-                         handlerBody = (
-                           [ TH.bindS (TH.varP (TH.mkName s)) binding | (s, binding) <- cTorFields ]
-                           ++ [
-                            TH.bindS 
-                              (TH.varP (TH.mkName "i"))
-                              [| liftIO $ $(foldl1 TH.appE . map TH.dyn $ [ 
-                                   "FFI.build" ++ name,
-                                   "builder"
-                                   ] ++ [
-                                    s | (s, _) <- cTorFields, s /= "metadata"
-                                   ] ++ [
-                                   "s"
-                                   ] ) |]
-
-                           ] ++ [
-                            TH.noBindS action
-                            | f <- fieldNames,
-                              let s = TH.nameBase f,
-                              Right action <- fieldData s
-                           ] ++ [
-                            TH.noBindS [| return' $(TH.dyn "i") |]
-                           ]
-                          )
-                         ]
+                         TH.RecC fullName (unzip3 -> (fieldNames, _, _)) = findInstrFields name
+                         encodeMFields = map TH.nameBase fieldNames List.\\ [ "metadata" ]
+                         handlerBody = ([
+                           TH.bindS (if s == "fastMathFlags" then TH.tupP [] else TH.varP (TH.mkName s))
+                               [| encodeM $(TH.dyn s) |] | s <- encodeMFields 
+                          ] ++ [
+                           TH.bindS (TH.varP (TH.mkName "i")) [| liftIO $ $(
+                              foldl1 TH.appE . map TH.dyn $ 
+                               [ "FFI.build" ++ name, "builder" ] ++ (encodeMFields List.\\ [ "fastMathFlags" ]) ++ [ "s" ] 
+                            ) |],
+                           TH.noBindS [| return' $(TH.dyn "i") |]
+                          ])
+                      ]
                     )
 
            |]

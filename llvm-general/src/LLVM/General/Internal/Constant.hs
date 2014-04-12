@@ -210,7 +210,6 @@ instance DecodeM DecodeAST A.Constant (Ptr FFI.Constant) where
                                | h == ''Bool -> case TH.nameBase fn of
                                                   "inBounds" -> return [| liftIO $ decodeM =<< FFI.getInBounds v |]
                                                   "exact" -> return [| liftIO $ decodeM =<< FFI.isExact v |]
-                                                  "fast" -> return [| liftIO $ decodeM =<< FFI.isFast v |]
                                                   "nsw" -> return [| liftIO $ decodeM =<< FFI.hasNoSignedWrap v |]
                                                   "nuw" -> return [| liftIO $ decodeM =<< FFI.hasNoUnsignedWrap v |]
                                                   x -> error $ "constant bool field " ++ show x ++ " not handled yet"

@@ -182,14 +182,14 @@ tests = testGroup "Optimization" [
              ], False),
             G.basicBlocks = [
               BasicBlock (UnName 0) ([
-                Name (l ++ n) := op False (LocalReference (Name (o1 ++ n))) (LocalReference (Name (o2 ++ n))) []
+                Name (l ++ n) := op NoFastMathFlags (LocalReference (Name (o1 ++ n))) (LocalReference (Name (o2 ++ n))) []
                 | (l, op, o1, o2) <- [
                    ("x", FSub, "a", "b"),
                    ("y", FMul, "x", "a"),
                    ("z", FAdd, "y", "b")],
                   n <- ["1", "2"]
                ] ++ [
-                Name "r" := FMul False (LocalReference (Name "z1")) (LocalReference (Name "z2")) []
+                Name "r" := FMul NoFastMathFlags (LocalReference (Name "z1")) (LocalReference (Name "z2")) []
               ]) (Do $ Ret (Just (LocalReference (Name "r"))) [])
              ]
           }

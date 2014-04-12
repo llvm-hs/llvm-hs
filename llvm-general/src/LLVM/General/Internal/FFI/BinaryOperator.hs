@@ -25,5 +25,5 @@ foreign import ccall unsafe "LLVM_General_HasNoUnsignedWrap" hasNoUnsignedWrap :
 foreign import ccall unsafe "LLVM_General_IsExact" isExact ::
     Ptr Value -> IO LLVMBool
 
-foreign import ccall unsafe "LLVM_General_IsFast" isFast ::
-    Ptr Value -> IO LLVMBool
+foreign import ccall unsafe "LLVM_General_GetFastMathFlags" getFastMathFlags ::
+    Ptr Value -> IO FastMathFlags

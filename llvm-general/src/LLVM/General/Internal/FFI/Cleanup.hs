@@ -21,6 +21,7 @@ import qualified LLVM.General.AST.FloatingPointPredicate as A (FloatingPointPred
 import qualified LLVM.General.AST.Constant as A.C (Constant)
 import qualified LLVM.General.AST.Operand as A (Operand)
 import qualified LLVM.General.AST.Type as A (Type)
+import qualified LLVM.General.AST.Instruction as A (FastMathFlags)
 
 foreignDecl :: String -> String -> [TypeQ] -> TypeQ -> DecsQ
 foreignDecl cName hName argTypeQs returnTypeQ = do
@@ -62,10 +63,9 @@ foreignDecl cName hName argTypeQs returnTypeQ = do
     ]
    ]
 
--- | The LLVM C-API for instructions with boolean flags (e.g. nsw) is weak, so they get
+-- | The LLVM C-API for instructions with boolean flags (e.g. nsw) and is weak, so they get
 -- separated out for different handling. This check is an accurate but crude test for whether
--- an instruction needs such handling. As such it may need revision in the future (if has-a-boolean-member
--- is no longer the same as needs-special-handling).
+-- an instruction needs such handling.
 hasFlags :: [Type] -> Bool
 hasFlags = any (== ConT ''Bool)
 
@@ -80,5 +80,6 @@ typeMapping t = case t of
          | h == ''A.C.Constant -> [t| Ptr FFI.Constant |]
          | h == ''A.FloatingPointPredicate -> [t| FCmpPredicate |]
          | h == ''A.IntegerPredicate -> [t| ICmpPredicate |]
+         | h == ''A.FastMathFlags -> [t| FastMathFlags |]
   AppT ListT x -> foldl1 appT [tupleT 2, [t| CUInt |], appT [t| Ptr |] (typeMapping x)]
   x -> error $ "type not handled in Cleanup typeMapping: " ++ show x

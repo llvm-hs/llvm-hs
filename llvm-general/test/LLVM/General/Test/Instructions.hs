@@ -95,7 +95,7 @@ tests = testGroup "Instructions" [
            "add nuw i32 %0, %0"),
           ("fadd",
            FAdd {
-             fast = False,
+             fastMathFlags = NoFastMathFlags,
              operand0 = a 1,
              operand1 = a 1,
              metadata = [] 
@@ -112,7 +112,7 @@ tests = testGroup "Instructions" [
            "sub i32 %0, %0"),
           ("fsub",
            FSub {
-             fast = False,
+             fastMathFlags = NoFastMathFlags,
              operand0 = a 1,
              operand1 = a 1,
              metadata = [] 
@@ -129,7 +129,7 @@ tests = testGroup "Instructions" [
            "mul i32 %0, %0"),
           ("fmul",
            FMul {
-             fast = False,
+             fastMathFlags = NoFastMathFlags,
              operand0 = a 1,
              operand1 = a 1,
              metadata = [] 
@@ -161,7 +161,7 @@ tests = testGroup "Instructions" [
            "sdiv i32 %0, %0"),
           ("fdiv",
            FDiv {
-             fast = False,
+             fastMathFlags = NoFastMathFlags,
              operand0 = a 1,
              operand1 = a 1,
              metadata = [] 
@@ -183,7 +183,7 @@ tests = testGroup "Instructions" [
            "srem i32 %0, %0"),
           ("frem",
            FRem {
-             fast = False,
+             fastMathFlags = NoFastMathFlags,
              operand0 = a 1,
              operand1 = a 1,
              metadata = [] 
@@ -191,7 +191,7 @@ tests = testGroup "Instructions" [
            "frem float %1, %1"),
           ("frem fast",
            FRem {
-             fast = True,
+             fastMathFlags = UnsafeAlgebra,
              operand0 = a 1,
              operand1 = a 1,
              metadata = [] 
