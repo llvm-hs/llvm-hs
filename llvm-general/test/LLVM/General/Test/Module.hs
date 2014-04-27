@@ -275,6 +275,25 @@ tests = testGroup "Module" [
    ast @?= defaultModule { moduleTargetTriple = Just "x86_64-unknown-linux" },
 
   testGroup "regression" [
+    testCase "minimal type info" $ withContext $ \context -> do
+      let s = "; ModuleID = '<string>'\n\
+              \\n\
+              \define void @trouble() {\n\
+              \entry:\n\
+              \  ret void\n\
+              \\n\
+              \dead0:                                            ; preds = %dead1\n\
+              \  %x0 = add i32 %x1, %x1\n\
+              \  br label %dead1\n\
+              \\n\
+              \dead1:                                            ; preds = %dead0\n\
+              \  %x1 = add i32 %x0, %x0\n\
+              \  br label %dead0\n\
+              \}\n"
+      ast <- withModuleFromLLVMAssembly' context s moduleAST
+      s' <- withModuleFromAST' context ast moduleLLVMAssembly
+      s' @?= s,
+
     testCase "set flag on constant expr" $ withContext $ \context -> do
       let ast = Module "<string>" Nothing Nothing [
              GlobalDefinition $ functionDefaults {
