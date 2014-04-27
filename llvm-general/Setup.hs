@@ -96,7 +96,7 @@ main = do
                         "3.2" -> "LLVM-3.2svn"
                         x -> "LLVM-" ++ x
       staticLibs <- liftM (map (fromJust . stripPrefix "-l") . words) $ llvmConfig ["--libs"]
-      externLibs <- liftM (mapMaybe (stripPrefix "-l") . words) $ llvmConfig ["--ldflags"]
+      externLibs <- liftM ((++ ["tinfo"]) . mapMaybe (stripPrefix "-l") . words) $ llvmConfig ["--ldflags"]
 
       let genericPackageDescription' = genericPackageDescription {
             condLibrary = do

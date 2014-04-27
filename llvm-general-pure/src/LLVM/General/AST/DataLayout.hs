@@ -27,13 +27,21 @@ data AlignType
   | VectorAlign
   | FloatAlign
   | AggregateAlign
-  | StackAlign
+  deriving (Eq, Ord, Read, Show, Typeable, Data)
+
+-- | A style of name mangling
+data Mangling
+  = ELFMangling
+  | MIPSMangling
+  | MachOMangling
+  | WindowsCOFFMangling
   deriving (Eq, Ord, Read, Show, Typeable, Data)
 
 -- | a description of the various data layout properties which may be used during
 -- optimization
 data DataLayout = DataLayout {
     endianness :: Maybe Endianness,
+    mangling :: Maybe Mangling,
     stackAlignment :: Maybe Word32,
     pointerLayouts :: Map AddrSpace (Word32, AlignmentInfo),
     typeLayouts :: Map (AlignType, Word32) AlignmentInfo,
@@ -44,6 +52,7 @@ data DataLayout = DataLayout {
 -- | a 'DataLayout' which specifies nothing
 defaultDataLayout = DataLayout {
   endianness = Nothing,
+  mangling = Nothing,
   stackAlignment = Nothing,
   pointerLayouts = Map.empty,
   typeLayouts = Map.empty,

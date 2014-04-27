@@ -93,7 +93,7 @@ foreign import ccall unsafe "LLVM_General_GetProcessTargetTriple" getProcessTarg
   IO (OwnerTransfered CString)
 
 foreign import ccall unsafe "LLVM_General_GetHostCPUName" getHostCPUName :: 
-  IO (OwnerTransfered CString)
+  Ptr CSize -> IO CString
 
 foreign import ccall unsafe "LLVM_General_GetHostCPUFeatures" getHostCPUFeatures :: 
   IO (OwnerTransfered CString)

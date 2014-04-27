@@ -67,6 +67,7 @@ tests = testGroup "DataLayout" [
      DataLayout {
        endianness = Just LittleEndian,
        stackAlignment = Just 128,
+       mangling = Just ELFMangling,
        pointerLayouts = Map.fromList [
          (AddrSpace 0, (64, AlignmentInfo {abiAlignment = 64, preferredAlignment = Just 64}))
         ],
@@ -81,13 +82,12 @@ tests = testGroup "DataLayout" [
          ((FloatAlign, 32), AlignmentInfo {abiAlignment = 32, preferredAlignment = Just 32}),
          ((FloatAlign, 64), AlignmentInfo {abiAlignment = 64, preferredAlignment = Just 64}),
          ((FloatAlign, 80), AlignmentInfo {abiAlignment = 128, preferredAlignment = Just 128}),
-         ((AggregateAlign, 0), AlignmentInfo {abiAlignment = 0, preferredAlignment = Just 64}),
-         ((StackAlign, 0), AlignmentInfo {abiAlignment = 64, preferredAlignment = Just 64})
+         ((AggregateAlign, 0), AlignmentInfo {abiAlignment = 0, preferredAlignment = Just 64})
         ],
        nativeSizes = Just (Set.fromList [8,16,32,64])
      },
-     "e-p:64:64:64-i1:8:8-i8:8:8-i16:16:16-i32:32:32-i64:64:64-f32:32:32-f64:64:64-v64:64:64-v128:128:128-a0:0:64-s0:64:64-f80:128:128-n8:16:32:64-S128",
-     Just "e-S128-p:64:64:64-i1:8:8-i8:8:8-i16:16:16-i32:32:32-i64:64:64-v64:64:64-v128:128:128-f32:32:32-f64:64:64-f80:128:128-a0:0:64-s0:64:64-n8:16:32:64"
+     "e-m:e-p:64:64:64-i1:8:8-i8:8:8-i16:16:16-i32:32:32-i64:64:64-f32:32:32-f64:64:64-v64:64:64-v128:128:128-a0:0:64-f80:128:128-n8:16:32:64-S128",
+     Just "e-m:e-S128-p:64:64:64-i1:8:8-i8:8:8-i16:16:16-i32:32:32-i64:64:64-v64:64:64-v128:128:128-f32:32:32-f64:64:64-f80:128:128-a0:0:64-n8:16:32:64"
     )
    ]
   ]

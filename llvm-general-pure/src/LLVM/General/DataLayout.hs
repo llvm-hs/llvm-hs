@@ -21,22 +21,29 @@ dataLayoutToString dl =
   let sTriple :: (Word32, AlignmentInfo) -> String
       sTriple (s, ai) = show s ++ ":" ++ show (abiAlignment ai) ++ (maybe "" (\p -> ":" ++ show p) (preferredAlignment ai))
       atChar at = case at of
-                    IntegerAlign -> "i"
-                    VectorAlign -> "v"
-                    FloatAlign -> "f"
-                    AggregateAlign -> "a"
-                    StackAlign -> "s"
+        IntegerAlign -> "i"
+        VectorAlign -> "v"
+        FloatAlign -> "f"
+        AggregateAlign -> "a"
+      manglingChar m = case m of
+        ELFMangling -> "e"
+        MIPSMangling -> "m"
+        MachOMangling -> "o"
+        WindowsCOFFMangling -> "w"
+      oneOpt f accessor = maybe [] ((:[]) . f) (accessor dl)
   in
   List.intercalate "-" (
-    (case endianness dl of Just BigEndian -> ["E"]; Just LittleEndian -> ["e"]; _ -> [])
+    (oneOpt (\e -> case e of BigEndian -> "E"; LittleEndian -> "e") endianness)
     ++
-    (maybe [] (\s -> ["S" ++ show s]) (stackAlignment dl))
+    (oneOpt (("m:" ++) . manglingChar) mangling)
+    ++
+    (oneOpt (("S"++) . show) stackAlignment)
     ++
     [ "p" ++ (if a == 0 then "" else show a) ++ ":" ++ sTriple t | (AddrSpace a, t) <- Map.toList . pointerLayouts $ dl]
     ++
     [ atChar at ++ sTriple (s, ai) | ((at, s), ai) <- Map.toList . typeLayouts $ dl ]
     ++ 
-    (maybe [] (\ns -> ["n" ++ (List.intercalate ":" (map show . Set.toList $ ns))]) (nativeSizes dl))
+    (oneOpt (("n"++) . (List.intercalate ":") . (map show) . Set.toList) nativeSizes)
   )
 
 parseDataLayout :: String -> Maybe DataLayout
@@ -44,7 +51,7 @@ parseDataLayout "" = Nothing
 parseDataLayout s = 
   let
     num :: Parser Word32
-    num = read <$> many digit
+    num = read <$> many1 digit
     triple :: Parser (Word32, AlignmentInfo)
     triple = do
       s <- num
@@ -63,6 +70,16 @@ parseDataLayout s =
         char 'E' 
         return $ \dl -> dl { endianness = Just BigEndian },
       do
+        char 'm'
+        char ':'
+        m <- choice [
+              char 'e' >> return ELFMangling,
+              char 'm' >> return MIPSMangling,
+              char 'o' >> return MachOMangling,
+              char 'w' >> return WindowsCOFFMangling
+             ]
+        return $ \dl -> dl { mangling = Just m },
+      do
         char 'S'
         n <- num
         return $ \dl -> dl { stackAlignment = Just n },
@@ -73,12 +90,16 @@ parseDataLayout s =
         t <- triple
         return $ \dl -> dl { pointerLayouts = Map.insert a t (pointerLayouts dl) },
       do
+        char 's' -- Ignore this obsolete approach to stack alignment.  After the 3.4 release,
+                 -- this is never generated, still parsed but ignored.  Comments suggest
+                 -- it will no longer be parsed after 4.0.
+        return id,
+      do
         at <- choice [
                char 'i' >> return IntegerAlign,
                char 'v' >> return VectorAlign,
                char 'f' >> return FloatAlign,
-               char 'a' >> return AggregateAlign,
-               char 's' >> return StackAlign
+               char 'a' >> return AggregateAlign
               ]
         (sz,ai) <- triple
         return $ \dl -> dl { typeLayouts = Map.insert (at,sz) ai (typeLayouts dl) },

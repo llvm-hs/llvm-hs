@@ -254,8 +254,10 @@ char *LLVM_General_GetProcessTargetTriple() {
 	return strdup(sys::getProcessTriple().c_str());
 }
 
-char *LLVM_General_GetHostCPUName() {
-	return strdup(sys::getHostCPUName().c_str());
+const char *LLVM_General_GetHostCPUName(size_t &len) {
+	StringRef r = sys::getHostCPUName();
+	len = r.size();
+	return r.data();
 }
 
 char *LLVM_General_GetHostCPUFeatures() {

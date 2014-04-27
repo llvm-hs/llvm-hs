@@ -50,6 +50,7 @@ liftM concat $ mapM makePrettyShowInstance [
   ''A.Global,
   ''A.AlignmentInfo,
   ''A.AlignType,
+  ''A.Mangling,
   ''A.C.Constant,
   ''A.AddrSpace,
   ''A.Endianness,
