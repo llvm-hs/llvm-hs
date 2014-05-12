@@ -30,7 +30,7 @@ data Constant
     | Vector { memberValues :: [ Constant ] }
     | Undef { constantType :: Type }
     | BlockAddress { blockAddressFunction :: Name, blockAddressBlock :: Name }
-    | GlobalReference Name 
+    | GlobalReference Type Name
     | Add { 
         nsw :: Bool,
         nuw :: Bool,

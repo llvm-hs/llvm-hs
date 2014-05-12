@@ -7,6 +7,7 @@ import Test.HUnit
 import LLVM.General.PrettyPrint
 
 import LLVM.General.AST
+import LLVM.General.AST.Type
 import qualified LLVM.General.AST.Linkage as L
 import qualified LLVM.General.AST.Visibility as V
 import qualified LLVM.General.AST.CallingConvention as CC
@@ -15,8 +16,8 @@ import qualified LLVM.General.AST.Constant as C
 tests = testGroup "PrettyPrint" [
   testCase "basic" $ do
     let ast = Module "<string>" Nothing Nothing [
-         GlobalDefinition $ Function L.External V.Default CC.C [] (IntegerType 32) (Name "foo") ([
-             Parameter (IntegerType 32) (Name "x") []
+         GlobalDefinition $ Function L.External V.Default CC.C [] i32 (Name "foo") ([
+             Parameter i32 (Name "x") []
             ],False)
             [] Nothing 0 Nothing
           [
@@ -33,7 +34,7 @@ tests = testGroup "PrettyPrint" [
             ),
            BasicBlock (Name "here") [
             ] (
-              Do $ Ret (Just (LocalReference (UnName 1))) []
+              Do $ Ret (Just (LocalReference i32 (UnName 1))) []
             )
           ]
          ]
@@ -65,7 +66,7 @@ tests = testGroup "PrettyPrint" [
             \          }\n\
             \        ] (A.Do A.Br { A.dest = A.Name \"here\", A.metadata' = [] }),\n\
             \        A.G.BasicBlock (A.Name \"here\") [] (\n\
-            \          A.Do A.Ret {A.returnOperand = Just (A.LocalReference (A.UnName 1)), A.metadata' = []}\n\
+            \          A.Do A.Ret {A.returnOperand = Just (A.LocalReference (A.IntegerType 32) (A.UnName 1)), A.metadata' = []}\n\
             \        )\n\
             \      ]\n\
             \    }\n\

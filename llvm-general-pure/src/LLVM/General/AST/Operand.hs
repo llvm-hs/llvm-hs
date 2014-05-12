@@ -7,6 +7,7 @@ import Data.Word
 import LLVM.General.AST.Name
 import LLVM.General.AST.Constant
 import LLVM.General.AST.InlineAssembly
+import LLVM.General.AST.Type
 
 -- | A 'MetadataNodeID' is a number for identifying a metadata node.
 -- Note this is different from "named metadata", which are represented with
@@ -23,7 +24,7 @@ data MetadataNode
 -- | An 'Operand' is roughly that which is an argument to an 'LLVM.General.AST.Instruction.Instruction'
 data Operand 
   -- | %foo
-  = LocalReference Name
+  = LocalReference Type Name
   -- | 'Constant's include 'LLVM.General.AST.Constant.GlobalReference', for \@foo
   | ConstantOperand Constant
   | MetadataStringOperand String

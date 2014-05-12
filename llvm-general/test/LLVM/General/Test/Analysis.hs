@@ -13,7 +13,7 @@ import LLVM.General.Context
 import LLVM.General.Analysis
 
 import LLVM.General.AST as A
-import LLVM.General.AST.Type
+import LLVM.General.AST.Type as A.T
 import LLVM.General.AST.Name
 import LLVM.General.AST.AddrSpace
 import LLVM.General.AST.DataLayout
@@ -35,8 +35,8 @@ tests = testGroup "Analysis" [
     -- this test will cause an assertion if LLVM is compiled with assertions on.
     testCase "Module" $ do
       let ast = Module "<string>" Nothing Nothing [
-            GlobalDefinition $ Function L.External V.Default CC.C [] VoidType (Name "foo") ([
-                Parameter (IntegerType 32) (Name "x") []
+            GlobalDefinition $ Function L.External V.Default CC.C [] A.T.void (Name "foo") ([
+                Parameter i32 (Name "x") []
                ],False)
              [] 
              Nothing 0         
@@ -79,28 +79,28 @@ tests = testGroup "Analysis" [
            ast = 
              Module "<string>" Nothing Nothing [
                GlobalDefinition $ functionDefaults {
-                 G.returnType = FloatingPointType 64 IEEE,
+                 G.returnType = double,
                  G.name = Name "my_function2",
                  G.parameters = ([
-                   Parameter (PointerType (FloatingPointType 64 IEEE) (AddrSpace 0)) (Name "input_0") []
+                   Parameter (ptr double) (Name "input_0") []
                   ],False),
                  G.basicBlocks = [
                    BasicBlock (Name "foo") [ 
                     Name "tmp_input_w0" := GetElementPtr {
                       inBounds = True,
-                      address = LocalReference (Name "input_0"),
+                      address = LocalReference (ptr double) (Name "input_0"),
                       indices = [ConstantOperand (C.Int 64 0)],
                       metadata = []
                     },
                     UnName 0 := Load {
                       volatile = False,
-                      address = LocalReference (Name "tmp_input_w0"),
+                      address = LocalReference (ptr double) (Name "tmp_input_w0"),
                       maybeAtomicity = Nothing,
                       alignment = 8,
                       metadata = []
                     }
                    ] (
-                     Do $ Ret (Just (LocalReference (UnName 0))) []
+                     Do $ Ret (Just (LocalReference double (UnName 0))) []
                    )
                   ]
                 }

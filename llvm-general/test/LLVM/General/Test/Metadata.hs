@@ -7,6 +7,8 @@ import Test.HUnit
 import LLVM.General.Test.Support
 
 import LLVM.General.AST as A
+import LLVM.General.AST.Type as A.T
+import LLVM.General.AST.AddrSpace as A
 import qualified LLVM.General.AST.Linkage as L
 import qualified LLVM.General.AST.Visibility as V
 import qualified LLVM.General.AST.CallingConvention as CC
@@ -16,15 +18,15 @@ import LLVM.General.AST.Global as G
 tests = testGroup "Metadata" [
   testCase "local" $ do
     let ast = Module "<string>" Nothing Nothing [
-          GlobalDefinition $ globalVariableDefaults { G.name = UnName 0, G.type' = IntegerType 32 },
+          GlobalDefinition $ globalVariableDefaults { G.name = UnName 0, G.type' = i32 },
           GlobalDefinition $ functionDefaults {
-            G.returnType = IntegerType 32,
+            G.returnType = i32,
             G.name = Name "foo",
             G.basicBlocks = [
               BasicBlock (UnName 0) [
                  UnName 1 := Load {
                             volatile = False,
-                            address = ConstantOperand (C.GlobalReference (UnName 0)),
+                            address = ConstantOperand (C.GlobalReference (ptr i32) (UnName 0)),
                             maybeAtomicity = Nothing,
                             A.alignment = 0,
                             metadata = []
@@ -34,7 +36,7 @@ tests = testGroup "Metadata" [
                    (
                      "my-metadatum", 
                      MetadataNode [
-                      Just $ LocalReference (UnName 1),
+                      Just $ LocalReference i32 (UnName 1),
                       Just $ MetadataStringOperand "super hyper",
                       Nothing
                      ]
@@ -57,7 +59,7 @@ tests = testGroup "Metadata" [
   testCase "global" $ do
     let ast = Module "<string>" Nothing Nothing [
           GlobalDefinition $ functionDefaults {
-            G.returnType = IntegerType 32,
+            G.returnType = i32,
             G.name = Name "foo",
             G.basicBlocks = [
               BasicBlock (UnName 0) [
@@ -125,7 +127,7 @@ tests = testGroup "Metadata" [
     testCase "metadata-global" $ do
       let ast = Module "<string>" Nothing Nothing [
             GlobalDefinition $ functionDefaults {
-              G.returnType = VoidType,
+              G.returnType = A.T.void,
               G.name = Name "foo",
               G.basicBlocks = [
                 BasicBlock (UnName 0) [
@@ -135,7 +137,7 @@ tests = testGroup "Metadata" [
                ]
              },
             MetadataNodeDefinition (MetadataNodeID 0) [
-              Just $ ConstantOperand (C.GlobalReference (Name "foo"))
+              Just $ ConstantOperand (C.GlobalReference (ptr (FunctionType A.T.void [] False)) (Name "foo"))
              ]
            ]
       let s = "; ModuleID = '<string>'\n\

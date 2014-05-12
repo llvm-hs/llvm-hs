@@ -40,63 +40,74 @@ ast = do
  dl <- withDefaultTargetMachine getTargetMachineDataLayout
  return $ Module "<string>" (Just dl) Nothing [
   GlobalDefinition $ functionDefaults {
-    G.returnType = IntegerType 32,
+    G.returnType = i32,
     G.name = Name "foo",
-    G.parameters = ([Parameter (IntegerType 128) (Name "x") []],False),
+    G.parameters = ([Parameter i128 (Name "x") []],False),
     G.basicBlocks = [
       BasicBlock (UnName 0) [] (Do $ Br (Name "checkDone") []),
       BasicBlock (Name "checkDone") [
         UnName 1 := Phi {
-         type' = IntegerType 128,
+         type' = i128,
          incomingValues = [
-          (LocalReference (Name "x"), UnName 0),
-          (LocalReference (Name "x'"), Name "even"),
-          (LocalReference (Name "x''"), Name "odd")
+          (LocalReference i128 (Name "x"), UnName 0),
+          (LocalReference i128 (Name "x'"), Name "even"),
+          (LocalReference i128 (Name "x''"), Name "odd")
          ],
          metadata = []
         },
         Name "count" := Phi {
-         type' = IntegerType 32,
+         type' = i32,
          incomingValues = [
           (ConstantOperand (C.Int 32 1), UnName 0),
-          (LocalReference (Name "count'"), Name "even"),
-          (LocalReference (Name "count'"), Name "odd")
+          (LocalReference i32 (Name "count'"), Name "even"),
+          (LocalReference i32 (Name "count'"), Name "odd")
          ],
          metadata = []
         },
-        Name "count'" := Add False False (LocalReference (Name "count")) (ConstantOperand (C.Int 32 1)) [],
-        Name "is one" := ICmp IPred.EQ (LocalReference (UnName 1)) (ConstantOperand (C.Int 128 1)) []
+        Name "count'" := Add {
+         nsw = False,
+         nuw = False,
+         operand0 = LocalReference i32 (Name "count"),
+         operand1 = ConstantOperand (C.Int 32 1),
+         metadata = []
+        },
+        Name "is one" := ICmp {
+         iPredicate = IPred.EQ,
+         operand0 = LocalReference i128 (UnName 1),
+         operand1 = ConstantOperand (C.Int 128 1),
+         metadata = []
+        }
       ] (
-        Do $ CondBr (LocalReference (Name "is one")) (Name "done") (Name "checkOdd") []
+        Do $ CondBr (LocalReference i1 (Name "is one")) (Name "done") (Name "checkOdd") []
       ),
       BasicBlock (Name "checkOdd") [
-        Name "is odd" := Trunc (LocalReference (UnName 1)) (IntegerType 1) []
+        Name "is odd" := Trunc (LocalReference i128 (UnName 1)) i1 []
       ] (
-       Do $ CondBr (LocalReference (Name "is odd")) (Name "odd") (Name "even") []
+       Do $ CondBr (LocalReference i1 (Name "is odd")) (Name "odd") (Name "even") []
       ),
       BasicBlock (Name "even") [
-        Name "x'" := UDiv True (LocalReference (UnName 1)) (ConstantOperand (C.Int 128 2)) []
+        Name "x'" := UDiv True (LocalReference i128 (UnName 1)) (ConstantOperand (C.Int 128 2)) []
       ] (
         Do $ Br (Name "checkDone") []
       ),
       BasicBlock (Name "odd") [
-        UnName 2 := Mul False False (LocalReference (UnName 1)) (ConstantOperand (C.Int 128 3)) [],
-        Name "x''" := Add False False (LocalReference (UnName 2)) (ConstantOperand (C.Int 128 1)) []
+        UnName 2 := Mul False False (LocalReference i128 (UnName 1)) (ConstantOperand (C.Int 128 3)) [],
+        Name "x''" := Add False False (LocalReference i128 (UnName 2)) (ConstantOperand (C.Int 128 1)) []
       ] (
         Do $ Br (Name "checkDone") []
       ),
       BasicBlock (Name "done") [
       ] (
-        Do $ Ret (Just (LocalReference (Name "count'"))) []
+        Do $ Ret (Just (LocalReference i32 (Name "count'"))) []
       )
      ]
    },
   GlobalDefinition $ functionDefaults {
-    G.returnType = IntegerType 32,
+    G.returnType = i32,
     G.name = Name "main",
     G.parameters = ([
-      Parameter (IntegerType 32) (Name "argc") [],
-      Parameter (PointerType (PointerType (IntegerType 8) (AddrSpace 0)) (AddrSpace 0)) (Name "argv") []
+      Parameter i32 (Name "argc") [],
+      Parameter (ptr (ptr i8)) (Name "argv") []
      ],False),
     G.basicBlocks = [
       BasicBlock (UnName 0) [
@@ -104,7 +115,7 @@ ast = do
           isTailCall = False,
           callingConvention = CC.C,
           returnAttributes = [],
-          function = Right (ConstantOperand (C.GlobalReference (Name "foo"))),
+          function = Right (ConstantOperand (C.GlobalReference (FunctionType i32 [i32, ptr (ptr i8)] False) (Name "foo"))),
           arguments = [
            (ConstantOperand (C.Int 128 9491828328), [])
           ],
@@ -112,7 +123,7 @@ ast = do
           metadata = []
         }
       ] (
-        Do $ Ret (Just (LocalReference (UnName 1))) []
+        Do $ Ret (Just (LocalReference i32 (UnName 1))) []
       )
      ]
    }

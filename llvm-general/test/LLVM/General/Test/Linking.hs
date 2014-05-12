@@ -36,24 +36,24 @@ tests = testGroup "Linking" [
       ast0 = Module "<string>" Nothing Nothing [
           GlobalDefinition $ functionDefaults {
              G.linkage = L.Private,
-             G.returnType = IntegerType 32,
+             G.returnType = i32,
              G.name = Name "private0"
            },
           GlobalDefinition $ functionDefaults {
              G.linkage = L.External,
-             G.returnType = IntegerType 32,
+             G.returnType = i32,
              G.name = Name "external0"
            }
         ]
       ast1 = Module "<string>" Nothing Nothing [
           GlobalDefinition $ functionDefaults {
              G.linkage = L.Private,
-             G.returnType = IntegerType 32,
+             G.returnType = i32,
              G.name = Name "private1"
            },
           GlobalDefinition $ functionDefaults {
              G.linkage = L.External,
-             G.returnType = IntegerType 32,
+             G.returnType = i32,
              G.name = Name "external1"
            }
         ]      

@@ -38,9 +38,9 @@ testJIT :: ExecutionEngine e (FunPtr ()) => (Context -> (e -> IO ()) -> IO ()) -
 testJIT withEE = withContext $ \context -> withEE context $ \executionEngine -> do
   let mAST = Module "runSomethingModule" Nothing Nothing [
               GlobalDefinition $ functionDefaults {
-                G.returnType = IntegerType 32,
+                G.returnType = i32,
                 G.name = Name "_foo",
-                G.parameters = ([Parameter (IntegerType 32) (Name "bar") []],False),
+                G.parameters = ([Parameter i32 (Name "bar") []],False),
                 G.basicBlocks = [
                   BasicBlock (UnName 0) [] (
                     Do $ Ret (Just (ConstantOperand (C.Int 32 42))) []

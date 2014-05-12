@@ -16,7 +16,7 @@ import LLVM.General.Context
 import LLVM.General.Module
 import LLVM.General.Diagnostic
 import LLVM.General.AST
-import LLVM.General.AST.Type
+import LLVM.General.AST.Type as A.T
 import LLVM.General.AST.Name
 import LLVM.General.AST.AddrSpace
 import qualified LLVM.General.AST.IntegerPredicate as IPred
@@ -34,17 +34,9 @@ tests = testGroup "Instructions" [
     testCase name $ do
       let mAST = Module "<string>" Nothing Nothing [
             GlobalDefinition $ functionDefaults {
-              G.returnType = VoidType,
+              G.returnType = A.T.void,
               G.name = UnName 0,
-              G.parameters = ([
-                  Parameter (IntegerType 32) (UnName 0) [],
-                  Parameter (FloatingPointType 32 IEEE) (UnName 1) [],
-                  Parameter (PointerType (IntegerType 32) (AddrSpace 0)) (UnName 2) [],
-                  Parameter (IntegerType 64) (UnName 3) [],
-                  Parameter (IntegerType 1) (UnName 4) [],
-                  Parameter (VectorType 2 (IntegerType 32)) (UnName 5) [],
-                  Parameter (StructureType False [IntegerType 32, IntegerType 32]) (UnName 6) []
-                 ], False),
+              G.parameters = ([Parameter t (UnName n) [] | (t,n) <- zip ts [0..]], False),
               G.basicBlocks = [
                 BasicBlock (UnName 7) [
                   namedInstr
@@ -61,7 +53,16 @@ tests = testGroup "Instructions" [
                  \  ret void\n\
                  \}\n"
       strCheck mAST mStr
-    | let a = LocalReference . UnName,
+    | let ts = [
+           i32,
+           float,
+           ptr i32,
+           i64,
+           i1,
+           VectorType 2 i32,
+           StructureType False [i32, i32]
+           ],
+      let a i = LocalReference (ts !! fromIntegral i) (UnName i),
       (name, namedInstr, namedInstrS) <- (
         [
          (name, UnName 8 := instr, "%8 = " ++ instrS)
@@ -245,7 +246,7 @@ tests = testGroup "Instructions" [
            "xor i32 %0, %0"),
           ("alloca",
            Alloca {
-             allocatedType = IntegerType 32,
+             allocatedType = i32,
              numElements = Nothing,
              alignment = 0,
              metadata = [] 
@@ -335,91 +336,91 @@ tests = testGroup "Instructions" [
           ("trunc",
            Trunc {
              operand0 = a 0,
-             type' = IntegerType 16,
+             type' = i16,
              metadata = [] 
            },
            "trunc i32 %0 to i16"),
           ("zext",
            ZExt {
              operand0 = a 0,
-             type' = IntegerType 64,
+             type' = i64,
              metadata = [] 
            },
            "zext i32 %0 to i64"),
           ("sext",
            SExt {
              operand0 = a 0,
-             type' = IntegerType 64,
+             type' = i64,
              metadata = [] 
            },
            "sext i32 %0 to i64"),
           ("fptoui",
            FPToUI {
              operand0 = a 1,
-             type' = IntegerType 64,
+             type' = i64,
              metadata = [] 
            },
            "fptoui float %1 to i64"),
           ("fptosi",
            FPToSI {
              operand0 = a 1,
-             type' = IntegerType 64,
+             type' = i64,
              metadata = [] 
            },
            "fptosi float %1 to i64"),
           ("uitofp",
            UIToFP {
              operand0 = a 0,
-             type' = FloatingPointType 32 IEEE,
+             type' = float,
              metadata = [] 
            },
            "uitofp i32 %0 to float"),
           ("sitofp",
            SIToFP {
              operand0 = a 0,
-             type' = FloatingPointType 32 IEEE,
+             type' = float,
              metadata = [] 
            },
            "sitofp i32 %0 to float"),
           ("fptrunc",
            FPTrunc {
              operand0 = a 1,
-             type' = FloatingPointType 16 IEEE,
+             type' = half,
              metadata = [] 
            },
            "fptrunc float %1 to half"),
           ("fpext",
            FPExt {
              operand0 = a 1,
-             type' = FloatingPointType 64 IEEE,
+             type' = double,
              metadata = [] 
            },
            "fpext float %1 to double"),
           ("ptrtoint",
            PtrToInt {
              operand0 = a 2,
-             type' = IntegerType 32,
+             type' = i32,
              metadata = [] 
            },
            "ptrtoint i32* %2 to i32"),
           ("inttoptr",
            IntToPtr {
              operand0 = a 0,
-             type' = PointerType (IntegerType 32) (AddrSpace 0),
+             type' = ptr i32,
              metadata = [] 
            },
            "inttoptr i32 %0 to i32*"),
           ("bitcast",
            BitCast {
              operand0 = a 0,
-             type' = FloatingPointType 32 IEEE,
+             type' = float,
              metadata = [] 
            },
            "bitcast i32 %0 to float"),
           ("addrspacecast",
            AddrSpaceCast {
              operand0 = a 2,
-             type' = PointerType (IntegerType 32) (AddrSpace 2),
+             type' = PointerType i32 (AddrSpace 2),
              metadata = [] 
            },
            "addrspacecast i32* %2 to i32 addrspace(2)*"),
@@ -434,7 +435,7 @@ tests = testGroup "Instructions" [
           ("vaarg",
            VAArg {
              argList = a 2,
-             type' = IntegerType 16,
+             type' = i16,
              metadata = []
            },
            "va_arg i32* %2, i16"),
@@ -480,10 +481,10 @@ tests = testGroup "Instructions" [
           ("landingpad-" ++ n,
            LandingPad {
              type' = StructureType False [ 
-                PointerType (IntegerType 8) (AddrSpace 0),
-                IntegerType 32
+                ptr i8,
+                i32
                ],
-             personalityFunction = ConstantOperand (C.GlobalReference (UnName 0)),
+             personalityFunction = ConstantOperand (C.GlobalReference (ptr (FunctionType A.T.void ts False)) (UnName 0)),
              cleanup = cp,
              clauses = cls,
              metadata = []
@@ -491,10 +492,10 @@ tests = testGroup "Instructions" [
            "landingpad { i8*, i32 } personality void (i32, float, i32*, i64, i1, <2 x i32>, { i32, i32 })* @0" ++ s)
           | (clsn,cls,clss) <- [
            ("catch",
-            [Catch (C.Null (PointerType (IntegerType 8) (AddrSpace 0)))],
+            [Catch (C.Null (ptr i8))],
             "\n          catch i8* null"),
            ("filter",
-            [Filter (C.Null (ArrayType 1 (PointerType (IntegerType 8) (AddrSpace 0))))],
+            [Filter (C.Null (ArrayType 1 (ptr i8)))],
             "\n          filter [1 x i8*] zeroinitializer")
           ],
           (cpn, cp, cps) <- [ ("-cleanup", True, "\n          cleanup"), ("", False, "") ],
@@ -561,8 +562,8 @@ tests = testGroup "Instructions" [
              isTailCall = False,
              callingConvention = CC.C,
              returnAttributes = [],
-             function = Right (ConstantOperand (C.GlobalReference (UnName 0))),
-             arguments = [ (LocalReference (UnName i), []) | i <- [0..6] ],
+             function = Right (ConstantOperand (C.GlobalReference (ptr (FunctionType A.T.void ts False)) (UnName 0))),
+             arguments = [ (a i, []) | i <- [0..6] ],
              functionAttributes = [],
              metadata = []
            },
@@ -574,30 +575,30 @@ tests = testGroup "Instructions" [
     let mAST = Module "<string>" Nothing Nothing [
           GlobalDefinition $ globalVariableDefaults {
             G.name = Name "fortytwo",
-            G.type' = IntegerType 32,
+            G.type' = i32,
             G.isConstant = True,
             G.initializer = Just $ C.Int 32 42
           },
           GlobalDefinition $ functionDefaults {
-            G.returnType = IntegerType 32,
+            G.returnType = i32,
             G.name = UnName 0,
             G.basicBlocks = [
               BasicBlock (UnName 1) [
                 UnName 2 := GetElementPtr {
                   inBounds = True,
-                  address = ConstantOperand (C.GlobalReference (Name "fortytwo")),
+                  address = ConstantOperand (C.GlobalReference (ptr i32) (Name "fortytwo")),
                   indices = [ ConstantOperand (C.Int 32 0) ],
                   metadata = []
                 },
                 UnName 3 := Load {
                   volatile = False,
-                  address = LocalReference (UnName 2),
+                  address = LocalReference (ptr i32) (UnName 2),
                   maybeAtomicity = Nothing,
                   alignment = 1,
                   metadata = []
                 }
               ] (
-                Do $ Ret (Just (LocalReference (UnName 3))) []
+                Do $ Ret (Just (LocalReference i32 (UnName 3))) []
               )
              ]
            }
@@ -620,7 +621,7 @@ tests = testGroup "Instructions" [
        "ret",
        Module "<string>" Nothing Nothing [
         GlobalDefinition $ functionDefaults {
-          G.returnType = VoidType,
+          G.returnType = A.T.void,
           G.name = UnName 0,
           G.basicBlocks = [
             BasicBlock (UnName 0) [
@@ -639,7 +640,7 @@ tests = testGroup "Instructions" [
        "br",
        Module "<string>" Nothing Nothing [
         GlobalDefinition $ functionDefaults {
-          G.returnType = VoidType,
+          G.returnType = A.T.void,
           G.name = UnName 0,
           G.basicBlocks = [
             BasicBlock (UnName 0) [] (
@@ -663,7 +664,7 @@ tests = testGroup "Instructions" [
        "condbr",
        Module "<string>" Nothing Nothing [
         GlobalDefinition $ functionDefaults {
-          G.returnType = VoidType,
+          G.returnType = A.T.void,
           G.name = UnName 0,
           G.basicBlocks = [
             BasicBlock (Name "bar") [] (
@@ -688,7 +689,7 @@ tests = testGroup "Instructions" [
        "switch",
        Module "<string>" Nothing Nothing [
          GlobalDefinition $ functionDefaults {
-           G.returnType = VoidType,
+           G.returnType = A.T.void,
            G.name = UnName 0,
            G.basicBlocks = [
              BasicBlock (UnName 0) [] (
@@ -727,24 +728,24 @@ tests = testGroup "Instructions" [
        Module "<string>" Nothing Nothing [
         GlobalDefinition $ globalVariableDefaults {
           G.name = UnName 0,
-          G.type' = PointerType (IntegerType 8) (AddrSpace 0),
+          G.type' = ptr i8,
           G.initializer = Just (C.BlockAddress (Name "foo") (UnName 2))
         },
         GlobalDefinition $ functionDefaults {
-          G.returnType = VoidType,
+          G.returnType = A.T.void,
           G.name = Name "foo",
           G.basicBlocks = [
             BasicBlock (UnName 0) [
               UnName 1 := Load {
                        volatile = False,
-                       address = ConstantOperand (C.GlobalReference (UnName 0)),
+                       address = ConstantOperand (C.GlobalReference (ptr (ptr i8)) (UnName 0)),
                        maybeAtomicity = Nothing,
                        alignment = 0,
                        metadata = [] 
                      }
             ] (
               Do $ IndirectBr {
-                operand0' = LocalReference (UnName 1),
+                operand0' = LocalReference (ptr i8) (UnName 1),
                 possibleDests = [UnName 2],
                 metadata' = []
              }
@@ -771,18 +772,18 @@ tests = testGroup "Instructions" [
        "invoke",
        Module "<string>" Nothing Nothing [
         GlobalDefinition $ functionDefaults {
-          G.returnType = VoidType,
+          G.returnType = A.T.void,
           G.name = UnName 0,
           G.parameters = ([
-            Parameter (IntegerType 32) (UnName 0) [],
-            Parameter (IntegerType 16) (UnName 1) []
+            Parameter i32 (UnName 0) [],
+            Parameter i16 (UnName 1) []
            ], False),
           G.basicBlocks = [
             BasicBlock (UnName 2) [] (
               Do $ Invoke {
                callingConvention' = CC.C,
                returnAttributes' = [],
-               function' = Right (ConstantOperand (C.GlobalReference (UnName 0))),
+               function' = Right (ConstantOperand (C.GlobalReference (ptr (FunctionType A.T.void [i32, i16] False)) (UnName 0))),
                arguments' = [
                 (ConstantOperand (C.Int 32 4), []),
                 (ConstantOperand (C.Int 16 8), [])
@@ -799,12 +800,12 @@ tests = testGroup "Instructions" [
             BasicBlock (Name "bar") [
              UnName 3 := LandingPad {
                type' = StructureType False [ 
-                  PointerType (IntegerType 8) (AddrSpace 0),
-                  IntegerType 32
+                  ptr i8,
+                  i32
                  ],
-               personalityFunction = ConstantOperand (C.GlobalReference (UnName 0)),
+               personalityFunction = ConstantOperand (C.GlobalReference (ptr (FunctionType A.T.void [i32, i16] False)) (UnName 0)),
                cleanup = True,
-               clauses = [Catch (C.Null (PointerType (IntegerType 8) (AddrSpace 0)))],
+               clauses = [Catch (C.Null (ptr i8))],
                metadata = []
              }
              ] (
@@ -832,7 +833,7 @@ tests = testGroup "Instructions" [
        "resume",
        Module "<string>" Nothing Nothing [
          GlobalDefinition $ functionDefaults {
-           G.returnType = VoidType,
+           G.returnType = A.T.void,
            G.name = UnName 0,
            G.basicBlocks = [
              BasicBlock (UnName 0) [] (
@@ -850,7 +851,7 @@ tests = testGroup "Instructions" [
        "unreachable",
        Module "<string>" Nothing Nothing [
         GlobalDefinition $ functionDefaults {
-          G.returnType = VoidType,
+          G.returnType = A.T.void,
           G.name = UnName 0,
           G.basicBlocks = [
             BasicBlock (UnName 0) [] (

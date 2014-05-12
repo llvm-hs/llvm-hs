@@ -9,6 +9,7 @@ import LLVM.General.Test.Support
 import LLVM.General.Context
 import LLVM.General.Module
 import LLVM.General.AST
+import LLVM.General.AST.Type as A.T
 import qualified LLVM.General.AST.Global as G
 
 tests = testGroup "Global" [
@@ -22,12 +23,12 @@ tests = testGroup "Global" [
       g <- [
        globalVariableDefaults {
         G.name = UnName 0,
-        G.type' = IntegerType 32,
+        G.type' = i32,
         G.alignment = a,
         G.section = s
         },
        functionDefaults {
-         G.returnType = VoidType,
+         G.returnType = A.T.void,
          G.name = UnName 0,
          G.parameters = ([], False),
          G.alignment = a,

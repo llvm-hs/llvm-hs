@@ -10,6 +10,7 @@ import LLVM.General.Context
 import LLVM.General.Module
 
 import LLVM.General.AST
+import LLVM.General.AST.Type
 import LLVM.General.AST.InlineAssembly as IA
 import qualified LLVM.General.AST.Linkage as L
 import qualified LLVM.General.AST.Visibility as V
@@ -22,9 +23,9 @@ tests = testGroup "InlineAssembly" [
     let ast = Module "<string>" Nothing Nothing [
                 GlobalDefinition $ 
                   functionDefaults {
-                    G.returnType = IntegerType 32,
+                    G.returnType = i32,
                     G.name = Name "foo",
-                    G.parameters = ([Parameter (IntegerType 32) (Name "x") []],False),
+                    G.parameters = ([Parameter i32 (Name "x") []],False),
                     G.basicBlocks = [
                       BasicBlock (UnName 0) [
                         UnName 1 := Call {
@@ -32,7 +33,7 @@ tests = testGroup "InlineAssembly" [
                           callingConvention = CC.C,
                           returnAttributes = [],
                           function = Left $ InlineAssembly {
-                                       IA.type' = FunctionType (IntegerType 32) [IntegerType 32] False,
+                                       IA.type' = FunctionType i32 [i32] False,
                                        assembly = "bswap $0",
                                        constraints = "=r,r",
                                        hasSideEffects = False,
@@ -40,13 +41,13 @@ tests = testGroup "InlineAssembly" [
                                        dialect = ATTDialect
                                      },
                           arguments = [
-                            (LocalReference (Name "x"), [])
+                            (LocalReference i32 (Name "x"), [])
                            ],
                           functionAttributes = [],
                           metadata = []
                         }
                       ] (
-                        Do $ Ret (Just (LocalReference (UnName 1))) []
+                        Do $ Ret (Just (LocalReference i32 (UnName 1))) []
                       )
                     ]
                 }
@@ -66,7 +67,7 @@ tests = testGroup "InlineAssembly" [
                 ModuleInlineAssembly "bar",
                 GlobalDefinition $ globalVariableDefaults {
                   G.name = UnName 0,
-                  G.type' = IntegerType 32
+                  G.type' = i32
                 }
               ]
         s = "; ModuleID = '<string>'\n\

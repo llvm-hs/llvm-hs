@@ -88,7 +88,7 @@ instance EncodeM EncodeAST A.Constant (Ptr FFI.Constant) where
                     A.F.PPC_FP128 _ _ -> FFI.floatSemanticsPPCDoubleDouble
       nBits <- encodeM nBits
       liftIO $ FFI.constantFloatOfArbitraryPrecision context nBits words fpSem
-    A.C.GlobalReference n -> FFI.upCast <$> referGlobal n
+    A.C.GlobalReference _ n -> FFI.upCast <$> referGlobal n
     A.C.BlockAddress f b -> do
       f' <- referGlobal f
       b' <- getBlockForAddress f b
@@ -137,7 +137,9 @@ instance DecodeM DecodeAST A.Constant (Ptr FFI.Constant) where
     t <- decodeM ft
     valueSubclassId <- liftIO $ FFI.getValueSubclassId v
     nOps <- liftIO $ FFI.getNumOperands u
-    let globalRef = return A.C.GlobalReference `ap` (getGlobalName =<< liftIO (FFI.isAGlobalValue v))
+    let globalRef = return A.C.GlobalReference 
+                    `ap` (return t)
+                    `ap` (getGlobalName =<< liftIO (FFI.isAGlobalValue v))
         op = decodeM <=< liftIO . FFI.getConstantOperand c
         getConstantOperands = mapM op [0..nOps-1] 
         getConstantData = do

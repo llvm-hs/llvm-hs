@@ -39,3 +39,18 @@ data Type
   -- | <http://llvm.org/docs/LangRef.html#metadata-type>
   | MetadataType -- only to be used as a parameter type for a few intrinsics
   deriving (Eq, Ord, Read, Show, Typeable, Data)
+
+void = VoidType -- ^ An abbreviation for VoidType
+i1 = IntegerType 1 -- ^ An abbreviation for IntegerType 1
+i8 = IntegerType 8 -- ^ An abbreviation for IntegerType 8
+i16 = IntegerType 16 -- ^ An abbreviation for IntegerType 16
+i32 = IntegerType 32 -- ^ An abbreviation for IntegerType 32
+i64 = IntegerType 64 -- ^ An abbreviation for IntegerType 64
+i128 = IntegerType 128 -- ^ An abbreviation for IntegerType 128
+ptr t = PointerType t (AddrSpace 0) -- ^ An abbreviation for PointerType t (AddrSpace 0)
+half = FloatingPointType 16 IEEE -- ^ An abbreviation for FloatingPointType 16 IEEE
+float = FloatingPointType 32 IEEE -- ^ An abbreviation for FloatingPointType 32 IEEE
+double = FloatingPointType 64 IEEE -- ^ An abbreviation for FloatingPointType 64 IEEE
+fp128 = FloatingPointType 128 IEEE -- ^ An abbreviation for FloatingPointType 128 IEEE
+x86_fp80 = FloatingPointType 80 DoubleExtended -- ^ An abbreviation for FloatingPointType 80 DoubleExtended
+ppc_fp128 = FloatingPointType 128 PairOfFloats -- ^ An abbreviation for FloatingPointType 128 PairOfFloats

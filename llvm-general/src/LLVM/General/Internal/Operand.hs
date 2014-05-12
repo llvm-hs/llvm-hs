@@ -13,6 +13,7 @@ import qualified LLVM.General.Internal.FFI.Constant as FFI
 import qualified LLVM.General.Internal.FFI.InlineAssembly as FFI
 import qualified LLVM.General.Internal.FFI.Metadata as FFI
 import qualified LLVM.General.Internal.FFI.PtrHierarchy as FFI
+import qualified LLVM.General.Internal.FFI.Value as FFI
 
 import LLVM.General.Internal.Coding
 import LLVM.General.Internal.Constant ()
@@ -41,7 +42,9 @@ instance DecodeM DecodeAST A.Operand (Ptr FFI.Value) where
              if mdn /= nullPtr
               then return A.MetadataNodeOperand `ap` decodeM mdn
               else
-                return A.LocalReference `ap` getLocalName v
+                return A.LocalReference 
+                         `ap` (decodeM =<< (liftIO $ FFI.typeOf v))
+                         `ap` getLocalName v
 
 instance DecodeM DecodeAST A.CallableOperand (Ptr FFI.Value) where
   decodeM v = do
@@ -52,7 +55,7 @@ instance DecodeM DecodeAST A.CallableOperand (Ptr FFI.Value) where
 
 instance EncodeM EncodeAST A.Operand (Ptr FFI.Value) where
   encodeM (A.ConstantOperand c) = (FFI.upCast :: Ptr FFI.Constant -> Ptr FFI.Value) <$> encodeM c
-  encodeM (A.LocalReference n) = referLocal n
+  encodeM (A.LocalReference t n) = referLocal n
   encodeM (A.MetadataStringOperand s) = do
     Context c <- gets encodeStateContext
     s <- encodeM s
