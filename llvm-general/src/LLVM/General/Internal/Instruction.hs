@@ -343,164 +343,160 @@ $(do
         builder <- gets encodeStateBuilder
         let return' i = return (FFI.upCast i, return ())
         s <- encodeM ""
-        (inst, act) <- $(
-          [|
-            case o of
-              A.ICmp { 
-                A.iPredicate = pred,
-                A.operand0 = op0,
-                A.operand1 = op1
-              } -> do
-                op0' <- encodeM op0
-                op1' <- encodeM op1
-                pred <- encodeM pred
-                i <- liftIO $ FFI.buildICmp builder pred op0' op1' s
-                return' i
-              A.FCmp {
-                A.fpPredicate = pred,
-                A.operand0 = op0,
-                A.operand1 = op1
-              } -> do
-                op0' <- encodeM op0
-                op1' <- encodeM op1
-                pred <- encodeM pred
-                i <- liftIO $ FFI.buildFCmp builder pred op0' op1' s
-                return' i
-              A.Phi { A.type' = t, A.incomingValues = ivs } -> do
-                 t' <- encodeM t
-                 i <- liftIO $ FFI.buildPhi builder t' s
-                 return (
-                   FFI.upCast i,
-                   do
-                     let (ivs3, bs3) = unzip ivs
-                     ivs3' <- encodeM ivs3
-                     bs3' <- encodeM bs3
-                     liftIO $ FFI.addIncoming i ivs3' bs3'
-                   )
-              A.Call {
-                A.isTailCall = tc,
-                A.callingConvention = cc,
-                A.returnAttributes = rAttrs,
-                A.function = f,
-                A.arguments = args,
-                A.functionAttributes = fAttrs
-              } -> do
-                fv <- encodeM f
-                let (argvs, argAttrs) = unzip args
-                (n, argvs) <- encodeM argvs
-                i <- liftIO $ FFI.buildCall builder fv argvs n s
-                forM (zip (rAttrs : argAttrs) [0..]) $ \(attrs, j) -> do
-                  attrs <- encodeM attrs
-                  liftIO $ FFI.addCallInstAttr i j attrs
-                fAttrs <- encodeM fAttrs
-                liftIO $ FFI.addCallInstFunctionAttr i fAttrs
-                when tc $ do
-                  tc <- encodeM tc
-                  liftIO $ FFI.setTailCall i tc
-                cc <- encodeM cc
-                liftIO $ FFI.setInstructionCallConv i cc
-                return' i
-              A.Select { A.condition' = c, A.trueValue = t, A.falseValue = f } -> do
-                c' <- encodeM c
-                t' <- encodeM t
-                f' <- encodeM f
-                i <- liftIO $ FFI.buildSelect builder c' t' f' s
-                return' i
-              A.VAArg { A.argList = al, A.type' = t } -> do
-                al' <- encodeM al
-                t' <- encodeM t
-                i <- liftIO $ FFI.buildVAArg builder al' t' s
-                return' i
-              A.ExtractElement { A.vector = v, A.index = idx } -> do
-                v' <- encodeM v
-                idx' <- encodeM idx
-                i <- liftIO $ FFI.buildExtractElement builder v' idx' s
-                return' i
-              A.InsertElement { A.vector = v, A.element = e, A.index = idx } -> do
-                v' <- encodeM v
-                e' <- encodeM e
-                idx' <- encodeM idx
-                i <- liftIO $ FFI.buildInsertElement builder v' e' idx' s
-                return' i
-              A.ShuffleVector { A.operand0 = o0, A.operand1 = o1, A.mask = mask } -> do
-                o0' <- encodeM o0
-                o1' <- encodeM o1
-                mask' <- encodeM mask
-                i <- liftIO $ FFI.buildShuffleVector builder o0' o1' mask' s
-                return' i
-              A.ExtractValue { A.aggregate = a, A.indices' = is } -> do
-                a' <- encodeM a
-                (n, is') <- encodeM is
-                i <- liftIO $ FFI.buildExtractValue builder a' is' n s
-                return' i
-              A.InsertValue { A.aggregate = a, A.element = e, A.indices' = is } -> do
-                a' <- encodeM a
-                e' <- encodeM e
-                (n, is') <- encodeM is
-                i <- liftIO $ FFI.buildInsertValue builder a' e' is' n s
-                return' i
-              A.LandingPad { 
-                A.type' = t,
-                A.personalityFunction = pf,
-                A.cleanup = cl, 
-                A.clauses = cs
-              } -> do
-                t' <- encodeM t
-                pf' <- encodeM pf
-                i <- liftIO $ FFI.buildLandingPad builder t' pf' (fromIntegral $ length cs) s
-                forM cs $ \c -> 
-                  case c of
-                    A.Catch a -> do
-                      cn <- encodeM a
-                      isArray <- liftIO $ isArrayType =<< FFI.typeOf (FFI.upCast cn)
-                      when isArray $ fail $ "Catch clause cannot take an array: " ++ show c
-                      liftIO $ FFI.addClause i cn
-                    A.Filter a -> do
-                      cn <- encodeM a
-                      isArray <- liftIO $ isArrayType =<< FFI.typeOf (FFI.upCast cn)
-                      unless isArray $ fail $ "filter clause must take an array: " ++ show c
-                      liftIO $ FFI.addClause i cn
-                when cl $ do
-                  cl <- encodeM cl
-                  liftIO $ FFI.setCleanup i cl
-                return' i
-              A.Alloca { A.allocatedType = alt, A.numElements = n, A.alignment = alignment } -> do 
-                 alt' <- encodeM alt
-                 n' <- encodeM n
-                 i <- liftIO $ FFI.buildAlloca builder alt' n' s
-                 unless (alignment == 0) $ liftIO $ FFI.setInstrAlignment i (fromIntegral alignment)
-                 return' i
-              o -> $(TH.caseE [| o |] [
-                       TH.match 
-                       (TH.recP fullName [ (f,) <$> (TH.varP . TH.mkName . TH.nameBase $ f) | f <- fieldNames ])
-                       (TH.normalB (TH.doE handlerBody))
-                       []
-                       |
-                       (name, ID.instructionKind -> k) <- Map.toList ID.instructionDefs,
-                       case (k, name) of
-                         (ID.Binary, _) -> True
-                         (ID.Cast, _) -> True
-                         (ID.Memory, "Alloca") -> False
-                         (ID.Memory, _) -> True
-                         _ -> False,
-                       let
-                         TH.RecC fullName (unzip3 -> (fieldNames, _, _)) = findInstrFields name
-                         encodeMFields = map TH.nameBase fieldNames List.\\ [ "metadata" ]
-                         handlerBody = ([
-                           TH.bindS (if s == "fastMathFlags" then TH.tupP [] else TH.varP (TH.mkName s))
-                               [| encodeM $(TH.dyn s) |] | s <- encodeMFields 
-                          ] ++ [
-                           TH.bindS (TH.varP (TH.mkName "i")) [| liftIO $ $(
-                              foldl1 TH.appE . map TH.dyn $ 
-                               [ "FFI.build" ++ name, "builder" ] ++ (encodeMFields List.\\ [ "fastMathFlags" ]) ++ [ "s" ] 
-                            ) |],
-                           TH.noBindS [| return' $(TH.dyn "i") |]
-                          ])
-                      ]
-                    )
+        (inst, act) <- case o of
+          A.ICmp { 
+            A.iPredicate = pred,
+            A.operand0 = op0,
+            A.operand1 = op1
+          } -> do
+            op0' <- encodeM op0
+            op1' <- encodeM op1
+            pred <- encodeM pred
+            i <- liftIO $ FFI.buildICmp builder pred op0' op1' s
+            return' i
+          A.FCmp {
+            A.fpPredicate = pred,
+            A.operand0 = op0,
+            A.operand1 = op1
+          } -> do
+            op0' <- encodeM op0
+            op1' <- encodeM op1
+            pred <- encodeM pred
+            i <- liftIO $ FFI.buildFCmp builder pred op0' op1' s
+            return' i
+          A.Phi { A.type' = t, A.incomingValues = ivs } -> do
+             t' <- encodeM t
+             i <- liftIO $ FFI.buildPhi builder t' s
+             return (
+               FFI.upCast i,
+               do
+                 let (ivs3, bs3) = unzip ivs
+                 ivs3' <- encodeM ivs3
+                 bs3' <- encodeM bs3
+                 liftIO $ FFI.addIncoming i ivs3' bs3'
+               )
+          A.Call {
+            A.isTailCall = tc,
+            A.callingConvention = cc,
+            A.returnAttributes = rAttrs,
+            A.function = f,
+            A.arguments = args,
+            A.functionAttributes = fAttrs
+          } -> do
+            fv <- encodeM f
+            let (argvs, argAttrs) = unzip args
+            (n, argvs) <- encodeM argvs
+            i <- liftIO $ FFI.buildCall builder fv argvs n s
+            forM (zip (rAttrs : argAttrs) [0..]) $ \(attrs, j) -> do
+              attrs <- encodeM attrs
+              liftIO $ FFI.addCallInstAttr i j attrs
+            fAttrs <- encodeM fAttrs
+            liftIO $ FFI.addCallInstFunctionAttr i fAttrs
+            when tc $ do
+              tc <- encodeM tc
+              liftIO $ FFI.setTailCall i tc
+            cc <- encodeM cc
+            liftIO $ FFI.setInstructionCallConv i cc
+            return' i
+          A.Select { A.condition' = c, A.trueValue = t, A.falseValue = f } -> do
+            c' <- encodeM c
+            t' <- encodeM t
+            f' <- encodeM f
+            i <- liftIO $ FFI.buildSelect builder c' t' f' s
+            return' i
+          A.VAArg { A.argList = al, A.type' = t } -> do
+            al' <- encodeM al
+            t' <- encodeM t
+            i <- liftIO $ FFI.buildVAArg builder al' t' s
+            return' i
+          A.ExtractElement { A.vector = v, A.index = idx } -> do
+            v' <- encodeM v
+            idx' <- encodeM idx
+            i <- liftIO $ FFI.buildExtractElement builder v' idx' s
+            return' i
+          A.InsertElement { A.vector = v, A.element = e, A.index = idx } -> do
+            v' <- encodeM v
+            e' <- encodeM e
+            idx' <- encodeM idx
+            i <- liftIO $ FFI.buildInsertElement builder v' e' idx' s
+            return' i
+          A.ShuffleVector { A.operand0 = o0, A.operand1 = o1, A.mask = mask } -> do
+            o0' <- encodeM o0
+            o1' <- encodeM o1
+            mask' <- encodeM mask
+            i <- liftIO $ FFI.buildShuffleVector builder o0' o1' mask' s
+            return' i
+          A.ExtractValue { A.aggregate = a, A.indices' = is } -> do
+            a' <- encodeM a
+            (n, is') <- encodeM is
+            i <- liftIO $ FFI.buildExtractValue builder a' is' n s
+            return' i
+          A.InsertValue { A.aggregate = a, A.element = e, A.indices' = is } -> do
+            a' <- encodeM a
+            e' <- encodeM e
+            (n, is') <- encodeM is
+            i <- liftIO $ FFI.buildInsertValue builder a' e' is' n s
+            return' i
+          A.LandingPad { 
+            A.type' = t,
+            A.personalityFunction = pf,
+            A.cleanup = cl, 
+            A.clauses = cs
+          } -> do
+            t' <- encodeM t
+            pf' <- encodeM pf
+            i <- liftIO $ FFI.buildLandingPad builder t' pf' (fromIntegral $ length cs) s
+            forM cs $ \c -> 
+              case c of
+                A.Catch a -> do
+                  cn <- encodeM a
+                  isArray <- liftIO $ isArrayType =<< FFI.typeOf (FFI.upCast cn)
+                  when isArray $ fail $ "Catch clause cannot take an array: " ++ show c
+                  liftIO $ FFI.addClause i cn
+                A.Filter a -> do
+                  cn <- encodeM a
+                  isArray <- liftIO $ isArrayType =<< FFI.typeOf (FFI.upCast cn)
+                  unless isArray $ fail $ "filter clause must take an array: " ++ show c
+                  liftIO $ FFI.addClause i cn
+            when cl $ do
+              cl <- encodeM cl
+              liftIO $ FFI.setCleanup i cl
+            return' i
+          A.Alloca { A.allocatedType = alt, A.numElements = n, A.alignment = alignment } -> do 
+             alt' <- encodeM alt
+             n' <- encodeM n
+             i <- liftIO $ FFI.buildAlloca builder alt' n' s
+             unless (alignment == 0) $ liftIO $ FFI.setInstrAlignment i (fromIntegral alignment)
+             return' i
+          o -> $(TH.caseE [| o |] [
+                   TH.match 
+                   (TH.recP fullName [ (f,) <$> (TH.varP . TH.mkName . TH.nameBase $ f) | f <- fieldNames ])
+                   (TH.normalB (TH.doE handlerBody))
+                   []
+                   |
+                   (name, ID.instructionKind -> k) <- Map.toList ID.instructionDefs,
+                   case (k, name) of
+                     (ID.Binary, _) -> True
+                     (ID.Cast, _) -> True
+                     (ID.Memory, "Alloca") -> False
+                     (ID.Memory, _) -> True
+                     _ -> False,
+                   let
+                     TH.RecC fullName (unzip3 -> (fieldNames, _, _)) = findInstrFields name
+                     encodeMFields = map TH.nameBase fieldNames List.\\ [ "metadata" ]
+                     handlerBody = ([
+                       TH.bindS (if s == "fastMathFlags" then TH.tupP [] else TH.varP (TH.mkName s))
+                           [| encodeM $(TH.dyn s) |] | s <- encodeMFields 
+                      ] ++ [
+                       TH.bindS (TH.varP (TH.mkName "i")) [| liftIO $ $(
+                          foldl1 TH.appE . map TH.dyn $ 
+                           [ "FFI.build" ++ name, "builder" ] ++ (encodeMFields List.\\ [ "fastMathFlags" ]) ++ [ "s" ] 
+                        ) |],
+                       TH.noBindS [| return' $(TH.dyn "i") |]
+                      ])
+                  ]
+                )
 
-           |]
-         )
         setMD inst (A.metadata o)
         return (inst, act)
    |]

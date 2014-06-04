@@ -18,6 +18,7 @@ import qualified Data.Map as Map
 
 import qualified LLVM.General.Internal.FFI.PtrHierarchy as FFI
 import qualified LLVM.General.Internal.FFI.Builder as FFI
+import qualified LLVM.General.Internal.FFI.Value as FFI
 
 import qualified LLVM.General.AST as A
 
@@ -25,10 +26,14 @@ import LLVM.General.Internal.Context
 import LLVM.General.Internal.Coding
 import LLVM.General.Internal.String ()
 
+data LocalValue
+  = ForwardValue (Ptr FFI.Value)
+  | DefinedValue (Ptr FFI.Value)
+
 data EncodeState = EncodeState { 
       encodeStateBuilder :: Ptr FFI.Builder,
       encodeStateContext :: Context,
-      encodeStateLocals :: Map A.Name (Ptr FFI.Value),
+      encodeStateLocals :: Map A.Name LocalValue,
       encodeStateGlobals :: Map A.Name (Ptr FFI.GlobalValue),
       encodeStateAllBlocks :: Map (A.Name, A.Name) (Ptr FFI.BasicBlock),
       encodeStateBlocks :: Map A.Name (Ptr FFI.BasicBlock),
@@ -92,31 +97,34 @@ phase p = do
     modify (`withLocalsFrom` s')
     return r
 
-define :: (Ord n, FFI.DescendentOf p v) => 
-          (EncodeState -> Map n (Ptr p))
-          -> (Map n (Ptr p) -> EncodeState -> EncodeState)
-          -> n
-          -> Ptr v
-          -> EncodeAST ()
-define r w n v = modify $ \b -> w (Map.insert n (FFI.upCast v) (r b)) b
-
 defineLocal :: FFI.DescendentOf FFI.Value v => A.Name -> Ptr v -> EncodeAST ()
-defineLocal = define encodeStateLocals (\m b -> b { encodeStateLocals = m })
+defineLocal n v' = do
+  let v = FFI.upCast v'
+  def <- gets $ Map.lookup n . encodeStateLocals
+  case def of
+    Just (ForwardValue dummy) -> liftIO $ FFI.replaceAllUsesWith dummy v
+    _ -> return ()
+  modify $ \b -> b { encodeStateLocals = Map.insert n (DefinedValue v) (encodeStateLocals b) }
 
 defineGlobal :: FFI.DescendentOf FFI.GlobalValue v => A.Name -> Ptr v -> EncodeAST ()
-defineGlobal = define encodeStateGlobals (\m b -> b { encodeStateGlobals = m })
+defineGlobal n v = modify $ \b -> b { encodeStateGlobals =  Map.insert n (FFI.upCast v) (encodeStateGlobals b) }
 
 defineMDNode :: A.MetadataNodeID -> Ptr FFI.MDNode -> EncodeAST ()
-defineMDNode = define encodeStateMDNodes (\m b -> b { encodeStateMDNodes = m })
+defineMDNode n v = modify $ \b -> b { encodeStateMDNodes = Map.insert n (FFI.upCast v) (encodeStateMDNodes b) }
 
-refer :: (Show n, Ord n) => (EncodeState -> Map n (Ptr p)) -> String -> n -> EncodeAST (Ptr p)
-refer r m n = do
+refer :: (Show n, Ord n) => (EncodeState -> Map n v) -> n -> EncodeAST v -> EncodeAST v
+refer r n f = do
   mop <- gets $ Map.lookup n . r
-  maybe (fail $ "reference to undefined " ++ m ++ ": " ++ show n) return mop
+  maybe f return mop
 
-referLocal = refer encodeStateLocals "local"
-referGlobal = refer encodeStateGlobals "global"
-referMDNode = refer encodeStateMDNodes "metadata node"
+failAsUndefined :: Show n => String -> n -> EncodeAST a
+failAsUndefined m n = fail $ "reference to undefined " ++ m ++ ": " ++ show n
+
+referOrFail :: (Show n, Ord n) => (EncodeState -> Map n (Ptr p)) -> String -> n -> EncodeAST (Ptr p)
+referOrFail r m n = refer r n $ failAsUndefined m n
+
+referGlobal = referOrFail encodeStateGlobals "global"
+referMDNode = referOrFail encodeStateMDNodes "metadata node"
 
 defineBasicBlock :: A.Name -> A.Name -> Ptr FFI.BasicBlock -> EncodeAST ()
 defineBasicBlock fn n b = modify $ \s -> s {
@@ -125,8 +133,8 @@ defineBasicBlock fn n b = modify $ \s -> s {
 }
 
 instance EncodeM EncodeAST A.Name (Ptr FFI.BasicBlock) where
-  encodeM = refer encodeStateBlocks "block"
+  encodeM = referOrFail encodeStateBlocks "block"
 
 getBlockForAddress :: A.Name -> A.Name -> EncodeAST (Ptr FFI.BasicBlock)
-getBlockForAddress fn n = refer encodeStateAllBlocks "blockaddress" (fn, n)
+getBlockForAddress fn n = referOrFail encodeStateAllBlocks "blockaddress" (fn, n)
 

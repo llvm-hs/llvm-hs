@@ -18,6 +18,7 @@ import Foreign.Ptr
 import Foreign.C
 import Data.IORef
 import qualified Data.ByteString as BS
+import qualified Data.Map as Map
 
 import qualified LLVM.General.Internal.FFI.Assembly as FFI
 import qualified LLVM.General.Internal.FFI.Builder as FFI
@@ -315,6 +316,8 @@ withModuleFromAST context@(Context c) (A.Module moduleId dataLayout triple defin
              (encodeM term :: EncodeAST (Ptr FFI.Instruction))
              return (sequence_ finishes)
            sequence_ finishInstrs
+           locals <- gets $ Map.toList . encodeStateLocals
+           forM [ n | (n, ForwardValue _) <- locals ] $ \n -> failAsUndefined "local" n
            return (FFI.upCast f)
      return $ do
        g' <- eg'

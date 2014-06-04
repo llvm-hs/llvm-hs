@@ -6,6 +6,7 @@ module LLVM.General.Internal.Operand where
 import Data.Functor
 import Control.Monad.State
 import Control.Monad.AnyCont
+import qualified Data.Map as Map
 
 import Foreign.Ptr
 
@@ -55,7 +56,17 @@ instance DecodeM DecodeAST A.CallableOperand (Ptr FFI.Value) where
 
 instance EncodeM EncodeAST A.Operand (Ptr FFI.Value) where
   encodeM (A.ConstantOperand c) = (FFI.upCast :: Ptr FFI.Constant -> Ptr FFI.Value) <$> encodeM c
-  encodeM (A.LocalReference t n) = referLocal n
+  encodeM (A.LocalReference t n) = do
+    lv <- refer encodeStateLocals n $ do
+      lv <- do
+        n <- encodeM n
+        t <- encodeM t
+        v <- liftIO $ FFI.createArgument t n
+        return $ ForwardValue v
+      modify $ \s -> s { encodeStateLocals = Map.insert n lv $ encodeStateLocals s }
+      return lv
+    return $ case lv of DefinedValue v -> v; ForwardValue v -> v
+
   encodeM (A.MetadataStringOperand s) = do
     Context c <- gets encodeStateContext
     s <- encodeM s

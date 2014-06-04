@@ -15,10 +15,11 @@ import qualified Data.Set as Set
 
 import LLVM.General.Context
 import LLVM.General.Module
+import LLVM.General.Analysis
 import LLVM.General.Diagnostic
 import LLVM.General.Target
 import LLVM.General.AST
-import LLVM.General.AST.Type
+import LLVM.General.AST.Type as A.T
 import LLVM.General.AST.AddrSpace
 import qualified LLVM.General.AST.IntegerPredicate as IPred
 
@@ -276,7 +277,6 @@ tests = testGroup "Module" [
    ast @?= defaultModule { moduleTargetTriple = Just "x86_64-unknown-linux" },
 
   testGroup "regression" [
-{-
     testCase "minimal type info" $ withContext $ \context -> do
       let s = "; ModuleID = '<string>'\n\
               \\n\
@@ -292,10 +292,43 @@ tests = testGroup "Module" [
               \  %x1 = add i32 %x0, %x0\n\
               \  br label %dead0\n\
               \}\n"
-      ast <- withModuleFromLLVMAssembly' context s moduleAST
-      s' <- withModuleFromAST' context ast moduleLLVMAssembly
-      s' @?= s,
--}
+          ast = Module "<string>" Nothing Nothing [
+             GlobalDefinition $ functionDefaults {
+                G.returnType = A.T.void,
+                G.name = Name "trouble",
+                G.basicBlocks = [
+                 BasicBlock (Name "entry") [
+                  ] (
+                   Do $ Ret Nothing []
+                  ),
+                 BasicBlock (Name "dead0") [
+                   Name "x0" := Add {
+                     nsw = False,
+                     nuw = False,
+                     operand0 = LocalReference i32 (Name "x1"),
+                     operand1 = LocalReference i32 (Name "x1"),
+                     metadata = []
+                   }
+                  ] (
+                   Do $ Br (Name "dead1") []
+                  ),
+                 BasicBlock (Name "dead1") [
+                   Name "x1" := Add {
+                     nsw = False,
+                     nuw = False,
+                     operand0 = LocalReference i32 (Name "x0"),
+                     operand1 = LocalReference i32 (Name "x0"),
+                     metadata = []
+                   }
+                  ] (
+                   Do $ Br (Name "dead0") []
+                  )
+                 ]
+              }
+            ]
+      strCheck ast s
+      s' <- withContext $ \context -> withModuleFromAST' context ast $ runErrorT . verify
+      s' @?= Right (),
     testCase "set flag on constant expr" $ withContext $ \context -> do
       let ast = Module "<string>" Nothing Nothing [
              GlobalDefinition $ functionDefaults {
