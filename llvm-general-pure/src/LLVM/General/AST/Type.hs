@@ -40,17 +40,59 @@ data Type
   | MetadataType -- only to be used as a parameter type for a few intrinsics
   deriving (Eq, Ord, Read, Show, Typeable, Data)
 
-void = VoidType -- ^ An abbreviation for VoidType
-i1 = IntegerType 1 -- ^ An abbreviation for IntegerType 1
-i8 = IntegerType 8 -- ^ An abbreviation for IntegerType 8
-i16 = IntegerType 16 -- ^ An abbreviation for IntegerType 16
-i32 = IntegerType 32 -- ^ An abbreviation for IntegerType 32
-i64 = IntegerType 64 -- ^ An abbreviation for IntegerType 64
-i128 = IntegerType 128 -- ^ An abbreviation for IntegerType 128
-ptr t = PointerType t (AddrSpace 0) -- ^ An abbreviation for PointerType t (AddrSpace 0)
-half = FloatingPointType 16 IEEE -- ^ An abbreviation for FloatingPointType 16 IEEE
-float = FloatingPointType 32 IEEE -- ^ An abbreviation for FloatingPointType 32 IEEE
-double = FloatingPointType 64 IEEE -- ^ An abbreviation for FloatingPointType 64 IEEE
-fp128 = FloatingPointType 128 IEEE -- ^ An abbreviation for FloatingPointType 128 IEEE
-x86_fp80 = FloatingPointType 80 DoubleExtended -- ^ An abbreviation for FloatingPointType 80 DoubleExtended
-ppc_fp128 = FloatingPointType 128 PairOfFloats -- ^ An abbreviation for FloatingPointType 128 PairOfFloats
+-- | An abbreviation for 'VoidType'
+void :: Type
+void = VoidType
+
+-- | An abbreviation for 'IntegerType' 1
+i1 :: Type
+i1 = IntegerType 1
+
+-- | An abbreviation for 'IntegerType' 8
+i8 :: Type
+i8 = IntegerType 8
+
+-- | An abbreviation for 'IntegerType' 16
+i16 :: Type
+i16 = IntegerType 16
+
+-- | An abbreviation for 'IntegerType' 32
+i32 :: Type
+i32 = IntegerType 32
+
+-- | An abbreviation for 'IntegerType' 64
+i64 :: Type
+i64 = IntegerType 64
+
+-- | An abbreviation for 'IntegerType' 128
+i128 :: Type
+i128 = IntegerType 128
+
+-- | An abbreviation for 'PointerType' t ('AddrSpace' 0)
+ptr :: Type -> Type
+ptr t = PointerType t (AddrSpace 0)
+
+-- | An abbreviation for 'FloatingPointType' 16 'IEEE'
+half :: Type
+half = FloatingPointType 16 IEEE
+
+-- | An abbreviation for 'FloatingPointType' 32 'IEEE'
+float :: Type
+float = FloatingPointType 32 IEEE
+
+-- | An abbreviation for 'FloatingPointType' 64 'IEEE'
+double :: Type
+double = FloatingPointType 64 IEEE
+
+-- | An abbreviation for 'FloatingPointType' 128 'IEEE'
+fp128 :: Type
+fp128 = FloatingPointType 128 IEEE
+
+-- | An abbreviation for 'FloatingPointType' 80 'DoubleExtended'
+x86_fp80 :: Type
+x86_fp80 = FloatingPointType 80 DoubleExtended
+
+-- | An abbreviation for 'FloatingPointType' 128 'PairOfFloats'
+ppc_fp128 :: Type
+ppc_fp128 = FloatingPointType 128 PairOfFloats
+
