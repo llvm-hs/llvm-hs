@@ -66,7 +66,10 @@ tests = testGroup "PrettyPrint" [
             \          }\n\
             \        ] (A.Do A.Br { A.dest = A.Name \"here\", A.metadata' = [] }),\n\
             \        A.G.BasicBlock (A.Name \"here\") [] (\n\
-            \          A.Do A.Ret {A.returnOperand = Just (A.LocalReference (A.IntegerType 32) (A.UnName 1)), A.metadata' = []}\n\
+            \          A.Do A.Ret {\n\
+            \            A.returnOperand = Just (A.LocalReference A.IntegerType { A.typeBits = 32 } (A.UnName 1)),\n\
+            \            A.metadata' = []\n\
+            \          }\n\
             \        )\n\
             \      ]\n\
             \    }\n\
