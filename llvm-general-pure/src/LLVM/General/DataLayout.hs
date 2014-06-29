@@ -93,6 +93,7 @@ parseDataLayout s =
         char 's' -- Ignore this obsolete approach to stack alignment.  After the 3.4 release,
                  -- this is never generated, still parsed but ignored.  Comments suggest
                  -- it will no longer be parsed after 4.0.
+        triple
         return id,
       do
         at <- choice [
