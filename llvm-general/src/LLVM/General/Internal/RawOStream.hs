@@ -24,19 +24,14 @@ withFileRawOStream path excl binary c = do
   path <- encodeM path
   excl <- encodeM excl
   binary <- encodeM binary
-  outputRef <- liftIO $ newIORef Nothing
   msgPtr <- alloca
   errorRef <- liftIO $ newIORef undefined
-  failed <- decodeM =<< (liftIO $ FFI.withFileRawOStream path excl binary msgPtr $ \os -> do
-                           r <- runErrorT (c os)
-                           writeIORef errorRef r)
-  when failed $ fail =<< decodeM msgPtr
+  succeeded <- decodeM =<< (liftIO $ FFI.withFileRawOStream path excl binary msgPtr $ \os -> do
+                              r <- runErrorT (c os)
+                              writeIORef errorRef r)
+  unless succeeded $ fail =<< decodeM msgPtr
   e <- liftIO $ readIORef errorRef
-  case e of
-    Left e -> fail e
-    _ -> do
-      Just r <- liftIO $ readIORef outputRef
-      return r
+  either fail return e
 
 withBufferRawOStream :: 
   (MonadIO m, DecodeM IO a (Ptr CChar, CSize))
