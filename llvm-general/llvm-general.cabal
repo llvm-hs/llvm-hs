@@ -84,6 +84,7 @@ library
     LLVM.General.Target
     LLVM.General.Target.LibraryFunction
     LLVM.General.Target.Options
+    LLVM.General.Threading
     LLVM.General.Transforms
 
   other-modules:
@@ -122,6 +123,7 @@ library
     LLVM.General.Internal.RMWOperation
     LLVM.General.Internal.String
     LLVM.General.Internal.Target
+    LLVM.General.Internal.Threading
     LLVM.General.Internal.Type
     LLVM.General.Internal.Value
     LLVM.General.Internal.FFI.Analysis
@@ -154,6 +156,7 @@ library
     LLVM.General.Internal.FFI.RawOStream
     LLVM.General.Internal.FFI.SMDiagnostic
     LLVM.General.Internal.FFI.Target
+    LLVM.General.Internal.FFI.Threading
     LLVM.General.Internal.FFI.Transforms
     LLVM.General.Internal.FFI.Type
     LLVM.General.Internal.FFI.User
