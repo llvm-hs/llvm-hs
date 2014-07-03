@@ -104,7 +104,10 @@ data Pass
       noMemoryOperationBoost :: Bool,
       fastDependencyAnalysis :: Bool
     }
-  | LoopVectorize
+  | LoopVectorize {
+      noUnrolling :: Bool,
+      alwaysVectorize :: Bool
+    }
   | SuperwordLevelParallelismVectorize
 
   -- here begin the instrumentation passes
@@ -144,6 +147,12 @@ data Pass
     }
   | DebugExistingIR
   deriving (Eq, Ord, Read, Show, Typeable, Data)
+
+-- | Defaults for the 'LoopVectorize' pass
+defaultLoopVectorize = LoopVectorize {
+    noUnrolling = False,
+    alwaysVectorize = True
+  }
 
 -- | Defaults for the 'BasicBlockVectorize' pass - copied from the C++ code to keep these defaults
 -- constant. (The C++ defaults are modifiable through global objects used for command-line processing,

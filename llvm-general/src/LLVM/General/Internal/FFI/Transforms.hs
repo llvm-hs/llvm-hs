@@ -55,6 +55,7 @@ cName n =
 	 "LoopClosedSingleStaticAssignment",
 	 "LoopInstructionSimplify",
          "LoopStrengthReduce",
+         "LoopVectorize",
 	 "LowerAtomic",
 	 "LowerInvoke",
 	 "LowerSwitch",

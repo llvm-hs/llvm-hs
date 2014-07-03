@@ -251,7 +251,7 @@ tests = testGroup "Optimization" [
         withTargetOptions $ \targetOptions -> do
           withTargetMachine target triple "" Set.empty targetOptions R.Default CM.Default CGO.Default $ \tm -> do
             optimize (defaultPassSetSpec { 
-                        transforms = [ LoopVectorize ],
+                        transforms = [ defaultLoopVectorize ],
                         dataLayout = moduleDataLayout mIn,
                         targetMachine = Just tm
                       }) mIn

@@ -246,8 +246,15 @@ void LLVM_General_AddDebugExistingIRPass(LLVMPassManagerRef PM) {
 	unwrap(PM)->add(createDebugIRPass());
 }
 
-void
-LLVM_General_PassManagerBuilderSetLibraryInfo(
+void LLVM_General_AddLoopVectorizePass(
+	LLVMPassManagerRef PM,
+	LLVMBool noUnrolling,
+	LLVMBool alwaysVectorize
+) {
+	unwrap(PM)->add(createLoopVectorizePass(noUnrolling, alwaysVectorize));
+}
+
+void LLVM_General_PassManagerBuilderSetLibraryInfo(
 	LLVMPassManagerBuilderRef PMB,
 	LLVMTargetLibraryInfoRef l
 ) {
