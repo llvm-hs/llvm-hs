@@ -105,6 +105,7 @@ data Pass
       fastDependencyAnalysis :: Bool
     }
   | LoopVectorize
+  | SLPVectorize
 
   -- here begin the instrumentation passes
   | GCOVProfiler {
