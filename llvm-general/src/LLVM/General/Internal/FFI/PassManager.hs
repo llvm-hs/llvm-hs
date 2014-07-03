@@ -133,5 +133,5 @@ foreign import ccall unsafe "LLVM_General_PassManagerBuilderSetLibraryInfo" pass
 foreign import ccall unsafe "LLVM_General_PassManagerBuilderSetLoopVectorize" passManagerBuilderSetLoopVectorize ::
     Ptr PassManagerBuilder -> LLVMBool -> IO ()
 
-foreign import ccall unsafe "LLVM_General_PassManagerBuilderSetSLPVectorize" passManagerBuilderSetSLPVectorize ::
+foreign import ccall unsafe "LLVM_General_PassManagerBuilderSetSuperwordLevelParallelismVectorize" passManagerBuilderSetSuperwordLevelParallelismVectorize ::
     Ptr PassManagerBuilder -> LLVMBool -> IO ()

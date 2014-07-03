@@ -248,26 +248,26 @@ void LLVM_General_AddDebugExistingIRPass(LLVMPassManagerRef PM) {
 
 void
 LLVM_General_PassManagerBuilderSetLibraryInfo(
-    LLVMPassManagerBuilderRef PMB,
-    LLVMTargetLibraryInfoRef l
+	LLVMPassManagerBuilderRef PMB,
+	LLVMTargetLibraryInfoRef l
 ) {
-  // The PassManager frees the TargetLibraryInfo when done,
-  // but we also free our ref, so give it a new copy.
-  unwrap(PMB)->LibraryInfo = new TargetLibraryInfo(*unwrap(l));
+	// The PassManager frees the TargetLibraryInfo when done,
+	// but we also free our ref, so give it a new copy.
+	unwrap(PMB)->LibraryInfo = new TargetLibraryInfo(*unwrap(l));
 }
 
 void LLVM_General_PassManagerBuilderSetLoopVectorize(
-    LLVMPassManagerBuilderRef PMB,
-    LLVMBool runLoopVectorization
+	LLVMPassManagerBuilderRef PMB,
+	LLVMBool runLoopVectorization
 ) {
-  unwrap(PMB)->LoopVectorize = runLoopVectorization;
+	unwrap(PMB)->LoopVectorize = runLoopVectorization;
 }
 
-void LLVM_General_PassManagerBuilderSetSLPVectorize(
-    LLVMPassManagerBuilderRef PMB,
-    LLVMBool runSLPVectorization
+void LLVM_General_PassManagerBuilderSetSuperwordLevelParallelismVectorize(
+	LLVMPassManagerBuilderRef PMB,
+	LLVMBool runSLPVectorization
 ) {
-  unwrap(PMB)->SLPVectorize = runSLPVectorization;
+	unwrap(PMB)->SLPVectorize = runSLPVectorization;
 }
 
 }
