@@ -256,4 +256,18 @@ LLVM_General_PassManagerBuilderSetLibraryInfo(
   unwrap(PMB)->LibraryInfo = new TargetLibraryInfo(*unwrap(l));
 }
 
+void LLVM_General_PassManagerBuilderSetLoopVectorize(
+    LLVMPassManagerBuilderRef PMB,
+    LLVMBool runLoopVectorization
+) {
+  unwrap(PMB)->LoopVectorize = runLoopVectorization;
+}
+
+void LLVM_General_PassManagerBuilderSetSLPVectorize(
+    LLVMPassManagerBuilderRef PMB,
+    LLVMBool runSLPVectorization
+) {
+  unwrap(PMB)->SLPVectorize = runSLPVectorization;
+}
+
 }

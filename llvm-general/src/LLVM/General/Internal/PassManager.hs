@@ -54,8 +54,12 @@ data PassSetSpec
       sizeLevel :: Maybe Word,
       unitAtATime :: Maybe Bool,
       simplifyLibCalls :: Maybe Bool,
+      loopVectorize :: Maybe Bool,
+      slpVectorize :: Maybe Bool,
       useInlinerWithThreshold :: Maybe Word,
-      curatedTargetLibraryInfo :: Maybe TargetLibraryInfo
+      dataLayout :: Maybe DataLayout,
+      targetLibraryInfo :: Maybe TargetLibraryInfo,
+      targetMachine :: Maybe TargetMachine
     }
 
 -- | Helper to make a curated 'PassSetSpec'
@@ -64,8 +68,12 @@ defaultCuratedPassSetSpec = CuratedPassSetSpec {
   sizeLevel = Nothing,
   unitAtATime = Nothing,
   simplifyLibCalls = Nothing,
+  loopVectorize = Nothing,
+  slpVectorize = Nothing,
   useInlinerWithThreshold = Nothing,
-  curatedTargetLibraryInfo = Nothing
+  dataLayout = Nothing,
+  targetLibraryInfo = Nothing,
+  targetMachine = Nothing
 }
 
 -- | an empty 'PassSetSpec'
@@ -82,6 +90,10 @@ instance (Monad m, MonadAnyCont IO m) => EncodeM m GCOVVersion CString where
 createPassManager :: PassSetSpec -> IO (Ptr FFI.PassManager)
 createPassManager pss = flip runAnyContT return $ do
   pm <- liftIO $ FFI.createPassManager
+  forM_ (dataLayout pss) $ \dl -> liftIO $ withFFIDataLayout dl $ FFI.addDataLayoutPass pm 
+  forM_ (targetLibraryInfo pss) $ \(TargetLibraryInfo tli) -> do
+    liftIO $ FFI.addTargetLibraryInfoPass pm tli
+  forM_ (targetMachine pss) $ \(TargetMachine tm) -> liftIO $ FFI.addAnalysisPasses tm pm
   case pss of
     s@CuratedPassSetSpec {} -> liftIO $ do
       bracket FFI.passManagerBuilderCreate FFI.passManagerBuilderDispose $ \b -> do
@@ -91,16 +103,11 @@ createPassManager pss = flip runAnyContT return $ do
         handleOption FFI.passManagerBuilderSetDisableUnitAtATime (liftM not . unitAtATime)
         handleOption FFI.passManagerBuilderSetDisableSimplifyLibCalls (liftM not . simplifyLibCalls)
         handleOption FFI.passManagerBuilderUseInlinerWithThreshold useInlinerWithThreshold
-        case (curatedTargetLibraryInfo s) of
-          (Just (TargetLibraryInfo tl)) -> FFI.passManagerBuilderSetLibraryInfo b tl
-          Nothing -> return ()
+        handleOption FFI.passManagerBuilderSetLoopVectorize loopVectorize
+        handleOption FFI.passManagerBuilderSetLoopVectorize slpVectorize
         FFI.passManagerBuilderPopulateModulePassManager b pm
     PassSetSpec ps dl tli tm' -> do
       let tm = maybe nullPtr (\(TargetMachine tm) -> tm) tm'
-      forM_ tli $ \(TargetLibraryInfo tli) -> do
-        liftIO $ FFI.addTargetLibraryInfoPass pm tli
-      forM_ dl $ \dl -> liftIO $ withFFIDataLayout dl $ FFI.addDataLayoutPass pm 
-      forM_ tm' $ \(TargetMachine tm) -> liftIO $ FFI.addAnalysisPasses tm pm
       forM_ ps $ \p -> $(
         do
           TH.TyConI (TH.DataD _ _ _ cons _) <- TH.reify ''Pass
