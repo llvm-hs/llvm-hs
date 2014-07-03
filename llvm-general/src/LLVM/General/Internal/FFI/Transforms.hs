@@ -33,6 +33,7 @@ cName n =
             "OldScalarReplacementOfAggregates" -> "ScalarReplAggregates"
             "SimplifyControlFlowGraph" -> "CFGSimplification"
             "SparseConditionalConstantPropagation" -> "SCCP"
+            "SuperwordLevelParallelismVectorize" -> "SLPVectorize"
             h -> h
         patchImpls = [
          "AddressSanitizer",
