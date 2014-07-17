@@ -15,9 +15,10 @@ import Data.Functor
 import Data.List
 import Data.Hashable
 import Data.Binary
-import Development.Shake
+import Development.Shake hiding (command_)
+import qualified Development.Shake as S (command_)
 import Development.Shake.FilePath
-import Development.Shake.Command
+-- import Development.Shake.Command
 import System.FilePath.Posix hiding ((</>), doesDirectoryExist)
 import System.Posix.Directory
 import System.Posix.Env hiding (getEnv)
@@ -44,13 +45,13 @@ pkgName = "llvm-general"
 wipedir :: FilePath -> Action ()
 wipedir d = do
   present <- doesDirectoryExist d
-  if present then system' "rm" [ "-r", d ] else return ()
+  unless present $ command_ [] "rm" [ "-r", d ]
 
 mkdir :: FilePath -> Action ()
-mkdir d = system' "mkdir" [ "-p", d ]
+mkdir d = command_ [] "mkdir" [ "-p", d ]
 
 untar :: FilePath -> FilePath -> Action ()
-untar d tb = system' "tar" [ "zxCf", d, tb ]
+untar d tb = command_ [] "tar" [ "zxCf", d, tb ]
 
 needRecursive :: FilePath -> Action ()
 needRecursive p = do
@@ -62,31 +63,18 @@ needRecursive p = do
 touch f = do
   let d = dropFileName f
   dExists <- doesDirectoryExist d
-  unless dExists $ cmd "mkdir" ["-p", d]
-  cmd "touch" [ f ]
+  unless dExists $ command_ [] "mkdir" ["-p", d]
+  command_ [] "touch" [ f ]
 
-systemCwdV p' c a = do
-  p <- liftIO $ canonicalizePath p'
-  putQuiet $ "Entering directory `" ++ p ++ "'"
-  () <- cmd (Cwd p) c a
-{-
-  liftIO $ do
-    putStrLn $ "out:\n" ++ out
-    putStrLn $ "err:\n" ++ err
--}
-  putQuiet $ "Leaving directory `" ++ p ++ "'"
-
-withAlteredEnvVar :: String -> (Maybe String -> Maybe String) -> Action () -> Action ()
-withAlteredEnvVar name modify action = do
-  let alterEnvVar :: String -> Maybe String -> Action ()
-      alterEnvVar name val = liftIO $ maybe (unsetEnv name) (\v -> setEnv name v True) val
-  old <- getEnv name
-  alterEnvVar name (modify old)
-  action
-  alterEnvVar name old
-
-setEnvVar = const . Just
-prefixPathVar entry = Just . maybe entry ((entry ++ ":") ++) 
+command_ :: [CmdOption] -> String -> [String] -> Action ()
+command_ opts c args = f opts 
+  where
+    f [] = S.command_ opts c args
+    f ((Cwd p'):opts') = do
+      p <- liftIO $ canonicalizePath p'
+      putQuiet $ "Entering directory `" ++ p ++ "'"
+      f opts'
+      putQuiet $ "Leaving directory `" ++ p ++ "'"
 
 newtype BuildRoot = BuildRoot () deriving (Eq, Ord, Read, Show, Binary, Hashable, NFData, Typeable)
 newtype LLVMConfig = LLVMConfig () deriving (Eq, Ord, Read, Show, Binary, Hashable, NFData, Typeable)
@@ -130,20 +118,37 @@ main = shake shakeOptions {
     args <- liftIO getArgs
     need (if null args then [ stamp ("tested", "llvm-general") ] else args)
 
+  let shared = [ "--enable-shared" | True ]
+  let ghPages = "out" </> "gh-pages"
+      sandbox = "out" </> "sandbox"
+      sandboxConfigFile = "out" </> "cabal.sandbox.config"
+
   let getCabalStep = do
         buildRoot <- getBuildRoot (BuildRoot ())
         ownLLVM <- getLlvmConfig (LLVMConfig ())
-        let subBuildEnv = if ownLLVM 
-                           then withAlteredEnvVar "PATH" (prefixPathVar $ buildRoot </> llvmDir </> "install/bin")
-                           else id
-        return $ \pkg args -> subBuildEnv (systemCwdV pkg "cabal-dev" $ [ "--sandbox", buildRoot </> "cabal-dev"] ++ args)
+        pathOpt <- if ownLLVM 
+                    then do
+                      opt <- addPath [buildRoot </> llvmDir </> "install/bin"] []
+                      return [opt]
+                     else 
+                      return []
+        return $ \pkg args -> command_ ([Cwd pkg] ++ pathOpt) "cabal" $ [ "--sandbox-config-file=" ++ (buildRoot </> sandboxConfigFile) ] ++ args
 
-  let shared = [ "--enable-shared" | True ]
-  let ghPages = "out" </> "gh-pages"
   let localPackageDeps "llvm-general" = [ "llvm-general-pure" ]
       localPackageDeps _ = []
       allPkgs = [ "llvm-general-pure", "llvm-general"]
       needStage stage pkgs = needStamps [ (stage, pkg) | pkg <- pkgs ]
+
+  let cabal args = do
+        () <- command_ [] "cabal" $ [ "--sandbox-config-file=" ++ sandboxConfigFile ] ++ args
+        return ()
+
+  let ensureSandbox = do
+        present <- doesFileExist sandboxConfigFile
+        unless present $ do
+          cabal [ "sandbox", "init", "--sandbox=" ++ sandbox ]
+          cabal $ [ "sandbox", "add-source" ] ++ allPkgs
+          return ()
 
   phony "build" $ needStage "built" allPkgs
   phony "test" $ needStage "tested" allPkgs
@@ -151,6 +156,7 @@ main = shake shakeOptions {
   phony "pubdoc" $ needStage "docPublished" allPkgs
 
   stamp ("*","*") *> \(stmp@(parseStamp -> (stage, pkg))) -> (>> touch stmp) $ do
+    ensureSandbox
     cabalStep <- getCabalStep
     tag <- getCabalVersion (CabalVersion pkg)
     buildRoot <- getBuildRoot (BuildRoot ())
@@ -159,8 +165,8 @@ main = shake shakeOptions {
         needStage "installed" (localPackageDeps pkg)
         need [ pkg </> "Setup.hs" ]
         need [ pkg </> pkg ++ ".cabal" ]
-        cabalStep pkg $ [ "install-deps", "--enable-tests" ] ++ shared
-        cabalStep pkg $ [ "configure", "--enable-tests" {- , "-fshared-llvm" -} ] ++ shared
+        cabalStep pkg $ [ "install", "--only-dependencies", "--enable-tests" ] ++ shared
+        cabalStep pkg $ [ "configure", "--enable-tests", "-fshared-llvm" ] ++ shared
 
       "built" -> do
         needStage "configured" [pkg]
@@ -170,11 +176,7 @@ main = shake shakeOptions {
 
       "installed" -> do
         needStage "built" [pkg]
-        () <- cmd "mv" [ pkg </> "dist", pkg </> "dist-hold" ]
-        () <- cmd "cp" [ "-r", pkg </> "dist-hold", pkg </> "dist" ]
         cabalStep pkg $ [ "install", "--reinstall", "--force-reinstalls" ] ++ shared
-        () <- cmd "rm" [ "-r", pkg </> "dist" ]
-        () <- cmd "mv" [ pkg </> "dist-hold", pkg </> "dist" ]
         return ()
 
       "tested" -> do
@@ -199,14 +201,13 @@ main = shake shakeOptions {
         needStage "documented" [pkg]
         withResource ghPagesLock 1 $ do
           ghPagesExists <- doesDirectoryExist ghPages
-          unless ghPagesExists $ cmd (Cwd "out") "git" ["clone", buildRoot, "-b", "gh-pages", "gh-pages"]
-          () <- cmd "rm" [ "-rf", ghPages </> tag </> "doc" </> "html" </> pkg ]
-          () <- cmd "mkdir" [ "-p", ghPages </> tag </> "doc" </> "html" ]
-          () <- cmd "cp" [ "-r", pkg </> "dist/doc/html" </> pkg, ghPages </> tag </> "doc" </> "html" ]
-          () <- cmd (Cwd ghPages) "git" [ "add", "-A", "." ]
-          () <- cmd (Cwd ghPages) "git" [ "commit", "-m", show ("update " ++ tag ++ " " ++ pkg ++ " doc") ]
-          () <- cmd (Cwd ghPages) "git" [ "push" ]
-          return ()
+          unless ghPagesExists $ command_ [Cwd "out"] "git" ["clone", buildRoot, "-b", "gh-pages", "gh-pages"]
+          command_ [] "rm" [ "-rf", ghPages </> tag </> "doc" </> "html" </> pkg ]
+          command_ [] "mkdir" [ "-p", ghPages </> tag </> "doc" </> "html" ]
+          command_ [] "cp" [ "-r", pkg </> "dist/doc/html" </> pkg, ghPages </> tag </> "doc" </> "html" ]
+          command_ [Cwd ghPages] "git" [ "add", "-A", "." ]
+          command_ [Cwd ghPages] "git" [ "commit", "-m", show ("update " ++ tag ++ " " ++ pkg ++ " doc") ]
+          command_ [Cwd ghPages] "git" [ "push" ]
 
   llvmDir </> "install/bin/llvm-config" *> \out -> do
     let tarball = "downloads/llvm-" ++ llvmVersion ++ ".src.tar.gz"
@@ -218,12 +219,12 @@ main = shake shakeOptions {
     untar buildDir tarball
     (".":"..":[srcDir']) <- liftM sort $ liftIO $ System.Directory.getDirectoryContents buildDir
     let srcDir = buildDir </> srcDir'
-    systemCwdV srcDir "sh" [
+    command_ [Cwd srcDir] "sh" [
         "./configure",
         "--prefix=" ++ buildRoot </> llvmDir </> "install",
         "--enable-shared"
         ]
-    systemCwdV srcDir "make" [ "-j", "8", "install" ]
+    command_ [Cwd srcDir] "make" [ "-j", "8", "install" ]
     wipedir buildDir
 
 

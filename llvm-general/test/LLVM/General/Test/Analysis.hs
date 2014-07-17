@@ -39,14 +39,14 @@ tests = testGroup "Analysis" [
                 Parameter i32 (Name "x") []
                ],False)
              [] 
-             Nothing 0         
+             Nothing 0 Nothing         
              [
               BasicBlock (UnName 0) [
                 UnName 1 := Call {
                   isTailCall = False,
                   callingConvention = CC.C,
                   returnAttributes = [],
-                  function = Right (ConstantOperand (C.GlobalReference (Name "foo"))),
+                  function = Right (ConstantOperand (C.GlobalReference (A.T.FunctionType A.T.void [A.T.i32] False) (Name "foo"))),
                   arguments = [
                    (ConstantOperand (C.Int 8 1), [])
                   ],

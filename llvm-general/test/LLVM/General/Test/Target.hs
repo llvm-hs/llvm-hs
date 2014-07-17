@@ -79,7 +79,7 @@ tests = testGroup "Target" [
            o' <- peekTargetOptions to
            o' @?= o
        ],
-     testProperty "basic" $ \options -> morallyDubiousIOProperty $ do
+     testProperty "basic" $ \options -> ioProperty $ do
        withTargetOptions $ \to -> do
          pokeTargetOptions options to
          options' <- peekTargetOptions to
