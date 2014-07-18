@@ -55,7 +55,7 @@ newtype EncodeAST a = EncodeAST { unEncodeAST :: AnyContT (ErrorT String (StateT
 lookupNamedType :: A.Name -> EncodeAST (Ptr FFI.Type)
 lookupNamedType n = do
   t <- gets $ Map.lookup n . encodeStateNamedTypes
-  maybe (fail $ "reference to undefined type: " ++ show n) return t
+  maybe (throwError $ "reference to undefined type: " ++ show n) return t
 
 defineType :: A.Name -> Ptr FFI.Type -> EncodeAST ()
 defineType n t = modify $ \s -> s { encodeStateNamedTypes = Map.insert n t (encodeStateNamedTypes s) }
@@ -117,14 +117,14 @@ refer r n f = do
   mop <- gets $ Map.lookup n . r
   maybe f return mop
 
-failAsUndefined :: Show n => String -> n -> EncodeAST a
-failAsUndefined m n = fail $ "reference to undefined " ++ m ++ ": " ++ show n
+undefinedReference :: Show n => String -> n -> EncodeAST a
+undefinedReference m n = throwError $ "reference to undefined " ++ m ++ ": " ++ show n
 
-referOrFail :: (Show n, Ord n) => (EncodeState -> Map n (Ptr p)) -> String -> n -> EncodeAST (Ptr p)
-referOrFail r m n = refer r n $ failAsUndefined m n
+referOrThrow :: (Show n, Ord n) => (EncodeState -> Map n (Ptr p)) -> String -> n -> EncodeAST (Ptr p)
+referOrThrow r m n = refer r n $ undefinedReference m n
 
-referGlobal = referOrFail encodeStateGlobals "global"
-referMDNode = referOrFail encodeStateMDNodes "metadata node"
+referGlobal = referOrThrow encodeStateGlobals "global"
+referMDNode = referOrThrow encodeStateMDNodes "metadata node"
 
 defineBasicBlock :: A.Name -> A.Name -> Ptr FFI.BasicBlock -> EncodeAST ()
 defineBasicBlock fn n b = modify $ \s -> s {
@@ -133,8 +133,8 @@ defineBasicBlock fn n b = modify $ \s -> s {
 }
 
 instance EncodeM EncodeAST A.Name (Ptr FFI.BasicBlock) where
-  encodeM = referOrFail encodeStateBlocks "block"
+  encodeM = referOrThrow encodeStateBlocks "block"
 
 getBlockForAddress :: A.Name -> A.Name -> EncodeAST (Ptr FFI.BasicBlock)
-getBlockForAddress fn n = referOrFail encodeStateAllBlocks "blockaddress" (fn, n)
+getBlockForAddress fn n = referOrThrow encodeStateAllBlocks "blockaddress" (fn, n)
 

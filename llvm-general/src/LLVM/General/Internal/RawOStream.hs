@@ -14,7 +14,7 @@ import LLVM.General.Internal.Coding
 import LLVM.General.Internal.String ()
 
 withFileRawOStream :: 
-  (MonadAnyCont IO m, MonadIO m) 
+  (Error e, MonadError e m, MonadAnyCont IO m, MonadIO m) 
   => String
   -> Bool
   -> Bool
@@ -29,12 +29,14 @@ withFileRawOStream path excl binary c = do
   succeeded <- decodeM =<< (liftIO $ FFI.withFileRawOStream path excl binary msgPtr $ \os -> do
                               r <- runErrorT (c os)
                               writeIORef errorRef r)
-  unless succeeded $ fail =<< decodeM msgPtr
+  unless succeeded $ do
+    s <- decodeM msgPtr
+    throwError (strMsg s)
   e <- liftIO $ readIORef errorRef
-  either fail return e
+  either (throwError . strMsg) return e
 
 withBufferRawOStream :: 
-  (MonadIO m, DecodeM IO a (Ptr CChar, CSize))
+  (Error e, MonadError e m, MonadIO m, DecodeM IO a (Ptr CChar, CSize))
   => (Ptr FFI.RawOStream -> ErrorT String IO ())
   -> m a
 withBufferRawOStream c = do
@@ -50,7 +52,7 @@ withBufferRawOStream c = do
   liftIO $ FFI.withBufferRawOStream saveBuffer saveError
   e <- liftIO $ readIORef errorRef
   case e of
-    Left e -> fail e
+    Left e -> throwError $ strMsg e
     _ -> do
       Just r <- liftIO $ readIORef resultRef
       return r

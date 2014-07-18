@@ -15,5 +15,5 @@ verify :: Module -> ErrorT String IO ()
 verify (Module m) = flip runAnyContT return $ do
   errorPtr <- alloca
   result <- decodeM =<< (liftIO $ FFI.verifyModule m FFI.verifierFailureActionReturnStatus errorPtr)
-  when result $ fail =<< decodeM errorPtr
+  when result $ throwError =<< decodeM errorPtr
 

@@ -7,6 +7,7 @@ module LLVM.General.Internal.Type where
 import Control.Applicative
 import Control.Monad.State
 import Control.Monad.AnyCont
+import Control.Monad.Error
 
 import qualified Data.Set as Set
 
@@ -85,7 +86,7 @@ instance EncodeM EncodeAST A.Type (Ptr FFI.Type) where
       A.FloatingPointType 80 A.DoubleExtended -> liftIO $ FFI.x86FP80TypeInContext context
       A.FloatingPointType 128 A.IEEE -> liftIO $ FFI.fP128TypeInContext context
       A.FloatingPointType 128 A.PairOfFloats -> liftIO $ FFI.ppcFP128TypeInContext context
-      A.FloatingPointType _ _ -> fail $ "unsupported floating point type: " ++ show f
+      A.FloatingPointType _ _ -> throwError $ "unsupported floating point type: " ++ show f
       A.VectorType sz e -> do
         e <- encodeM e
         sz <- encodeM sz

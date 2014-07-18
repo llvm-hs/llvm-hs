@@ -95,7 +95,7 @@ lookupTarget arch triple = flip runAnyContT return $ do
   arch <- encodeM (maybe "" id arch)
   triple <- encodeM triple
   target <- liftIO $ FFI.lookupTarget arch triple cNewTripleP cErrorP
-  when (target == nullPtr) $ fail =<< decodeM cErrorP
+  when (target == nullPtr) $ throwError =<< decodeM cErrorP
   liftM (Target target, ) $ decodeM cNewTripleP
 
 -- | <http://llvm.org/doxygen/classllvm_1_1TargetOptions.html>
@@ -255,8 +255,9 @@ getHostCPUFeatures = decodeM =<< FFI.getHostCPUFeatures
   
 -- | 'DataLayout' to use for the given 'TargetMachine'
 getTargetMachineDataLayout :: TargetMachine -> IO DataLayout
-getTargetMachineDataLayout (TargetMachine m) =
-    fromMaybe (error "parseDataLayout failed") . parseDataLayout <$> (decodeM =<< (FFI.getTargetMachineDataLayout m))
+getTargetMachineDataLayout (TargetMachine m) = do
+  dl <- decodeM =<< FFI.getTargetMachineDataLayout m
+  maybe (fail "parseDataLayout failed") return $ parseDataLayout dl
 
 -- | Initialize all targets so they can be found by 'lookupTarget'
 initializeAllTargets :: IO ()

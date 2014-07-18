@@ -14,6 +14,7 @@ import LLVM.General.Internal.InstructionDefs (instrP)
 
 import Data.Functor
 import Control.Monad
+import Control.Monad.Error
 import Control.Monad.Trans
 import Control.Monad.AnyCont
 import Control.Monad.State
@@ -451,12 +452,12 @@ $(do
                 A.Catch a -> do
                   cn <- encodeM a
                   isArray <- liftIO $ isArrayType =<< FFI.typeOf (FFI.upCast cn)
-                  when isArray $ fail $ "Catch clause cannot take an array: " ++ show c
+                  when isArray $ throwError $ "Catch clause cannot take an array: " ++ show c
                   liftIO $ FFI.addClause i cn
                 A.Filter a -> do
                   cn <- encodeM a
                   isArray <- liftIO $ isArrayType =<< FFI.typeOf (FFI.upCast cn)
-                  unless isArray $ fail $ "filter clause must take an array: " ++ show c
+                  unless isArray $ throwError $ "filter clause must take an array: " ++ show c
                   liftIO $ FFI.addClause i cn
             when cl $ do
               cl <- encodeM cl

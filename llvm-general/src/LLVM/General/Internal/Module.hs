@@ -91,10 +91,10 @@ linkModules preserveRight (Module m) (Module m') = flip runAnyContT return $ do
   preserveRight <- encodeM preserveRight
   msgPtr <- alloca
   result <- decodeM =<< (liftIO $ FFI.linkModules m m' preserveRight msgPtr)
-  when result $ fail =<< decodeM msgPtr
+  when result $ throwError =<< decodeM msgPtr
 
 class LLVMAssemblyInput s where
-  llvmAssemblyMemoryBuffer :: (MonadIO e, MonadAnyCont IO e) => s -> e (FFI.OwnerTransfered (Ptr FFI.MemoryBuffer))
+  llvmAssemblyMemoryBuffer :: (Error e, MonadError e m, MonadIO m, MonadAnyCont IO m) => s -> m (FFI.OwnerTransfered (Ptr FFI.MemoryBuffer))
 
 instance LLVMAssemblyInput (String, String) where
   llvmAssemblyMemoryBuffer (id, s) = do
@@ -134,7 +134,7 @@ writeLLVMAssemblyToFile (File path) (Module m) = flip runAnyContT return $ do
   withFileRawOStream path False False $ liftIO . FFI.writeLLVMAssembly m
 
 class BitcodeInput b where
-  bitcodeMemoryBuffer :: (MonadIO e, MonadAnyCont IO e) => b -> e (Ptr FFI.MemoryBuffer)
+  bitcodeMemoryBuffer :: (Error e, MonadError e m, MonadIO m, MonadAnyCont IO m) => b -> m (Ptr FFI.MemoryBuffer)
 
 instance BitcodeInput (String, BS.ByteString) where
   bitcodeMemoryBuffer (s, bs) = encodeM (MB.Bytes s bs)
@@ -148,7 +148,7 @@ withModuleFromBitcode (Context c) b f = flip runAnyContT return $ do
   mb <- bitcodeMemoryBuffer b
   msgPtr <- alloca
   m <- anyContToM $ bracket (FFI.parseBitcode c mb msgPtr) FFI.disposeModule
-  when (m == nullPtr) $ fail =<< decodeM msgPtr
+  when (m == nullPtr) $ throwError =<< decodeM msgPtr
   liftIO $ f (Module m)
 
 -- | generate LLVM bitcode from a 'Module'
@@ -164,7 +164,7 @@ targetMachineEmit :: FFI.CodeGenFileType -> TargetMachine -> Module -> Ptr FFI.R
 targetMachineEmit fileType (TargetMachine tm) (Module m) os = flip runAnyContT return $ do
   msgPtr <- alloca
   r <- decodeM =<< (liftIO $ FFI.targetMachineEmit tm m fileType msgPtr os)
-  when r $ fail =<< decodeM msgPtr
+  when r $ throwError =<< decodeM msgPtr
 
 emitToFile :: FFI.CodeGenFileType -> TargetMachine -> File -> Module -> ErrorT String IO ()
 emitToFile fileType tm (File path) m = flip runAnyContT return $ do
@@ -317,7 +317,7 @@ withModuleFromAST context@(Context c) (A.Module moduleId dataLayout triple defin
              return (sequence_ finishes)
            sequence_ finishInstrs
            locals <- gets $ Map.toList . encodeStateLocals
-           forM [ n | (n, ForwardValue _) <- locals ] $ \n -> failAsUndefined "local" n
+           forM [ n | (n, ForwardValue _) <- locals ] $ \n -> undefinedReference "local" n
            return (FFI.upCast f)
      return $ do
        g' <- eg'

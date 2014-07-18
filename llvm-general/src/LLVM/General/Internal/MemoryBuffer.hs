@@ -6,6 +6,7 @@ module LLVM.General.Internal.MemoryBuffer where
 
 import Control.Exception
 import Control.Monad
+import Control.Monad.Error
 import Control.Monad.AnyCont
 import Control.Monad.IO.Class
 import qualified Data.ByteString as BS
@@ -21,7 +22,7 @@ data Specification
   = Bytes { name :: String,  content :: BS.ByteString }
   | File { pathName :: String }
 
-instance (Monad e, MonadIO e, MonadAnyCont IO e) => EncodeM e Specification (FFI.OwnerTransfered (Ptr FFI.MemoryBuffer)) where
+instance (Error e, MonadError e m, Monad m, MonadIO m, MonadAnyCont IO m) => EncodeM m Specification (FFI.OwnerTransfered (Ptr FFI.MemoryBuffer)) where
   encodeM spec = liftM FFI.OwnerTransfered $ do
     case spec of
       Bytes name content -> do
@@ -34,10 +35,12 @@ instance (Monad e, MonadIO e, MonadAnyCont IO e) => EncodeM e Specification (FFI
         mbPtr <- alloca
         msgPtr <- alloca
         result <- decodeM =<< (liftIO $ FFI.createMemoryBufferWithContentsOfFile pathName mbPtr msgPtr)
-        when result $ fail =<< decodeM msgPtr
+        when result $ do
+          msg <- decodeM msgPtr
+          throwError (strMsg (msg :: String))
         peek mbPtr          
 
-instance (Monad e, MonadIO e, MonadAnyCont IO e) => EncodeM e Specification (Ptr FFI.MemoryBuffer) where
+instance (Error e, MonadError e m, Monad m, MonadIO m, MonadAnyCont IO m) => EncodeM m Specification (Ptr FFI.MemoryBuffer) where
   encodeM spec = do
     FFI.OwnerTransfered mb <- encodeM spec
     anyContToM $ bracket (return mb) FFI.disposeMemoryBuffer
