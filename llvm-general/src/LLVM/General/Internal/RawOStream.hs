@@ -1,7 +1,8 @@
 module LLVM.General.Internal.RawOStream where
 
 import Control.Monad
-import Control.Monad.Error
+import Control.Monad.Except
+import Control.Monad.Error (Error(..))
 import Control.Monad.AnyCont
 
 import Data.IORef
@@ -18,7 +19,7 @@ withFileRawOStream ::
   => String
   -> Bool
   -> Bool
-  -> (Ptr FFI.RawOStream -> ErrorT String IO ())
+  -> (Ptr FFI.RawOStream -> ExceptT String IO ())
   -> m ()
 withFileRawOStream path excl binary c = do
   path <- encodeM path
@@ -27,7 +28,7 @@ withFileRawOStream path excl binary c = do
   msgPtr <- alloca
   errorRef <- liftIO $ newIORef undefined
   succeeded <- decodeM =<< (liftIO $ FFI.withFileRawOStream path excl binary msgPtr $ \os -> do
-                              r <- runErrorT (c os)
+                              r <- runExceptT (c os)
                               writeIORef errorRef r)
   unless succeeded $ do
     s <- decodeM msgPtr
@@ -37,7 +38,7 @@ withFileRawOStream path excl binary c = do
 
 withBufferRawOStream :: 
   (Error e, MonadError e m, MonadIO m, DecodeM IO a (Ptr CChar, CSize))
-  => (Ptr FFI.RawOStream -> ErrorT String IO ())
+  => (Ptr FFI.RawOStream -> ExceptT String IO ())
   -> m a
 withBufferRawOStream c = do
   resultRef <- liftIO $ newIORef Nothing
@@ -47,7 +48,7 @@ withBufferRawOStream c = do
         r <- decodeM (start, size)
         writeIORef resultRef (Just r)
       saveError os = do
-        r <- runErrorT (c os)
+        r <- runExceptT (c os)
         writeIORef errorRef r
   liftIO $ FFI.withBufferRawOStream saveBuffer saveError
   e <- liftIO $ readIORef errorRef

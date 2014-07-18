@@ -8,7 +8,7 @@ module Control.Monad.AnyCont.Class where
 import Control.Monad.Trans.Class
 import Control.Monad.Trans.AnyCont (AnyContT)
 import qualified Control.Monad.Trans.AnyCont as AnyCont
-import Control.Monad.Trans.Error as Error
+import Control.Monad.Trans.Except as Except
 import Control.Monad.Trans.State as State
 
 class ScopeAnyCont m where
@@ -32,11 +32,11 @@ instance ScopeAnyCont m => ScopeAnyCont (StateT s m) where
   scopeAnyCont = StateT . (scopeAnyCont .) . runStateT
 
 
-instance (Error e, Monad m, MonadAnyCont b m) => MonadAnyCont b (ErrorT e m) where
+instance (Monad m, MonadAnyCont b m) => MonadAnyCont b (ExceptT e m) where
   anyContToM x = lift $ anyContToM x
 
-instance ScopeAnyCont m => ScopeAnyCont (ErrorT e m) where
-  scopeAnyCont = mapErrorT scopeAnyCont
+instance ScopeAnyCont m => ScopeAnyCont (ExceptT e m) where
+  scopeAnyCont = mapExceptT scopeAnyCont
 
 
 
@@ -50,5 +50,5 @@ instance MonadTransAnyCont b b where
 instance MonadTransAnyCont b m => MonadTransAnyCont b (StateT s m) where
   liftAnyCont c = (\c q -> StateT $ \s -> c $ ($ s) . runStateT . q) (liftAnyCont c)
 
-instance MonadTransAnyCont b m => MonadTransAnyCont b (ErrorT e m) where
-  liftAnyCont c = (\c q -> ErrorT . c $ runErrorT . q) (liftAnyCont c)
+instance MonadTransAnyCont b m => MonadTransAnyCont b (ExceptT e m) where
+  liftAnyCont c = (\c q -> ExceptT . c $ runExceptT . q) (liftAnyCont c)

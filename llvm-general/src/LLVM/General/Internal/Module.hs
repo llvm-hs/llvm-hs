@@ -9,7 +9,8 @@ module LLVM.General.Internal.Module where
 
 import Control.Monad.Trans
 import Control.Monad.State
-import Control.Monad.Error
+import Control.Monad.Except
+import Control.Monad.Error (Error(..))
 import Control.Monad.AnyCont
 import Control.Applicative
 import Control.Exception
@@ -86,7 +87,7 @@ linkModules ::
   Bool -- ^ True to leave the right module unmodified, False to cannibalize it (for efficiency's sake).
   -> Module -- ^ The module into which to link
   -> Module -- ^ The module to link into the other (and cannibalize or not)
-  -> ErrorT String IO ()
+  -> ExceptT String IO ()
 linkModules preserveRight (Module m) (Module m') = flip runAnyContT return $ do
   preserveRight <- encodeM preserveRight
   msgPtr <- alloca
@@ -108,7 +109,7 @@ instance LLVMAssemblyInput File where
   llvmAssemblyMemoryBuffer (File p) = encodeM (MB.File p)
 
 -- | parse 'Module' from LLVM assembly
-withModuleFromLLVMAssembly :: LLVMAssemblyInput s => Context -> s -> (Module -> IO a) -> ErrorT (Either String Diagnostic) IO a
+withModuleFromLLVMAssembly :: LLVMAssemblyInput s => Context -> s -> (Module -> IO a) -> ExceptT (Either String Diagnostic) IO a
 withModuleFromLLVMAssembly (Context c) s f = flip runAnyContT return $ do
   mb <- llvmAssemblyMemoryBuffer s
   smDiag <- anyContToM withSMDiagnostic
@@ -129,7 +130,7 @@ moduleLLVMAssembly (Module m) = do
   return s
 
 -- | write LLVM assembly for a 'Module' to a file
-writeLLVMAssemblyToFile :: File -> Module -> ErrorT String IO ()
+writeLLVMAssemblyToFile :: File -> Module -> ExceptT String IO ()
 writeLLVMAssemblyToFile (File path) (Module m) = flip runAnyContT return $ do
   withFileRawOStream path False False $ liftIO . FFI.writeLLVMAssembly m
 
@@ -143,7 +144,7 @@ instance BitcodeInput File where
   bitcodeMemoryBuffer (File p) = encodeM (MB.File p)
 
 -- | parse 'Module' from LLVM bitcode
-withModuleFromBitcode :: BitcodeInput b => Context -> b -> (Module -> IO a) -> ErrorT String IO a
+withModuleFromBitcode :: BitcodeInput b => Context -> b -> (Module -> IO a) -> ExceptT String IO a
 withModuleFromBitcode (Context c) b f = flip runAnyContT return $ do
   mb <- bitcodeMemoryBuffer b
   msgPtr <- alloca
@@ -156,38 +157,38 @@ moduleBitcode :: Module -> IO BS.ByteString
 moduleBitcode (Module m) = withBufferRawOStream (liftIO . FFI.writeBitcode m)
 
 -- | write LLVM bitcode from a 'Module' into a file
-writeBitcodeToFile :: File -> Module -> ErrorT String IO ()
+writeBitcodeToFile :: File -> Module -> ExceptT String IO ()
 writeBitcodeToFile (File path) (Module m) = flip runAnyContT return $ do
   withFileRawOStream path False True $ liftIO . FFI.writeBitcode m
 
-targetMachineEmit :: FFI.CodeGenFileType -> TargetMachine -> Module -> Ptr FFI.RawOStream -> ErrorT String IO ()
+targetMachineEmit :: FFI.CodeGenFileType -> TargetMachine -> Module -> Ptr FFI.RawOStream -> ExceptT String IO ()
 targetMachineEmit fileType (TargetMachine tm) (Module m) os = flip runAnyContT return $ do
   msgPtr <- alloca
   r <- decodeM =<< (liftIO $ FFI.targetMachineEmit tm m fileType msgPtr os)
   when r $ throwError =<< decodeM msgPtr
 
-emitToFile :: FFI.CodeGenFileType -> TargetMachine -> File -> Module -> ErrorT String IO ()
+emitToFile :: FFI.CodeGenFileType -> TargetMachine -> File -> Module -> ExceptT String IO ()
 emitToFile fileType tm (File path) m = flip runAnyContT return $ do
   withFileRawOStream path False True $ targetMachineEmit fileType tm m
 
-emitToByteString :: FFI.CodeGenFileType -> TargetMachine -> Module -> ErrorT String IO BS.ByteString
+emitToByteString :: FFI.CodeGenFileType -> TargetMachine -> Module -> ExceptT String IO BS.ByteString
 emitToByteString fileType tm m = flip runAnyContT return $ do
   withBufferRawOStream $ targetMachineEmit fileType tm m
 
 -- | write target-specific assembly directly into a file
-writeTargetAssemblyToFile :: TargetMachine -> File -> Module -> ErrorT String IO ()
+writeTargetAssemblyToFile :: TargetMachine -> File -> Module -> ExceptT String IO ()
 writeTargetAssemblyToFile = emitToFile FFI.codeGenFileTypeAssembly
 
 -- | produce target-specific assembly as a 'String'
-moduleTargetAssembly :: TargetMachine -> Module -> ErrorT String IO String
+moduleTargetAssembly :: TargetMachine -> Module -> ExceptT String IO String
 moduleTargetAssembly tm m = decodeM . UTF8ByteString =<< emitToByteString FFI.codeGenFileTypeAssembly tm m
 
 -- | produce target-specific object code as a 'ByteString'
-moduleObject :: TargetMachine -> Module -> ErrorT String IO BS.ByteString
+moduleObject :: TargetMachine -> Module -> ExceptT String IO BS.ByteString
 moduleObject = emitToByteString FFI.codeGenFileTypeObject
 
 -- | write target-specific object code directly into a file
-writeObjectToFile :: TargetMachine -> File -> Module -> ErrorT String IO ()
+writeObjectToFile :: TargetMachine -> File -> Module -> ExceptT String IO ()
 writeObjectToFile = emitToFile FFI.codeGenFileTypeObject
 
 setTargetTriple :: Ptr FFI.Module -> String -> EncodeAST ()
@@ -208,11 +209,9 @@ setDataLayout m dl = do
 getDataLayout :: Ptr FFI.Module -> IO (Maybe A.DataLayout)
 getDataLayout m = parseDataLayout <$> (decodeM =<< FFI.getDataLayout m)
 
-type P a = a -> a
-
 -- | Build an LLVM.General.'Module' from a LLVM.General.AST.'LLVM.General.AST.Module' - i.e.
 -- lower an AST from Haskell into C++ objects.
-withModuleFromAST :: Context -> A.Module -> (Module -> IO a) -> ErrorT String IO a
+withModuleFromAST :: Context -> A.Module -> (Module -> IO a) -> ExceptT String IO a
 withModuleFromAST context@(Context c) (A.Module moduleId dataLayout triple definitions) f = runEncodeAST context $ do
   moduleId <- encodeM moduleId
   m <- anyContToM $ bracket (FFI.moduleCreateWithNameInContext moduleId c) FFI.disposeModule

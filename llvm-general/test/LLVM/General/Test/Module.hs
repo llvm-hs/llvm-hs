@@ -6,7 +6,7 @@ import Test.HUnit
 
 import LLVM.General.Test.Support
 
-import Control.Monad.Error
+import Control.Monad.Except
 import Data.Bits
 import Data.Word
 import Data.Functor
@@ -327,7 +327,7 @@ tests = testGroup "Module" [
               }
             ]
       strCheck ast s
-      s' <- withContext $ \context -> withModuleFromAST' context ast $ runErrorT . verify
+      s' <- withContext $ \context -> withModuleFromAST' context ast $ runExceptT . verify
       s' @?= Right (),
     testCase "set flag on constant expr" $ withContext $ \context -> do
       let ast = Module "<string>" Nothing Nothing [
@@ -484,7 +484,7 @@ tests = testGroup "Module" [
                ]
              }
            ]
-      t <- runErrorT $ withModuleFromAST context badAST $ \_ -> return True
+      t <- runExceptT $ withModuleFromAST context badAST $ \_ -> return True
       t @?= Left "reference to undefined block: Name \"not here\"",
 
     testCase "multiple" $ withContext $ \context -> do
@@ -514,7 +514,7 @@ tests = testGroup "Module" [
                ]
              }
            ]
-      t <- runErrorT $ withModuleFromAST context badAST $ \_ -> return True
+      t <- runExceptT $ withModuleFromAST context badAST $ \_ -> return True
       t @?= Left "reference to undefined local: Name \"unknown\""
    ]
  ]

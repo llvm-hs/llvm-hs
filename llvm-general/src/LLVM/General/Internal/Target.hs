@@ -7,12 +7,11 @@
 module LLVM.General.Internal.Target where
 
 import Control.Monad hiding (forM)
-import Control.Monad.Error hiding (forM)
+import Control.Monad.Except hiding (forM)
 import Control.Exception
 import Data.Functor
 import Data.Traversable (forM)
 import Control.Monad.AnyCont
-import Data.Maybe
 
 import Foreign.Ptr
 import Data.List (intercalate)
@@ -88,7 +87,7 @@ instance (Monad d, DecodeM d String es) => DecodeM d (Set CPUFeature) es where
 lookupTarget :: 
   Maybe String -- ^ arch
   -> String -- ^ \"triple\" - e.g. x86_64-unknown-linux-gnu
-  -> ErrorT String IO (Target, String)
+  -> ExceptT String IO (Target, String)
 lookupTarget arch triple = flip runAnyContT return $ do
   cErrorP <- alloca
   cNewTripleP <- alloca
@@ -264,7 +263,7 @@ initializeAllTargets :: IO ()
 initializeAllTargets = FFI.initializeAllTargets
 
 -- | Bracket creation and destruction of a 'TargetMachine' configured for the host
-withDefaultTargetMachine :: (TargetMachine -> IO a) -> ErrorT String IO a
+withDefaultTargetMachine :: (TargetMachine -> IO a) -> ExceptT String IO a
 withDefaultTargetMachine f = do
   liftIO $ initializeAllTargets
   triple <- liftIO $ getDefaultTargetTriple

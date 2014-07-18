@@ -1,6 +1,6 @@
 module LLVM.General.Internal.DataLayout where
 
-import Control.Monad.Error
+import Control.Monad.Except
 import Control.Monad.AnyCont
 import Control.Exception
 

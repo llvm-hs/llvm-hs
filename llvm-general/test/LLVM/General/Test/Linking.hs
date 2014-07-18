@@ -6,7 +6,7 @@ import Test.HUnit
 
 import LLVM.General.Test.Support
 
-import Control.Monad.Error
+import Control.Monad.Except
 import Data.Functor
 import qualified Data.Set as Set
 import qualified Data.Map as Map
@@ -61,7 +61,7 @@ tests = testGroup "Linking" [
     Module { moduleDefinitions = defs } <- withContext $ \context -> 
       withModuleFromAST' context ast0 $ \m0 ->
         withModuleFromAST' context ast1 $ \m1 -> do
-          runErrorT $ linkModules False m0 m1
+          runExceptT $ linkModules False m0 m1
           moduleAST m0
     [ n | GlobalDefinition g <- defs, let Name n = G.name g ] @?= [ "private0", "external0", "external1" ]
  ]

@@ -6,7 +6,7 @@ import Test.HUnit
 
 import Data.Functor
 import Control.Monad
-import Control.Monad.Error
+import Control.Monad.Except
 
 import LLVM.General.Context
 import LLVM.General.Module
@@ -16,8 +16,8 @@ import LLVM.General.PrettyPrint
 class FailInIO f where
   errorToString :: f -> String
 
-failInIO :: FailInIO f => ErrorT f IO a -> IO a
-failInIO = either (fail . errorToString) return <=< runErrorT
+failInIO :: FailInIO f => ExceptT f IO a -> IO a
+failInIO = either (fail . errorToString) return <=< runExceptT
 
 instance FailInIO String where
   errorToString = id

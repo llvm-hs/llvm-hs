@@ -6,7 +6,7 @@ import Test.HUnit
 
 import LLVM.General.Test.Support
 
-import Control.Monad.Error
+import Control.Monad.Except
 import Data.Functor
 import qualified Data.List as List
 import qualified Data.Set as Set
@@ -134,8 +134,8 @@ tests = testGroup "Instrumentation" [
     testCase n $ do
       triple <- getProcessTargetTriple
       withTargetLibraryInfo triple $ \tli -> do
-        Right dl <- runErrorT $ withDefaultTargetMachine getTargetMachineDataLayout
-        Right ast <- runErrorT ast
+        Right dl <- runExceptT $ withDefaultTargetMachine getTargetMachineDataLayout
+        Right ast <- runExceptT ast
         ast' <- instrument (defaultPassSetSpec { transforms = [p], dataLayout = Just dl, targetLibraryInfo = Just tli }) ast
         let names ast = [ n | GlobalDefinition d <- moduleDefinitions ast, Name n <- return (G.name d) ]
         (names ast') `List.intersect` (names ast) @?= names ast
