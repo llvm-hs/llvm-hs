@@ -109,6 +109,7 @@ library
     LLVM.General.Internal.FloatingPointPredicate
     LLVM.General.Internal.Function
     LLVM.General.Internal.Global
+    LLVM.General.Internal.Inject
     LLVM.General.Internal.InlineAssembly
     LLVM.General.Internal.Instruction
     LLVM.General.Internal.InstructionDefs

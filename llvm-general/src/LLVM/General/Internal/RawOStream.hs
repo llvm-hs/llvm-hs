@@ -2,7 +2,6 @@ module LLVM.General.Internal.RawOStream where
 
 import Control.Monad
 import Control.Monad.Except
-import Control.Monad.Error (Error(..))
 import Control.Monad.AnyCont
 
 import Data.IORef
@@ -12,10 +11,11 @@ import Foreign.Ptr
 import qualified  LLVM.General.Internal.FFI.RawOStream as FFI
 
 import LLVM.General.Internal.Coding
+import LLVM.General.Internal.Inject
 import LLVM.General.Internal.String ()
 
 withFileRawOStream :: 
-  (Error e, MonadError e m, MonadAnyCont IO m, MonadIO m) 
+  (Inject String e, MonadError e m, MonadAnyCont IO m, MonadIO m) 
   => String
   -> Bool
   -> Bool
@@ -32,12 +32,12 @@ withFileRawOStream path excl binary c = do
                               writeIORef errorRef r)
   unless succeeded $ do
     s <- decodeM msgPtr
-    throwError (strMsg s)
+    throwError $ inject (s :: String)
   e <- liftIO $ readIORef errorRef
-  either (throwError . strMsg) return e
+  either (throwError . inject) return e
 
 withBufferRawOStream :: 
-  (Error e, MonadError e m, MonadIO m, DecodeM IO a (Ptr CChar, CSize))
+  (Inject String e, MonadError e m, MonadIO m, DecodeM IO a (Ptr CChar, CSize))
   => (Ptr FFI.RawOStream -> ExceptT String IO ())
   -> m a
 withBufferRawOStream c = do
@@ -53,7 +53,7 @@ withBufferRawOStream c = do
   liftIO $ FFI.withBufferRawOStream saveBuffer saveError
   e <- liftIO $ readIORef errorRef
   case e of
-    Left e -> throwError $ strMsg e
+    Left e -> throwError $ inject e
     _ -> do
       Just r <- liftIO $ readIORef resultRef
       return r

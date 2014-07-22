@@ -10,7 +10,6 @@ module LLVM.General.Internal.Module where
 import Control.Monad.Trans
 import Control.Monad.State
 import Control.Monad.Except
-import Control.Monad.Error (Error(..))
 import Control.Monad.AnyCont
 import Control.Applicative
 import Control.Exception
@@ -46,6 +45,7 @@ import LLVM.General.Internal.Diagnostic
 import LLVM.General.Internal.EncodeAST
 import LLVM.General.Internal.Function
 import LLVM.General.Internal.Global
+import LLVM.General.Internal.Inject
 import LLVM.General.Internal.Instruction ()
 import qualified LLVM.General.Internal.MemoryBuffer as MB 
 import LLVM.General.Internal.Metadata
@@ -71,8 +71,8 @@ newtype Module = Module (Ptr FFI.Module)
 newtype File = File FilePath
   deriving (Eq, Ord, Read, Show)
 
-instance Error (Either String Diagnostic) where
-    strMsg = Left
+instance Inject String (Either String Diagnostic) where
+    inject = Left
 
 genCodingInstance [t| Bool |] ''FFI.LinkerMode [
   (FFI.linkerModeDestroySource, False),
@@ -95,7 +95,8 @@ linkModules preserveRight (Module m) (Module m') = flip runAnyContT return $ do
   when result $ throwError =<< decodeM msgPtr
 
 class LLVMAssemblyInput s where
-  llvmAssemblyMemoryBuffer :: (Error e, MonadError e m, MonadIO m, MonadAnyCont IO m) => s -> m (FFI.OwnerTransfered (Ptr FFI.MemoryBuffer))
+  llvmAssemblyMemoryBuffer :: (Inject String e, MonadError e m, MonadIO m, MonadAnyCont IO m)
+                              => s -> m (FFI.OwnerTransfered (Ptr FFI.MemoryBuffer))
 
 instance LLVMAssemblyInput (String, String) where
   llvmAssemblyMemoryBuffer (id, s) = do
@@ -109,7 +110,8 @@ instance LLVMAssemblyInput File where
   llvmAssemblyMemoryBuffer (File p) = encodeM (MB.File p)
 
 -- | parse 'Module' from LLVM assembly
-withModuleFromLLVMAssembly :: LLVMAssemblyInput s => Context -> s -> (Module -> IO a) -> ExceptT (Either String Diagnostic) IO a
+withModuleFromLLVMAssembly :: LLVMAssemblyInput s
+                              => Context -> s -> (Module -> IO a) -> ExceptT (Either String Diagnostic) IO a
 withModuleFromLLVMAssembly (Context c) s f = flip runAnyContT return $ do
   mb <- llvmAssemblyMemoryBuffer s
   smDiag <- anyContToM withSMDiagnostic
@@ -135,7 +137,8 @@ writeLLVMAssemblyToFile (File path) (Module m) = flip runAnyContT return $ do
   withFileRawOStream path False False $ liftIO . FFI.writeLLVMAssembly m
 
 class BitcodeInput b where
-  bitcodeMemoryBuffer :: (Error e, MonadError e m, MonadIO m, MonadAnyCont IO m) => b -> m (Ptr FFI.MemoryBuffer)
+  bitcodeMemoryBuffer :: (Inject String e, MonadError e m, MonadIO m, MonadAnyCont IO m)
+                         => b -> m (Ptr FFI.MemoryBuffer)
 
 instance BitcodeInput (String, BS.ByteString) where
   bitcodeMemoryBuffer (s, bs) = encodeM (MB.Bytes s bs)
@@ -154,7 +157,9 @@ withModuleFromBitcode (Context c) b f = flip runAnyContT return $ do
 
 -- | generate LLVM bitcode from a 'Module'
 moduleBitcode :: Module -> IO BS.ByteString
-moduleBitcode (Module m) = withBufferRawOStream (liftIO . FFI.writeBitcode m)
+moduleBitcode (Module m) = do
+  r <- runExceptT $ withBufferRawOStream (liftIO . FFI.writeBitcode m)
+  either fail return r
 
 -- | write LLVM bitcode from a 'Module' into a file
 writeBitcodeToFile :: File -> Module -> ExceptT String IO ()
