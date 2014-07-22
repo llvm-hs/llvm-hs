@@ -49,36 +49,6 @@ instance Arbitrary Options where
 
 tests = testGroup "Target" [
   testGroup "Options" [
-     testGroup "regressions" [
-       testCase "hurm" $ do
-         withTargetOptions $ \to -> do
-           let o = Options {
-                    printMachineCode = True,
-                    noFramePointerElimination = False,
-                    lessPreciseFloatingPointMultiplyAddOption = True,
-                    unsafeFloatingPointMath = True,
-                    noInfinitiesFloatingPointMath = True,
-                    noNaNsFloatingPointMath = False,
-                    honorSignDependentRoundingFloatingPointMathOption = True,
-                    useSoftFloat = True,
-                    noZerosInBSS = False,
-                    jITEmitDebugInfo = True,
-                    jITEmitDebugInfoToDisk = False,
-                    guaranteedTailCallOptimization = False,
-                    disableTailCalls = False,
-                    enableFastInstructionSelection = True,
-                    positionIndependentExecutable = True,
-                    enableSegmentedStacks = False,
-                    useInitArray = True,
-                    stackAlignmentOverride = 9432851444,
-                    trapFunctionName = "baz",
-                    floatABIType = FloatABISoft,
-                    allowFloatingPointOperationFusion = FloatingPointOperationFusionStrict
-                   }
-           pokeTargetOptions o to
-           o' <- peekTargetOptions to
-           o' @?= o
-       ],
      testProperty "basic" $ \options -> ioProperty $ do
        withTargetOptions $ \to -> do
          pokeTargetOptions options to
