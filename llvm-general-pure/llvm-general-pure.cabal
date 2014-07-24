@@ -25,8 +25,8 @@ library
   ghc-options: -fwarn-unused-imports
   build-depends: 
     base >= 4.5.0.0 && < 5,
-    transformers >= 0.3.0.0,
-    mtl >= 2.0.1.0,
+    transformers >= 0.4.0.0,
+    mtl >= 2.2.1,
     template-haskell >= 2.5.0.0,
     containers >= 0.4.2.1,
     setenv >= 0.1.0,
@@ -76,7 +76,7 @@ test-suite test
     QuickCheck >= 2.5.1.1,
     llvm-general-pure == 3.5.0.0,
     containers >= 0.4.2.1,
-    mtl >= 2.0.1.0
+    mtl >= 2.2.1
   hs-source-dirs: test
   extensions:
     TupleSections
