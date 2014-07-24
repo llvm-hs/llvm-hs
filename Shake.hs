@@ -67,14 +67,13 @@ touch f = do
   command_ [] "touch" [ f ]
 
 command_ :: [CmdOption] -> String -> [String] -> Action ()
-command_ opts c args = f opts 
-  where
-    f [] = S.command_ opts c args
-    f ((Cwd p'):opts') = do
-      p <- liftIO $ canonicalizePath p'
-      putQuiet $ "Entering directory `" ++ p ++ "'"
-      f opts'
-      putQuiet $ "Leaving directory `" ++ p ++ "'"
+command_ opts c args = foldr x (S.command_ opts c args) opts
+  where x (Cwd p') rest = do
+          p <- liftIO $ canonicalizePath p'
+          putQuiet $ "Entering directory `" ++ p ++ "'"
+          rest
+          putQuiet $ "Leaving directory `" ++ p ++ "'"
+        x _ rest = rest
 
 newtype BuildRoot = BuildRoot () deriving (Eq, Ord, Read, Show, Binary, Hashable, NFData, Typeable)
 newtype LLVMConfig = LLVMConfig () deriving (Eq, Ord, Read, Show, Binary, Hashable, NFData, Typeable)
