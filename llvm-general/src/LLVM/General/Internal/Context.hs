@@ -15,8 +15,5 @@ data Context = Context (Ptr FFI.Context)
 
 -- | Create a Context, run an action (to which it is provided), then destroy the Context.
 withContext :: (Context -> IO a) -> IO a
-withContext =
-  let runBound = case rtsSupportsBoundThreads of
-        True  -> runInBoundThread
-        False -> id
-  in runBound . bracket FFI.contextCreate FFI.contextDispose . (. Context)
+withContext = runBound . bracket FFI.contextCreate FFI.contextDispose . (. Context)
+  where runBound = if rtsSupportsBoundThreads then runInBoundThread else id
