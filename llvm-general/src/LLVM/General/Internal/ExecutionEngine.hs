@@ -86,9 +86,10 @@ withJIT ::
   -> Word -- ^ optimization level
   -> (JIT -> IO a)
   -> IO a
-withJIT c opt = 
-    withExecutionEngine c Nothing (\e m -> FFI.createJITCompilerForModule e m (fromIntegral opt))
-    . (. JIT)
+withJIT c opt f = FFI.linkInJIT >> withJIT' f
+  where withJIT' = 
+         withExecutionEngine c Nothing (\e m -> FFI.createJITCompilerForModule e m (fromIntegral opt))
+         . (. JIT)
 
 instance ExecutionEngine JIT (FunPtr ()) where
   withModuleInEngine (JIT e) m f = withModuleInEngine e m (\(ExecutableModule e m) -> f (ExecutableModule (JIT e) m))
@@ -116,6 +117,7 @@ withMCJIT ::
   -> (MCJIT -> IO a)
   -> IO a
 withMCJIT c opt cm fpe fisel f = do
+  FFI.linkInMCJIT
   let createMCJITCompilerForModule e m s = do
         size <- FFI.getMCJITCompilerOptionsSize
         allocaBytes (fromIntegral size) $ \p -> do
