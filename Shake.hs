@@ -18,7 +18,6 @@ import Data.Binary
 import Development.Shake hiding (command_)
 import qualified Development.Shake as S (command_)
 import Development.Shake.FilePath
--- import Development.Shake.Command
 import System.FilePath.Posix hiding ((</>), doesDirectoryExist)
 import System.Posix.Directory
 import System.Posix.Env hiding (getEnv)
