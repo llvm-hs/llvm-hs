@@ -87,7 +87,7 @@ withJIT ::
   -> (JIT -> IO a)
   -> IO a
 withJIT c opt f = FFI.linkInJIT >> withJIT' f
-  where withJIT' = 
+  where withJIT' =
          withExecutionEngine c Nothing (\e m -> FFI.createJITCompilerForModule e m (fromIntegral opt))
          . (. JIT)
 
