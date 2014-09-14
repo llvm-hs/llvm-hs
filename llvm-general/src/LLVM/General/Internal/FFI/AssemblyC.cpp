@@ -1,8 +1,7 @@
 #define __STDC_LIMIT_MACROS
 #include "llvm/IR/LLVMContext.h"
 #include "llvm/IR/Module.h"
-#include "llvm/Assembly/Parser.h"
-#include "llvm/Assembly/PrintModulePass.h"
+#include "llvm/AsmParser/Parser.h"
 #include "llvm/Pass.h"
 #include "llvm/Support/SourceMgr.h"
 #include "llvm/Support/raw_ostream.h"

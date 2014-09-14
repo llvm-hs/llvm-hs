@@ -234,7 +234,7 @@ tests = testGroup "Module" [
       a <- withModuleFromLLVMAssembly' context s $ \m -> do
         (t, _) <- failInIO $ lookupTarget Nothing "x86_64-unknown-linux"
         withTargetOptions $ \to -> do
-          withTargetMachine t "" "" Set.empty to R.Default CM.Default CGO.Default $ \tm -> do
+          withTargetMachine t "x86_64-unknown-linux" "" Set.empty to R.Default CM.Default CGO.Default $ \tm -> do
             failInIO $ moduleTargetAssembly tm m
       a @?= "\t.file\t\"<string>\"\n\
             \\t.text\n\
@@ -244,7 +244,7 @@ tests = testGroup "Module" [
             \main:\n\
             \\t.cfi_startproc\n\
             \\txorl\t%eax, %eax\n\
-            \\tret\n\
+            \\tretq\n\
             \.Ltmp0:\n\
             \\t.size\tmain, .Ltmp0-main\n\
             \\t.cfi_endproc\n\
