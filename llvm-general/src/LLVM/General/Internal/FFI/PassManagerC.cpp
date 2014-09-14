@@ -183,16 +183,14 @@ void LLVM_General_AddAddressSanitizerFunctionPass(
 	LLVMBool checkInitOrder,
 	LLVMBool checkUseAfterReturn,
 	LLVMBool checkLifetime,
-	char *blacklistFile,
-	LLVMBool zeroBaseShadow
+	char *blacklistFile
 ) {
 	unwrap(PM)->add(
 		createAddressSanitizerFunctionPass(
 			checkInitOrder,
 			checkUseAfterReturn,
 			checkLifetime,
-			blacklistFile,
-			zeroBaseShadow
+			blacklistFile
 		)
 	);
 }
@@ -200,10 +198,9 @@ void LLVM_General_AddAddressSanitizerFunctionPass(
 void LLVM_General_AddAddressSanitizerModulePass(
 	LLVMPassManagerRef PM,
 	LLVMBool checkInitOrder,
-	const char *blacklistFile,
-	bool zeroBaseShadow
+	const char *blacklistFile
 ) {
-	unwrap(PM)->add(createAddressSanitizerModulePass(checkInitOrder, blacklistFile, zeroBaseShadow));
+	unwrap(PM)->add(createAddressSanitizerModulePass(checkInitOrder, blacklistFile));
 }
 
 void LLVM_General_AddMemorySanitizerPass(

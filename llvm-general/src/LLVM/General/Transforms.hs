@@ -123,13 +123,11 @@ data Pass
       checkInitOrder :: Bool,
       checkUseAfterReturn :: Bool,
       checkLifetime :: Bool,
-      blackListFile :: Maybe FilePath,
-      zeroBaseShadow :: Bool
+      blackListFile :: Maybe FilePath
     }
   | AddressSanitizerModule {
       checkInitOrder :: Bool,
-      blackListFile :: Maybe FilePath,
-      zeroBaseShadow :: Bool
+      blackListFile :: Maybe FilePath
     }
   | MemorySanitizer {
       trackOrigins :: Bool,
@@ -202,15 +200,13 @@ defaultAddressSanitizer = AddressSanitizer {
   checkInitOrder = True,
   checkUseAfterReturn = False,
   checkLifetime = False,
-  blackListFile = Nothing,
-  zeroBaseShadow = False
+  blackListFile = Nothing
 }
 
 -- | Defaults for 'AddressSanitizerModule'.
 defaultAddressSanitizerModule = AddressSanitizerModule {
   checkInitOrder = True,
-  blackListFile = Nothing,
-  zeroBaseShadow = False
+  blackListFile = Nothing
 }
 
 -- | Defaults for 'MemorySanitizer'.

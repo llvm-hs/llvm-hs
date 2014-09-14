@@ -1,5 +1,4 @@
 #define __STDC_LIMIT_MACROS
-//#include "llvm/Config/llvm-config.h"
 #include "llvm/IR/LLVMContext.h"
 #include "llvm/IR/Module.h"
 #include "llvm-c/Core.h"
@@ -17,9 +16,12 @@ LLVMModuleRef LLVM_General_ParseBitcode(
 	char **error
 ) {
 	std::string msg;
-	Module *m = ParseBitcodeFile(unwrap(mb), *unwrap(c), &msg);
-	if (m == 0) *error = strdup(msg.c_str());
-	return wrap(m);
+	ErrorOr<Module *> m = parseBitcodeFile(unwrap(mb), *unwrap(c));
+	if (error_code ec = m.getError()) {
+		*error = strdup(ec.message().c_str());
+		return 0;
+	}
+	return wrap(m.get());
 }
 
 void LLVM_General_WriteBitcode(LLVMModuleRef m, raw_ostream &os) {
