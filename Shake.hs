@@ -116,6 +116,9 @@ main = shake shakeOptions {
     args <- liftIO getArgs
     need (if null args then [ stamp ("tested", "llvm-general") ] else args)
 
+  phony "env" $ do
+    command_ [] "env" []
+
   let shared = [ "--enable-shared" | True ]
   let ghPages = "out" </> "gh-pages"
       sandbox = "out" </> "sandbox"
@@ -138,15 +141,13 @@ main = shake shakeOptions {
       needStage stage pkgs = needStamps [ (stage, pkg) | pkg <- pkgs ]
 
   let cabal args = do
-        () <- command_ [] "cabal" $ [ "--sandbox-config-file=" ++ sandboxConfigFile ] ++ args
-        return ()
+        command_ [] "cabal" $ [ "--sandbox-config-file=" ++ sandboxConfigFile ] ++ args
 
   let ensureSandbox = do
         present <- doesFileExist sandboxConfigFile
         unless present $ do
           cabal [ "sandbox", "init", "--sandbox=" ++ sandbox ]
           cabal $ [ "sandbox", "add-source" ] ++ allPkgs
-          return ()
 
   phony "build" $ needStage "built" allPkgs
   phony "test" $ needStage "tested" allPkgs
@@ -175,7 +176,6 @@ main = shake shakeOptions {
       "installed" -> do
         needStage "built" [pkg]
         cabalStep pkg $ [ "install", "--reinstall", "--force-reinstalls" ] ++ shared
-        return ()
 
       "tested" -> do
         needStage "built" [pkg]
