@@ -4,6 +4,7 @@ module LLVM.General.DataLayout (
  ) where
 
 import Control.Applicative
+import Control.Monad.Except
 
 import Data.Word
 
@@ -18,57 +19,76 @@ import LLVM.General.AST.AddrSpace
 
 dataLayoutToString :: DataLayout -> String
 dataLayoutToString dl = 
-  let sTriple :: (Word32, AlignmentInfo) -> String
-      sTriple (s, ai) = show s ++ ":" ++ show (abiAlignment ai) ++ (maybe "" (\p -> ":" ++ show p) (preferredAlignment ai))
+  let sAlignmentInfo :: AlignmentInfo -> String
+      sAlignmentInfo (AlignmentInfo abi pref) = 
+        show abi ++ case pref of
+                      Just pref | pref /= abi -> ":" ++ show pref
+                      _ -> ""
+      sTriple :: (Word32, AlignmentInfo) -> String
+      sTriple (s, ai) = show s ++ ":" ++ sAlignmentInfo ai
       atChar at = case at of
         IntegerAlign -> "i"
         VectorAlign -> "v"
         FloatAlign -> "f"
-        AggregateAlign -> "a"
       manglingChar m = case m of
         ELFMangling -> "e"
         MIPSMangling -> "m"
         MachOMangling -> "o"
         WindowsCOFFMangling -> "w"
       oneOpt f accessor = maybe [] ((:[]) . f) (accessor dl)
+      defDl = defaultDataLayout BigEndian
+      nonDef :: Eq a => (DataLayout -> [a]) -> [a]
+      nonDef f = (f dl) List.\\ (f defDl)
   in
   List.intercalate "-" (
-    (oneOpt (\e -> case e of BigEndian -> "E"; LittleEndian -> "e") endianness)
+    [case endianness dl of BigEndian -> "E"; LittleEndian -> "e"]
     ++
     (oneOpt (("m:" ++) . manglingChar) mangling)
     ++
-    (oneOpt (("S"++) . show) stackAlignment)
-    ++
-    [ "p" ++ (if a == 0 then "" else show a) ++ ":" ++ sTriple t | (AddrSpace a, t) <- Map.toList . pointerLayouts $ dl]
-    ++
-    [ atChar at ++ sTriple (s, ai) | ((at, s), ai) <- Map.toList . typeLayouts $ dl ]
-    ++ 
+    [
+      "p" ++ (if a == 0 then "" else show a) ++ ":" ++ sTriple t 
+      | (AddrSpace a, t) <- nonDef (Map.toList . pointerLayouts)
+    ] ++ [
+      atChar at ++ sTriple (s, ai)
+      | ((at, s), ai) <- nonDef (Map.toList . typeLayouts)
+    ] ++ [
+      "a:" ++ sAlignmentInfo ai | ai <- nonDef (return . aggregateLayout)
+    ] ++
     (oneOpt (("n"++) . (List.intercalate ":") . (map show) . Set.toList) nativeSizes)
+    ++
+    (oneOpt (("S"++) . show) stackAlignment)
   )
 
-parseDataLayout :: String -> Maybe DataLayout
-parseDataLayout "" = Nothing
-parseDataLayout s = 
+-- | Parse a 'DataLayout', given a default Endianness should one not be specified in the
+-- string to be parsed. LLVM itself uses BigEndian as the default: thus pass BigEndian to
+-- be conformant or LittleEndian to be righteously defiant.
+parseDataLayout :: Endianness -> String -> Except String (Maybe DataLayout)
+parseDataLayout _ "" = return Nothing
+parseDataLayout defaultEndianness s = 
   let
     num :: Parser Word32
     num = read <$> many1 digit
-    triple :: Parser (Word32, AlignmentInfo)
-    triple = do
-      s <- num
-      char ':'
+    alignmentInfo :: Parser AlignmentInfo
+    alignmentInfo = do
       abi <- num
       pref <- optionMaybe $ do
                 char ':'
                 num
-      return (s, (AlignmentInfo abi pref))
+      return $ AlignmentInfo abi pref
+    triple :: Parser (Word32, AlignmentInfo)
+    triple = do
+      s <- num
+      char ':'
+      ai <- alignmentInfo
+      return (s, ai)
     parseSpec :: Parser (DataLayout -> DataLayout)
     parseSpec = choice [
       do
         char 'e'
-        return $ \dl -> dl { endianness = Just LittleEndian },
+        return $ \dl -> dl { endianness = LittleEndian },
       do
         char 'E' 
-        return $ \dl -> dl { endianness = Just BigEndian },
+        return $ \dl -> dl { endianness = BigEndian },
       do
         char 'm'
         char ':'
@@ -99,11 +119,15 @@ parseDataLayout s =
         at <- choice [
                char 'i' >> return IntegerAlign,
                char 'v' >> return VectorAlign,
-               char 'f' >> return FloatAlign,
-               char 'a' >> return AggregateAlign
+               char 'f' >> return FloatAlign
               ]
-        (sz,ai) <- triple
-        return $ \dl -> dl { typeLayouts = Map.insert (at,sz) ai (typeLayouts dl) },
+        (sz, ai) <- triple
+        return $ \dl -> dl { typeLayouts = Map.insert (at, sz) ai (typeLayouts dl) },
+      do
+        char 'a'
+        char ':'
+        ai <- alignmentInfo
+        return $ \dl -> dl { aggregateLayout = ai },
       do 
         char 'n'
         ns <- num `sepBy` (char ':')
@@ -111,7 +135,7 @@ parseDataLayout s =
      ]
   in 
     case parse (parseSpec `sepBy` (char '-')) "" s of
-      Left _ -> error $ "ill formed data layout: " ++ show s
-      Right fs -> Just $ foldr ($) defaultDataLayout fs
+      Left _ -> throwError $ "ill formed data layout: " ++ show s
+      Right fs -> return . Just $ foldr ($) (defaultDataLayout defaultEndianness) fs
 
 

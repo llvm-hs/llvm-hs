@@ -5,19 +5,19 @@
 using namespace llvm;
 using sys::fs::F_None;
 using sys::fs::F_Excl;
-using sys::fs::F_Binary;
+using sys::fs::F_Text;
 
 extern "C" {
 
 LLVMBool LLVM_General_WithFileRawOStream(
 	const char *filename,
 	LLVMBool excl,
-	LLVMBool binary,
+	LLVMBool text,
 	const char *&error,
 	void (&callback)(raw_ostream &ostream)
 ) {
 	std::string e;
-	raw_fd_ostream os(filename, e, (excl ? F_Excl : F_None) | (binary ? F_Binary : F_None));
+	raw_fd_ostream os(filename, e, (excl ? F_Excl : F_None) | (text ? F_Text : F_None));
 	if (!e.empty()) {
 		error = strdup(e.c_str());
 		return false;

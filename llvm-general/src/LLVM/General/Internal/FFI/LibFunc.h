@@ -26,7 +26,7 @@
 	macro(dunder_isoc99_sscanf)										\
 	macro(memcpy_chk)															\
 	macro(sincospi_stret)													\
-	macro(sincospi_stretf)												\
+	macro(sincospif_stret)												\
 	macro(sinpi)																	\
 	macro(sinpif)																	\
 	macro(sqrt_finite)														\
@@ -118,6 +118,12 @@
 	macro(floor)																	\
 	macro(floorf)																	\
 	macro(floorl)																	\
+	macro(fmax)																		\
+	macro(fmaxf)																	\
+	macro(fmaxl)																	\
+	macro(fmin)																		\
+	macro(fminf)																	\
+	macro(fminl)																	\
 	macro(fmod)																		\
 	macro(fmodf)																	\
 	macro(fmodl)																	\
@@ -162,6 +168,9 @@
 	macro(isdigit)																\
 	macro(labs)																		\
 	macro(lchown)																	\
+	macro(ldexp)																	\
+	macro(ldexpf)																	\
+	macro(ldexpl)																	\
 	macro(llabs)																	\
 	macro(log)																		\
 	macro(log10)																	\

@@ -255,8 +255,9 @@ getHostCPUFeatures = decodeM =<< FFI.getHostCPUFeatures
 -- | 'DataLayout' to use for the given 'TargetMachine'
 getTargetMachineDataLayout :: TargetMachine -> IO DataLayout
 getTargetMachineDataLayout (TargetMachine m) = do
-  dl <- decodeM =<< FFI.getTargetMachineDataLayout m
-  maybe (fail "parseDataLayout failed") return $ parseDataLayout dl
+  dlString <- decodeM =<< FFI.getTargetMachineDataLayout m
+  let Right (Just dl) = runExcept . parseDataLayout BigEndian $ dlString
+  return dl
 
 -- | Initialize all targets so they can be found by 'lookupTarget'
 initializeAllTargets :: IO ()

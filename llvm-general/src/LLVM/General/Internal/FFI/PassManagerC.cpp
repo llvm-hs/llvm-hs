@@ -5,6 +5,7 @@
 #include "llvm/Transforms/IPO.h"
 #include "llvm/Transforms/Vectorize.h"
 #include "llvm/Transforms/Instrumentation.h"
+#include "llvm/CodeGen/Passes.h"
 #include "llvm/PassManager.h"
 #include "llvm-c/Target.h"
 #include "llvm-c/Transforms/PassManagerBuilder.h"
@@ -50,10 +51,6 @@ inline PassManagerBuilder *unwrap(LLVMPassManagerBuilderRef P) {
 }
 
 extern "C" {
-
-void LLVM_General_AddDataLayoutPass(LLVMPassManagerRef PM, const char *dl) {
-	unwrap(PM)->add(new DataLayout(dl));
-}
 
 void LLVM_General_LLVMAddAnalysisPasses(LLVMTargetMachineRef T, LLVMPassManagerRef PM) {
 	unwrap(T)->addAnalysisPasses(*unwrap(PM));

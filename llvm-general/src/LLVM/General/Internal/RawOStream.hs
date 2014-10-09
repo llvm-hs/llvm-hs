@@ -21,13 +21,13 @@ withFileRawOStream ::
   -> Bool
   -> (Ptr FFI.RawOStream -> ExceptT String IO ())
   -> m ()
-withFileRawOStream path excl binary c = do
+withFileRawOStream path excl text c = do
   path <- encodeM path
   excl <- encodeM excl
-  binary <- encodeM binary
+  text <- encodeM text
   msgPtr <- alloca
   errorRef <- liftIO $ newIORef undefined
-  succeeded <- decodeM =<< (liftIO $ FFI.withFileRawOStream path excl binary msgPtr $ \os -> do
+  succeeded <- decodeM =<< (liftIO $ FFI.withFileRawOStream path excl text msgPtr $ \os -> do
                               r <- runExceptT (c os)
                               writeIORef errorRef r)
   unless succeeded $ do

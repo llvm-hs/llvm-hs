@@ -134,7 +134,7 @@ moduleLLVMAssembly (Module m) = do
 -- | write LLVM assembly for a 'Module' to a file
 writeLLVMAssemblyToFile :: File -> Module -> ExceptT String IO ()
 writeLLVMAssemblyToFile (File path) (Module m) = flip runAnyContT return $ do
-  withFileRawOStream path False False $ liftIO . FFI.writeLLVMAssembly m
+  withFileRawOStream path False True $ liftIO . FFI.writeLLVMAssembly m
 
 class BitcodeInput b where
   bitcodeMemoryBuffer :: (Inject String e, MonadError e m, MonadIO m, MonadAnyCont IO m)
@@ -164,7 +164,7 @@ moduleBitcode (Module m) = do
 -- | write LLVM bitcode from a 'Module' into a file
 writeBitcodeToFile :: File -> Module -> ExceptT String IO ()
 writeBitcodeToFile (File path) (Module m) = flip runAnyContT return $ do
-  withFileRawOStream path False True $ liftIO . FFI.writeBitcode m
+  withFileRawOStream path False False $ liftIO . FFI.writeBitcode m
 
 targetMachineEmit :: FFI.CodeGenFileType -> TargetMachine -> Module -> Ptr FFI.RawOStream -> ExceptT String IO ()
 targetMachineEmit fileType (TargetMachine tm) (Module m) os = flip runAnyContT return $ do
@@ -174,7 +174,7 @@ targetMachineEmit fileType (TargetMachine tm) (Module m) os = flip runAnyContT r
 
 emitToFile :: FFI.CodeGenFileType -> TargetMachine -> File -> Module -> ExceptT String IO ()
 emitToFile fileType tm (File path) m = flip runAnyContT return $ do
-  withFileRawOStream path False True $ targetMachineEmit fileType tm m
+  withFileRawOStream path False False $ targetMachineEmit fileType tm m
 
 emitToByteString :: FFI.CodeGenFileType -> TargetMachine -> Module -> ExceptT String IO BS.ByteString
 emitToByteString fileType tm m = flip runAnyContT return $ do
@@ -212,7 +212,9 @@ setDataLayout m dl = do
   liftIO $ FFI.setDataLayout m s
 
 getDataLayout :: Ptr FFI.Module -> IO (Maybe A.DataLayout)
-getDataLayout m = parseDataLayout <$> (decodeM =<< FFI.getDataLayout m)
+getDataLayout m = do
+  dlString <- decodeM =<< FFI.getDataLayout m
+  either fail return . runExcept . parseDataLayout A.BigEndian $ dlString
 
 -- | Build an LLVM.General.'Module' from a LLVM.General.AST.'LLVM.General.AST.Module' - i.e.
 -- lower an AST from Haskell into C++ objects.
