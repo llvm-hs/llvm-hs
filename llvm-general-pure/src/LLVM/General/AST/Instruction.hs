@@ -88,9 +88,15 @@ data MemoryOrdering
   | SequentiallyConsistent
   deriving (Eq, Ord, Read, Show, Data, Typeable)
 
+-- | <http://llvm.org/docs/LangRef.html#singlethread>
+data SynchronizationScope
+  = SingleThread
+  | CrossThread
+  deriving (Eq, Ord, Read, Show, Data, Typeable)
+
 -- | An 'Atomicity' describes constraints on the visibility of effects of an atomic instruction
 data Atomicity = Atomicity { 
-  crossThread :: Bool, -- ^ <http://llvm.org/docs/LangRef.html#singlethread>
+  synchronizationScope :: SynchronizationScope,
   memoryOrdering :: MemoryOrdering
  }
  deriving (Eq, Ord, Read, Show, Typeable, Data)
@@ -251,6 +257,7 @@ data Instruction
       expected :: Operand,
       replacement :: Operand,
       atomicity :: Atomicity,
+      failureMemoryOrdering :: MemoryOrdering,
       metadata :: InstructionMetadata 
     }
   | AtomicRMW { 

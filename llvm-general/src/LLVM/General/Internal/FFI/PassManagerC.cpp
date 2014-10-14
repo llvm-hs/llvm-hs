@@ -96,8 +96,8 @@ void LLVM_General_AddLoopStrengthReducePass(LLVMPassManagerRef PM) {
 	unwrap(PM)->add(createLoopStrengthReducePass());
 }
 
-void LLVM_General_AddLowerInvokePass(LLVMPassManagerRef PM, LLVMTargetMachineRef T, LLVMBool expensiveEH) {
-	unwrap(PM)->add(createLowerInvokePass(unwrap(T), expensiveEH));
+void LLVM_General_AddLowerInvokePass(LLVMPassManagerRef PM) {
+	unwrap(PM)->add(createLowerInvokePass());
 }
 	
 void LLVM_General_AddSROAPass(LLVMPassManagerRef PM, LLVMBool RequiresDomTree) {

@@ -282,7 +282,7 @@ tests = testGroup "Instructions" [
            Load {
              volatile = False,
              address = a 2,
-             maybeAtomicity = Just (Atomicity { crossThread = True, memoryOrdering = Acquire }),
+             maybeAtomicity = Just (Atomicity { synchronizationScope = CrossThread, memoryOrdering = Acquire }),
              alignment = 1,
              metadata = [] 
            },
@@ -291,7 +291,7 @@ tests = testGroup "Instructions" [
            Load {
              volatile = False,
              address = a 2,
-             maybeAtomicity = Just (Atomicity { crossThread = False, memoryOrdering = Monotonic }),
+             maybeAtomicity = Just (Atomicity { synchronizationScope = SingleThread, memoryOrdering = Monotonic }),
              alignment = 1,
              metadata = [] 
            },
@@ -318,17 +318,18 @@ tests = testGroup "Instructions" [
              address = a 2,
              expected = a 0,
              replacement = a 0,
-             atomicity = Atomicity { crossThread = True, memoryOrdering = Monotonic },
+             atomicity = Atomicity { synchronizationScope = CrossThread, memoryOrdering = Monotonic },
+             failureMemoryOrdering = Monotonic,
              metadata = [] 
            },
-           "cmpxchg i32* %2, i32 %0, i32 %0 monotonic"),
+           "cmpxchg i32* %2, i32 %0, i32 %0 monotonic monotonic"),
           ("atomicrmw",
            AtomicRMW {
              volatile = False,
              rmwOperation = RMWOp.UMax,
              address = a 2,
              value = a 0,
-             atomicity = Atomicity { crossThread = True, memoryOrdering = Release },
+             atomicity = Atomicity { synchronizationScope = CrossThread, memoryOrdering = Release },
              metadata = []
            },
            "atomicrmw umax i32* %2, i32 %0 release"),
@@ -553,7 +554,7 @@ tests = testGroup "Instructions" [
           "store i32 %0, i32* %2"),
          ("fence",
           Do $ Fence {
-            atomicity = Atomicity { crossThread = True, memoryOrdering = Acquire },
+            atomicity = Atomicity { synchronizationScope = CrossThread, memoryOrdering = Acquire },
             metadata = [] 
           },
           "fence acquire"),

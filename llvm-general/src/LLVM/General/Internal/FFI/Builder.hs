@@ -88,12 +88,12 @@ foreign import ccall unsafe "LLVMBuildArrayAlloca" buildAlloca ::
   Ptr Builder -> Ptr Type -> Ptr Value -> CString -> IO (Ptr Instruction)
 
 foreign import ccall unsafe "LLVM_General_BuildLoad" buildLoad' ::
-  Ptr Builder -> LLVMBool -> Ptr Value -> MemoryOrdering -> LLVMBool -> CUInt -> CString -> IO (Ptr Instruction)
+  Ptr Builder -> LLVMBool -> Ptr Value -> MemoryOrdering -> SynchronizationScope -> CUInt -> CString -> IO (Ptr Instruction)
 
 buildLoad builder vol a' (ss, mo) al s = buildLoad' builder vol a' mo ss al s
 
 foreign import ccall unsafe "LLVM_General_BuildStore" buildStore' ::
-  Ptr Builder -> LLVMBool -> Ptr Value -> Ptr Value -> MemoryOrdering -> LLVMBool -> CUInt -> CString -> IO (Ptr Instruction)
+  Ptr Builder -> LLVMBool -> Ptr Value -> Ptr Value -> MemoryOrdering -> SynchronizationScope -> CUInt -> CString -> IO (Ptr Instruction)
 
 buildStore builder vol a' v' (ss, mo) al s = buildStore' builder vol a' v' mo ss al s
 
@@ -108,17 +108,17 @@ buildGetElementPtr builder (LLVMBool 1) a (n, is) s = buildInBoundsGetElementPtr
 buildGetElementPtr builder (LLVMBool 0) a (n, is) s = buildGetElementPtr' builder a is n s
 
 foreign import ccall unsafe "LLVM_General_BuildFence" buildFence' ::
-  Ptr Builder -> MemoryOrdering -> LLVMBool -> CString -> IO (Ptr Instruction)
+  Ptr Builder -> MemoryOrdering -> SynchronizationScope -> CString -> IO (Ptr Instruction)
 
 buildFence builder (ss, mo) s = buildFence' builder mo ss s
 
 foreign import ccall unsafe "LLVM_General_BuildAtomicCmpXchg" buildCmpXchg' ::
-  Ptr Builder -> LLVMBool -> Ptr Value -> Ptr Value -> Ptr Value -> MemoryOrdering -> LLVMBool -> CString -> IO (Ptr Instruction)
+  Ptr Builder -> LLVMBool -> Ptr Value -> Ptr Value -> Ptr Value -> MemoryOrdering -> MemoryOrdering -> SynchronizationScope -> CString -> IO (Ptr Instruction)
 
-buildCmpXchg builder vol a e r (ss, mo) s =  buildCmpXchg' builder vol a e r mo ss s
+buildCmpXchg builder vol a e r (ss, smo) fmo s =  buildCmpXchg' builder vol a e r smo fmo ss s
 
 foreign import ccall unsafe "LLVM_General_BuildAtomicRMW" buildAtomicRMW' ::
-  Ptr Builder -> LLVMBool -> RMWOperation -> Ptr Value -> Ptr Value -> MemoryOrdering -> LLVMBool -> CString -> IO (Ptr Instruction)
+  Ptr Builder -> LLVMBool -> RMWOperation -> Ptr Value -> Ptr Value -> MemoryOrdering -> SynchronizationScope -> CString -> IO (Ptr Instruction)
 
 buildAtomicRMW builder vol rmwOp a v (ss, mo) s = buildAtomicRMW' builder vol rmwOp a v mo ss s 
 

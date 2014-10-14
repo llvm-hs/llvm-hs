@@ -24,16 +24,27 @@ genCodingInstance [t| Maybe A.MemoryOrdering |] ''FFI.MemoryOrdering [
   (FFI.memoryOrderingSequentiallyConsistent, Just A.SequentiallyConsistent)
  ]
 
-instance Monad m => EncodeM m (Maybe A.Atomicity) (FFI.LLVMBool, FFI.MemoryOrdering) where
-  encodeM a =
-    return (,) `ap` encodeM (maybe False A.crossThread a) `ap` encodeM (liftM A.memoryOrdering a)
+genCodingInstance [t| A.SynchronizationScope |] ''FFI.SynchronizationScope [
+  (FFI.synchronizationScopeSingleThread, A.SingleThread),
+  (FFI.synchronizationScopeCrossThread, A.CrossThread)
+ ]
 
-instance Monad m => DecodeM m (Maybe A.Atomicity) (FFI.LLVMBool, FFI.MemoryOrdering) where
+instance Monad m => EncodeM m (Maybe A.Atomicity) (FFI.SynchronizationScope, FFI.MemoryOrdering) where
+  encodeM a =
+    return (,) `ap` encodeM (maybe A.SingleThread A.synchronizationScope a) `ap` encodeM (liftM A.memoryOrdering a)
+
+instance Monad m => DecodeM m (Maybe A.Atomicity) (FFI.SynchronizationScope, FFI.MemoryOrdering) where
   decodeM (ss, ao) = return (liftM . A.Atomicity) `ap` decodeM ss `ap` decodeM ao
 
-instance Monad m => EncodeM m A.Atomicity (FFI.LLVMBool, FFI.MemoryOrdering) where
+instance Monad m => EncodeM m A.Atomicity (FFI.SynchronizationScope, FFI.MemoryOrdering) where
   encodeM = encodeM . Just
 
-instance Monad m => DecodeM m A.Atomicity (FFI.LLVMBool, FFI.MemoryOrdering) where
+instance Monad m => DecodeM m A.Atomicity (FFI.SynchronizationScope, FFI.MemoryOrdering) where
+  decodeM = liftM fromJust . decodeM
+
+instance Monad m => EncodeM m A.MemoryOrdering FFI.MemoryOrdering where
+  encodeM = encodeM . Just
+
+instance Monad m => DecodeM m A.MemoryOrdering FFI.MemoryOrdering where
   decodeM = liftM fromJust . decodeM
 

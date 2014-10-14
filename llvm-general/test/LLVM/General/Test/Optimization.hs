@@ -262,45 +262,36 @@ tests = testGroup "Optimization" [
       -- The pass seems to be quite deeply dependent on weakly documented presumptions about
       -- how unwinding works (as is the invoke instruction)
       withContext $ \context -> do
-        let triple = "x86_64-apple-darwin"
-        (target, _) <- failInIO $ lookupTarget Nothing triple
-        withTargetOptions $ \targetOptions -> do
-          withTargetMachine target triple "" Set.empty targetOptions
-                            R.Default CM.Default CGO.Default $ \tm -> do
-            withPassManager (defaultPassSetSpec { transforms = [LowerInvoke False], targetMachine = Just tm}) $ \passManager -> do
-              let astIn = 
-                    Module "<string>" Nothing Nothing [
-                      GlobalDefinition $ functionDefaults {
-                        G.returnType = i32,
-                        G.name = Name "foo",
-                        G.parameters = ([Parameter i32 (Name "x") []], False),
-                        G.basicBlocks = [
-                          BasicBlock (Name "here") [
-                          ] (
-                            Do $ Ret (Just (ConstantOperand (C.Int 32 0))) []
-                          )
-                         ]
-                       }
-                     ] 
-              astOut <- withModuleFromAST' context astIn $ \mIn -> do
-                runPassManager passManager mIn
-                moduleAST mIn
-              astOut @?= Module "<string>" Nothing Nothing [
-                      GlobalDefinition $ functionDefaults {
-                        G.returnType = i32,
-                        G.name = Name "foo",
-                        G.parameters = ([Parameter i32 (Name "x") []], False),
-                        G.basicBlocks = [
-                          BasicBlock (Name "here") [
-                          ] (
-                            Do $ Ret (Just (ConstantOperand (C.Int 32 0))) []
-                          )
-                        ]
-                      },
-                      GlobalDefinition $ functionDefaults {
-                        G.returnType = A.T.void,
-                        G.name = Name "abort"
-                      }
+        withPassManager (defaultPassSetSpec { transforms = [LowerInvoke] }) $ \passManager -> do
+          let astIn = 
+                Module "<string>" Nothing Nothing [
+                  GlobalDefinition $ functionDefaults {
+                    G.returnType = i32,
+                    G.name = Name "foo",
+                    G.parameters = ([Parameter i32 (Name "x") []], False),
+                    G.basicBlocks = [
+                      BasicBlock (Name "here") [
+                      ] (
+                        Do $ Ret (Just (ConstantOperand (C.Int 32 0))) []
+                      )
                      ]
+                   }
+                 ] 
+          astOut <- withModuleFromAST' context astIn $ \mIn -> do
+            runPassManager passManager mIn
+            moduleAST mIn
+          astOut @?= Module "<string>" Nothing Nothing [
+                  GlobalDefinition $ functionDefaults {
+                    G.returnType = i32,
+                    G.name = Name "foo",
+                    G.parameters = ([Parameter i32 (Name "x") []], False),
+                    G.basicBlocks = [
+                      BasicBlock (Name "here") [
+                      ] (
+                        Do $ Ret (Just (ConstantOperand (C.Int 32 0))) []
+                      )
+                    ]
+                  }
+                 ]
    ]
  ]

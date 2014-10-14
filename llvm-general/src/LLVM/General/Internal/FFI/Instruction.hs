@@ -104,8 +104,11 @@ foreign import ccall unsafe "LLVM_General_GetAllocatedType" getAllocatedType ::
 foreign import ccall unsafe "LLVM_General_GetAtomicOrdering" getAtomicOrdering ::
   Ptr Instruction -> IO MemoryOrdering
 
+foreign import ccall unsafe "LLVM_General_GetFailureAtomicOrdering" getFailureAtomicOrdering ::
+  Ptr Instruction -> IO MemoryOrdering
+
 foreign import ccall unsafe "LLVM_General_GetSynchronizationScope" getSynchronizationScope ::
-  Ptr Instruction -> IO LLVMBool
+  Ptr Instruction -> IO SynchronizationScope
 
 getAtomicity i = return (,) `ap` getSynchronizationScope i `ap` getAtomicOrdering i
 

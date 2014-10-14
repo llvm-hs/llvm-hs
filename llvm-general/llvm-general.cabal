@@ -47,6 +47,7 @@ flag debug
 library
   build-tools: llvm-config
   ghc-options: -fwarn-unused-imports
+  cc-options: -std=c++11
   build-depends: 
     base >= 4.5.0.0 && < 5,
     utf8-string >= 0.3.7,

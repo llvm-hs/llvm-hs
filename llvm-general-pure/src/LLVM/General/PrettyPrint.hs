@@ -74,6 +74,7 @@ liftM concat $ mapM makePrettyShowInstance [
   ''A.Atomicity,
   ''A.Dialect,
   ''A.FastMathFlags,
+  ''A.SynchronizationScope,
   ''A.MemoryOrdering,
   ''Either,
   ''Maybe

@@ -116,6 +116,11 @@ newtype MemoryOrdering = MemoryOrdering CUInt
 #define MO_Rec(n) { #n, LLVMAtomicOrdering ## n },
 #{inject ATOMIC_ORDERING, MemoryOrdering, MemoryOrdering, memoryOrdering, MO_Rec}
 
+newtype SynchronizationScope = SynchronizationScope CUInt
+  deriving (Eq, Typeable, Data)
+#define SS_Rec(n) { #n, LLVM ## n ## SynchronizationScope },
+#{inject SYNCRONIZATION_SCOPE, SynchronizationScope, SynchronizationScope, synchronizationScope, SS_Rec}
+
 newtype Linkage = Linkage CUInt
   deriving (Eq, Read, Show, Typeable, Data)
 #define LK_Rec(n) { #n, LLVM ## n ## Linkage },

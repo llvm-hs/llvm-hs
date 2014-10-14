@@ -236,8 +236,8 @@ tests = testGroup "Module" [
         withTargetOptions $ \to -> do
           withTargetMachine t "x86_64-unknown-linux" "" Set.empty to R.Default CM.Default CGO.Default $ \tm -> do
             failInIO $ moduleTargetAssembly tm m
-      a @?= "\t.file\t\"<string>\"\n\
-            \\t.text\n\
+      a @?= "\t.text\n\
+            \\t.file\t\"<string>\"\n\
             \\t.globl\tmain\n\
             \\t.align\t16, 0x90\n\
             \\t.type\tmain,@function\n\

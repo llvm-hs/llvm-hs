@@ -6,7 +6,7 @@
 #include "llvm/IR/Operator.h"
 #include "llvm/IR/BasicBlock.h"
 #include "llvm/IR/Metadata.h"
-#include "llvm/Support/CallSite.h"
+#include "llvm/IR/CallSite.h"
 
 #include "llvm-c/Core.h"
 
@@ -134,25 +134,32 @@ void LLVM_General_SetInstrAlignment(LLVMValueRef l, unsigned a) {
 
 // ------------------------------------------------------------
 
-#define LLVM_GENERAL_FOR_EACH_ATOMIC_INST(macro) \
-	macro(Load) \
-	macro(Store) \
-	macro(Fence) \
-	macro(AtomicCmpXchg) \
-	macro(AtomicRMW)
+#define LLVM_GENERAL_FOR_EACH_ATOMIC_INST(macro)	\
+	macro(Load,)																		\
+	macro(Store,)																		\
+	macro(Fence,)																		\
+	macro(AtomicCmpXchg,Success)										\
+	macro(AtomicRMW,)
 
 LLVMAtomicOrdering LLVM_General_GetAtomicOrdering(LLVMValueRef i) {
 	switch(unwrap<Instruction>(i)->getOpcode()) {
-#define ENUM_CASE(n) case Instruction::n: return wrap(unwrap<n ## Inst>(i)->getOrdering());
+#define ENUM_CASE(n,s) case Instruction::n: return wrap(unwrap<n ## Inst>(i)->get ## s ## Ordering());
 		LLVM_GENERAL_FOR_EACH_ATOMIC_INST(ENUM_CASE)
 #undef ENUM_CASE
 	default: return LLVMAtomicOrdering(0);
 	}
 }
 
+LLVMAtomicOrdering LLVM_General_GetFailureAtomicOrdering(LLVMValueRef i) {
+	switch(unwrap<Instruction>(i)->getOpcode()) {
+	case Instruction::AtomicCmpXchg: return wrap(unwrap<AtomicCmpXchgInst>(i)->getFailureOrdering());
+	default: return LLVMAtomicOrdering(0);
+	}
+}
+
 LLVMSynchronizationScope LLVM_General_GetSynchronizationScope(LLVMValueRef i) {
 	switch(unwrap<Instruction>(i)->getOpcode()) {
-#define ENUM_CASE(n) case Instruction::n: return wrap(unwrap<n ## Inst>(i)->getSynchScope());
+#define ENUM_CASE(n,s) case Instruction::n: return wrap(unwrap<n ## Inst>(i)->getSynchScope());
 		LLVM_GENERAL_FOR_EACH_ATOMIC_INST(ENUM_CASE)
 #undef ENUM_CASE
 	default: return LLVMSynchronizationScope(0);

@@ -127,12 +127,13 @@ LLVMValueRef LLVM_General_BuildAtomicCmpXchg(
 	LLVMValueRef ptr, 
 	LLVMValueRef cmp, 
 	LLVMValueRef n, 
-	LLVMAtomicOrdering lao,
+	LLVMAtomicOrdering successOrdering,
+	LLVMAtomicOrdering failureOrdering,
 	LLVMSynchronizationScope lss,
 	const char *name
 ) {
 	AtomicCmpXchgInst *a = unwrap(b)->CreateAtomicCmpXchg(
-		unwrap(ptr), unwrap(cmp), unwrap(n), unwrap(lao), unwrap(lss)
+		unwrap(ptr), unwrap(cmp), unwrap(n), unwrap(successOrdering), unwrap(failureOrdering), unwrap(lss)
 	);
 	a->setVolatile(v);
 	a->setName(name);

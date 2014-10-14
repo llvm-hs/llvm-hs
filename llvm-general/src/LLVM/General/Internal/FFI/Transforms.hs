@@ -3,7 +3,6 @@ module LLVM.General.Internal.FFI.Transforms where
 
 -- | does the constructor for this pass require a TargetMachine object
 needsTargetMachine "CodeGenPrepare" = True
-needsTargetMachine "LowerInvoke" = True
 needsTargetMachine _ = False
 
 -- | Translate a Haskell name (used in the public Haskell interface, typically not abbreviated)

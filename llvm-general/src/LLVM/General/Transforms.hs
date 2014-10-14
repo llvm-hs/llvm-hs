@@ -38,8 +38,7 @@ data Pass
   | LoopUnroll { loopUnrollThreshold :: Maybe Word, count :: Maybe Word, allowPartial :: Maybe Bool }
   | LoopUnswitch { optimizeForSize :: Bool }
   | LowerAtomic
-  -- | can use a 'LLVM.General.Target.TargetMachine'
-  | LowerInvoke { useExpensiveExceptionHandlingSupport :: Bool } 
+  | LowerInvoke
   | LowerSwitch
   | LowerExpectIntrinsic
   | MemcpyOptimization

@@ -304,6 +304,7 @@ $(do
                 "atomicity" -> ([], [| decodeM =<< liftIO (FFI.getAtomicity i) |])
                 "volatile" -> ([], [| decodeM =<< liftIO (FFI.getVolatile i) |])
                 "inBounds" -> ([], [| decodeM =<< liftIO (FFI.getInBounds (FFI.upCast i)) |])
+                "failureMemoryOrdering" -> ([], [| decodeM =<< liftIO (FFI.getFailureAtomicOrdering i) |])
                 "indices" -> ([], [| mapM op [1..nOps-1] |])
                 "indices'" ->
                   ([], [| do
