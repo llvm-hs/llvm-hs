@@ -204,6 +204,7 @@ test-suite test
     llvm-general-pure == 3.5.0.0,
     containers >= 0.4.2.1,
     mtl >= 2.1,
+    transformers >= 0.3.0.0,
     transformers-compat
   hs-source-dirs: test
   extensions:
