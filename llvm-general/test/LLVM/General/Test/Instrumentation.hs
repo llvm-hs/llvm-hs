@@ -6,7 +6,8 @@ import Test.HUnit
 
 import LLVM.General.Test.Support
 
-import Control.Monad.Except
+import Control.Monad.Trans.Except 
+
 import Data.Functor
 import qualified Data.List as List
 import qualified Data.Set as Set

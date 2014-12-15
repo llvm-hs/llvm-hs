@@ -4,7 +4,7 @@ module LLVM.General.DataLayout (
  ) where
 
 import Control.Applicative
-import Control.Monad.Except
+import Control.Monad.Trans.Except
 
 import Data.Word
 
@@ -135,7 +135,7 @@ parseDataLayout defaultEndianness s =
      ]
   in 
     case parse (parseSpec `sepBy` (char '-')) "" s of
-      Left _ -> throwError $ "ill formed data layout: " ++ show s
+      Left _ -> throwE $ "ill formed data layout: " ++ show s
       Right fs -> return . Just $ foldr ($) (defaultDataLayout defaultEndianness) fs
 
 

@@ -8,8 +8,9 @@
 module LLVM.General.Internal.Module where
 
 import Control.Monad.Trans
+import Control.Monad.Trans.Except (runExcept)
 import Control.Monad.State
-import Control.Monad.Except
+import Control.Monad.Exceptable
 import Control.Monad.AnyCont
 import Control.Applicative
 import Control.Exception
@@ -47,7 +48,7 @@ import LLVM.General.Internal.Function
 import LLVM.General.Internal.Global
 import LLVM.General.Internal.Inject
 import LLVM.General.Internal.Instruction ()
-import qualified LLVM.General.Internal.MemoryBuffer as MB 
+import qualified LLVM.General.Internal.MemoryBuffer as MB
 import LLVM.General.Internal.Metadata
 import LLVM.General.Internal.Operand
 import LLVM.General.Internal.RawOStream
@@ -83,12 +84,12 @@ genCodingInstance [t| Bool |] ''FFI.LinkerMode [
 -- Note that this operation is not commutative - not only concretely (e.g. the destination module
 -- is modified, becoming the result) but abstractly (e.g. unused private globals in the source
 -- module do not appear in the result, but similar globals in the destination remain).
-linkModules :: 
+linkModules ::
   Bool -- ^ True to leave the right module unmodified, False to cannibalize it (for efficiency's sake).
   -> Module -- ^ The module into which to link
   -> Module -- ^ The module to link into the other (and cannibalize or not)
   -> ExceptT String IO ()
-linkModules preserveRight (Module m) (Module m') = flip runAnyContT return $ do
+linkModules preserveRight (Module m) (Module m') = unExceptableT $ flip runAnyContT return $ do
   preserveRight <- encodeM preserveRight
   msgPtr <- alloca
   result <- decodeM =<< (liftIO $ FFI.linkModules m m' preserveRight msgPtr)
@@ -112,7 +113,7 @@ instance LLVMAssemblyInput File where
 -- | parse 'Module' from LLVM assembly
 withModuleFromLLVMAssembly :: LLVMAssemblyInput s
                               => Context -> s -> (Module -> IO a) -> ExceptT (Either String Diagnostic) IO a
-withModuleFromLLVMAssembly (Context c) s f = flip runAnyContT return $ do
+withModuleFromLLVMAssembly (Context c) s f = unExceptableT $ flip runAnyContT return $ do
   mb <- llvmAssemblyMemoryBuffer s
   smDiag <- anyContToM withSMDiagnostic
   m <- anyContToM $ bracket (FFI.parseLLVMAssembly c mb smDiag) FFI.disposeModule
@@ -133,7 +134,7 @@ moduleLLVMAssembly (Module m) = do
 
 -- | write LLVM assembly for a 'Module' to a file
 writeLLVMAssemblyToFile :: File -> Module -> ExceptT String IO ()
-writeLLVMAssemblyToFile (File path) (Module m) = flip runAnyContT return $ do
+writeLLVMAssemblyToFile (File path) (Module m) = unExceptableT $ flip runAnyContT return $ do
   withFileRawOStream path False True $ liftIO . FFI.writeLLVMAssembly m
 
 class BitcodeInput b where
@@ -148,7 +149,7 @@ instance BitcodeInput File where
 
 -- | parse 'Module' from LLVM bitcode
 withModuleFromBitcode :: BitcodeInput b => Context -> b -> (Module -> IO a) -> ExceptT String IO a
-withModuleFromBitcode (Context c) b f = flip runAnyContT return $ do
+withModuleFromBitcode (Context c) b f = unExceptableT $ flip runAnyContT return $ do
   mb <- bitcodeMemoryBuffer b
   msgPtr <- alloca
   m <- anyContToM $ bracket (FFI.parseBitcode c mb msgPtr) FFI.disposeModule
@@ -158,26 +159,26 @@ withModuleFromBitcode (Context c) b f = flip runAnyContT return $ do
 -- | generate LLVM bitcode from a 'Module'
 moduleBitcode :: Module -> IO BS.ByteString
 moduleBitcode (Module m) = do
-  r <- runExceptT $ withBufferRawOStream (liftIO . FFI.writeBitcode m)
+  r <- runExceptableT  $ withBufferRawOStream (liftIO . FFI.writeBitcode m)
   either fail return r
 
 -- | write LLVM bitcode from a 'Module' into a file
 writeBitcodeToFile :: File -> Module -> ExceptT String IO ()
-writeBitcodeToFile (File path) (Module m) = flip runAnyContT return $ do
+writeBitcodeToFile (File path) (Module m) = unExceptableT $ flip runAnyContT return $ do
   withFileRawOStream path False False $ liftIO . FFI.writeBitcode m
 
 targetMachineEmit :: FFI.CodeGenFileType -> TargetMachine -> Module -> Ptr FFI.RawOStream -> ExceptT String IO ()
-targetMachineEmit fileType (TargetMachine tm) (Module m) os = flip runAnyContT return $ do
+targetMachineEmit fileType (TargetMachine tm) (Module m) os = unExceptableT $ flip runAnyContT return $ do
   msgPtr <- alloca
   r <- decodeM =<< (liftIO $ FFI.targetMachineEmit tm m fileType msgPtr os)
   when r $ throwError =<< decodeM msgPtr
 
 emitToFile :: FFI.CodeGenFileType -> TargetMachine -> File -> Module -> ExceptT String IO ()
-emitToFile fileType tm (File path) m = flip runAnyContT return $ do
+emitToFile fileType tm (File path) m = unExceptableT$ flip runAnyContT return $ do
   withFileRawOStream path False False $ targetMachineEmit fileType tm m
 
 emitToByteString :: FFI.CodeGenFileType -> TargetMachine -> Module -> ExceptT String IO BS.ByteString
-emitToByteString fileType tm m = flip runAnyContT return $ do
+emitToByteString fileType tm m = unExceptableT $ flip runAnyContT return $ do
   withBufferRawOStream $ targetMachineEmit fileType tm m
 
 -- | write target-specific assembly directly into a file
@@ -261,8 +262,8 @@ withModuleFromAST context@(Context c) (A.Module moduleId dataLayout triple defin
      eg' :: EncodeAST (Ptr FFI.GlobalValue) <- case g of
        g@(A.GlobalVariable { A.G.name = n }) -> do
          typ <- encodeM (A.G.type' g)
-         g' <- liftIO $ withName n $ \gName -> 
-                   FFI.addGlobalInAddressSpace m typ gName 
+         g' <- liftIO $ withName n $ \gName ->
+                   FFI.addGlobalInAddressSpace m typ gName
                           (fromIntegral ((\(A.AddrSpace a) -> a) $ A.G.addrSpace g))
          defineGlobal n g'
          liftIO $ do
@@ -331,7 +332,7 @@ withModuleFromAST context@(Context c) (A.Module moduleId dataLayout triple defin
        setVisibility g' (A.G.visibility g)
        return $ return ()
 
-  liftIO $ f (Module m)     
+  liftIO $ f (Module m)
 
 -- | Get an LLVM.General.AST.'LLVM.General.AST.Module' from a LLVM.General.'Module' - i.e.
 -- raise C++ objects into an Haskell AST.
@@ -339,7 +340,7 @@ moduleAST :: Module -> IO A.Module
 moduleAST (Module mod) = runDecodeAST $ do
   c <- return Context `ap` liftIO (FFI.getModuleContext mod)
   getMetadataKindNames c
-  return A.Module 
+  return A.Module
    `ap` (liftIO $ decodeM =<< FFI.getModuleIdentifier mod)
    `ap` (liftIO $ getDataLayout mod)
    `ap` (liftIO $ do
@@ -420,7 +421,7 @@ moduleAST (Module mod) = runDecodeAST $ do
               return A.NamedMetadataDefinition
                  `ap` (decodeM $ FFI.getNamedMetadataName nm)
                  `ap` liftM (map (\(A.MetadataNodeReference mid) -> mid)) (decodeM (n, os))
-         
+
        mds <- getMetadataDefinitions
 
        return $ tds ++ ias ++ gs ++ nmds ++ mds

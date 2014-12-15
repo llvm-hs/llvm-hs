@@ -6,7 +6,7 @@ import Test.HUnit
 
 import LLVM.General.Test.Support
 
-import Control.Monad.Except
+import Control.Monad.Trans.Except
 
 import LLVM.General.Module
 import LLVM.General.Context

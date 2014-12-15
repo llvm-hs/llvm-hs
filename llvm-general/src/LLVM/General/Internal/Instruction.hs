@@ -1,4 +1,4 @@
-{-# LANGUAGE 
+{-# LANGUAGE
   TemplateHaskell,
   QuasiQuotes,
   MultiParamTypeClasses,
@@ -14,7 +14,7 @@ import LLVM.General.Internal.InstructionDefs (instrP)
 
 import Data.Functor
 import Control.Monad
-import Control.Monad.Except
+import Control.Monad.Exceptable
 import Control.Monad.AnyCont
 import Control.Monad.State
 

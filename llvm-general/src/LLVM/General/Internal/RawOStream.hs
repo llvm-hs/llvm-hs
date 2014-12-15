@@ -1,7 +1,7 @@
 module LLVM.General.Internal.RawOStream where
 
 import Control.Monad
-import Control.Monad.Except
+import Control.Monad.Exceptable
 import Control.Monad.AnyCont
 
 import Data.IORef
@@ -14,8 +14,8 @@ import LLVM.General.Internal.Coding
 import LLVM.General.Internal.Inject
 import LLVM.General.Internal.String ()
 
-withFileRawOStream :: 
-  (Inject String e, MonadError e m, MonadAnyCont IO m, MonadIO m) 
+withFileRawOStream ::
+  (Inject String e, MonadError e m, MonadAnyCont IO m, MonadIO m)
   => String
   -> Bool
   -> Bool
@@ -28,7 +28,7 @@ withFileRawOStream path excl text c = do
   msgPtr <- alloca
   errorRef <- liftIO $ newIORef undefined
   succeeded <- decodeM =<< (liftIO $ FFI.withFileRawOStream path excl text msgPtr $ \os -> do
-                              r <- runExceptT (c os)
+                              r <- runExceptableT (ExceptableT  $ c os)
                               writeIORef errorRef r)
   unless succeeded $ do
     s <- decodeM msgPtr
@@ -36,7 +36,7 @@ withFileRawOStream path excl text c = do
   e <- liftIO $ readIORef errorRef
   either (throwError . inject) return e
 
-withBufferRawOStream :: 
+withBufferRawOStream ::
   (Inject String e, MonadError e m, MonadIO m, DecodeM IO a (Ptr CChar, CSize))
   => (Ptr FFI.RawOStream -> ExceptT String IO ())
   -> m a
@@ -48,7 +48,7 @@ withBufferRawOStream c = do
         r <- decodeM (start, size)
         writeIORef resultRef (Just r)
       saveError os = do
-        r <- runExceptT (c os)
+        r <- runExceptableT (ExceptableT $ c os)
         writeIORef errorRef r
   liftIO $ FFI.withBufferRawOStream saveBuffer saveError
   e <- liftIO $ readIORef errorRef

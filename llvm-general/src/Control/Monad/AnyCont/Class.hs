@@ -10,6 +10,7 @@ import Control.Monad.Trans.AnyCont (AnyContT)
 import qualified Control.Monad.Trans.AnyCont as AnyCont
 import Control.Monad.Trans.Except as Except
 import Control.Monad.Trans.State as State
+import Control.Monad.Exceptable as Exceptable
 
 class ScopeAnyCont m where
   scopeAnyCont :: m a -> m a
@@ -23,7 +24,7 @@ instance MonadTransAnyCont b m => MonadAnyCont b (AnyContT m) where
 
 instance Monad m => ScopeAnyCont (AnyContT m) where
   scopeAnyCont = lift . flip AnyCont.runAnyContT return
-                                     
+
 
 instance (Monad m, MonadAnyCont b m) => MonadAnyCont b (StateT s m) where
   anyContToM x = lift $ anyContToM x
@@ -35,11 +36,15 @@ instance ScopeAnyCont m => ScopeAnyCont (StateT s m) where
 instance (Monad m, MonadAnyCont b m) => MonadAnyCont b (ExceptT e m) where
   anyContToM x = lift $ anyContToM x
 
+instance (Monad m, MonadAnyCont b m) => MonadAnyCont b (Exceptable.ExceptableT e m) where
+  anyContToM x = lift $ anyContToM x
+
+
 instance ScopeAnyCont m => ScopeAnyCont (ExceptT e m) where
   scopeAnyCont = mapExceptT scopeAnyCont
 
-
-
+instance ScopeAnyCont m => ScopeAnyCont (Exceptable.ExceptableT e m) where
+  scopeAnyCont = Exceptable.mapExceptableT scopeAnyCont
 
 class MonadTransAnyCont b m where
   liftAnyCont :: (forall r . (a -> b r) -> b r) -> (forall r . (a -> m r) -> m r)
@@ -52,3 +57,6 @@ instance MonadTransAnyCont b m => MonadTransAnyCont b (StateT s m) where
 
 instance MonadTransAnyCont b m => MonadTransAnyCont b (ExceptT e m) where
   liftAnyCont c = (\c q -> ExceptT . c $ runExceptT . q) (liftAnyCont c)
+
+instance MonadTransAnyCont b m => MonadTransAnyCont b (Exceptable.ExceptableT e m) where
+  liftAnyCont c = (\c q -> makeExceptableT . c $ Exceptable.runExceptableT . q) (liftAnyCont c)

@@ -6,7 +6,7 @@ import Test.HUnit
 
 import Data.Functor
 import Control.Monad
-import Control.Monad.Except
+import Control.Monad.Trans.Except
 
 import LLVM.General.Context
 import LLVM.General.Module

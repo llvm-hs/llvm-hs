@@ -9,7 +9,7 @@ import Control.Exception
 import Control.Monad
 import Control.Monad.IO.Class
 import Control.Monad.AnyCont
-import Control.Monad.Except
+import Control.Monad.Exceptable
 
 import Data.Word
 import Data.IORef
@@ -68,7 +68,7 @@ withExecutionEngine c m createEngine f = flip runAnyContT return $ do
   liftIO initializeNativeTarget
   outExecutionEngine <- alloca
   outErrorCStringPtr <- alloca
-  Module dummyModule <- maybe (anyContToM $ liftM (either undefined id) . runExceptT
+  Module dummyModule <- maybe (anyContToM $ liftM (either undefined id) . runExceptableT . ExceptableT
                                    . withModuleFromAST c (A.Module "" Nothing Nothing []))
                         (return . Module) m
   r <- liftIO $ createEngine outExecutionEngine dummyModule outErrorCStringPtr
