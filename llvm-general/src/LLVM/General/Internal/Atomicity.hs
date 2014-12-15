@@ -31,10 +31,10 @@ genCodingInstance [t| A.SynchronizationScope |] ''FFI.SynchronizationScope [
 
 instance Monad m => EncodeM m (Maybe A.Atomicity) (FFI.SynchronizationScope, FFI.MemoryOrdering) where
   encodeM a =
-    return (,) `ap` encodeM (maybe A.SingleThread A.synchronizationScope a) `ap` encodeM (liftM A.memoryOrdering a)
+    return (,) `ap` encodeM (maybe A.SingleThread fst a) `ap` encodeM (liftM snd a)
 
 instance Monad m => DecodeM m (Maybe A.Atomicity) (FFI.SynchronizationScope, FFI.MemoryOrdering) where
-  decodeM (ss, ao) = return (liftM . A.Atomicity) `ap` decodeM ss `ap` decodeM ao
+  decodeM (ss, ao) = return (liftM . (,)) `ap` decodeM ss `ap` decodeM ao
 
 instance Monad m => EncodeM m A.Atomicity (FFI.SynchronizationScope, FFI.MemoryOrdering) where
   encodeM = encodeM . Just

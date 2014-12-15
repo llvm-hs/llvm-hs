@@ -95,11 +95,7 @@ data SynchronizationScope
   deriving (Eq, Ord, Read, Show, Data, Typeable)
 
 -- | An 'Atomicity' describes constraints on the visibility of effects of an atomic instruction
-data Atomicity = Atomicity { 
-  synchronizationScope :: SynchronizationScope,
-  memoryOrdering :: MemoryOrdering
- }
- deriving (Eq, Ord, Read, Show, Typeable, Data)
+type Atomicity = (SynchronizationScope, MemoryOrdering)
 
 -- | For the redoubtably complex 'LandingPad' instruction
 data LandingPadClause

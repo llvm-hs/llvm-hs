@@ -282,7 +282,7 @@ tests = testGroup "Instructions" [
            Load {
              volatile = False,
              address = a 2,
-             maybeAtomicity = Just (Atomicity { synchronizationScope = CrossThread, memoryOrdering = Acquire }),
+             maybeAtomicity = Just (CrossThread, Acquire),
              alignment = 1,
              metadata = [] 
            },
@@ -291,7 +291,7 @@ tests = testGroup "Instructions" [
            Load {
              volatile = False,
              address = a 2,
-             maybeAtomicity = Just (Atomicity { synchronizationScope = SingleThread, memoryOrdering = Monotonic }),
+             maybeAtomicity = Just (SingleThread, Monotonic),
              alignment = 1,
              metadata = [] 
            },
@@ -318,7 +318,7 @@ tests = testGroup "Instructions" [
              address = a 2,
              expected = a 0,
              replacement = a 0,
-             atomicity = Atomicity { synchronizationScope = CrossThread, memoryOrdering = Monotonic },
+             atomicity = (CrossThread, Monotonic),
              failureMemoryOrdering = Monotonic,
              metadata = [] 
            },
@@ -329,7 +329,7 @@ tests = testGroup "Instructions" [
              rmwOperation = RMWOp.UMax,
              address = a 2,
              value = a 0,
-             atomicity = Atomicity { synchronizationScope = CrossThread, memoryOrdering = Release },
+             atomicity = (CrossThread, Release),
              metadata = []
            },
            "atomicrmw umax i32* %2, i32 %0 release"),
@@ -554,7 +554,7 @@ tests = testGroup "Instructions" [
           "store i32 %0, i32* %2"),
          ("fence",
           Do $ Fence {
-            atomicity = Atomicity { synchronizationScope = CrossThread, memoryOrdering = Acquire },
+            atomicity = (CrossThread, Acquire),
             metadata = [] 
           },
           "fence acquire"),

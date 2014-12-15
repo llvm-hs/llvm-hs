@@ -71,7 +71,6 @@ liftM concat $ mapM makePrettyShowInstance [
   ''A.LandingPadClause,
   ''A.InlineAssembly,
   ''A.RMWOperation,
-  ''A.Atomicity,
   ''A.Dialect,
   ''A.FastMathFlags,
   ''A.SynchronizationScope,
