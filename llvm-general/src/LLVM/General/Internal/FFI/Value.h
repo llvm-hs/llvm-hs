@@ -22,8 +22,6 @@
 	macro(MDNode) \
 	macro(MDString) \
 	macro(InlineAsm) \
-	macro(PseudoSourceValue) \
-	macro(FixedStackPseudoSourceValue) \
 	macro(Instruction)
 
 typedef enum {

@@ -1,5 +1,6 @@
 #define __STDC_LIMIT_MACROS
 #include "llvm/Support/raw_ostream.h"
+#include "llvm/Support/FileSystem.h"
 #include "llvm-c/Core.h"
 
 using namespace llvm;

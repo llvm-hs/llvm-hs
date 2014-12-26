@@ -41,8 +41,10 @@
 	macro(DisableTailCalls)																\
 	macro(EnableFastISel)																	\
 	macro(PositionIndependentExecutable)									\
-	macro(EnableSegmentedStacks)													\
-	macro(UseInitArray)
+	macro(UseInitArray)																		\
+	macro(DisableIntegratedAS)														\
+	macro(CompressDebugSections)													\
+	macro(TrapUnreachable)
 
 typedef enum {
 #define ENUM_CASE(n) LLVM_General_TargetOptionFlag_ ## n,

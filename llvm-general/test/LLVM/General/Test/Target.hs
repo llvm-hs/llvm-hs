@@ -39,8 +39,10 @@ instance Arbitrary Options where
     disableTailCalls <- arbitrary
     enableFastInstructionSelection <- arbitrary
     positionIndependentExecutable <- arbitrary
-    enableSegmentedStacks <- arbitrary
     useInitArray <- arbitrary
+    disableIntegratedAssembler <- arbitrary
+    compressDebugSections <- arbitrary
+    trapUnreachable <- arbitrary
     stackAlignmentOverride <- arbitrary
     trapFunctionName <- elements [ "foo", "bar", "baz" ]
     floatABIType <- arbitrary
