@@ -48,6 +48,21 @@ instance Monad m => ProgramSearch (v -> m (Maybe b)) where
 instance Monad m => ProgramSearch (v -> p -> m (Maybe b)) where
   programSearch checkName = \v p -> findJustBy (\n -> checkName n v p) llvmConfigNames
 
+class OldHookable hook where
+  preHookOld :: (PackageDescription -> LocalBuildInfo -> UserHooks -> TestFlags -> IO ()) -> hook -> hook
+
+-- this instance is used before Cabal-1.22.0.0, when testHook took four arguments
+instance OldHookable (PackageDescription -> LocalBuildInfo -> UserHooks -> TestFlags -> IO ()) where
+  preHookOld f hook = \packageDescription localBuildInfo userHooks testFlags -> do
+    f packageDescription localBuildInfo userHooks testFlags
+    hook packageDescription localBuildInfo userHooks testFlags
+
+-- this instance is used for and after Cabal-1.22.0.0, when testHook took four five arguments
+instance OldHookable (Args -> PackageDescription -> LocalBuildInfo -> UserHooks -> TestFlags -> IO ()) where
+  preHookOld f hook = \args packageDescription localBuildInfo userHooks testFlags -> do
+    f packageDescription localBuildInfo userHooks testFlags
+    hook args packageDescription localBuildInfo userHooks testFlags
+
 llvmProgram = (simpleProgram "llvm-config") {
   programFindLocation = programSearch (programFindLocation . simpleProgram),
   programFindVersion = 
@@ -125,9 +140,8 @@ main = do
       addLLVMToLdLibraryPath (configFlags localBuildInfo)
       buildHook simpleUserHooks packageDescription localBuildInfo userHooks buildFlags,
 
-    testHook = \packageDescription localBuildInfo userHooks testFlags -> do
-      addLLVMToLdLibraryPath (configFlags localBuildInfo)
-      testHook simpleUserHooks packageDescription localBuildInfo userHooks testFlags,
+    testHook = preHookOld (\_ localBuildInfo _ _ -> addLLVMToLdLibraryPath (configFlags localBuildInfo))
+               (testHook simpleUserHooks),
 
     haddockHook = \packageDescription localBuildInfo userHooks haddockFlags -> do
        let v = "GHCRTS"
