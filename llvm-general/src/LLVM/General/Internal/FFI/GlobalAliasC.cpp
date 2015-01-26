@@ -1,6 +1,7 @@
 #define __STDC_LIMIT_MACROS
 #include "llvm/IR/LLVMContext.h"
 #include "llvm/IR/GlobalAlias.h"
+#include "llvm/IR/GlobalObject.h"
 
 #include "llvm-c/Core.h"
 
@@ -15,7 +16,7 @@ LLVMValueRef LLVM_General_GetAliasee(LLVMValueRef g) {
 }
 
 void LLVM_General_SetAliasee(LLVMValueRef g, LLVMValueRef c) {
-	unwrap<GlobalAlias>(g)->setAliasee(unwrap<Constant>(c));
+	unwrap<GlobalAlias>(g)->setAliasee(unwrap<GlobalObject>(c));
 }
 
 }

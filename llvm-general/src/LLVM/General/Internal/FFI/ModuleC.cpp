@@ -24,7 +24,7 @@ LLVMValueRef LLVM_General_GetNextAlias(LLVMValueRef a) {
 }
 
 LLVMValueRef LLVM_General_JustAddAlias(LLVMModuleRef m, LLVMTypeRef ty, const char *name) {
-	return wrap(new GlobalAlias(unwrap(ty), GlobalValue::ExternalLinkage, name, 0, unwrap(m)));
+	return wrap(GlobalAlias::create(unwrap(ty), 0, GlobalValue::ExternalLinkage, name, 0, unwrap(m)));
 }
 
 NamedMDNode *LLVM_General_GetOrAddNamedMetadata(LLVMModuleRef m, const char *name) {

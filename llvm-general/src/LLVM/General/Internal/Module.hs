@@ -373,11 +373,12 @@ moduleAST (Module mod) = runDecodeAST $ do
             ffiAliases <- liftIO $ FFI.getXs (FFI.getFirstAlias mod) FFI.getNextAlias
             liftM sequence . forM ffiAliases $ \a -> do
               n <- getGlobalName a
+              A.PointerType t as <- typeOf a
               return $ return A.G.GlobalAlias
                `ap` return n
                `ap` getLinkage a
                `ap` getVisibility a
-               `ap` typeOf a
+               `ap` return t
                `ap` (decodeM =<< (liftIO $ FFI.getAliasee a)),
 
           do

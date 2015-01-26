@@ -142,8 +142,10 @@ tests = testGroup "Instrumentation" [
         (names ast') `List.intersect` (names ast) @?= names ast
     | (n,p) <- [
      ("GCOVProfiler", defaultGCOVProfiler),
+{-
      ("AddressSanitizer", defaultAddressSanitizer),
      ("AddressSanitizerModule", defaultAddressSanitizerModule),
+-}
      ("MemorySanitizer", defaultMemorySanitizer),
      ("ThreadSanitizer", defaultThreadSanitizer),
      ("BoundsChecking", BoundsChecking),

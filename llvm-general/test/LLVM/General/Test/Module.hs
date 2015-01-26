@@ -46,8 +46,7 @@ handString = "; ModuleID = '<string>'\n\
     \@4 = external global [4294967296 x i32]\n\
     \@.argyle = thread_local global i32 0\n\
     \\n\
-    \@three = alias private i32 addrspace(3)* @1\n\
-    \@two = alias i32 addrspace(3)* @three\n\
+    \@three = alias private i32 addrspace(3)*, i32 addrspace(3)* @1\n\
     \\n\
     \define i32 @bar() {\n\
     \  %1 = call zeroext i32 @foo(i32 inreg 1, i8 signext 4) #0\n\
@@ -115,16 +114,18 @@ handAST = Module "<string>" Nothing Nothing [
         G.isThreadLocal = True
       },
       GlobalDefinition $ globalAliasDefaults {
-        G.name = Name "three", 
-        G.linkage = L.Private,
-        G.type' = PointerType i32 (AddrSpace 3),
-        G.aliasee = C.GlobalReference (PointerType i32 (AddrSpace 3)) (UnName 1)
+         G.name = Name "three",
+         G.linkage = L.Private,
+         G.type' = PointerType i32 (AddrSpace 3),
+         G.aliasee = C.GlobalReference (PointerType i32 (AddrSpace 3)) (UnName 1)
       },
+{-
       GlobalDefinition $ globalAliasDefaults {
         G.name = Name "two",
         G.type' = PointerType i32 (AddrSpace 3),
         G.aliasee = C.GlobalReference (PointerType i32 (AddrSpace 3)) (Name "three")
       },
+-}
       GlobalDefinition $ functionDefaults {
         G.returnType = i32,
         G.name = Name "bar",
