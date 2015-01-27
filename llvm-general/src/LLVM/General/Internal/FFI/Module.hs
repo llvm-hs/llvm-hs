@@ -9,6 +9,7 @@ import Foreign.C
 import LLVM.General.Internal.FFI.Context
 import LLVM.General.Internal.FFI.LLVMCTypes
 import LLVM.General.Internal.FFI.PtrHierarchy
+import LLVM.General.Internal.FFI.Type
 
 data Module
 
@@ -64,7 +65,7 @@ foreign import ccall unsafe "LLVMAddGlobalInAddressSpace" addGlobalInAddressSpac
   Ptr Module -> Ptr Type -> CString -> CUInt -> IO (Ptr GlobalVariable)
 
 foreign import ccall unsafe "LLVM_General_JustAddAlias" justAddAlias ::
-  Ptr Module -> Ptr Type -> CString -> IO (Ptr GlobalAlias)
+  Ptr Module -> Ptr Type -> AddrSpace -> CString -> IO (Ptr GlobalAlias)
 
 
 foreign import ccall unsafe "LLVMAddFunction" addFunction ::

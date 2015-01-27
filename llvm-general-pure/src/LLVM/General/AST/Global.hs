@@ -35,6 +35,7 @@ data Global
         name :: Name,
         linkage :: L.Linkage,
         visibility :: V.Visibility,
+        addrSpace :: AddrSpace,
         type' :: Type,
         aliasee :: Constant
       }
@@ -89,6 +90,7 @@ globalAliasDefaults =
     name = error "global alias name not defined",
     linkage = L.External,
     visibility = V.Default,
+    addrSpace = AddrSpace 0,
     type' = error "global alias type not defined",
     aliasee = error "global alias aliasee not defined"
   }
