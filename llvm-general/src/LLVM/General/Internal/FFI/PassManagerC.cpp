@@ -177,43 +177,29 @@ void LLVM_General_AddGCOVProfilerPass(
 }
 
 void LLVM_General_AddAddressSanitizerFunctionPass(
-	LLVMPassManagerRef PM,
-	LLVMBool checkInitOrder,
-	LLVMBool checkUseAfterReturn,
-	LLVMBool checkLifetime,
-	char *blacklistFile
+	LLVMPassManagerRef PM
 ) {
-	unwrap(PM)->add(
-		createAddressSanitizerFunctionPass(
-			checkInitOrder,
-			checkUseAfterReturn,
-			checkLifetime,
-			blacklistFile
-		)
-	);
+	unwrap(PM)->add(createAddressSanitizerFunctionPass());
 }
 
 void LLVM_General_AddAddressSanitizerModulePass(
 	LLVMPassManagerRef PM,
-	LLVMBool checkInitOrder,
 	const char *blacklistFile
 ) {
-	unwrap(PM)->add(createAddressSanitizerModulePass(checkInitOrder, blacklistFile));
+	unwrap(PM)->add(createAddressSanitizerModulePass(blacklistFile));
 }
 
 void LLVM_General_AddMemorySanitizerPass(
 	LLVMPassManagerRef PM,
-	LLVMBool trackOrigins,
-	const char *blacklistFile
+	LLVMBool trackOrigins
 ) {
-	unwrap(PM)->add(createMemorySanitizerPass(trackOrigins, blacklistFile));
+	unwrap(PM)->add(createMemorySanitizerPass(trackOrigins));
 }
 
 void LLVM_General_AddThreadSanitizerPass(
-	LLVMPassManagerRef PM,
-	const char *blacklistFile
+	LLVMPassManagerRef PM
 ) {
-	unwrap(PM)->add(createThreadSanitizerPass(blacklistFile));
+	unwrap(PM)->add(createThreadSanitizerPass());
 }
 
 void LLVM_General_AddBoundsCheckingPass(LLVMPassManagerRef PM) {

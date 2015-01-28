@@ -118,23 +118,14 @@ data Pass
       noRedZone :: Bool,
       functionNamesInData :: Bool
     }
-  | AddressSanitizer {
-      checkInitOrder :: Bool,
-      checkUseAfterReturn :: Bool,
-      checkLifetime :: Bool,
-      blackListFile :: Maybe FilePath
-    }
+  | AddressSanitizer
   | AddressSanitizerModule {
-      checkInitOrder :: Bool,
       blackListFile :: Maybe FilePath
     }
   | MemorySanitizer {
-      trackOrigins :: Bool,
-      blackListFile :: Maybe FilePath
+      trackOrigins :: Bool
     }
-  | ThreadSanitizer {
-      blackListFile :: Maybe FilePath
-    }
+  | ThreadSanitizer
   | BoundsChecking
   | DebugGeneratedIR {
       hideDebugIntrinsics :: Bool,
@@ -195,29 +186,20 @@ defaultGCOVProfiler = GCOVProfiler {
   }
 
 -- | Defaults for 'AddressSanitizer'.
-defaultAddressSanitizer = AddressSanitizer {
-  checkInitOrder = True,
-  checkUseAfterReturn = False,
-  checkLifetime = False,
-  blackListFile = Nothing
-}
+defaultAddressSanitizer = AddressSanitizer
 
 -- | Defaults for 'AddressSanitizerModule'.
 defaultAddressSanitizerModule = AddressSanitizerModule {
-  checkInitOrder = True,
   blackListFile = Nothing
 }
 
 -- | Defaults for 'MemorySanitizer'.
 defaultMemorySanitizer = MemorySanitizer {
-  trackOrigins = False,
-  blackListFile = Nothing
+  trackOrigins = False
 }
 
 -- | Defaults for 'ThreadSanitizer'.
-defaultThreadSanitizer = ThreadSanitizer {
-  blackListFile = Nothing
-}
+defaultThreadSanitizer = ThreadSanitizer
 
 -- | Defaults for 'DebugGeneratedIR'.
 defaultDebugGeneratedIR = DebugGeneratedIR {

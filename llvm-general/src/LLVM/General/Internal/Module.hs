@@ -279,8 +279,9 @@ withModuleFromAST context@(Context c) (A.Module moduleId dataLayout triple defin
            setAlignment g' (A.G.alignment g)
            return (FFI.upCast g')
        (a@A.G.GlobalAlias { A.G.name = n }) -> do
-         typ <- encodeM (A.G.type' a)
-         as <- encodeM (A.G.addrSpace a)
+         let A.PointerType typ as = A.G.type' a
+         typ <- encodeM typ
+         as <- encodeM as
          a' <- liftIO $ withName n $ \name -> FFI.justAddAlias m typ as name
          defineGlobal n a'
          return $ do
@@ -374,13 +375,11 @@ moduleAST (Module mod) = runDecodeAST $ do
             ffiAliases <- liftIO $ FFI.getXs (FFI.getFirstAlias mod) FFI.getNextAlias
             liftM sequence . forM ffiAliases $ \a -> do
               n <- getGlobalName a
-              A.PointerType t as <- typeOf a
               return $ return A.G.GlobalAlias
                `ap` return n
                `ap` getLinkage a
                `ap` getVisibility a
-               `ap` return as
-               `ap` return t
+               `ap` typeOf a
                `ap` (decodeM =<< (liftIO $ FFI.getAliasee a)),
 
           do
