@@ -183,10 +183,9 @@ void LLVM_General_AddAddressSanitizerFunctionPass(
 }
 
 void LLVM_General_AddAddressSanitizerModulePass(
-	LLVMPassManagerRef PM,
-	const char *blacklistFile
+	LLVMPassManagerRef PM
 ) {
-	unwrap(PM)->add(createAddressSanitizerModulePass(blacklistFile));
+	unwrap(PM)->add(createAddressSanitizerModulePass());
 }
 
 void LLVM_General_AddMemorySanitizerPass(

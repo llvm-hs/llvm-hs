@@ -37,20 +37,20 @@ import Text.Parsec
 import Text.Parsec.String
 import Data.Version
 
-llvmVersion = "svn"
+llvmVersion = "3.5.0"
 llvmDir = "out" </> ("llvm-" ++ llvmVersion)
 pkgName = "llvm-general"
 
 wipedir :: FilePath -> Action ()
 wipedir d = do
   present <- doesDirectoryExist d
-  unless present $ command_ [] "rm" [ "-r", d ]
+  when present $ command_ [] "rm" [ "-r", d ]
 
 mkdir :: FilePath -> Action ()
 mkdir d = command_ [] "mkdir" [ "-p", d ]
 
 untar :: FilePath -> FilePath -> Action ()
-untar d tb = command_ [] "tar" [ "zxCf", d, tb ]
+untar d tb = command_ [] "tar" [ "xCf", d, tb ]
 
 needRecursive :: FilePath -> Action ()
 needRecursive p = do
@@ -208,7 +208,7 @@ main = shake shakeOptions {
           command_ [Cwd ghPages] "git" [ "push" ]
 
   llvmDir </> "install/bin/llvm-config" *> \out -> do
-    let tarball = "downloads/llvm-" ++ llvmVersion ++ ".src.tar.gz"
+    Stdout tarball <- command [] "ls" [ "downloads/llvm-" ++ llvmVersion ++ ".src.tar.*" ]
     buildRoot <- askOracle (BuildRoot ())
     need [ tarball ]
     let buildDir = llvmDir </> "build"

@@ -119,9 +119,7 @@ data Pass
       functionNamesInData :: Bool
     }
   | AddressSanitizer
-  | AddressSanitizerModule {
-      blackListFile :: Maybe FilePath
-    }
+  | AddressSanitizerModule
   | MemorySanitizer {
       trackOrigins :: Bool
     }
@@ -189,9 +187,7 @@ defaultGCOVProfiler = GCOVProfiler {
 defaultAddressSanitizer = AddressSanitizer
 
 -- | Defaults for 'AddressSanitizerModule'.
-defaultAddressSanitizerModule = AddressSanitizerModule {
-  blackListFile = Nothing
-}
+defaultAddressSanitizerModule = AddressSanitizerModule
 
 -- | Defaults for 'MemorySanitizer'.
 defaultMemorySanitizer = MemorySanitizer {
