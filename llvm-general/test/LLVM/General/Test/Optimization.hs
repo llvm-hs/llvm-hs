@@ -212,35 +212,40 @@ tests = testGroup "Optimization" [
              },
             moduleTargetTriple = Just "x86_64",
             moduleDefinitions = [
+              GlobalDefinition $ globalVariableDefaults {
+                G.name = Name "a",
+                G.linkage = L.Common,
+                G.type' = A.T.ArrayType 2048 i32,
+                G.initializer = Just (C.Null (A.T.ArrayType 2048 i32))
+               },
               GlobalDefinition $ functionDefaults {
                 G.returnType = A.T.void,
-                G.name = Name "foo",
-                G.parameters = ([Parameter (ptr i32) (Name "x") []], False),
+                G.name = Name "inc",
+                G.functionAttributes = [ A.NoUnwind, A.UWTable, A.NoInline, A.StackProtect ],
+                G.parameters = ([Parameter i32 (Name "n") []], False),
                 G.basicBlocks = [
-                  BasicBlock (UnName 0) [] (Do $ Br (UnName 1) []),
-                  BasicBlock (UnName 1) [
-                    Name "i.0" := Phi i32 [ 
-                      (ConstantOperand (C.Int 32 0), UnName 0),
-                      (LocalReference i32 (UnName 8), UnName 7)
+                  BasicBlock (UnName 0) [
+                    UnName 1 := ICmp IPred.SGT (LocalReference i32 (Name "n")) (ConstantOperand (C.Int 32 0)) []
+                   ] (Do $ CondBr (LocalReference i1 (UnName 1)) (Name ".lr.ph") (Name "._crit_edge") []),
+                  BasicBlock (Name ".lr.ph") [
+                    Name "indvars.iv" := Phi i64 [ 
+                      (ConstantOperand (C.Int 64 0), UnName 0),
+                      (LocalReference i64 (Name "indvars.iv.next"), Name ".lr.ph")
                      ] [],
-                    Name ".0" := Phi (ptr i32) [ 
-                      (LocalReference (ptr i32) (Name "x"), UnName 0),
-                      (LocalReference (ptr i32) (UnName 4), UnName 7)
+                    UnName 2 := GetElementPtr True (ConstantOperand (C.GlobalReference (A.T.ArrayType 2048 i32) (Name "a"))) [ 
+                      ConstantOperand (C.Int 64 0),
+                      (LocalReference i64 (Name "indvars.iv"))
                      ] [],
-                    UnName 2 := ICmp IPred.SLT (LocalReference i32 (Name "i.0")) (ConstantOperand (C.Int 32 2048)) []
-                   ] (Do $ CondBr (LocalReference i1 (UnName 2)) (UnName 3) (UnName 9) []),
-                  BasicBlock (UnName 3) [
-                    UnName 4 := GetElementPtr True (LocalReference (ptr i32) (Name ".0")) [ 
-                      ConstantOperand (C.Int 32 1)
-                     ] [],
-                    UnName 5 := Load False (LocalReference (ptr i32) (Name ".0")) Nothing 4 [],
-                    UnName 6 := Add True False (LocalReference i32 (UnName 5)) (ConstantOperand (C.Int 32 1)) [],
-                    Do $ Store False (LocalReference (ptr i32) (Name ".0")) (LocalReference i32 (UnName 6)) Nothing 4 []  
-                   ] (Do $ Br (UnName 7) []),
-                  BasicBlock (UnName 7) [
-                    UnName 8 := Add True False (LocalReference i32 (Name "i.0")) (ConstantOperand (C.Int 32 1)) []
-                   ] (Do $ Br (UnName 1) []),
-                  BasicBlock (UnName 9) [] (Do $ Ret Nothing [])
+                    UnName 3 := Load False (LocalReference (ptr i32) (UnName 2)) Nothing 4 [],
+                    UnName 4 := Trunc (LocalReference i64 (Name "indvars.iv")) i32 [],
+                    UnName 5 := Add True False (LocalReference i32 (UnName 3)) (LocalReference i32 (UnName 4)) [],
+                    Do $ Store False (LocalReference (ptr i32) (UnName 2)) (LocalReference i32 (UnName 5)) Nothing 4 [],
+                    Name "indvars.iv.next" := Add False False (LocalReference i64 (Name "indvars.iv")) (ConstantOperand (C.Int 64 1)) [],
+                    Name "lftr.wideiv" := Trunc (LocalReference i64 (Name "indvars.iv.next")) i32 [],
+                    Name "exitcond" := ICmp IPred.EQ (LocalReference i32 (Name "lftr.wideiv")) (LocalReference i32 (Name "n")) []
+                   ] (Do $ CondBr (LocalReference i1 (Name "exitcond")) (Name "._crit_edge") (Name ".lr.ph") []),
+                  BasicBlock (Name "._crit_edge") [
+                   ] (Do $ Ret Nothing [])
                  ]
                }
              ]
