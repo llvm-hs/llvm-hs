@@ -16,7 +16,7 @@ LLVMValueRef LLVM_General_GetAliasee(LLVMValueRef g) {
 }
 
 void LLVM_General_SetAliasee(LLVMValueRef g, LLVMValueRef c) {
-	unwrap<GlobalAlias>(g)->setAliasee(unwrap<GlobalObject>(c));
+	unwrap<GlobalAlias>(g)->setAliasee(unwrap<Constant>(c));
 }
 
 }
