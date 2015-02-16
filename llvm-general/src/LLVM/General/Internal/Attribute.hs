@@ -9,8 +9,8 @@ import Language.Haskell.TH
 import Language.Haskell.TH.Quote
 
 import Data.Data
+import Data.Either
 import Data.List (genericSplitAt)
-
 import Data.Bits
 
 import qualified LLVM.General.Internal.FFI.LLVMCTypes as FFI
@@ -18,6 +18,7 @@ import qualified LLVM.General.Internal.FFI.LLVMCTypes as FFI
 import qualified LLVM.General.AST.Attribute as A.A
 
 import LLVM.General.Internal.Coding
+import LLVM.General.Internal.EncodeAST
 
 $(do
   let
@@ -149,5 +150,9 @@ $(do
   return (pi ++ fi)
  )
 
-
-
+instance EncodeM EncodeAST [Either A.A.GroupID A.A.FunctionAttribute] FFI.FunctionAttr where
+  encodeM fas = do
+    let (gids, as) = partitionEithers fas
+    as <- encodeM as
+    gs <- mapM referAttributeGroup gids
+    return $ foldl (.|.) as gs

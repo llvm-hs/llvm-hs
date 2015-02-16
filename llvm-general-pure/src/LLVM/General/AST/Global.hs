@@ -47,7 +47,7 @@ data Global
         returnType :: Type,
         name :: Name,
         parameters :: ([Parameter],Bool), -- ^ snd indicates varargs
-        functionAttributes :: [A.FunctionAttribute],
+        functionAttributes :: [Either A.GroupID A.FunctionAttribute],
         section :: Maybe String,
         alignment :: Word32,
         garbageCollectorName :: Maybe String,

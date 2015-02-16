@@ -256,7 +256,12 @@ withModuleFromAST context@(Context c) (A.Module moduleId dataLayout triple defin
    A.ModuleInlineAssembly s -> do
      s <- encodeM s
      liftIO $ FFI.moduleAppendInlineAsm m (FFI.ModuleAsm s)
-     return . return . return . return $ return ()
+     return . return . return . return . return $ ()
+
+   A.FunctionAttributes gid attrs -> do
+     attrs <- encodeM attrs
+     defineAttributeGroup gid attrs
+     return . return . return . return . return $ ()
 
    A.GlobalDefinition g -> return . phase $ do
      eg' :: EncodeAST (Ptr FFI.GlobalValue) <- case g of
@@ -295,7 +300,7 @@ withModuleFromAST context@(Context c) (A.Module moduleId dataLayout triple defin
          liftIO $ FFI.setFunctionCallConv f cc
          rAttrs <- encodeM rAttrs
          liftIO $ FFI.addFunctionRetAttr f rAttrs
-         liftIO $ setFunctionAttrs f attrs
+         setFunctionAttrs f attrs
          setSection f (A.G.section g)
          setAlignment f (A.G.alignment g)
          setGC f gc
@@ -403,7 +408,7 @@ moduleAST (Module mod) = runDecodeAST $ do
                  `ap` return returnType
                  `ap` return n
                  `ap` return (parameters, isVarArg)
-                 `ap` (liftIO $ getFunctionAttrs f)
+                 `ap` getFunctionAttrs f
                  `ap` getSection f
                  `ap` getAlignment f
                  `ap` getGC f
@@ -426,5 +431,9 @@ moduleAST (Module mod) = runDecodeAST $ do
 
        mds <- getMetadataDefinitions
 
-       return $ tds ++ ias ++ gs ++ nmds ++ mds
+       ags <- do
+         ags <- gets $ Map.toList . attributeGroups
+         forM ags $ \(as, gid) -> return A.FunctionAttributes `ap` return gid `ap` decodeM as
+
+       return $ tds ++ ias ++ gs ++ nmds ++ mds ++ ags
    )

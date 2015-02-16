@@ -15,7 +15,7 @@ data ParameterAttribute
     | ByVal
     | NoCapture
     | Nest
-  deriving (Eq, Read, Show, Typeable, Data)
+  deriving (Eq, Ord, Read, Show, Typeable, Data)
 
 -- | <http://llvm.org/docs/LangRef.html#function-attributes>
 data FunctionAttribute
@@ -36,4 +36,9 @@ data FunctionAttribute
     | ReturnsTwice
     | UWTable
     | NonLazyBind
-  deriving (Eq, Read, Show, Typeable, Data)
+  deriving (Eq, Ord, Read, Show, Typeable, Data)
+
+
+-- | <http://llvm.org/docs/LangRef.html#attribute-groups>
+newtype GroupID = GroupID Word
+  deriving (Eq, Ord, Read, Show, Typeable, Data)

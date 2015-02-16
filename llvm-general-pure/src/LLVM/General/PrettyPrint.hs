@@ -75,6 +75,7 @@ liftM concat $ mapM makePrettyShowInstance [
   ''A.FastMathFlags,
   ''A.SynchronizationScope,
   ''A.MemoryOrdering,
+  ''A.GroupID,
   ''Either,
   ''Maybe
  ]

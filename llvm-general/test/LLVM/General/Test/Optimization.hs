@@ -13,7 +13,7 @@ import qualified Data.Map as Map
 import LLVM.General.Module
 import LLVM.General.Context
 import LLVM.General.PassManager
-import LLVM.General.Transforms
+import qualified LLVM.General.Transforms as T
 import LLVM.General.Target
 
 import LLVM.General.AST as A
@@ -39,7 +39,7 @@ handAST =
         G.returnType = i32,
         G.name = Name "foo",
         G.parameters = ([Parameter i32 (Name "x") []], False),
-        G.functionAttributes = [A.NoUnwind, A.ReadNone, A.UWTable], 
+        G.functionAttributes = [Left (A.GroupID 0)],
         G.basicBlocks = [
           BasicBlock (UnName 0) [
            UnName 1 := Mul {
@@ -91,7 +91,8 @@ handAST =
              Do $ Ret (Just (LocalReference i32 (Name "r"))) []
            )
          ]
-       }
+       },
+      FunctionAttributes (A.GroupID 0) [A.NoUnwind, A.ReadNone, A.UWTable]
      ]
 
 isVectory :: A.Module -> Assertion
@@ -116,26 +117,27 @@ tests = testGroup "Optimization" [
         G.returnType = i32,
          G.name = Name "foo",
          G.parameters = ([Parameter i32 (Name "x") []], False),
-         G.functionAttributes = [A.NoUnwind, A.ReadNone, A.UWTable],
+         G.functionAttributes = [Left (A.GroupID 0)],
          G.basicBlocks = [
            BasicBlock (Name "here") [
               ] (
               Do $ Ret (Just (ConstantOperand (C.Int 32 0))) []
             )
           ]
-        }
+        },
+      FunctionAttributes (A.GroupID 0) [A.NoUnwind, A.ReadNone, A.UWTable]
       ],
 
   testGroup "individual" [
     testCase "ConstantPropagation" $ do
-      mOut <- optimize defaultPassSetSpec { transforms = [ConstantPropagation] } handAST
+      mOut <- optimize defaultPassSetSpec { transforms = [T.ConstantPropagation] } handAST
 
       mOut @?= Module "<string>" Nothing Nothing [
         GlobalDefinition $ functionDefaults {
           G.returnType = i32,
           G.name = Name "foo",
           G.parameters = ([Parameter i32 (Name "x") []], False),
-          G.functionAttributes = [A.NoUnwind, A.ReadNone, A.UWTable],
+          G.functionAttributes = [Left (A.GroupID 0)],
           G.basicBlocks = [
             BasicBlock (UnName 0) [] (Do $ Br (Name "here") []),
             BasicBlock (Name "here") [] (
@@ -167,7 +169,8 @@ tests = testGroup "Optimization" [
               Do $ Ret (Just (LocalReference i32 (Name "r"))) []
             )
            ]
-         }
+         },
+        FunctionAttributes (A.GroupID 0) [A.NoUnwind, A.ReadNone, A.UWTable]
        ],
 
     testCase "BasicBlockVectorization" $ do
@@ -196,9 +199,9 @@ tests = testGroup "Optimization" [
          ]
       mOut <- optimize (defaultPassSetSpec {
                     transforms = [
-                     defaultVectorizeBasicBlocks { requiredChainDepth = 3 },
-                     InstructionCombining, 
-                     GlobalValueNumbering False
+                     T.defaultVectorizeBasicBlocks { T.requiredChainDepth = 3 },
+                     T.InstructionCombining, 
+                     T.GlobalValueNumbering False
                     ] }) mIn
       isVectory mOut,
       
@@ -221,7 +224,7 @@ tests = testGroup "Optimization" [
               GlobalDefinition $ functionDefaults {
                 G.returnType = A.T.void,
                 G.name = Name "inc",
-                G.functionAttributes = [ A.NoUnwind, A.UWTable, A.NoInline, A.StackProtect ],
+                G.functionAttributes = [Left (A.GroupID 0)],
                 G.parameters = ([Parameter i32 (Name "n") []], False),
                 G.basicBlocks = [
                   BasicBlock (UnName 0) [
@@ -247,7 +250,8 @@ tests = testGroup "Optimization" [
                   BasicBlock (Name "._crit_edge") [
                    ] (Do $ Ret Nothing [])
                  ]
-               }
+               },
+              FunctionAttributes (A.GroupID 0) [A.NoUnwind, A.ReadNone, A.UWTable, A.StackProtect]
              ]
            }
       mOut <- do
@@ -256,7 +260,7 @@ tests = testGroup "Optimization" [
         withTargetOptions $ \targetOptions -> do
           withTargetMachine target triple "" Set.empty targetOptions R.Default CM.Default CGO.Default $ \tm -> do
             optimize (defaultPassSetSpec { 
-                        transforms = [ defaultLoopVectorize ],
+                        transforms = [ T.defaultLoopVectorize ],
                         dataLayout = moduleDataLayout mIn,
                         targetMachine = Just tm
                       }) mIn
@@ -267,7 +271,7 @@ tests = testGroup "Optimization" [
       -- The pass seems to be quite deeply dependent on weakly documented presumptions about
       -- how unwinding works (as is the invoke instruction)
       withContext $ \context -> do
-        withPassManager (defaultPassSetSpec { transforms = [LowerInvoke] }) $ \passManager -> do
+        withPassManager (defaultPassSetSpec { transforms = [T.LowerInvoke] }) $ \passManager -> do
           let astIn = 
                 Module "<string>" Nothing Nothing [
                   GlobalDefinition $ functionDefaults {

@@ -24,6 +24,7 @@ import LLVM.General.AST.Global
 import LLVM.General.AST.Operand
 import LLVM.General.AST.Instruction
 import LLVM.General.AST.DataLayout
+import qualified LLVM.General.AST.Attribute as A
 
 -- | Any thing which can be at the top level of a 'Module'
 data Definition 
@@ -32,6 +33,7 @@ data Definition
   | MetadataNodeDefinition MetadataNodeID [Maybe Operand]
   | NamedMetadataDefinition String [MetadataNodeID]
   | ModuleInlineAssembly String
+  | FunctionAttributes A.GroupID [A.FunctionAttribute]
     deriving (Eq, Read, Show, Typeable, Data)
 
 -- | <http://llvm.org/docs/LangRef.html#modulestructure>

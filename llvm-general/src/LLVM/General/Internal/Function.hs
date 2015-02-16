@@ -18,11 +18,17 @@ import LLVM.General.Internal.Attribute ()
 import qualified LLVM.General.AST as A
 import qualified LLVM.General.AST.Attribute as A.A
 
-getFunctionAttrs :: Ptr FFI.Function -> IO [A.A.FunctionAttribute]
-getFunctionAttrs = decodeM <=< FFI.getFunctionAttr
+getFunctionAttrs :: Ptr FFI.Function -> DecodeAST [Either A.A.GroupID A.A.FunctionAttribute]
+getFunctionAttrs p = do
+  a <- liftIO $ FFI.getFunctionAttr p
+  case a of
+    0 -> return []
+    a -> do
+      gid <- getAttributeGroupID a
+      return [Left gid]
 
-setFunctionAttrs :: Ptr FFI.Function -> [A.A.FunctionAttribute] -> IO ()
-setFunctionAttrs f = FFI.addFunctionAttr f <=< encodeM 
+setFunctionAttrs :: Ptr FFI.Function -> [Either A.A.GroupID A.A.FunctionAttribute] -> EncodeAST ()
+setFunctionAttrs f = (liftIO . FFI.addFunctionAttr f) <=< encodeM 
 
 getParameterAttrs :: Ptr FFI.Parameter -> IO [A.A.ParameterAttribute]
 getParameterAttrs = decodeM <=< FFI.getAttribute

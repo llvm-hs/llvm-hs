@@ -202,7 +202,7 @@ newtype ParamAttr = ParamAttr CUInt
 #{inject PARAM_ATTR, ParamAttr, ParamAttr, paramAttr, PA_Rec}
 
 newtype FunctionAttr = FunctionAttr CUInt
-  deriving (Eq, Read, Show, Bits, Typeable, Data, Num)
+  deriving (Eq, Ord, Read, Show, Bits, Typeable, Data, Num)
 #define FA_Rec(n,a) { #n, LLVM ## n ## a },
 #{inject FUNCTION_ATTR, FunctionAttr, FunctionAttr, functionAttr, FA_Rec}
 

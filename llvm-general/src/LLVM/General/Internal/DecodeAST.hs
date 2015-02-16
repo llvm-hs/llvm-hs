@@ -20,12 +20,15 @@ import qualified Data.Map as Map
 import Data.Array (Array)
 import qualified Data.Array as Array
 
+import qualified LLVM.General.Internal.FFI.LLVMCTypes as FFI
 import qualified LLVM.General.Internal.FFI.PtrHierarchy as FFI
+import qualified LLVM.General.Internal.FFI.Attributes as FFI
 import qualified LLVM.General.Internal.FFI.Value as FFI
 import qualified LLVM.General.Internal.FFI.Type as FFI
 
 import qualified LLVM.General.AST.Name as A
 import qualified LLVM.General.AST.Operand as A (MetadataNodeID(..))
+import qualified LLVM.General.AST.Attribute as A.A
 
 import LLVM.General.Internal.Coding
 import LLVM.General.Internal.String ()
@@ -40,7 +43,8 @@ data DecodeState = DecodeState {
     typesToDefine :: Seq (Ptr FFI.Type),
     metadataNodesToDefine :: Seq (A.MetadataNodeID, Ptr FFI.MDNode),
     metadataNodes :: Map (Ptr FFI.MDNode) A.MetadataNodeID,
-    metadataKinds :: Array Word String
+    metadataKinds :: Array Word String,
+    attributeGroups :: Map FFI.FunctionAttr A.A.GroupID
   }
 initialDecode = DecodeState {
     globalVarNum = Map.empty,
@@ -50,7 +54,8 @@ initialDecode = DecodeState {
     typesToDefine = Seq.empty,
     metadataNodesToDefine = Seq.empty,
     metadataNodes = Map.empty,
-    metadataKinds = Array.listArray (1,0) []
+    metadataKinds = Array.listArray (1,0) [],
+    attributeGroups = Map.empty
   }
 newtype DecodeAST a = DecodeAST { unDecodeAST :: AnyContT (StateT DecodeState IO) a }
   deriving (
@@ -150,3 +155,13 @@ takeMetadataNodeToDefine = state $ \s -> case Seq.viewr (metadataNodesToDefine s
 
 instance DecodeM DecodeAST A.Name (Ptr FFI.BasicBlock) where
   decodeM = getLocalName
+
+getAttributeGroupID :: FFI.FunctionAttr -> DecodeAST (A.A.GroupID)
+getAttributeGroupID p = do
+  ids <- gets attributeGroups
+  case Map.lookup p ids of
+    Just r -> return r
+    Nothing -> do
+      let r = A.A.GroupID (fromIntegral (Map.size ids))
+      modify $ \s -> s { attributeGroups = Map.insert p r (attributeGroups s) }
+      return r

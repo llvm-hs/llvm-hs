@@ -155,7 +155,7 @@ handAST = Module "<string>" Nothing Nothing [
           Parameter i32 (Name "x") [A.InReg, A.Alignment 16],
           Parameter i8 (Name "y") [A.SignExt]
          ], False),
-        G.functionAttributes = [A.NoUnwind, A.ReadNone, A.UWTable],
+        G.functionAttributes = [Left (A.GroupID 0)],
         G.basicBlocks = [
           BasicBlock (UnName 0) [
            UnName 1 := Mul {
@@ -207,7 +207,8 @@ handAST = Module "<string>" Nothing Nothing [
              Do $ Ret (Just (LocalReference i32 (Name "r"))) []
            )
          ]
-        }
+        },
+      FunctionAttributes (A.GroupID 0) [A.NoUnwind, A.ReadNone, A.UWTable]
       ]
 
 tests = testGroup "Module" [
