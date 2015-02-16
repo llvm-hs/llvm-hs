@@ -6,15 +6,16 @@
 	macro(Fast)																	\
 	macro(Cold)																	\
 
-#define LLVM_GENERAL_FOR_EACH_PARAM_ATTR(macro)				 \
-	macro(ZExt)																					 \
-	macro(SExt)																					 \
-	macro(InReg)																				 \
-	macro(StructRet)																		 \
-	macro(NoAlias)																			 \
-	macro(ByVal)																				 \
-	macro(NoCapture)																		 \
-	macro(Nest)																					 \
+#define LLVM_GENERAL_FOR_EACH_PARAM_ATTR(macro) \
+	macro(ZExt,Attribute)                         \
+	macro(SExt,Attribute)                         \
+	macro(InReg,Attribute)                        \
+	macro(StructRet,Attribute)                    \
+	macro(Alignment,)                             \
+	macro(NoAlias,Attribute)                      \
+	macro(ByVal,Attribute)                        \
+	macro(NoCapture,Attribute)                    \
+	macro(Nest,Attribute)
 
 #define LLVM_GENERAL_FOR_EACH_FUNCTION_ATTR(macro)	\
 	macro(NoReturn,Attribute)													\
@@ -26,7 +27,6 @@
 	macro(OptimizeForSize,Attribute)									\
 	macro(StackProtect,Attribute)											\
 	macro(StackProtectReq,Attribute)									\
-	macro(Alignment,)																	\
 	macro(NoRedZone,Attribute)												\
 	macro(NoImplicitFloat,Attribute)									\
 	macro(Naked,Attribute)														\

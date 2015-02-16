@@ -50,12 +50,12 @@ handString = "; ModuleID = '<string>'\n\
     \@two = alias i32 addrspace(3)* @three\n\
     \\n\
     \define i32 @bar() {\n\
-    \  %1 = call zeroext i32 @foo(i32 inreg 1, i8 signext 4) #0\n\
+    \  %1 = call zeroext i32 @foo(i32 inreg align 16 1, i8 signext 4) #0\n\
     \  ret i32 %1\n\
     \}\n\
     \\n\
     \; Function Attrs: nounwind readnone uwtable\n\
-    \define zeroext i32 @foo(i32 inreg %x, i8 signext %y) #0 {\n\
+    \define zeroext i32 @foo(i32 inreg align 16 %x, i8 signext %y) #0 {\n\
     \  %1 = mul nsw i32 %x, %x\n\
     \  br label %here\n\
     \\n\
@@ -136,7 +136,7 @@ handAST = Module "<string>" Nothing Nothing [
              returnAttributes = [A.ZeroExt],
              function = Right (ConstantOperand (C.GlobalReference (ptr (FunctionType i32 [i32, i8] False)) (Name "foo"))),
              arguments = [
-              (ConstantOperand (C.Int 32 1), [A.InReg]),
+              (ConstantOperand (C.Int 32 1), [A.InReg, A.Alignment 16]),
               (ConstantOperand (C.Int 8 4), [A.SignExt])
              ],
              functionAttributes = [A.NoUnwind, A.ReadNone, A.UWTable],
@@ -152,7 +152,7 @@ handAST = Module "<string>" Nothing Nothing [
         G.returnType = i32,
         G.name = Name "foo",
         G.parameters = ([
-          Parameter i32 (Name "x") [A.InReg],
+          Parameter i32 (Name "x") [A.InReg, A.Alignment 16],
           Parameter i8 (Name "y") [A.SignExt]
          ], False),
         G.functionAttributes = [A.NoUnwind, A.ReadNone, A.UWTable],

@@ -198,7 +198,7 @@ newtype TypeKind = TypeKind CUInt
 
 newtype ParamAttr = ParamAttr CUInt
   deriving (Eq, Read, Show, Bits, Typeable, Data, Num)
-#define PA_Rec(n) { #n, LLVM ## n ## Attribute },
+#define PA_Rec(n,a) { #n, LLVM ## n ## a },
 #{inject PARAM_ATTR, ParamAttr, ParamAttr, paramAttr, PA_Rec}
 
 newtype FunctionAttr = FunctionAttr CUInt

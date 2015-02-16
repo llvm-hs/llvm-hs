@@ -10,6 +10,7 @@ data ParameterAttribute
     | SignExt
     | InReg
     | SRet
+    | Alignment Word32
     | NoAlias
     | ByVal
     | NoCapture
@@ -27,7 +28,6 @@ data FunctionAttribute
     | OptimizeForSize
     | StackProtect
     | StackProtectReq
-    | Alignment Word32
     | NoRedZone
     | NoImplicitFloat
     | Naked

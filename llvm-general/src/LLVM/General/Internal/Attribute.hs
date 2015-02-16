@@ -42,7 +42,9 @@ $(do
         instanceD (sequence [classP ''Monad [m]]) [t| EncodeM $(m) [$(type')] $(conT ctn) |] [
           funD (mkName "encodeM") [
             clause [] (normalB [| return . (
-              let 
+              let
+                 encodeAlignment a | popCount a == 1 = 1 + popCount (a - 1)
+                 encodeAlignment _ = error "Cannot encode alignment which is not a power of two"
                  encodeAttribute a = $(
                   caseE [| a |] $ flip map attributeData' $ \(n, b, s, w) ->
                     let bQ = (dataToExpQ (const Nothing) b)
@@ -53,7 +55,7 @@ $(do
                           a <- newName "a"
                           match 
                            (conP n [varP a])
-                           (normalB [| ($(conE ctcn) (fromIntegral $(varE a) `shiftL` s)) .&. $(bQ) |])
+                           (normalB [| ($(conE ctcn) (fromIntegral (encodeAlignment $(varE a)) `shiftL` s)) .&. $(bQ) |])
                            []
                   )
               in
@@ -83,7 +85,7 @@ $(do
                                     i' <- newName "i'"
                                     letE 
                                      [valD (conP ctcn [varP i']) (normalB [| i |]) []]
-                                     [| $(conE n) (fromIntegral $(varE i')) |])
+                                     [| $(conE n) (bit ((fromIntegral $(varE i')) - 1)) |])
                                  | let i = ($(varE bits) .&. $(dataToExpQ (const Nothing) b)) `shiftR` s, 
                                    i /= $(zero)
                                ]
@@ -118,6 +120,7 @@ $(do
     (FFI.paramAttrSExt, "A.A.SignExt"),
     (FFI.paramAttrInReg, "A.A.InReg"),
     (FFI.paramAttrStructRet, "A.A.SRet"),
+    (FFI.paramAttrAlignment, "A.A.Alignment"),
     (FFI.paramAttrNoAlias, "A.A.NoAlias"),
     (FFI.paramAttrByVal, "A.A.ByVal"),
     (FFI.paramAttrNoCapture, "A.A.NoCapture"),
@@ -134,7 +137,6 @@ $(do
     (FFI.functionAttrOptimizeForSize, "A.A.OptimizeForSize"),
     (FFI.functionAttrStackProtect, "A.A.StackProtect"),
     (FFI.functionAttrStackProtectReq, "A.A.StackProtectReq"),
-    (FFI.functionAttrAlignment, "A.A.Alignment"),
     (FFI.functionAttrNoRedZone, "A.A.NoRedZone"),
     (FFI.functionAttrNoImplicitFloat, "A.A.NoImplicitFloat"),
     (FFI.functionAttrNaked, "A.A.Naked"),
