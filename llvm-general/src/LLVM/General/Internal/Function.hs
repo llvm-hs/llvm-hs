@@ -28,7 +28,7 @@ getFunctionAttrs p = do
       return [Left gid]
 
 setFunctionAttrs :: Ptr FFI.Function -> [Either A.A.GroupID A.A.FunctionAttribute] -> EncodeAST ()
-setFunctionAttrs f = (liftIO . FFI.addFunctionAttr f) <=< encodeM 
+setFunctionAttrs f = (liftIO . FFI.addFunctionAttr f) <=< encodeM
 
 getParameterAttrs :: Ptr FFI.Parameter -> IO [A.A.ParameterAttribute]
 getParameterAttrs = decodeM <=< FFI.getAttribute

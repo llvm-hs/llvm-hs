@@ -22,7 +22,6 @@ import qualified Data.Array as Array
 
 import qualified LLVM.General.Internal.FFI.LLVMCTypes as FFI
 import qualified LLVM.General.Internal.FFI.PtrHierarchy as FFI
-import qualified LLVM.General.Internal.FFI.Attributes as FFI
 import qualified LLVM.General.Internal.FFI.Value as FFI
 import qualified LLVM.General.Internal.FFI.Type as FFI
 
