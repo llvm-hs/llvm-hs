@@ -9,7 +9,6 @@ import LLVM.General.Test.Support
 import Control.Monad.Trans.Except
 import Data.Bits
 import Data.Word
-import Data.Functor
 
 import qualified Data.Set as Set
 
