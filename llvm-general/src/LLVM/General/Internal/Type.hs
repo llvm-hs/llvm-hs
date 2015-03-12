@@ -137,7 +137,7 @@ instance DecodeM DecodeAST A.Type (Ptr FFI.Type) where
         ifM (decodeM =<< liftIO (FFI.structIsLiteral t))
             (getStructure t)
             (saveNamedType t >> return A.NamedTypeReference `ap` getTypeName t)
-
+      [typeKindP|Metadata|] -> return A.MetadataType
       [typeKindP|Array|] ->
         return A.ArrayType
          `ap` (decodeM =<< liftIO (FFI.getArrayLength t))
