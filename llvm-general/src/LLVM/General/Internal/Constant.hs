@@ -158,7 +158,7 @@ instance DecodeM DecodeAST A.Constant (Ptr FFI.Constant) where
         wsp <- liftIO $ FFI.getConstantIntWords c np
         n <- peek np
         words <- decodeM (n, wsp)
-        return $ A.C.Int (A.typeBits t) (foldr (\b a -> (a `shiftL` 64) .|. fromIntegral (b :: Word64)) 0 words)
+        return $ A.C.Int (A.typeBits t) (foldr (\b a -> (a `shiftL` 64) .|. fromIntegral b) 0 (words :: [Word64]))
       [valueSubclassIdP|ConstantFP|] -> do
         let A.FloatingPointType nBits fmt = t
         ws <- allocaWords nBits

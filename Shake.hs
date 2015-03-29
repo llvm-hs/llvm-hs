@@ -7,6 +7,7 @@
   FlexibleInstances,
   ViewPatterns
   #-}
+import Prelude hiding ((*>))
 import Control.Exception
 import Control.Monad
 import Control.DeepSeq
