@@ -13,6 +13,7 @@ install:
  - /opt/ghc/$GHCVER/bin/ghc-pkg recache --user
  - cabal update
  - cabal install shake
+ - cabal install parsec
  - wget -P downloads/ http://llvm.org/releases/3.5.1/llvm-3.5.1.src.tar.xz
 script:
  - runhaskell Shake.hs test
