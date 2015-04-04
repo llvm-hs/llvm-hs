@@ -1,5 +1,9 @@
 language: haskell
 sudo: false
+addons:
+  apt:
+    packages:
+      - libstdc++6
 install:
  - mkdir -p llvm/build
  - travis_retry wget -P llvm/ http://llvm.org/releases/3.5.1/llvm-3.5.1.src.tar.xz
