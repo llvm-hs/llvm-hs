@@ -1,8 +1,7 @@
 {-# LANGUAGE
   ForeignFunctionInterface,
   MultiParamTypeClasses,
-  UndecidableInstances,
-  OverlappingInstances
+  UndecidableInstances
   #-}
 -- | FFI functions for handling the LLVM GlobalVariable class
 module LLVM.General.Internal.FFI.GlobalVariable where

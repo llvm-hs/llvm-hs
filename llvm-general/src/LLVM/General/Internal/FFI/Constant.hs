@@ -3,7 +3,6 @@
   ForeignFunctionInterface,
   MultiParamTypeClasses,
   UndecidableInstances,
-  OverlappingInstances,
   ViewPatterns
   #-}
 -- | FFI functions for handling the LLVM Constant class

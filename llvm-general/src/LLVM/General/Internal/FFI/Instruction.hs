@@ -2,7 +2,6 @@
   ForeignFunctionInterface,
   MultiParamTypeClasses,
   UndecidableInstances,
-  OverlappingInstances,
   TemplateHaskell
   #-}
 module LLVM.General.Internal.FFI.Instruction where

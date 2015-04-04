@@ -3,8 +3,16 @@
   MultiParamTypeClasses,
   FunctionalDependencies,
   UndecidableInstances,
-  OverlappingInstances
+  CPP
   #-}
+#if __GLASGOW_HASKELL__ < 710
+{-# LANGUAGE OverlappingInstances #-}
+#define CPP_OVERLAPPING
+#define CPP_OVERLAPPED
+#else
+#define CPP_OVERLAPPING {-# OVERLAPPING #-}
+#define CPP_OVERLAPPED {-# OVERLAPPED #-}
+#endif
 -- | This module defines typeclasses to represent the relationships of an object-oriented inheritance hierarchy
 module LLVM.General.Internal.FFI.PtrHierarchy where
 
@@ -16,14 +24,14 @@ class DescendentOf a b where
     upCast = castPtr
 
 -- | trivial casts
-instance DescendentOf a a where
+instance CPP_OVERLAPPING DescendentOf a a where
     upCast = id
 
 -- | a class to represent direct parent-child relationships
 class ChildOf b c | c -> b
 
 -- | ancestor-descentant relationships are build out of parent-child relationships
-instance (DescendentOf a b, ChildOf b c) => DescendentOf a c
+instance CPP_OVERLAPPED (DescendentOf a b, ChildOf b c) => DescendentOf a c
 
 -- | <http://llvm.org/doxygen/classllvm_1_1Value.html>
 data Value
