@@ -1,19 +1,11 @@
 language: haskell
-env:
- - GHCVER=7.6.3 CABALVER=1.18
- - GHCVER=7.8.3 CABALVER=1.18
- - GHCVER=7.10.1 CABALVER=1.22
+sudo: false
 install:
- - travis_retry sudo add-apt-repository -y ppa:hvr/ghc
- - travis_retry sudo apt-get update
- - travis_retry sudo apt-get install cabal-install-$CABALVER ghc-$GHCVER
- - export PATH=/opt/ghc/$GHCVER/bin:/opt/cabal/$CABALVER/bin:$PATH
- - cabal --version
- - sudo /opt/ghc/$GHCVER/bin/ghc-pkg recache
- - /opt/ghc/$GHCVER/bin/ghc-pkg recache --user
+ - mkdir -p llvm/build
+ - travis_retry wget -P llvm/ http://llvm.org/releases/3.5.1/llvm-3.5.1.src.tar.xz
+ - (cd llvm; tar xf llvm-3.5.1.src.tar.xz; cd build; ../llvm-3.5.1.src/configure --prefix=${PWD}/../install --enable-shared; make install)
+ - PATH=${PWD}/llvm/install/bin:${PATH}
  - cabal update
- - cabal install shake
- - cabal install parsec
- - wget -P downloads/ http://llvm.org/releases/3.5.1/llvm-3.5.1.src.tar.xz
+ - cabal install --only-dependencies --enable-tests --force-reinstall llvm-general-pure/ llvm-general/
 script:
- - runhaskell Shake.hs test
+ - cabal install --enable-tests llvm-general-pure/ llvm-general/
