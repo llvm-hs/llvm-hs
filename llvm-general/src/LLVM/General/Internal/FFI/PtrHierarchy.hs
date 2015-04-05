@@ -8,10 +8,8 @@
 #if __GLASGOW_HASKELL__ < 710
 {-# LANGUAGE OverlappingInstances #-}
 #define CPP_OVERLAPPING
-#define CPP_OVERLAPPED
 #else
 #define CPP_OVERLAPPING {-# OVERLAPPING #-}
-#define CPP_OVERLAPPED {-# OVERLAPPED #-}
 #endif
 -- | This module defines typeclasses to represent the relationships of an object-oriented inheritance hierarchy
 module LLVM.General.Internal.FFI.PtrHierarchy where
@@ -31,7 +29,7 @@ instance CPP_OVERLAPPING DescendentOf a a where
 class ChildOf b c | c -> b
 
 -- | ancestor-descentant relationships are build out of parent-child relationships
-instance CPP_OVERLAPPED (DescendentOf a b, ChildOf b c) => DescendentOf a c
+instance (DescendentOf a b, ChildOf b c) => DescendentOf a c
 
 -- | <http://llvm.org/doxygen/classllvm_1_1Value.html>
 data Value
