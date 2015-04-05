@@ -4,7 +4,7 @@ env:
  - GHCVER=7.8.3 CABALVER=1.18
  - GHCVER=7.10.1 CABALVER=1.22
 before_install:
- - sudo add-apt-repository ppa:ubuntu-toolchain-r/test
+ - sudo add-apt-repository -y ppa:ubuntu-toolchain-r/test
  - sudo apt-get update
  - sudo apt-get install gcc-4.8
  - sudo update-alternatives --install /usr/bin/gcc gcc /usr/bin/gcc-4.8 50
