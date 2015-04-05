@@ -1,8 +1,7 @@
 -- | <http://llvm.org/docs/LangRef.html#data-layout>
 module LLVM.General.AST.DataLayout where
 
-import Data.Data
-import Data.Word
+import LLVM.General.Prelude
 
 import Data.Map (Map)
 import qualified Data.Map as Map

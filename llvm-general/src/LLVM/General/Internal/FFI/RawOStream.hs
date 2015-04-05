@@ -3,12 +3,13 @@
   #-}
 module LLVM.General.Internal.FFI.RawOStream where
 
-import LLVM.General.Internal.FFI.ByteRangeCallback
+import LLVM.General.Prelude
 
 import Foreign.Ptr
 import Foreign.C
 import Control.Exception (bracket)
 
+import LLVM.General.Internal.FFI.ByteRangeCallback
 import LLVM.General.Internal.FFI.LLVMCTypes
 
 data RawOStream

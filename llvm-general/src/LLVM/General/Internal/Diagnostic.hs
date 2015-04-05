@@ -4,6 +4,8 @@
   #-}  
 module LLVM.General.Internal.Diagnostic where
 
+import LLVM.General.Prelude
+
 import qualified LLVM.General.Internal.FFI.LLVMCTypes as FFI
 import qualified LLVM.General.Internal.FFI.SMDiagnostic as FFI
 

@@ -1,8 +1,7 @@
 -- | Module to allow importing 'Attribute' distinctly qualified.
 module LLVM.General.AST.Attribute where
 
-import Data.Data
-import Data.Word
+import LLVM.General.Prelude
 
 -- | <http://llvm.org/docs/LangRef.html#parameter-attributes>
 data ParameterAttribute

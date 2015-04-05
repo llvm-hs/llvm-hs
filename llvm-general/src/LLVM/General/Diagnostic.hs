@@ -5,7 +5,7 @@ module LLVM.General.Diagnostic (
   diagnosticDisplay
  ) where
 
-import Data.Data
+import LLVM.General.Prelude
 
 -- | What kind of problem does a diagnostic describe?
 data DiagnosticKind 

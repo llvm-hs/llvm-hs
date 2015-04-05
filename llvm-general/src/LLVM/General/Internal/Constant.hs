@@ -6,12 +6,12 @@
   #-}
 module LLVM.General.Internal.Constant where
 
+import LLVM.General.Prelude
+
 import qualified Language.Haskell.TH as TH
 import qualified Language.Haskell.TH.Quote as TH
 import qualified LLVM.General.Internal.InstructionDefs as ID
 
-import Control.Applicative
-import Data.Word (Word32, Word64)
 import Data.Bits
 import Control.Monad.State
 import Control.Monad.AnyCont

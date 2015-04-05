@@ -1,7 +1,8 @@
 module LLVM.General.Internal.Context where
 
-import Control.Exception
+import LLVM.General.Prelude
 
+import Control.Exception
 import Control.Concurrent
 
 import Foreign.Ptr

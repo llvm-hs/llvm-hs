@@ -1,8 +1,7 @@
 -- | A representation of an LLVM type
 module LLVM.General.AST.Type where
 
-import Data.Data
-import Data.Word (Word32, Word64)
+import LLVM.General.Prelude
 
 import LLVM.General.AST.AddrSpace
 import LLVM.General.AST.Name

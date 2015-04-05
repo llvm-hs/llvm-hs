@@ -6,6 +6,8 @@
 -- | FFI functions for handling the LLVM GlobalAlias class
 module LLVM.General.Internal.FFI.GlobalAlias where
 
+import LLVM.General.Prelude
+
 import Foreign.Ptr
 
 import LLVM.General.Internal.FFI.PtrHierarchy

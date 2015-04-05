@@ -3,6 +3,8 @@
  #-}
 module LLVM.General.Internal.LibraryFunction where
 
+import LLVM.General.Prelude
+
 import qualified LLVM.General.Internal.FFI.LLVMCTypes as FFI
 
 import LLVM.General.Internal.Coding

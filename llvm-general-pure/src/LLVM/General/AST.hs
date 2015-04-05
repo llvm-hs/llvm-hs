@@ -16,7 +16,7 @@ module LLVM.General.AST (
   module LLVM.General.AST.Type
   ) where
 
-import Data.Data
+import LLVM.General.Prelude
 
 import LLVM.General.AST.Name
 import LLVM.General.AST.Type (Type(..), FloatingPointFormat(..))

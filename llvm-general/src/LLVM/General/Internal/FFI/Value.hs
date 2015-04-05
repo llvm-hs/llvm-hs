@@ -6,6 +6,8 @@
 -- | FFI functions for handling the LLVM Value class
 module LLVM.General.Internal.FFI.Value where
 
+import LLVM.General.Prelude
+
 import Foreign.Ptr
 import Foreign.C
 

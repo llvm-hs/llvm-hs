@@ -6,7 +6,8 @@
   #-}
 module LLVM.General.Internal.FFI.Instruction where
 
-import Control.Monad
+import LLVM.General.Prelude
+
 import Foreign.Ptr
 import Foreign.C
 

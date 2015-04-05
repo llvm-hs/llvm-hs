@@ -5,10 +5,11 @@
   #-}
 module LLVM.General.Internal.Attribute where
 
+import LLVM.General.Prelude
+
 import Language.Haskell.TH
 import Language.Haskell.TH.Quote
 
-import Data.Data
 import Data.Either
 import Data.List (genericSplitAt)
 import Data.Bits

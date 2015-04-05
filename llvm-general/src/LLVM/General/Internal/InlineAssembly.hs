@@ -4,7 +4,8 @@
   #-}
 module LLVM.General.Internal.InlineAssembly where
  
-import Control.Monad
+import LLVM.General.Prelude
+
 import Control.Monad.IO.Class
 
 import Foreign.C

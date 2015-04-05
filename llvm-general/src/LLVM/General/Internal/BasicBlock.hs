@@ -1,6 +1,7 @@
 module LLVM.General.Internal.BasicBlock where
 
-import Control.Monad
+import LLVM.General.Prelude
+
 import Control.Monad.Trans
 import Foreign.Ptr
 

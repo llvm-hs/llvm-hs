@@ -1,7 +1,7 @@
 -- | Operations for the 'LLVM.General.AST.Instruction.AtomicRMW' instruction
 module LLVM.General.AST.RMWOperation where
 
-import Data.Data
+import LLVM.General.Prelude
 
 -- | <http://llvm.org/docs/LangRef.html#atomicrmw-instruction>
 data RMWOperation

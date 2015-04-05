@@ -5,6 +5,8 @@
 -- | Functions to read and write textual LLVM assembly
 module LLVM.General.Internal.FFI.Assembly where
 
+import LLVM.General.Prelude
+
 import LLVM.General.Internal.FFI.Context 
 import LLVM.General.Internal.FFI.MemoryBuffer
 import LLVM.General.Internal.FFI.Module

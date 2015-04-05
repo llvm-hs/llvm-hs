@@ -4,6 +4,8 @@
 -- | FFI functions for handling the LLVM SMDiagnostic class
 module LLVM.General.Internal.FFI.SMDiagnostic where
 
+import LLVM.General.Prelude
+
 import Foreign.Ptr
 import Foreign.C
 

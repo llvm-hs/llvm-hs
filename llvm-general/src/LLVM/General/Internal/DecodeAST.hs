@@ -5,13 +5,13 @@
   #-}
 module LLVM.General.Internal.DecodeAST where
 
-import Control.Applicative
+import LLVM.General.Prelude
+
 import Control.Monad.State
 import Control.Monad.AnyCont
 
 import Foreign.Ptr
 import Foreign.C
-import Data.Word
 
 import Data.Sequence (Seq)
 import qualified Data.Sequence as Seq

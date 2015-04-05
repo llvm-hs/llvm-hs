@@ -6,6 +6,8 @@
 -- | FFI functions for handling the LLVM User class
 module LLVM.General.Internal.FFI.User where
 
+import LLVM.General.Prelude
+
 import Foreign.Ptr
 import Foreign.C
 

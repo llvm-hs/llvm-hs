@@ -12,6 +12,8 @@ module LLVM.General.Internal.InstructionDefs (
   outerJoin
   ) where
 
+import LLVM.General.Prelude
+
 import qualified Language.Haskell.TH as TH
 import qualified Language.Haskell.TH.Quote as TH
 

@@ -4,6 +4,8 @@
 
 module LLVM.General.Internal.FFI.DataLayout where
 
+import LLVM.General.Prelude
+
 import Foreign.C.String
 import Foreign.Ptr
 

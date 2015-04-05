@@ -1,6 +1,7 @@
 module LLVM.General.Internal.Function where
 
-import Control.Monad
+import LLVM.General.Prelude
+
 import Control.Monad.Trans
 import Control.Monad.AnyCont
 

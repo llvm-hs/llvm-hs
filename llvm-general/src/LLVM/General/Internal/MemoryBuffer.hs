@@ -4,8 +4,9 @@
   #-}
 module LLVM.General.Internal.MemoryBuffer where
 
+import LLVM.General.Prelude
+
 import Control.Exception
-import Control.Monad
 import Control.Monad.Exceptable
 import Control.Monad.AnyCont
 import qualified Data.ByteString as BS

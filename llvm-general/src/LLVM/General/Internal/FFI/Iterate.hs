@@ -1,8 +1,8 @@
 -- | Functions to help handle LLVM iteration patterns
 module LLVM.General.Internal.FFI.Iterate where
 
-import Control.Monad
-import Data.Functor
+import LLVM.General.Prelude
+
 import Foreign.Ptr
 
 -- | retrieve a sequence of objects which form a linked list, given an action to

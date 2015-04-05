@@ -3,10 +3,12 @@
   #-}
 module LLVM.General.Internal.FFI.MemoryBuffer where
 
-import LLVM.General.Internal.FFI.LLVMCTypes
+import LLVM.General.Prelude
 
 import Foreign.Ptr
 import Foreign.C
+
+import LLVM.General.Internal.FFI.LLVMCTypes
 
 data MemoryBuffer
 

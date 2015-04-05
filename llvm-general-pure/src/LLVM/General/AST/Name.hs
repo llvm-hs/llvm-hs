@@ -1,8 +1,7 @@
 -- | Names as used in LLVM IR
 module LLVM.General.AST.Name where
 
-import Data.Data
-import Data.Word
+import LLVM.General.Prelude
 
 {- |
 Objects of various sorts in LLVM IR are identified by address in the LLVM C++ API, and

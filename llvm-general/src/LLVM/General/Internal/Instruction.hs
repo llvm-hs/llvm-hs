@@ -7,13 +7,13 @@
   #-}
 module LLVM.General.Internal.Instruction where
 
+import LLVM.General.Prelude
+
 import qualified Language.Haskell.TH as TH
 import qualified Language.Haskell.TH.Quote as TH
 import qualified LLVM.General.Internal.InstructionDefs as ID
 import LLVM.General.Internal.InstructionDefs (instrP)
 
-import Data.Functor
-import Control.Monad
 import Control.Monad.Exceptable
 import Control.Monad.AnyCont
 import Control.Monad.State

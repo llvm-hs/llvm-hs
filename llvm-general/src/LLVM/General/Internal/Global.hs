@@ -4,12 +4,11 @@
   #-}
 module LLVM.General.Internal.Global where
 
+import LLVM.General.Prelude
+
 import Control.Monad.IO.Class
-import Data.Functor
 import Foreign.Ptr
 import Control.Monad.AnyCont
-
-import Data.Word
 
 import qualified LLVM.General.Internal.FFI.PtrHierarchy as FFI
 import qualified LLVM.General.Internal.FFI.LLVMCTypes as FFI

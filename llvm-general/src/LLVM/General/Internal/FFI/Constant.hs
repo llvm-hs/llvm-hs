@@ -8,12 +8,12 @@
 -- | FFI functions for handling the LLVM Constant class
 module LLVM.General.Internal.FFI.Constant where
 
+import LLVM.General.Prelude
+
 import qualified Language.Haskell.TH as TH
 import qualified LLVM.General.Internal.InstructionDefs as ID
 
-import Control.Monad
 import qualified Data.Map as Map
-import Data.Word
 
 import Foreign.Ptr
 import Foreign.C

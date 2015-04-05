@@ -5,6 +5,8 @@
   #-}
 module LLVM.General.Internal.CallingConvention where
 
+import LLVM.General.Prelude
+
 import LLVM.General.Internal.Coding
 import Foreign.C.Types (CUInt(..))
 

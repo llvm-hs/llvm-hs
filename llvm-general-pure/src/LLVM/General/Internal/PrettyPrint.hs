@@ -6,13 +6,13 @@
   #-}
 module LLVM.General.Internal.PrettyPrint where
 
+import LLVM.General.Prelude
+
 import Language.Haskell.TH 
 import Language.Haskell.TH.Quote
 
 import Data.Monoid
 import Data.String
-import Data.Data
-import Data.Word
 import Data.Maybe
 
 import Data.List
@@ -20,7 +20,6 @@ import Data.Set (Set)
 import qualified Data.Set as Set
 import Data.Map (Map)
 import qualified Data.Map as Map
-import Control.Applicative ((<$>),(<*>))
 import Control.Monad.Reader
 
 data Branch

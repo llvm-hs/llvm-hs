@@ -7,19 +7,18 @@
 -- | FFI glue for llvm::IRBuilder - llvm's IR construction state object
 module LLVM.General.Internal.FFI.Builder where
 
+import LLVM.General.Prelude
+
 import qualified Language.Haskell.TH as TH
-
-import Control.Monad
-
-import qualified LLVM.General.AST.Instruction as A
-
-import LLVM.General.Internal.InstructionDefs as ID
 
 import Foreign.Ptr
 import Foreign.C
 
 import qualified Data.List as List
 import qualified Data.Map as Map
+
+import qualified LLVM.General.AST.Instruction as A
+import LLVM.General.Internal.InstructionDefs as ID
 
 import LLVM.General.Internal.FFI.Cleanup
 import LLVM.General.Internal.FFI.Context

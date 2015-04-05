@@ -5,6 +5,8 @@
 -- Encapsulate hsc macro weirdness here, supporting higher-level tricks elsewhere.
 module LLVM.General.Internal.FFI.LLVMCTypes where
 
+import LLVM.General.Prelude
+
 #define __STDC_LIMIT_MACROS
 #include "llvm-c/Core.h"
 #include "llvm-c/Target.h"
@@ -25,7 +27,6 @@ module LLVM.General.Internal.FFI.LLVMCTypes where
 
 import Language.Haskell.TH.Quote
 
-import Data.Data
 import Data.Bits
 import Foreign.C
 import Foreign.Storable

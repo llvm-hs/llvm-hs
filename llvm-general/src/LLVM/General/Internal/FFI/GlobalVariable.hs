@@ -6,6 +6,8 @@
 -- | FFI functions for handling the LLVM GlobalVariable class
 module LLVM.General.Internal.FFI.GlobalVariable where
 
+import LLVM.General.Prelude
+
 import Foreign.Ptr
 import Foreign.C
 

@@ -8,6 +8,8 @@
 -- | This choice allows multiple threads to do independent work with LLVM safely.
 module LLVM.General.Internal.FFI.Context where
 
+import LLVM.General.Prelude
+
 import Foreign.Ptr
 
 -- | a blind type to correspond to LLVMContext

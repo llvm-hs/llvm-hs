@@ -1,8 +1,7 @@
 -- | Pointers exist in Address Spaces 
 module LLVM.General.AST.AddrSpace where
 
-import Data.Data
-import Data.Word
+import LLVM.General.Prelude
 
 -- | See <http://llvm.org/docs/LangRef.html#pointer-type>
 data AddrSpace = AddrSpace Word32

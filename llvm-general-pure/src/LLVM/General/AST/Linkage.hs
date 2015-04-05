@@ -1,7 +1,7 @@
 -- | Module to allow importing 'Linkage' distinctly qualified.
 module LLVM.General.AST.Linkage where
 
-import Data.Data
+import LLVM.General.Prelude
 
 -- | <http://llvm.org/docs/LangRef.html#linkage>
 data Linkage

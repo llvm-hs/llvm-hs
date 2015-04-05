@@ -5,6 +5,8 @@
   #-}
 module Control.Monad.AnyCont.Class where
 
+import Prelude
+
 import Control.Monad.Trans.Class
 import Control.Monad.Trans.AnyCont (AnyContT)
 import qualified Control.Monad.Trans.AnyCont as AnyCont

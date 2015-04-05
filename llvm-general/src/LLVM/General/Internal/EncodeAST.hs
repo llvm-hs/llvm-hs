@@ -5,7 +5,8 @@
   #-}
 module LLVM.General.Internal.EncodeAST where
 
-import Control.Applicative
+import LLVM.General.Prelude
+
 import Control.Exception
 import Control.Monad.State
 import Control.Monad.Exceptable

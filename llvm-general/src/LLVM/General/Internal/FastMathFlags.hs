@@ -3,6 +3,8 @@
   #-}
 module LLVM.General.Internal.FastMathFlags where
 
+import LLVM.General.Prelude
+
 import Control.Monad.Trans
 import Control.Monad.AnyCont
 import Control.Monad.State

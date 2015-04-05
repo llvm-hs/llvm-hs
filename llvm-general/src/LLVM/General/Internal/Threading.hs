@@ -3,9 +3,10 @@ module LLVM.General.Internal.Threading (
   isMultithreaded
   ) where
 
+import LLVM.General.Prelude
+
 import Control.Concurrent.MVar
 import System.IO.Unsafe
-import Control.Monad
 
 import qualified LLVM.General.Internal.FFI.Threading as FFI
 

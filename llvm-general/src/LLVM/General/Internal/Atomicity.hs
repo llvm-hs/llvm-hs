@@ -4,14 +4,13 @@
   #-}
 module LLVM.General.Internal.Atomicity where
 
-import Control.Monad
+import LLVM.General.Prelude
 
 import Data.Maybe
 
 import qualified LLVM.General.Internal.FFI.LLVMCTypes as FFI
 
 import LLVM.General.Internal.Coding
-
 import qualified LLVM.General.AST as A
 
 genCodingInstance [t| Maybe A.MemoryOrdering |] ''FFI.MemoryOrdering [

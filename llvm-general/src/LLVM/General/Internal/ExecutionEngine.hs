@@ -5,13 +5,13 @@
   #-}
 module LLVM.General.Internal.ExecutionEngine where
 
+import LLVM.General.Prelude
+
 import Control.Exception
-import Control.Monad
 import Control.Monad.IO.Class
 import Control.Monad.AnyCont
 import Control.Monad.Exceptable
 
-import Data.Word
 import Data.IORef
 import Foreign.Ptr
 import Foreign.C (CUInt, CString)

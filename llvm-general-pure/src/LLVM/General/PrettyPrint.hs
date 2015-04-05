@@ -17,8 +17,8 @@ module LLVM.General.PrettyPrint (
   imports
   ) where
 
-import Control.Monad
-import Data.Functor
+import LLVM.General.Prelude
+
 import Data.Monoid
 import Data.Map (Map)
 import qualified Data.Map as Map
@@ -38,7 +38,7 @@ import qualified LLVM.General.AST.Linkage as A
 import qualified LLVM.General.AST.InlineAssembly as A
 import qualified LLVM.General.AST.RMWOperation as A
 
-liftM concat $ mapM makePrettyShowInstance [
+fmap concat $ mapM makePrettyShowInstance [
   ''A.Module,
   ''A.Definition,
   ''A.DataLayout,

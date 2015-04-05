@@ -1,6 +1,7 @@
 module LLVM.General.Internal.RawOStream where
 
-import Control.Monad
+import LLVM.General.Prelude
+
 import Control.Monad.Exceptable
 import Control.Monad.AnyCont
 

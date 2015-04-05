@@ -12,6 +12,8 @@ module Control.Monad.AnyCont (
     mapAnyContT
   ) where
 
+import Prelude
+
 import Control.Monad.Trans.AnyCont
 import Control.Monad.AnyCont.Class
 import Control.Monad.Trans.Class

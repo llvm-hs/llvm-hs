@@ -4,8 +4,9 @@
   #-}
 module LLVM.General.Internal.String where
 
+import LLVM.General.Prelude
+
 import Control.Arrow
-import Control.Monad
 import Control.Monad.AnyCont
 import Control.Monad.IO.Class
 import Control.Exception (finally)

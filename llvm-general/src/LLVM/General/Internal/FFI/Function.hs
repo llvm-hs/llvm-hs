@@ -5,6 +5,8 @@
 
 module LLVM.General.Internal.FFI.Function where
 
+import LLVM.General.Prelude
+
 import Foreign.Ptr
 import Foreign.C
 

@@ -4,8 +4,7 @@
 -- instead using 'LLVM.General.PassManager.CuratedPassSetSpec'.
 module LLVM.General.Transforms where
 
-import Data.Data
-import Data.Word
+import LLVM.General.Prelude
 
 -- | <http://llvm.org/docs/Passes.html#transform-passes>
 -- A few passes can make use of information in a 'LLVM.General.Target.TargetMachine' if one

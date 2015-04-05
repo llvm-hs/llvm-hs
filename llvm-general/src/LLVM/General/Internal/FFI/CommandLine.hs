@@ -3,6 +3,8 @@
   #-}
 module LLVM.General.Internal.FFI.CommandLine where
 
+import LLVM.General.Prelude
+
 import Foreign.Ptr
 import Foreign.C
 

@@ -2,6 +2,8 @@
 -- so it may be accessed conveniently with Template Haskell code
 module LLVM.General.Internal.FFI.InstructionDefs where
 
+import LLVM.General.Prelude
+
 import LLVM.General.Internal.FFI.LLVMCTypes
 
 #define FIRST_TERM_INST(num) struct inst { const char *kind; int opcode; const char *name; const char *clas; } insts[] = { { "Terminator", },

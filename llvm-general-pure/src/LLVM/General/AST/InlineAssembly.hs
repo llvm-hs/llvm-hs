@@ -1,7 +1,7 @@
 -- | A representation of an LLVM inline assembly
 module LLVM.General.AST.InlineAssembly where
 
-import Data.Data
+import LLVM.General.Prelude
 
 import LLVM.General.AST.Type
 

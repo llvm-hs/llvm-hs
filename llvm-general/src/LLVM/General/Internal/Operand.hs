@@ -3,7 +3,8 @@
   #-}
 module LLVM.General.Internal.Operand where
 
-import Data.Functor
+import LLVM.General.Prelude
+
 import Control.Monad.State
 import Control.Monad.AnyCont
 import qualified Data.Map as Map

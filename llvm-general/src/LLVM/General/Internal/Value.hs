@@ -3,6 +3,8 @@
   #-}
 module LLVM.General.Internal.Value where
 
+import LLVM.General.Prelude
+
 import Control.Monad.State
 
 import Foreign.Ptr

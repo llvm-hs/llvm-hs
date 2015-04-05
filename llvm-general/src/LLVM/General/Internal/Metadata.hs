@@ -3,6 +3,8 @@
   #-}
 module LLVM.General.Internal.Metadata where
 
+import LLVM.General.Prelude
+
 import Control.Monad.State
 import Control.Monad.AnyCont
 

@@ -1,7 +1,7 @@
 -- | Predicates for the 'LLVM.General.AST.Instruction.FCmp' instruction
 module LLVM.General.AST.FloatingPointPredicate where
 
-import Data.Data
+import LLVM.General.Prelude
 
 -- | <http://llvm.org/docs/LangRef.html#fcmp-instruction>
 data FloatingPointPredicate

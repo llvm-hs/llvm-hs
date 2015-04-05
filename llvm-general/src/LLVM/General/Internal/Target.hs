@@ -6,12 +6,11 @@
   #-}
 module LLVM.General.Internal.Target where
 
-import Control.Monad hiding (forM)
+import LLVM.General.Prelude
+
 import Control.Monad.Trans.Except (runExcept)
-import Control.Monad.Exceptable hiding (forM)
+import Control.Monad.Exceptable
 import Control.Exception
-import Data.Functor
-import Data.Traversable (forM)
 import Control.Monad.AnyCont
 
 import Foreign.Ptr

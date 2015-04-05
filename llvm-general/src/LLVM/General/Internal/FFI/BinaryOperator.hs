@@ -6,6 +6,8 @@
 -- | FFI functions for handling the LLVM BinaryOperator class
 module LLVM.General.Internal.FFI.BinaryOperator where
 
+import LLVM.General.Prelude
+
 import Foreign.Ptr
 import Foreign.C
 

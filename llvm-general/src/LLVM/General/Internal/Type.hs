@@ -4,7 +4,8 @@
   #-}
 module LLVM.General.Internal.Type where
 
-import Control.Applicative
+import LLVM.General.Prelude
+
 import Control.Monad.State
 import Control.Monad.AnyCont
 import Control.Monad.Exceptable

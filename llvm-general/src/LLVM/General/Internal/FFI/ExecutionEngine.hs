@@ -4,6 +4,8 @@
 
 module LLVM.General.Internal.FFI.ExecutionEngine where
 
+import LLVM.General.Prelude
+
 import Foreign.Ptr
 import Foreign.C
 

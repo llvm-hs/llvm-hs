@@ -6,16 +6,13 @@
   #-}
 module LLVM.General.Internal.Coding where
 
+import LLVM.General.Prelude
+
 import Language.Haskell.TH
 import Language.Haskell.TH.Quote
 
-import Control.Monad
 import Control.Monad.AnyCont
 import Control.Monad.IO.Class
-
-import Data.Data (Data)
-import Data.Word (Word, Word32, Word64)
-import Data.Int (Int32)
 
 import Foreign.C
 import Foreign.Ptr

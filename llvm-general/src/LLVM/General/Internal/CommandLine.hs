@@ -1,11 +1,13 @@
 module LLVM.General.Internal.CommandLine where
 
-import qualified LLVM.General.Internal.FFI.CommandLine as FFI
-
-import Foreign.Ptr
+import LLVM.General.Prelude
 
 import Control.Monad.AnyCont
 import Control.Monad.IO.Class
+
+import Foreign.Ptr
+
+import qualified LLVM.General.Internal.FFI.CommandLine as FFI
 
 import LLVM.General.Internal.Coding
 import LLVM.General.Internal.String ()

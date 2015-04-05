@@ -2,8 +2,7 @@
 -- <http://llvm.org/docs/LangRef.html#instruction-reference>
 module LLVM.General.AST.Instruction where
 
-import Data.Data
-import Data.Word
+import LLVM.General.Prelude
 
 import LLVM.General.AST.Type
 import LLVM.General.AST.Name

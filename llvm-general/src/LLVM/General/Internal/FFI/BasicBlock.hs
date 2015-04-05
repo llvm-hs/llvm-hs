@@ -6,6 +6,8 @@
 -- | <http://llvm.org/doxygen/classllvm_1_1BasicBlock.html>
 module LLVM.General.Internal.FFI.BasicBlock where
 
+import LLVM.General.Prelude
+
 import Foreign.Ptr
 
 import LLVM.General.Internal.FFI.PtrHierarchy

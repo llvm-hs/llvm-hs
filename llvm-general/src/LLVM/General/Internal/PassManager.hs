@@ -4,17 +4,15 @@
   #-}
 module LLVM.General.Internal.PassManager where
 
+import LLVM.General.Prelude
+
 import qualified Language.Haskell.TH as TH
 
 import Control.Exception
-import Control.Monad hiding (forM_)
 import Control.Monad.IO.Class
-import Control.Applicative
 
 import Control.Monad.AnyCont
 
-import Data.Word
-import Data.Foldable (forM_)
 import Foreign.C (CString)
 import Foreign.Ptr
 

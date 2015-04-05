@@ -14,6 +14,8 @@
 -- | This module defines typeclasses to represent the relationships of an object-oriented inheritance hierarchy
 module LLVM.General.Internal.FFI.PtrHierarchy where
 
+import LLVM.General.Prelude
+
 import Foreign.Ptr
 
 -- | a class to represent safe casting of pointers to objects of descendant-classes to ancestor-classes.

@@ -5,11 +5,9 @@
 
 module LLVM.General.Internal.FFI.PassManager where
 
+import LLVM.General.Prelude
+
 import qualified Language.Haskell.TH as TH
-
-import Control.Monad
-
-import Data.Word
 
 import Foreign.Ptr
 import Foreign.C

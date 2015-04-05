@@ -4,6 +4,8 @@
 
 module LLVM.General.Internal.FFI.InlineAssembly where
 
+import LLVM.General.Prelude
+
 import Foreign.C
 import Foreign.Ptr
 

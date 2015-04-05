@@ -1,8 +1,7 @@
 -- | <http://llvm.org/doxygen/classllvm_1_1TargetOptions.html>
 module LLVM.General.Target.Options where
 
-import Data.Data
-import Data.Word
+import LLVM.General.Prelude
 
 -- | <http://llvm.org/doxygen/namespacellvm_1_1FloatABI.html#aea077c52d84934aabf9445cef9eab2e2>
 data FloatABI

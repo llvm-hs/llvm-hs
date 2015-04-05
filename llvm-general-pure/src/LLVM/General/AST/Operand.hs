@@ -1,8 +1,7 @@
 -- | A type to represent operands to LLVM 'LLVM.General.AST.Instruction.Instruction's
 module LLVM.General.AST.Operand where
 
-import Data.Data
-import Data.Word
+import LLVM.General.Prelude
 
 import LLVM.General.AST.Name
 import LLVM.General.AST.Constant
