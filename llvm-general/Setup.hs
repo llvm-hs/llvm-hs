@@ -141,12 +141,5 @@ main = do
       buildHook simpleUserHooks packageDescription localBuildInfo userHooks buildFlags,
 
     testHook = preHookOld (\_ localBuildInfo _ _ -> addLLVMToLdLibraryPath (configFlags localBuildInfo))
-               (testHook simpleUserHooks),
-
-    haddockHook = \packageDescription localBuildInfo userHooks haddockFlags -> do
-       let v = "GHCRTS"
-       oldGhcRts <- try $ getEnv v :: IO (Either SomeException String)
-       setEnv v (either (const id) (\o n -> o ++ " " ++ n) oldGhcRts "-K32M")
-       haddockHook simpleUserHooks packageDescription localBuildInfo userHooks haddockFlags
-       either (const (unsetEnv v)) (setEnv v) oldGhcRts
+               (testHook simpleUserHooks)
    }

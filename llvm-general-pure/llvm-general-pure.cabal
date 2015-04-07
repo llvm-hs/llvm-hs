@@ -5,7 +5,7 @@ license-file: LICENSE
 author: Benjamin S.Scarlet <fgthb0@greynode.net>
 maintainer: Benjamin S. Scarlet <fgthb0@greynode.net>
 copyright: Benjamin S. Scarlet 2013
-build-type: Custom
+build-type: Simple
 stability: experimental
 cabal-version: >= 1.8
 category: Compilers/Interpreters, Code Generation
