@@ -15,12 +15,12 @@ import Data.Monoid
 import Data.String
 import Data.Maybe
 
-import Data.List
+import Data.List (intercalate)
 import Data.Set (Set)
 import qualified Data.Set as Set
 import Data.Map (Map)
 import qualified Data.Map as Map
-import Control.Monad.Reader
+import Control.Monad.Reader hiding (sequence, mapM)
 
 data Branch
   = Fixed String

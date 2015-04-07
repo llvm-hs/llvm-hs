@@ -5,7 +5,7 @@ module LLVM.General.Internal.Metadata where
 
 import LLVM.General.Prelude
 
-import Control.Monad.State
+import Control.Monad.State hiding (mapM, forM)
 import Control.Monad.AnyCont
 
 import Foreign.Ptr

@@ -13,8 +13,9 @@ import qualified Language.Haskell.TH.Quote as TH
 import qualified LLVM.General.Internal.InstructionDefs as ID
 
 import Data.Bits
-import Control.Monad.State
+import Control.Monad.State (get, gets, modify, evalState)
 import Control.Monad.AnyCont
+import Control.Monad.IO.Class
 
 import qualified Data.Map as Map
 import Foreign.Ptr

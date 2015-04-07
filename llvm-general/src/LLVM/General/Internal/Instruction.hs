@@ -16,7 +16,7 @@ import LLVM.General.Internal.InstructionDefs (instrP)
 
 import Control.Monad.Exceptable
 import Control.Monad.AnyCont
-import Control.Monad.State
+import Control.Monad.State (gets)
 
 import Foreign.Ptr
 

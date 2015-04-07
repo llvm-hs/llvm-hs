@@ -7,7 +7,6 @@ import LLVM.General.Prelude
 
 import Language.Haskell.TH
 import Data.Sequence as Seq
-import Data.Foldable (toList)
 
 import Foreign.C
 import Foreign.Ptr
