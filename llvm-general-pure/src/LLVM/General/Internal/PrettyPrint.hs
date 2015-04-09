@@ -8,7 +8,7 @@ module LLVM.General.Internal.PrettyPrint where
 
 import LLVM.General.Prelude
 
-import Language.Haskell.TH 
+import LLVM.General.TH 
 import Language.Haskell.TH.Quote
 
 import Data.Monoid
@@ -167,7 +167,7 @@ makePrettyShowInstance n = do
           x -> error $ "unexpected info: " ++ show x
   cs <- mapM (const $ newName "a") tvb
   let cvs = map varT cs
-  sequence . return $ instanceD (cxt [classP (mkName "PrettyShow") [cv] | cv <- cvs]) [t| PrettyShow $(foldl appT (conT n) cvs) |] [
+  sequence . return $ instanceD (cxt [appT (conT (mkName "PrettyShow")) cv | cv <- cvs]) [t| PrettyShow $(foldl appT (conT n) cvs) |] [
     funD (mkName "prettyShow") [
        clause
          [varP (mkName "a")] (

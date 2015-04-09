@@ -1,4 +1,6 @@
-{-# LANGUAGE CPP #-}
+-- | This module is presents a prelude mostly like the post-Applicative-Monad world of
+-- base >= 4.8 / ghc >= 7.10, even on earlier versions. It's intended as an internal library
+-- for llvm-general-pure and llvm-general; it's exposed only to be shared between the two.
 module LLVM.General.Prelude (
     module Prelude,
     module Data.Data,

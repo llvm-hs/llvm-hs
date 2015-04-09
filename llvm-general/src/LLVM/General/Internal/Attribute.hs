@@ -7,7 +7,7 @@ module LLVM.General.Internal.Attribute where
 
 import LLVM.General.Prelude
 
-import Language.Haskell.TH
+import LLVM.General.TH
 import Language.Haskell.TH.Quote
 
 import Data.Either
@@ -41,7 +41,7 @@ $(do
       TyConI (NewtypeD _ _ _ (NormalC ctcn _) _) <- reify ctn
       let zero = [| $(conE ctcn) 0 |]
       sequence [
-        instanceD (sequence [classP ''Monad [m]]) [t| EncodeM $(m) [$(type')] $(conT ctn) |] [
+        instanceD (sequence [appT (conT ''Monad) m]) [t| EncodeM $(m) [$(type')] $(conT ctn) |] [
           funD (mkName "encodeM") [
             clause [] (normalB [| return . (
               let
@@ -68,7 +68,7 @@ $(do
  
         -- build a decoder which uses bit masking for multiple fields at once
         -- to eliminate multiple absent attributes in fewer tests
-        instanceD (sequence [classP ''Monad [m]]) [t| DecodeM $(m) [$(type')] $(conT ctn) |] [
+        instanceD (sequence [appT (conT ''Monad) m]) [t| DecodeM $(m) [$(type')] $(conT ctn) |] [
           funD (mkName "decodeM") [
             do
               bits <- newName "bits"

@@ -63,6 +63,7 @@ library
     LLVM.General.DataLayout
     LLVM.General.PrettyPrint
     LLVM.General.Prelude
+    LLVM.General.TH
 
   other-modules:
     LLVM.General.Internal.PrettyPrint
