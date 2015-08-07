@@ -38,7 +38,7 @@ instrument s m = withContext $ \context -> withModuleFromAST' context m $ \mIn' 
   moduleAST mIn'
 
 ast = do
- dl <- withDefaultTargetMachine getTargetMachineDataLayout
+ dl <- withHostTargetMachine getTargetMachineDataLayout
  return $ Module "<string>" (Just dl) Nothing [
   GlobalDefinition $ functionDefaults {
     G.returnType = i32,
@@ -135,7 +135,7 @@ tests = testGroup "Instrumentation" [
     testCase n $ do
       triple <- getProcessTargetTriple
       withTargetLibraryInfo triple $ \tli -> do
-        Right dl <- runExceptT $ withDefaultTargetMachine getTargetMachineDataLayout
+        Right dl <- runExceptT $ withHostTargetMachine getTargetMachineDataLayout
         Right ast <- runExceptT ast
         ast' <- instrument (defaultPassSetSpec { transforms = [p], dataLayout = Just dl, targetLibraryInfo = Just tli }) ast
         let names ast = [ n | GlobalDefinition d <- moduleDefinitions ast, Name n <- return (G.name d) ]
