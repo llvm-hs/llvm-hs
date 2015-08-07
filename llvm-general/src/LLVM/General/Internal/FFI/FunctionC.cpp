@@ -22,5 +22,9 @@ void LLVM_General_AddFunctionRetAttr(LLVMValueRef v, LLVMAttribute attr) {
 	);
 }
 
+llvm::AttributeSet *LLVM_General_GetFunctionAttributeSet(LLVMValueRef f) {
+	return &unwrap<Function>(f)->getAttributes();
+}
+
 
 }

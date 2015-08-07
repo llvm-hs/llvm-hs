@@ -10,6 +10,7 @@ import LLVM.General.Prelude
 import Foreign.Ptr
 import Foreign.C
 
+import LLVM.General.Internal.FFI.Attributes
 import LLVM.General.Internal.FFI.Context
 import LLVM.General.Internal.FFI.LLVMCTypes
 import LLVM.General.Internal.FFI.PtrHierarchy
@@ -25,6 +26,9 @@ foreign import ccall unsafe "LLVMAddFunctionAttr" addFunctionAttr ::
 
 foreign import ccall unsafe "LLVMGetFunctionAttr" getFunctionAttr ::
     Ptr Function -> IO FunctionAttr
+
+foreign import ccall unsafe "LLVM_General_GetFunctionAttributeSet" getFunctionAttributeSet ::
+    Ptr Function -> IO (Ptr AttributeSet)
 
 foreign import ccall unsafe "LLVMGetFirstBasicBlock" getFirstBasicBlock ::
     Ptr Function -> IO (Ptr BasicBlock)
