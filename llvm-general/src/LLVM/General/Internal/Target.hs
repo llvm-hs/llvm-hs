@@ -8,6 +8,7 @@ module LLVM.General.Internal.Target where
 
 import LLVM.General.Prelude
 
+import Control.Monad.Trans.Except (runExcept)
 import Control.Monad.Exceptable
 import Control.Exception
 import Control.Monad.AnyCont
