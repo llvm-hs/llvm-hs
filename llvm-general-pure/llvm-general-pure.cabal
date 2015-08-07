@@ -89,3 +89,4 @@ test-suite test
   other-modules:
     LLVM.General.Test.DataLayout
     LLVM.General.Test.PrettyPrint
+    LLVM.General.Test.Tests
