@@ -269,11 +269,16 @@ getTargetMachineDataLayout (TargetMachine m) = do
 initializeAllTargets :: IO ()
 initializeAllTargets = FFI.initializeAllTargets
 
--- | Bracket creation and destruction of a 'TargetMachine' configured for the host
+{-# DEPRECATED withDefaultTargetMachine "use withHostTargetMachine or withTargetMachine" #-}
+-- | Bracket creation and destruction of a 'TargetMachine' configured for the host.
 withDefaultTargetMachine :: (TargetMachine -> IO a) -> ExceptT String IO a
-withDefaultTargetMachine f = do
+withDefaultTargetMachine = withHostTargetMachine
+
+-- | Bracket creation and destruction of a 'TargetMachine' configured for the host
+withHostTargetMachine :: (TargetMachine -> IO a) -> ExceptT String IO a
+withHostTargetMachine f = do
   liftIO $ initializeAllTargets
-  triple <- liftIO $ getDefaultTargetTriple
+  triple <- liftIO $ getProcessTargetTriple
   cpu <- liftIO $ getHostCPUName
   features <- liftIO $ getHostCPUFeatures
   (target, _) <- lookupTarget Nothing triple

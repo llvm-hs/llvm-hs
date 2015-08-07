@@ -139,9 +139,9 @@ LLVMBool LLVM_General_InitializeNativeTarget() {
 }
 
 LLVMTargetRef LLVM_General_LookupTarget(
-	const char *arch, 
-	const char *ctriple, 
-	const char **tripleOut, 
+	const char *arch,
+	const char *ctriple,
+	const char **tripleOut,
 	const char **cerror
 ) {
 	std::string error;
@@ -234,14 +234,14 @@ LLVMTargetMachineRef LLVM_General_CreateTargetMachine(
 			triple,
 			cpu,
 			features,
-			*targetOptions, 
+			*targetOptions,
 			unwrap(relocModel),
 			unwrap(codeModel),
 			unwrap(codeGenOptLevel)
 		)
 	);
 }
-	
+
 const TargetLowering *LLVM_General_GetTargetLowering(LLVMTargetMachineRef t) {
 	return unwrap(t)->getTargetLowering();
 }
