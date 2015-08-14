@@ -13,6 +13,27 @@ type Slot = CUInt
 type IntValue = Word64
 
 {-
+Data model:
+llvm::Attribute is one function or parameter attribute
+
+llvm::AttributeSet is some of the attributes for a function:
+ function attributes and
+ parameter attributes for each parameter
+ parameter attributes for the return value
+It's used (at least logically) hierarchically - one for each non-empty
+such case and one for the whole, holding the others
+
+
+Encode path:
+AttrBuilder per field, (index, AttrBuilder) -> AttributeSet
+AttributeSets -> whole AttributeSet
+
+Decode path:
+whole AttributeSet -> AttributeSet per field
+decode AttributeSet into Attributes 
+-}
+
+{-
 data AttrBuilder a
 foreign import ccall unsafe "LLVM_General_CreateAttrBuilder" createAttrBuilder ::
   IO (Ptr (AttrBuilder a))
