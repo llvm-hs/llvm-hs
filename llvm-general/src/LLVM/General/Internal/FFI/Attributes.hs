@@ -4,6 +4,7 @@
 
 module LLVM.General.Internal.FFI.Attributes where
 
+import Data.Word
 import Foreign.Ptr
 import Foreign.C
 
