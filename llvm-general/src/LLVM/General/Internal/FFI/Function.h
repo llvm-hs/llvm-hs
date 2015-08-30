@@ -6,7 +6,7 @@
 	macro(Fast)																	\
 	macro(Cold)																	\
 
-#define LLVM_GENERAL_FOR_EACH_PARAM_ATTR(macro) \
+#define LLVM_GENERAL_FOR_EACH_F_PARAM_ATTR(macro) \
 	macro(ZExt,Attribute)                         \
 	macro(SExt,Attribute)                         \
 	macro(InReg,Attribute)                        \
@@ -17,7 +17,7 @@
 	macro(NoCapture,Attribute)                    \
 	macro(Nest,Attribute)
 
-#define LLVM_GENERAL_FOR_EACH_FUNCTION_ATTR(macro)	\
+#define LLVM_GENERAL_FOR_EACH_F_FUNCTION_ATTR(macro)	\
 	macro(NoReturn,Attribute)													\
 	macro(NoUnwind,Attribute)													\
 	macro(ReadNone,Attribute)													\

@@ -27,8 +27,8 @@ foreign import ccall unsafe "LLVMAddFunctionAttr" addFunctionAttr ::
 foreign import ccall unsafe "LLVMGetFunctionAttr" getFunctionAttr ::
     Ptr Function -> IO FunctionAttr
 
-foreign import ccall unsafe "LLVM_General_GetFunctionAttributeSet" getFunctionAttributeSet ::
-    Ptr Function -> IO (Ptr AttributeSet)
+foreign import ccall unsafe "LLVM_General_GetCombinedAttributeSet" getCombinedAttributeSet ::
+    Ptr Function -> IO MixedAttributeSet
 
 foreign import ccall unsafe "LLVMGetFirstBasicBlock" getFirstBasicBlock ::
     Ptr Function -> IO (Ptr BasicBlock)

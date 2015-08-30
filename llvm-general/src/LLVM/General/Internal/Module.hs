@@ -393,6 +393,7 @@ moduleAST (Module mod) = runDecodeAST $ do
             liftM sequence . forM ffiFunctions $ \f -> localScope $ do
               A.PointerType (A.FunctionType returnType _ isVarArg) _ <- typeOf f
               n <- getGlobalName f
+              (functionAttrs, _, _) <- getCombinedAttributeSet f
               parameters <- getParameters f
               decodeBlocks <- do
                 ffiBasicBlocks <- liftIO $ FFI.getXs (FFI.getFirstBasicBlock f) FFI.getNextBasicBlock
@@ -409,7 +410,7 @@ moduleAST (Module mod) = runDecodeAST $ do
                  `ap` return returnType
                  `ap` return n
                  `ap` return (parameters, isVarArg)
-                 `ap` getFunctionAttrs f
+                 `ap` return functionAttrs
                  `ap` getSection f
                  `ap` getAlignment f
                  `ap` getGC f
@@ -433,7 +434,7 @@ moduleAST (Module mod) = runDecodeAST $ do
        mds <- getMetadataDefinitions
 
        ags <- do
-         ags <- gets $ Map.toList . attributeGroups
+         ags <- gets $ Map.toList . functionAttributeSetIDs
          forM ags $ \(as, gid) -> return A.FunctionAttributes `ap` return gid `ap` decodeM as
 
        return $ tds ++ ias ++ gs ++ nmds ++ mds ++ ags

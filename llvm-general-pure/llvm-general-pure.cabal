@@ -46,6 +46,8 @@ library
     LLVM.General.AST.AddrSpace
     LLVM.General.AST.InlineAssembly
     LLVM.General.AST.Attribute
+    LLVM.General.AST.ParameterAttribute
+    LLVM.General.AST.FunctionAttribute
     LLVM.General.AST.CallingConvention
     LLVM.General.AST.Constant
     LLVM.General.AST.DataLayout

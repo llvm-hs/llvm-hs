@@ -22,9 +22,13 @@ void LLVM_General_AddFunctionRetAttr(LLVMValueRef v, LLVMAttribute attr) {
 	);
 }
 
-llvm::AttributeSet *LLVM_General_GetFunctionAttributeSet(LLVMValueRef f) {
-	return &unwrap<Function>(f)->getAttributes();
+AttributeSetImpl *LLVM_General_GetCombinedAttributeSet(LLVMValueRef f) {
+	static_assert(
+		sizeof(AttributeSet) == sizeof(AttributeSetImpl*),
+		"AttributeSet implementation has changed"
+	);
+	AttributeSet result = unwrap<Function>(f)->getAttributes();
+	return *reinterpret_cast<AttributeSetImpl **>(&result);
 }
-
 
 }

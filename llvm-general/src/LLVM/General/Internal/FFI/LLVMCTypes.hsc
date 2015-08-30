@@ -12,7 +12,8 @@ import LLVM.General.Prelude
 #include "llvm-c/Target.h"
 #include "llvm-c/TargetMachine.h"
 #include "llvm-c/Linker.h"
-#include "LLVM/General/Internal/FFI/Instruction.h"
+#include "LLVM/General/Internal/FFI/Attributes.h"
+#include "LLVM/General/Internal/FFI/Instruction.h" 
 #include "LLVM/General/Internal/FFI/Value.h"
 #include "LLVM/General/Internal/FFI/SMDiagnostic.h"
 #include "LLVM/General/Internal/FFI/InlineAssembly.h"
@@ -200,12 +201,32 @@ newtype TypeKind = TypeKind CUInt
 newtype ParamAttr = ParamAttr CUInt
   deriving (Eq, Read, Show, Bits, Typeable, Data, Num)
 #define PA_Rec(n,a) { #n, LLVM ## n ## a },
-#{inject PARAM_ATTR, ParamAttr, ParamAttr, paramAttr, PA_Rec}
+#{inject F_PARAM_ATTR, ParamAttr, ParamAttr, paramAttr, PA_Rec}
 
 newtype FunctionAttr = FunctionAttr CUInt
   deriving (Eq, Ord, Read, Show, Bits, Typeable, Data, Num)
 #define FA_Rec(n,a) { #n, LLVM ## n ## a },
-#{inject FUNCTION_ATTR, FunctionAttr, FunctionAttr, functionAttr, FA_Rec}
+#{inject F_FUNCTION_ATTR, FunctionAttr, FunctionAttr, functionAttr, FA_Rec}
+
+#define COMMA ,
+#define IF_T(z) z
+#define IF_F(z)
+#define IF2(x) IF_ ## x
+#define IF(x) IF2(x)
+#define OR_TT T
+#define OR_TF T
+#define OR_FT T
+#define OR_FF F  
+#define OR(x,y) OR_ ## x ## y
+newtype ParameterAttributeKind = ParameterAttributeKind CUInt
+  deriving (Eq, Read, Show, Typeable, Data)
+#define PAK_Rec(n,p,r,f) IF(OR(p,r))({ #n COMMA LLVM_General_AttributeKind_ ## n} COMMA)
+#{inject ATTRIBUTE_KIND, ParameterAttributeKind, ParameterAttributeKind, parameterAttributeKind, PAK_Rec}
+
+newtype FunctionAttributeKind = FunctionAttributeKind CUInt
+  deriving (Eq, Read, Show, Typeable, Data)
+#define FAK_Rec(n,p,r,f) IF(f)({ #n COMMA LLVM_General_AttributeKind_ ## n} COMMA)
+#{inject ATTRIBUTE_KIND, FunctionAttributeKind, FunctionAttributeKind, functionAttributeKind, FAK_Rec}
 
 newtype FloatSemantics = FloatSemantics CUInt
   deriving (Eq, Read, Show, Typeable, Data)

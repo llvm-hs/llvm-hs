@@ -1,43 +1,17 @@
 -- | Module to allow importing 'Attribute' distinctly qualified.
-module LLVM.General.AST.Attribute where
+-- Before LLVM 3.5, the attributes which could be used on functions
+-- and those which could be used on parameters were disjoint.  In
+-- LLVM 3.5, two attributes (readonly and readnone) can be used
+-- in both contexts. Because their interpretation is different in
+-- the two contexts and only those two attributes can be used in
+-- both contexts, I've opted to keep the Haskell types for parameter
+-- and function attributes distinct, but move the two types into
+-- separate modules so they can have contructors with the same names.
+module LLVM.General.AST.Attribute (
+    ParameterAttribute(..),
+    FunctionAttribute(..),
+    GroupID(..)
+  ) where
 
-import LLVM.General.Prelude
-
--- | <http://llvm.org/docs/LangRef.html#parameter-attributes>
-data ParameterAttribute
-    = ZeroExt
-    | SignExt
-    | InReg
-    | SRet
-    | Alignment Word32
-    | NoAlias
-    | ByVal
-    | NoCapture
-    | Nest
-  deriving (Eq, Ord, Read, Show, Typeable, Data)
-
--- | <http://llvm.org/docs/LangRef.html#function-attributes>
-data FunctionAttribute
-    = NoReturn
-    | NoUnwind
-    | ReadNone
-    | ReadOnly
-    | NoInline
-    | AlwaysInline
-    | OptimizeForSize
-    | StackProtect
-    | StackProtectReq
-    | NoRedZone
-    | NoImplicitFloat
-    | Naked
-    | InlineHint
-    | StackAlignment Word32
-    | ReturnsTwice
-    | UWTable
-    | NonLazyBind
-  deriving (Eq, Ord, Read, Show, Typeable, Data)
-
-
--- | <http://llvm.org/docs/LangRef.html#attribute-groups>
-newtype GroupID = GroupID Word
-  deriving (Eq, Ord, Read, Show, Typeable, Data)
+import LLVM.General.AST.ParameterAttribute hiding (ReadNone, ReadOnly)
+import LLVM.General.AST.FunctionAttribute

@@ -1,7 +1,8 @@
 {-# LANGUAGE
   TemplateHaskell,
   MultiParamTypeClasses,
-  ConstraintKinds
+  ConstraintKinds,
+  QuasiQuotes
   #-}
 module LLVM.General.Internal.Attribute where
 
@@ -10,16 +11,23 @@ import LLVM.General.Prelude
 import LLVM.General.TH
 import Language.Haskell.TH.Quote
 
+import Control.Monad.Exceptable
+
 import Data.Either
 import Data.List (genericSplitAt)
 import Data.Bits
 
+import qualified LLVM.General.Internal.FFI.Attributes as FFI
 import qualified LLVM.General.Internal.FFI.LLVMCTypes as FFI
+import LLVM.General.Internal.FFI.LLVMCTypes (parameterAttributeKindP, functionAttributeKindP)  
 
 import qualified LLVM.General.AST.Attribute as A.A
+import qualified LLVM.General.AST.ParameterAttribute as A.PA
+import qualified LLVM.General.AST.FunctionAttribute as A.FA  
 
 import LLVM.General.Internal.Coding
 import LLVM.General.Internal.EncodeAST
+import LLVM.General.Internal.DecodeAST
 
 $(do
   let
@@ -157,3 +165,67 @@ instance EncodeM EncodeAST [Either A.A.GroupID A.A.FunctionAttribute] FFI.Functi
     as <- encodeM as
     gs <- mapM referAttributeGroup gids
     return $ foldl (.|.) as gs
+
+instance DecodeM DecodeAST A.A.ParameterAttribute FFI.ParameterAttribute where
+  decodeM a = do
+    enum <- liftIO $ FFI.parameterAttributeEnum a
+    case enum of
+      [parameterAttributeKindP|ZExt|] -> return A.PA.ZeroExt
+      [parameterAttributeKindP|SExt|] -> return A.PA.SignExt
+      [parameterAttributeKindP|InReg|] -> return A.PA.InReg
+      [parameterAttributeKindP|StructRet|] -> return A.PA.SRet
+      [parameterAttributeKindP|Alignment|] -> return A.PA.Alignment `ap` (liftIO $ FFI.attributeValueAsInt a)
+      [parameterAttributeKindP|NoAlias|] -> return A.PA.NoAlias
+      [parameterAttributeKindP|ByVal|] -> return A.PA.ByVal
+      [parameterAttributeKindP|NoCapture|] -> return A.PA.NoCapture
+      [parameterAttributeKindP|Nest|] -> return A.PA.Nest
+      [parameterAttributeKindP|ReadOnly|] -> return A.PA.ReadOnly
+      [parameterAttributeKindP|ReadNone|] -> return A.PA.ReadNone
+      [parameterAttributeKindP|InAlloca|] -> return A.PA.InAlloca
+      [parameterAttributeKindP|NonNull|] -> return A.PA.NonNull
+      [parameterAttributeKindP|Dereferenceable|] -> return A.PA.Dereferenceable `ap` (liftIO $ FFI.attributeValueAsInt a)
+      [parameterAttributeKindP|Returned|] -> return A.PA.Returned
+      _ -> error $ "unhandled parameter attribute enum value: " ++ show enum
+           
+
+instance DecodeM DecodeAST A.A.FunctionAttribute FFI.FunctionAttribute where
+  decodeM a = do
+    enum <- liftIO $ FFI.functionAttributeEnum a
+    case enum of
+      [functionAttributeKindP|NoReturn|] -> return A.FA.NoReturn
+      [functionAttributeKindP|NoUnwind|] -> return A.FA.NoUnwind
+      [functionAttributeKindP|ReadNone|] -> return A.FA.ReadNone
+      [functionAttributeKindP|ReadOnly|] -> return A.FA.ReadOnly
+      [functionAttributeKindP|NoInline|] -> return A.FA.NoInline
+      [functionAttributeKindP|AlwaysInline|] -> return A.FA.AlwaysInline
+      [functionAttributeKindP|MinSize|] -> return A.FA.MinimizeSize
+      [functionAttributeKindP|OptimizeForSize|] -> return A.FA.OptimizeForSize
+      [functionAttributeKindP|OptimizeNone|] -> return A.FA.OptimizeForSize                                                   
+      [functionAttributeKindP|StackProtect|] -> return A.FA.StackProtect
+      [functionAttributeKindP|StackProtectReq|] -> return A.FA.StackProtectReq
+      [functionAttributeKindP|StackProtectStrong|] -> return A.FA.StackProtectStrong
+      [functionAttributeKindP|NoRedZone|] -> return A.FA.NoRedZone
+      [functionAttributeKindP|NoImplicitFloat|] -> return A.FA.NoImplicitFloat
+      [functionAttributeKindP|Naked|] -> return A.FA.Naked
+      [functionAttributeKindP|InlineHint|] -> return A.FA.InlineHint
+      [functionAttributeKindP|StackAlignment|] -> return A.FA.StackAlignment `ap` (liftIO $ FFI.attributeValueAsInt a)
+      [functionAttributeKindP|ReturnsTwice|] -> return A.FA.ReturnsTwice
+      [functionAttributeKindP|UWTable|] -> return A.FA.UWTable
+      [functionAttributeKindP|NonLazyBind|] -> return A.FA.NonLazyBind
+      [functionAttributeKindP|Builtin|] -> return A.FA.Builtin
+      [functionAttributeKindP|NoBuiltin|] -> return A.FA.NoBuiltin
+      [functionAttributeKindP|Cold|] -> return A.FA.Cold
+      [functionAttributeKindP|JumpTable|] -> return A.FA.JumpTable
+      [functionAttributeKindP|NoDuplicate|] -> return A.FA.NoDuplicate
+      [functionAttributeKindP|SanitizeAddress|] -> return A.FA.SanitizeAddress
+      [functionAttributeKindP|SanitizeThread|] -> return A.FA.SanitizeThread
+      [functionAttributeKindP|SanitizeMemory|] -> return A.FA.SanitizeMemory
+      _ -> error $ "unhandled function attribute enum value: " ++ show enum
+            
+instance DecodeM DecodeAST a (FFI.Attribute b) => DecodeM DecodeAST [a] (FFI.AttributeSet b) where
+  decodeM as = do
+    np <- alloca
+    as <- liftIO $ FFI.attributeSetGetAttributes as 0 np
+    n <- peek np
+    decodeM (n, as)
+            
