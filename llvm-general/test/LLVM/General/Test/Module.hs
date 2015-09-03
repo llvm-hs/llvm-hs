@@ -71,7 +71,7 @@ handString = "; ModuleID = '<string>'\n\
     \  ret i32 %r\n\
     \}\n\
     \\n\
-    \attributes #0 = { nounwind readnone uwtable }\n"
+    \attributes #0 = { nounwind readnone uwtable \"eep\" }\n"
 
 handAST = Module "<string>" Nothing Nothing [
       TypeDefinition (UnName 0) (

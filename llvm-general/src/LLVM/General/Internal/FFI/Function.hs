@@ -10,7 +10,7 @@ import LLVM.General.Prelude
 import Foreign.Ptr
 import Foreign.C
 
-import LLVM.General.Internal.FFI.Attributes
+import LLVM.General.Internal.FFI.Attribute
 import LLVM.General.Internal.FFI.Context
 import LLVM.General.Internal.FFI.LLVMCTypes
 import LLVM.General.Internal.FFI.PtrHierarchy

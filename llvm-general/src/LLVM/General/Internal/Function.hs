@@ -10,7 +10,7 @@ import Data.Maybe
 
 import Foreign.Ptr
 
-import qualified LLVM.General.Internal.FFI.Attributes as FFI
+import qualified LLVM.General.Internal.FFI.Attribute as FFI
 import qualified LLVM.General.Internal.FFI.Function as FFI
 import qualified LLVM.General.Internal.FFI.PtrHierarchy as FFI
 

@@ -12,7 +12,7 @@ import LLVM.General.Prelude
 #include "llvm-c/Target.h"
 #include "llvm-c/TargetMachine.h"
 #include "llvm-c/Linker.h"
-#include "LLVM/General/Internal/FFI/Attributes.h"
+#include "LLVM/General/Internal/FFI/Attribute.h"
 #include "LLVM/General/Internal/FFI/Instruction.h" 
 #include "LLVM/General/Internal/FFI/Value.h"
 #include "LLVM/General/Internal/FFI/SMDiagnostic.h"

@@ -20,7 +20,7 @@ import qualified Data.Map as Map
 import Data.Array (Array)
 import qualified Data.Array as Array
 
-import qualified LLVM.General.Internal.FFI.Attributes as FFI
+import qualified LLVM.General.Internal.FFI.Attribute as FFI
 import qualified LLVM.General.Internal.FFI.PtrHierarchy as FFI
 import qualified LLVM.General.Internal.FFI.Value as FFI
 import qualified LLVM.General.Internal.FFI.Type as FFI

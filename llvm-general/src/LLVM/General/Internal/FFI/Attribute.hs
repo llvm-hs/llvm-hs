@@ -1,13 +1,14 @@
 {-# LANGUAGE
   ForeignFunctionInterface
   #-}
-module LLVM.General.Internal.FFI.Attributes where
+module LLVM.General.Internal.FFI.Attribute where
 
 import LLVM.General.Prelude
 
 import Foreign.Ptr
 import Foreign.C
 
+import LLVM.General.Internal.FFI.Context
 import LLVM.General.Internal.FFI.LLVMCTypes
 
 type Index = CInt
@@ -58,30 +59,20 @@ functionIndex = -1
 returnIndex :: Index
 returnIndex = -1
 
-{-
-data AttrBuilder a
-foreign import ccall unsafe "LLVM_General_CreateAttrBuilder" createAttrBuilder ::
-  IO (Ptr (AttrBuilder a))
-
-foreign import ccall unsafe "LLVM_General_DisposeAttrBuilder" disposeAttrBuilder ::
-  Ptr (AttrBuilder a) -> IO ()
-
-foreign import ccall unsafe "LLVM_General_AttrBuilderAdd" attrBuilderAdd ::
-  Ptr (AttrBuilder a) -> AttrKind -> IntValue -> IO ()
-
-data (AttributeSet a)
-foreign import ccall unsafe "LLVM_General_CreateAttributeSet" createAttributeSet ::
-  Ptr (AttrBuilder a) -> IO (Ptr (AttributeSet a))
-
-foreign import ccall unsafe "LLVM_General_DisposeAttributeSet" disposeAttributeSet ::
-  Ptr (AttributeSet a) -> IO ()
--}
-
-foreign import ccall unsafe "LLVM_General_AttributeEnum" parameterAttributeEnum ::
+foreign import ccall unsafe "LLVM_General_AttributeKindAsEnum" parameterAttributeKindAsEnum ::
   ParameterAttribute -> IO ParameterAttributeKind
 
-foreign import ccall unsafe "LLVM_General_AttributeEnum" functionAttributeEnum ::
+foreign import ccall unsafe "LLVM_General_AttributeKindAsEnum" functionAttributeKindAsEnum ::
   FunctionAttribute -> IO FunctionAttributeKind
+
+foreign import ccall unsafe "LLVM_General_IsStringAttribute" isStringAttribute ::
+  Attribute a -> IO LLVMBool
+
+foreign import ccall unsafe "LLVM_General_AttributeKindAsString" attributeKindAsString ::
+  Attribute a -> Ptr CSize -> IO (Ptr CChar)
+
+foreign import ccall unsafe "LLVM_General_AttributeValueAsString" attributeValueAsString ::
+  Attribute a -> Ptr CSize -> IO (Ptr CChar)
 
 foreign import ccall unsafe "LLVM_General_AttributeValueAsInt" attributeValueAsInt ::
   Attribute a -> IO Word64
@@ -98,19 +89,14 @@ foreign import ccall unsafe "LLVM_General_AttributeSetSlotAttributes" attributeS
 foreign import ccall unsafe "LLVM_General_AttributeSetGetAttributes" attributeSetGetAttributes ::
   AttributeSet a -> Slot -> Ptr CUInt -> IO (Ptr (Attribute a))
 
-{-
-foreign import ccall unsafe "LLVM_General_AttributeKind" attributeKind ::
-  Ptr (Attribute a) -> Index -> IO AttrKind
+foreign import ccall unsafe "LLVM_General_GetAttribute" getParameterAttribute ::
+  Ptr Context -> ParameterAttributeKind -> Word64 -> IO ParameterAttribute
 
-foreign import ccall unsafe "LLVM_General_AttributeSetIndexValueAsInt" attributeSetIndexValueAsInt ::
-  Ptr (AttributeSet a) -> Index -> IO IntValue
+foreign import ccall unsafe "LLVM_General_GetAttribute" getFunctionAttribute ::
+  Ptr Context -> FunctionAttributeKind -> Word64 -> IO FunctionAttribute
 
-foreign import ccall unsafe "LLVM_General_AttributeSetIndexValueAsString" attributeSetIndexValueAsString ::
-  Ptr (AttributeSet a) -> Index -> Ptr CUInt -> IO (Ptr CChar)
-
-foreign import ccall unsafe "LLVM_General_AttributeSetIndexKindAsString" attributeSetIndexValueAsString ::
-  Ptr (AttributeSet a) -> Index -> Ptr CUInt -> IO (Ptr CChar)
--}
+foreign import ccall unsafe "LLVM_General_GetStringAttribute" getStringAttribute ::
+  Ptr Context -> Ptr CChar -> CSize -> Ptr CChar -> CSize -> IO FunctionAttribute
 
 
 
