@@ -46,18 +46,6 @@ foreign import ccall unsafe "LLVMCountParams" countParams ::
 foreign import ccall unsafe "LLVMGetParams" getParams ::
   Ptr Function -> Ptr (Ptr Parameter) -> IO ()
 
-foreign import ccall unsafe "LLVMGetAttribute" getAttribute ::
-  Ptr Parameter -> IO ParamAttr
-
-foreign import ccall unsafe "LLVMAddAttribute" addAttribute ::
-  Ptr Parameter -> ParamAttr -> IO ()
-
-foreign import ccall unsafe "LLVM_General_GetFunctionRetAttr" getFunctionRetAttr ::
-  Ptr Function -> IO ParamAttr
-
-foreign import ccall unsafe "LLVM_General_AddFunctionRetAttr" addFunctionRetAttr ::
-  Ptr Function -> ParamAttr -> IO ()
-
 foreign import ccall unsafe "LLVMGetGC" getGC ::
   Ptr Function -> IO CString
 

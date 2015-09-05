@@ -400,7 +400,7 @@ moduleAST (Module mod) = runDecodeAST $ do
                  `ap` getLinkage f
                  `ap` getVisibility f
                  `ap` (liftIO $ decodeM =<< FFI.getFunctionCallConv f)
-                 `ap` (liftIO $ decodeM =<< FFI.getFunctionRetAttr f)
+                 `ap` return rAttrs
                  `ap` return returnType
                  `ap` return n
                  `ap` return (parameters, isVarArg)

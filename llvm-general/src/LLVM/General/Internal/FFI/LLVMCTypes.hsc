@@ -198,16 +198,6 @@ newtype TypeKind = TypeKind CUInt
 #define TK_Rec(n) { #n, LLVM ## n ## TypeKind },
 #{inject TYPE_KIND, TypeKind, TypeKind, typeKind, TK_Rec}
 
-newtype ParamAttr = ParamAttr CUInt
-  deriving (Eq, Read, Show, Bits, Typeable, Data, Num)
-#define PA_Rec(n,a) { #n, LLVM ## n ## a },
-#{inject F_PARAM_ATTR, ParamAttr, ParamAttr, paramAttr, PA_Rec}
-
-newtype FunctionAttr = FunctionAttr CUInt
-  deriving (Eq, Ord, Read, Show, Bits, Typeable, Data, Num)
-#define FA_Rec(n,a) { #n, LLVM ## n ## a },
-#{inject F_FUNCTION_ATTR, FunctionAttr, FunctionAttr, functionAttr, FA_Rec}
-
 #define COMMA ,
 #define IF_T(z) z
 #define IF_F(z)
