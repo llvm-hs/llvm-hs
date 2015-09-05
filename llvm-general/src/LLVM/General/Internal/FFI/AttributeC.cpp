@@ -1,27 +1,6 @@
 #define __STDC_LIMIT_MACROS
-#include <iostream>
 #include "llvm/IR/LLVMContext.h"
-#include "llvm/IR/Attributes.h"
-#include "LLVM/General/Internal/FFI/Attribute.h"
-
-using namespace llvm;
-using namespace std;
-
-AttributeSet unwrap(const AttributeSetImpl *asi) {
-	return *reinterpret_cast<const AttributeSet *>(&asi);
-}
-
-const AttributeSetImpl *wrap(AttributeSet as) {
-	return *reinterpret_cast<const AttributeSetImpl **>(&as);
-}
-
-Attribute unwrap(const AttributeImpl *ai) {
-	return *reinterpret_cast<const Attribute *>(&ai);
-}
-
-const AttributeImpl *wrap(Attribute a) {
-	return *reinterpret_cast<const AttributeImpl **>(&a);
-}
+#include "LLVM/General/Internal/FFI/AttributeC.hpp"
 
 extern "C" {
 
@@ -90,16 +69,52 @@ const char *LLVM_General_AttributeValueAsString(const AttributeImpl *a, size_t &
 	return s.data();
 }
 
-const AttributeImpl *LLVM_General_GetAttribute(LLVMContextRef context, unsigned kind, uint64_t value) {
-	LLVM_General_AttributeEnumMatches();
-	return wrap(Attribute::get(*unwrap(context), Attribute::AttrKind(kind), value));
+const AttributeSetImpl *LLVM_General_GetAttributeSet(LLVMContextRef context, unsigned index, const AttrBuilder &ab) {
+	return wrap(AttributeSet::get(*unwrap(context), index, ab));
 }
 
-const AttributeImpl *LLVM_General_GetStringAttribute(
-	LLVMContextRef context, const char *kind, size_t kind_len, const char *value, size_t value_len
+const AttributeSetImpl *LLVM_General_MixAttributeSets(
+	LLVMContextRef context, const AttributeSetImpl **as, unsigned n
 ) {
+	return wrap(
+		AttributeSet::get(
+			*unwrap(context),
+			ArrayRef<AttributeSet>(reinterpret_cast<const AttributeSet *>(as), n)
+		)
+	);
+}
+
+size_t LLVM_General_GetAttrBuilderSize() { return sizeof(AttrBuilder); }
+
+AttrBuilder *LLVM_General_ConstructAttrBuilder(char *p) {
+	return new(p) AttrBuilder();
+}
+
+void LLVM_General_DestroyAttrBuilder(AttrBuilder *a) {
+	a->~AttrBuilder();
+}
+
+void LLVM_General_AttrBuilderAddAttributeKind(AttrBuilder &ab, unsigned kind) {
 	LLVM_General_AttributeEnumMatches();
-	return wrap(Attribute::get(*unwrap(context), StringRef(kind, kind_len), StringRef(value, value_len)));
+	ab.addAttribute(Attribute::AttrKind(kind));
+}
+
+void LLVM_General_AttrBuilderAddStringAttribute(
+	AttrBuilder &ab, const char *kind, size_t kind_len, const char *value, size_t value_len
+) {
+	ab.addAttribute(StringRef(kind, kind_len), StringRef(value, value_len));
+}
+
+void LLVM_General_AttrBuilderAddAlignment(AttrBuilder &ab, uint64_t v) {
+	ab.addAlignmentAttr(v);
+}
+
+void LLVM_General_AttrBuilderAddStackAlignment(AttrBuilder &ab, uint64_t v) {
+	ab.addStackAlignmentAttr(v);
+}
+
+void LLVM_General_AttrBuilderAddDereferenceableAttr(AttrBuilder &ab, uint64_t v) {
+	ab.addDereferenceableAttr(v);
 }
 
 }

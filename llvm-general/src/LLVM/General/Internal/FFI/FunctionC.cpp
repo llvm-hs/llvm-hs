@@ -4,6 +4,7 @@
 #include "llvm/IR/Function.h"
 
 #include "llvm-c/Core.h"
+#include "LLVM/General/Internal/FFI/AttributeC.hpp"
 
 using namespace llvm;
 
@@ -22,13 +23,12 @@ void LLVM_General_AddFunctionRetAttr(LLVMValueRef v, LLVMAttribute attr) {
 	);
 }
 
-AttributeSetImpl *LLVM_General_GetCombinedAttributeSet(LLVMValueRef f) {
-	static_assert(
-		sizeof(AttributeSet) == sizeof(AttributeSetImpl*),
-		"AttributeSet implementation has changed"
-	);
-	AttributeSet result = unwrap<Function>(f)->getAttributes();
-	return *reinterpret_cast<AttributeSetImpl **>(&result);
+const AttributeSetImpl *LLVM_General_GetFunctionMixedAttributeSet(LLVMValueRef f) {
+	return wrap(unwrap<Function>(f)->getAttributes());
+}
+
+void LLVM_General_SetFunctionMixedAttributeSet(LLVMValueRef f, AttributeSetImpl *asi) {
+	unwrap<Function>(f)->setAttributes(unwrap(asi));
 }
 
 }

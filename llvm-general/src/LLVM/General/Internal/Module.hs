@@ -39,7 +39,8 @@ import qualified LLVM.General.Internal.FFI.RawOStream as FFI
 import qualified LLVM.General.Internal.FFI.Target as FFI
 import qualified LLVM.General.Internal.FFI.Value as FFI
 
-import LLVM.General.Internal.BasicBlock
+import LLVM.General.Internal.Attribute
+import LLVM.General.Internal.BasicBlock  
 import LLVM.General.Internal.Coding
 import LLVM.General.Internal.Context
 import LLVM.General.Internal.DecodeAST
@@ -293,15 +294,13 @@ withModuleFromAST context@(Context c) (A.Module moduleId dataLayout triple defin
          return $ do
            (liftIO . FFI.setAliasee a') =<< encodeM (A.G.aliasee a)
            return (FFI.upCast a')
-       (A.Function _ _ cc rAttrs resultType fName (args,isVarArgs) attrs _ _ gc blocks) -> do
-         typ <- encodeM $ A.FunctionType resultType (map (\(A.Parameter t _ _) -> t) args) isVarArgs
+       (A.Function _ _ cc rAttrs resultType fName (args, isVarArgs) attrs _ _ gc blocks) -> do
+         typ <- encodeM $ A.FunctionType resultType [t | A.Parameter t _ _ <- args] isVarArgs
          f <- liftIO . withName fName $ \fName -> FFI.addFunction m fName typ
          defineGlobal fName f
          cc <- encodeM cc
          liftIO $ FFI.setFunctionCallConv f cc
-         rAttrs <- encodeM rAttrs
-         liftIO $ FFI.addFunctionRetAttr f rAttrs
-         setFunctionAttrs f attrs
+         setFunctionAttributes f (MixedAttributeSet attrs rAttrs (Map.fromList $ zip [0..] [pa | A.Parameter _ _ pa <- args]))
          setSection f (A.G.section g)
          setAlignment f (A.G.alignment g)
          setGC f gc
@@ -313,15 +312,10 @@ withModuleFromAST context@(Context c) (A.Module moduleId dataLayout triple defin
            ps <- allocaArray nParams
            liftIO $ FFI.getParams f ps
            params <- peekArray nParams ps
-           forM (zip args params) $ \(A.Parameter _ n attrs, p) -> do
+           forM (zip args params) $ \(A.Parameter _ n _, p) -> do
              defineLocal n p
              n <- encodeM n
              liftIO $ FFI.setValueName (FFI.upCast p) n
-             unless (null attrs) $
-                    do attrs <- encodeM attrs
-                       liftIO $ FFI.addAttribute p attrs
-                       return ()
-             return ()
            finishInstrs <- forM blocks $ \(A.BasicBlock bName namedInstrs term) -> do
              b <- encodeM bName
              (do
@@ -393,8 +387,8 @@ moduleAST (Module mod) = runDecodeAST $ do
             liftM sequence . forM ffiFunctions $ \f -> localScope $ do
               A.PointerType (A.FunctionType returnType _ isVarArg) _ <- typeOf f
               n <- getGlobalName f
-              (functionAttrs, _, _) <- getCombinedAttributeSet f
-              parameters <- getParameters f
+              MixedAttributeSet fAttrs rAttrs pAttrs <- getMixedAttributeSet f
+              parameters <- getParameters f pAttrs
               decodeBlocks <- do
                 ffiBasicBlocks <- liftIO $ FFI.getXs (FFI.getFirstBasicBlock f) FFI.getNextBasicBlock
                 liftM sequence . forM ffiBasicBlocks $ \b -> do
@@ -410,7 +404,7 @@ moduleAST (Module mod) = runDecodeAST $ do
                  `ap` return returnType
                  `ap` return n
                  `ap` return (parameters, isVarArg)
-                 `ap` return functionAttrs
+                 `ap` return fAttrs
                  `ap` getSection f
                  `ap` getAlignment f
                  `ap` getGC f

@@ -33,7 +33,7 @@ import qualified LLVM.General.Internal.FFI.Constant as FFI
 import qualified LLVM.General.Internal.FFI.BasicBlock as FFI
 
 import LLVM.General.Internal.Atomicity ()
-import LLVM.General.Internal.Attribute ()
+import LLVM.General.Internal.Attribute
 import LLVM.General.Internal.CallingConvention ()
 import LLVM.General.Internal.Coding
 import LLVM.General.Internal.DecodeAST
@@ -48,7 +48,8 @@ import LLVM.General.Internal.Value
 import qualified LLVM.General.AST as A
 import qualified LLVM.General.AST.Constant as A.C
 
-callInstAttr i j = liftIO $ decodeM =<< FFI.getCallInstAttr i j
+callInstAttributeSet :: Ptr FFI.Instruction -> DecodeAST MixedAttributeSet
+callInstAttributeSet = decodeM <=< liftIO . FFI.getCallInstAttributeSet
 
 meta :: Ptr FFI.Instruction -> DecodeAST A.InstructionMetadata
 meta i = do
@@ -122,19 +123,20 @@ instance DecodeM DecodeAST A.Terminator (Ptr FFI.Instruction) where
         }
       [instrP|Invoke|] -> do
         cc <- decodeM =<< liftIO (FFI.getInstructionCallConv i)
-        rAttrs <- callInstAttr i 0
+        attrs <- callInstAttributeSet i
         fv <- liftIO $ FFI.getCallInstCalledValue i
         f <- decodeM fv
-        args <- forM [1..nOps-3] $ \j -> return (,) `ap` op (j-1) `ap` callInstAttr i j
-        fAttrs <- decodeM =<< liftIO (FFI.getCallInstFunctionAttr i)
+        args <- forM [1..nOps-3] $ \j -> do
+                  let pAttrs = Map.findWithDefault [] (j-1) (parameterAttributes attrs)
+                  return (, pAttrs) `ap` op (j-1) 
         rd <- successor (nOps - 2)
         ed <- successor (nOps - 1)
         return A.Invoke {
           A.callingConvention' = cc,
-          A.returnAttributes' = rAttrs,
+          A.returnAttributes' = returnAttributes attrs,
           A.function' = f,
           A.arguments' = args,
-          A.functionAttributes' = fAttrs,
+          A.functionAttributes' = functionAttributes attrs,
           A.returnDest = rd,
           A.exceptionDest = ed,
           A.metadata' = md
@@ -204,11 +206,8 @@ instance EncodeM EncodeAST A.Terminator (Ptr FFI.Instruction) where
         let (argvs, argAttrs) = unzip args
         (n, argvs) <- encodeM argvs
         i <- liftIO $ FFI.buildInvoke builder fv argvs n rb eb s
-        forM (zip (rAttrs : argAttrs) [0..]) $ \(attrs, j) -> do
-          attrs <- encodeM attrs
-          liftIO $ FFI.addCallInstAttr i j attrs
-        fAttrs <- encodeM fAttrs
-        liftIO $ FFI.addCallInstFunctionAttr i fAttrs
+        attrs <- encodeM $ MixedAttributeSet fAttrs rAttrs (Map.fromList (zip [0..] argAttrs))
+        liftIO $ FFI.setCallInstAttributeSet i attrs
         cc <- encodeM cc
         liftIO $ FFI.setInstructionCallConv i cc
         return $ FFI.upCast i
@@ -271,18 +270,21 @@ $(do
                 "fpPredicate" -> ([], [| decodeM =<< liftIO (FFI.getFCmpPredicate i) |])
                 "isTailCall" -> ([], [| decodeM =<< liftIO (FFI.isTailCall i) |])
                 "callingConvention" -> ([], [| decodeM =<< liftIO (FFI.getInstructionCallConv i) |])
-                "returnAttributes" -> ([], [| callInstAttr i 0 |])
+                "attrs" -> ([], [| callInstAttributeSet i |])
+                "returnAttributes" -> (["attrs"], [| return $ returnAttributes $(TH.dyn "attrs") |])
                 "f" -> ([], [| liftIO $ FFI.getCallInstCalledValue i |])
                 "function" -> (["f"], [| decodeM $(TH.dyn "f") |])
-                "arguments" -> ([], [| forM [1..nOps-1] $ \j -> return (,) `ap` op (j-1) `ap` callInstAttr i j |])
+                "arguments" -> ([], [| forM [1..nOps-1] $ \j -> do
+                                         let pAttrs = Map.findWithDefault [] (j-1) (parameterAttributes $(TH.dyn "attrs"))
+                                         p <- op (j-1)
+                                         return (p, pAttrs) |])
                 "clauses" -> 
                   ([], [| forM [1..nOps-1] $ \j -> do
                           v <- liftIO $ FFI.getOperand (FFI.upCast i) j
                           c <- decodeM =<< (liftIO $ FFI.isAConstant v)
                           t <- typeOf v
                           return $ case t of { A.ArrayType _ _ -> A.Filter; _ -> A.Catch} $ c |])
-                "functionAttributes" ->
-                    ([], [| decodeM =<< liftIO (FFI.getCallInstFunctionAttr i) |])
+                "functionAttributes" -> (["attrs"], [| return $ functionAttributes $(TH.dyn "attrs") |])
                 "type'" -> ([], [| return t |])
                 "incomingValues" ->
                     ([], [| do
@@ -388,11 +390,8 @@ $(do
             let (argvs, argAttrs) = unzip args
             (n, argvs) <- encodeM argvs
             i <- liftIO $ FFI.buildCall builder fv argvs n s
-            forM (zip (rAttrs : argAttrs) [0..]) $ \(attrs, j) -> do
-              attrs <- encodeM attrs
-              liftIO $ FFI.addCallInstAttr i j attrs
-            fAttrs <- encodeM fAttrs
-            liftIO $ FFI.addCallInstFunctionAttr i fAttrs
+            attrs <- encodeM $ MixedAttributeSet fAttrs rAttrs (Map.fromList (zip [0..] argAttrs))
+            liftIO $ FFI.setCallInstAttributeSet i attrs     
             when tc $ do
               tc <- encodeM tc
               liftIO $ FFI.setTailCall i tc

@@ -10,6 +10,7 @@
 
 #include "llvm-c/Core.h"
 
+#include "LLVM/General/Internal/FFI/AttributeC.hpp"
 #include "LLVM/General/Internal/FFI/Instruction.h"
 
 using namespace llvm;
@@ -81,23 +82,12 @@ LLVMValueRef LLVM_General_GetCallInstCalledValue(
 	return wrap(CallSite(unwrap<Instruction>(callInst)).getCalledValue());
 }
 
-LLVMAttribute LLVM_General_GetCallInstAttr(LLVMValueRef callInst, unsigned i) {
-	return (LLVMAttribute)CallSite(unwrap<Instruction>(callInst)).getAttributes().Raw(i);
+const AttributeSetImpl *LLVM_General_GetCallInstAttributeSet(LLVMValueRef call_inst) {
+	return wrap(CallSite(unwrap<Instruction>(call_inst)).getAttributes());
 }
 
-void LLVM_General_AddCallInstAttr(LLVMValueRef callInst, unsigned i, LLVMAttribute attr) {
-	CallSite callSite(unwrap<Instruction>(callInst));
-	LLVMContext &context = callSite->getContext();
-	AttrBuilder attrBuilder(attr);
-	callSite.setAttributes(callSite.getAttributes().addAttributes(context, i, AttributeSet::get(context, i, attrBuilder)));
-}
-
-LLVMAttribute LLVM_General_GetCallInstFunctionAttr(LLVMValueRef callInst) {
-	return LLVM_General_GetCallInstAttr(callInst, AttributeSet::FunctionIndex);
-}
-
-void LLVM_General_AddCallInstFunctionAttr(LLVMValueRef callInst, LLVMAttribute attr) {
-	LLVM_General_AddCallInstAttr(callInst, AttributeSet::FunctionIndex, attr);
+void LLVM_General_SetCallInstAttributeSet(LLVMValueRef call_inst, const AttributeSetImpl *asi) {
+	CallSite(unwrap<Instruction>(call_inst)).setAttributes(unwrap(asi));
 }
 
 LLVMValueRef LLVM_General_GetAllocaNumElements(LLVMValueRef a) {

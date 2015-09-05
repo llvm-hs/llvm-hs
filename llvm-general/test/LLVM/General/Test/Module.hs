@@ -18,14 +18,15 @@ import LLVM.General.Analysis
 import LLVM.General.Diagnostic
 import LLVM.General.Target
 import LLVM.General.AST
-import LLVM.General.AST.Type as A.T
+import LLVM.General.AST.Type as T
 import LLVM.General.AST.AddrSpace
 import qualified LLVM.General.AST.IntegerPredicate as IPred
 
 import qualified LLVM.General.AST.Linkage as L
 import qualified LLVM.General.AST.Visibility as V
 import qualified LLVM.General.AST.CallingConvention as CC
-import qualified LLVM.General.AST.Attribute as A
+import qualified LLVM.General.AST.FunctionAttribute as FA
+import qualified LLVM.General.AST.ParameterAttribute as PA    
 import qualified LLVM.General.AST.Global as G
 import qualified LLVM.General.AST.Constant as C
 
@@ -132,13 +133,13 @@ handAST = Module "<string>" Nothing Nothing [
            UnName 1 := Call {
              isTailCall = False,
              callingConvention = CC.C,
-             returnAttributes = [A.ZeroExt],
+             returnAttributes = [PA.ZeroExt],
              function = Right (ConstantOperand (C.GlobalReference (ptr (FunctionType i32 [i32, i8] False)) (Name "foo"))),
              arguments = [
-              (ConstantOperand (C.Int 32 1), [A.InReg, A.Alignment 16]),
-              (ConstantOperand (C.Int 8 4), [A.SignExt])
+              (ConstantOperand (C.Int 32 1), [PA.InReg, PA.Alignment 16]),
+              (ConstantOperand (C.Int 8 4), [PA.SignExt])
              ],
-             functionAttributes = [A.NoUnwind, A.ReadNone, A.UWTable],
+             functionAttributes = [Left (FA.GroupID 0)],
              metadata = []
            }
          ] (
@@ -147,14 +148,14 @@ handAST = Module "<string>" Nothing Nothing [
         ]
       },
       GlobalDefinition $ functionDefaults {
-        G.returnAttributes = [A.ZeroExt],
+        G.returnAttributes = [PA.ZeroExt],
         G.returnType = i32,
         G.name = Name "foo",
         G.parameters = ([
-          Parameter i32 (Name "x") [A.InReg, A.Alignment 16],
-          Parameter i8 (Name "y") [A.SignExt]
+          Parameter i32 (Name "x") [PA.InReg, PA.Alignment 16],
+          Parameter i8 (Name "y") [PA.SignExt]
          ], False),
-        G.functionAttributes = [Left (A.GroupID 0)],
+        G.functionAttributes = [Left (FA.GroupID 0)],
         G.basicBlocks = [
           BasicBlock (UnName 0) [
            UnName 1 := Mul {
@@ -207,7 +208,7 @@ handAST = Module "<string>" Nothing Nothing [
            )
          ]
         },
-      FunctionAttributes (A.GroupID 0) [A.NoUnwind, A.ReadNone, A.UWTable]
+      FunctionAttributes (FA.GroupID 0) [FA.NoUnwind, FA.ReadNone, FA.UWTable, FA.StringAttribute "eep" ""]
       ]
 
 tests = testGroup "Module" [
@@ -294,7 +295,7 @@ tests = testGroup "Module" [
               \}\n"
           ast = Module "<string>" Nothing Nothing [
              GlobalDefinition $ functionDefaults {
-                G.returnType = A.T.void,
+                G.returnType = T.void,
                 G.name = Name "trouble",
                 G.basicBlocks = [
                  BasicBlock (Name "entry") [

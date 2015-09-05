@@ -17,6 +17,8 @@ description:
 	only from Haskell into LLVM C++ objects, but the other direction - from LLVM C++ into Haskell.
 extra-source-files:
   src/LLVM/General/Internal/FFI/Analysis.h
+  src/LLVM/General/Internal/FFI/Attribute.h
+  src/LLVM/General/Internal/FFI/AttributeC.hpp
   src/LLVM/General/Internal/FFI/BinaryOperator.h
   src/LLVM/General/Internal/FFI/Constant.h
   src/LLVM/General/Internal/FFI/Function.h

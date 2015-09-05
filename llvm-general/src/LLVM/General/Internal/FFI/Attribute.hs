@@ -54,10 +54,13 @@ type MixedAttributeSet = AttributeSet MixedAttributeType
 type FunctionAttributeSet = AttributeSet FunctionAttributeType
 type ParameterAttributeSet = AttributeSet ParameterAttributeType
 
+forgetAttributeType :: AttributeSet a -> AttributeSet MixedAttributeType
+forgetAttributeType = castPtr
+
 functionIndex :: Index
 functionIndex = -1
 returnIndex :: Index
-returnIndex = -1
+returnIndex = 0
 
 foreign import ccall unsafe "LLVM_General_AttributeKindAsEnum" parameterAttributeKindAsEnum ::
   ParameterAttribute -> IO ParameterAttributeKind
@@ -89,15 +92,40 @@ foreign import ccall unsafe "LLVM_General_AttributeSetSlotAttributes" attributeS
 foreign import ccall unsafe "LLVM_General_AttributeSetGetAttributes" attributeSetGetAttributes ::
   AttributeSet a -> Slot -> Ptr CUInt -> IO (Ptr (Attribute a))
 
-foreign import ccall unsafe "LLVM_General_GetAttribute" getParameterAttribute ::
-  Ptr Context -> ParameterAttributeKind -> Word64 -> IO ParameterAttribute
+foreign import ccall unsafe "LLVM_General_GetAttributeSet" getAttributeSet ::
+  Ptr Context -> Index -> Ptr (AttrBuilder a) -> IO (AttributeSet a)
 
-foreign import ccall unsafe "LLVM_General_GetAttribute" getFunctionAttribute ::
-  Ptr Context -> FunctionAttributeKind -> Word64 -> IO FunctionAttribute
+foreign import ccall unsafe "LLVM_General_MixAttributeSets" mixAttributeSets ::
+  Ptr Context -> Ptr MixedAttributeSet -> CUInt -> IO MixedAttributeSet
 
-foreign import ccall unsafe "LLVM_General_GetStringAttribute" getStringAttribute ::
-  Ptr Context -> Ptr CChar -> CSize -> Ptr CChar -> CSize -> IO FunctionAttribute
+data AttrBuilder a
+type FunctionAttrBuilder = AttrBuilder FunctionAttributeType
+type ParameterAttrBuilder = AttrBuilder ParameterAttributeType
 
+foreign import ccall unsafe "LLVM_General_GetAttrBuilderSize" getAttrBuilderSize ::
+  CSize
 
+foreign import ccall unsafe "LLVM_General_ConstructAttrBuilder" constructAttrBuilder ::
+  Ptr Word8 -> IO (Ptr (AttrBuilder a))
 
-  
+foreign import ccall unsafe "LLVM_General_DestroyAttrBuilder" destroyAttrBuilder ::
+  Ptr (AttrBuilder a) -> IO ()
+
+foreign import ccall unsafe "LLVM_General_AttrBuilderAddAttributeKind" attrBuilderAddFunctionAttributeKind ::
+  Ptr FunctionAttrBuilder -> FunctionAttributeKind -> IO ()
+
+foreign import ccall unsafe "LLVM_General_AttrBuilderAddAttributeKind" attrBuilderAddParameterAttributeKind ::
+  Ptr ParameterAttrBuilder -> ParameterAttributeKind -> IO ()
+
+foreign import ccall unsafe "LLVM_General_AttrBuilderAddStringAttribute" attrBuilderAddStringAttribute ::
+  Ptr FunctionAttrBuilder -> Ptr CChar -> CSize -> Ptr CChar -> CSize -> IO ()
+
+foreign import ccall unsafe "LLVM_General_AttrBuilderAddAlignment" attrBuilderAddAlignment ::
+  Ptr ParameterAttrBuilder -> Word64 -> IO ()
+
+foreign import ccall unsafe "LLVM_General_AttrBuilderAddStackAlignment" attrBuilderAddStackAlignment ::
+  Ptr FunctionAttrBuilder -> Word64 -> IO ()
+
+foreign import ccall unsafe "LLVM_General_AttrBuilderAddDereferenceableAttr" attrBuilderAddDereferenceable ::
+  Ptr ParameterAttrBuilder -> Word64 -> IO ()
+                                              

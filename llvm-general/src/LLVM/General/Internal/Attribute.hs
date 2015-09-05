@@ -2,7 +2,9 @@
   TemplateHaskell,
   MultiParamTypeClasses,
   ConstraintKinds,
-  QuasiQuotes
+  QuasiQuotes,
+  UndecidableInstances,
+  RankNTypes
   #-}
 module LLVM.General.Internal.Attribute where
 
@@ -11,19 +13,25 @@ import LLVM.General.Prelude
 import LLVM.General.TH
 import Language.Haskell.TH.Quote
 
+import Control.Monad.AnyCont
 import Control.Monad.Exceptable
 import Control.Monad.State (gets)
 
+import Foreign.C (CUInt)
+import Foreign.Ptr
 import Data.Either
 import Data.List (genericSplitAt)
 import Data.Bits
+import Data.Map (Map)
+import qualified Data.Map as Map
+import Data.Maybe
 
 import qualified LLVM.General.Internal.FFI.Attribute as FFI
 import qualified LLVM.General.Internal.FFI.LLVMCTypes as FFI
 import LLVM.General.Internal.FFI.LLVMCTypes (parameterAttributeKindP, functionAttributeKindP)  
 
 import qualified LLVM.General.AST.Attribute as A.A
-import qualified LLVM.General.AST.ParameterAttribute as A.PA
+import qualified LLVM.General.AST.ParameterAttribute as A.PA  
 import qualified LLVM.General.AST.FunctionAttribute as A.FA  
 
 import LLVM.General.Internal.Coding
@@ -161,76 +169,71 @@ $(do
   return (pi ++ fi)
  )
 
-instance EncodeM EncodeAST [Either A.A.GroupID A.A.FunctionAttribute] FFI.FunctionAttr where
+instance EncodeM EncodeAST [Either A.FA.GroupID A.FA.FunctionAttribute] FFI.FunctionAttributeSet where
   encodeM fas = do
+{-
     let (gids, as) = partitionEithers fas
-    as <- encodeM as
+    as <- (encodeM as :: EncodeAST FFI.FunctionAttributeSet)
     gs <- mapM referAttributeGroup gids
-    return $ foldl (.|.) as gs
+-}
+    return $ error "EncodeM to FFI.FunctionAttributeSet nyi"
 
-instance EncodeM EncodeAST A.A.ParameterAttribute FFI.ParameterAttribute where
-  encodeM a = do
-    let (kind, value) = case a of
-          A.PA.Alignment v -> (FFI.parameterAttributeKindAlignment, v)
-          A.PA.Dereferenceable v -> (FFI.parameterAttributeKindDereferenceable, v)
-          _ -> (, 0) $ case a of
-            A.PA.ZeroExt -> FFI.parameterAttributeKindZExt
-            A.PA.SignExt -> FFI.parameterAttributeKindSExt
-            A.PA.InReg -> FFI.parameterAttributeKindInReg
-            A.PA.SRet -> FFI.parameterAttributeKindStructRet
-            A.PA.NoAlias -> FFI.parameterAttributeKindNoAlias
-            A.PA.ByVal -> FFI.parameterAttributeKindByVal
-            A.PA.NoCapture -> FFI.parameterAttributeKindNoCapture
-            A.PA.Nest -> FFI.parameterAttributeKindNest
-            A.PA.ReadOnly -> FFI.parameterAttributeKindReadOnly
-            A.PA.ReadNone -> FFI.parameterAttributeKindReadNone
-            A.PA.InAlloca -> FFI.parameterAttributeKindInAlloca
-            A.PA.NonNull -> FFI.parameterAttributeKindNonNull
-            A.PA.Returned -> FFI.parameterAttributeKindReturned
-    Context context <- gets encodeStateContext
-    liftIO $ FFI.getParameterAttribute context kind value         
+instance Monad m => EncodeM m A.PA.ParameterAttribute (Ptr FFI.ParameterAttrBuilder -> EncodeAST ()) where
+  encodeM a = return $ \b -> liftIO $ case a of
+    A.PA.Alignment v -> FFI.attrBuilderAddAlignment b v
+    A.PA.Dereferenceable v -> FFI.attrBuilderAddDereferenceable b v
+    _ -> FFI.attrBuilderAddParameterAttributeKind b $ case a of
+      A.PA.ZeroExt -> FFI.parameterAttributeKindZExt
+      A.PA.SignExt -> FFI.parameterAttributeKindSExt
+      A.PA.InReg -> FFI.parameterAttributeKindInReg
+      A.PA.SRet -> FFI.parameterAttributeKindStructRet
+      A.PA.NoAlias -> FFI.parameterAttributeKindNoAlias
+      A.PA.ByVal -> FFI.parameterAttributeKindByVal
+      A.PA.NoCapture -> FFI.parameterAttributeKindNoCapture
+      A.PA.Nest -> FFI.parameterAttributeKindNest
+      A.PA.ReadOnly -> FFI.parameterAttributeKindReadOnly
+      A.PA.ReadNone -> FFI.parameterAttributeKindReadNone
+      A.PA.InAlloca -> FFI.parameterAttributeKindInAlloca
+      A.PA.NonNull -> FFI.parameterAttributeKindNonNull
+      A.PA.Returned -> FFI.parameterAttributeKindReturned
 
-instance EncodeM EncodeAST A.A.FunctionAttribute FFI.FunctionAttribute where
-  encodeM (A.FA.StringAttribute kind value) = do
+instance Monad m => EncodeM m A.FA.FunctionAttribute (Ptr FFI.FunctionAttrBuilder -> EncodeAST ()) where
+  encodeM (A.FA.StringAttribute kind value) = return $ \b -> do
     (kindP, kindLen) <- encodeM kind
     (valueP, valueLen) <- encodeM value
-    Context context <- gets encodeStateContext
-    liftIO $ FFI.getStringAttribute context kindP kindLen valueP valueLen
-  encodeM a = do
-    let (kind, value) = case a of
-           A.FA.StackAlignment v -> (FFI.functionAttributeKindStackAlignment, v)
-           _ -> (, 0) $ case a of
-             A.FA.NoReturn -> FFI.functionAttributeKindNoReturn
-             A.FA.NoUnwind -> FFI.functionAttributeKindNoUnwind
-             A.FA.ReadNone -> FFI.functionAttributeKindReadNone
-             A.FA.ReadOnly -> FFI.functionAttributeKindReadOnly
-             A.FA.NoInline -> FFI.functionAttributeKindNoInline
-             A.FA.AlwaysInline -> FFI.functionAttributeKindAlwaysInline
-             A.FA.MinimizeSize -> FFI.functionAttributeKindMinSize
-             A.FA.OptimizeForSize -> FFI.functionAttributeKindOptimizeForSize
-             A.FA.OptimizeNone -> FFI.functionAttributeKindOptimizeForSize                                                   
-             A.FA.StackProtect -> FFI.functionAttributeKindStackProtect
-             A.FA.StackProtectReq -> FFI.functionAttributeKindStackProtectReq
-             A.FA.StackProtectStrong -> FFI.functionAttributeKindStackProtectStrong
-             A.FA.NoRedZone -> FFI.functionAttributeKindNoRedZone
-             A.FA.NoImplicitFloat -> FFI.functionAttributeKindNoImplicitFloat
-             A.FA.Naked -> FFI.functionAttributeKindNaked
-             A.FA.InlineHint -> FFI.functionAttributeKindInlineHint
-             A.FA.ReturnsTwice -> FFI.functionAttributeKindReturnsTwice
-             A.FA.UWTable -> FFI.functionAttributeKindUWTable
-             A.FA.NonLazyBind -> FFI.functionAttributeKindNonLazyBind
-             A.FA.Builtin -> FFI.functionAttributeKindBuiltin
-             A.FA.NoBuiltin -> FFI.functionAttributeKindNoBuiltin
-             A.FA.Cold -> FFI.functionAttributeKindCold
-             A.FA.JumpTable -> FFI.functionAttributeKindJumpTable
-             A.FA.NoDuplicate -> FFI.functionAttributeKindNoDuplicate
-             A.FA.SanitizeAddress -> FFI.functionAttributeKindSanitizeAddress
-             A.FA.SanitizeThread -> FFI.functionAttributeKindSanitizeThread
-             A.FA.SanitizeMemory -> FFI.functionAttributeKindSanitizeMemory
-    Context context <- gets encodeStateContext
-    liftIO $ FFI.getFunctionAttribute context kind value                          
+    liftIO $ FFI.attrBuilderAddStringAttribute b kindP kindLen valueP valueLen
+  encodeM a = return $ \b -> liftIO $ case a of
+    A.FA.StackAlignment v -> FFI.attrBuilderAddStackAlignment b v
+    _ -> FFI.attrBuilderAddFunctionAttributeKind b $ case a of
+      A.FA.NoReturn -> FFI.functionAttributeKindNoReturn
+      A.FA.NoUnwind -> FFI.functionAttributeKindNoUnwind
+      A.FA.ReadNone -> FFI.functionAttributeKindReadNone
+      A.FA.ReadOnly -> FFI.functionAttributeKindReadOnly
+      A.FA.NoInline -> FFI.functionAttributeKindNoInline
+      A.FA.AlwaysInline -> FFI.functionAttributeKindAlwaysInline
+      A.FA.MinimizeSize -> FFI.functionAttributeKindMinSize
+      A.FA.OptimizeForSize -> FFI.functionAttributeKindOptimizeForSize
+      A.FA.OptimizeNone -> FFI.functionAttributeKindOptimizeForSize                                                   
+      A.FA.StackProtect -> FFI.functionAttributeKindStackProtect
+      A.FA.StackProtectReq -> FFI.functionAttributeKindStackProtectReq
+      A.FA.StackProtectStrong -> FFI.functionAttributeKindStackProtectStrong
+      A.FA.NoRedZone -> FFI.functionAttributeKindNoRedZone
+      A.FA.NoImplicitFloat -> FFI.functionAttributeKindNoImplicitFloat
+      A.FA.Naked -> FFI.functionAttributeKindNaked
+      A.FA.InlineHint -> FFI.functionAttributeKindInlineHint
+      A.FA.ReturnsTwice -> FFI.functionAttributeKindReturnsTwice
+      A.FA.UWTable -> FFI.functionAttributeKindUWTable
+      A.FA.NonLazyBind -> FFI.functionAttributeKindNonLazyBind
+      A.FA.Builtin -> FFI.functionAttributeKindBuiltin
+      A.FA.NoBuiltin -> FFI.functionAttributeKindNoBuiltin
+      A.FA.Cold -> FFI.functionAttributeKindCold
+      A.FA.JumpTable -> FFI.functionAttributeKindJumpTable
+      A.FA.NoDuplicate -> FFI.functionAttributeKindNoDuplicate
+      A.FA.SanitizeAddress -> FFI.functionAttributeKindSanitizeAddress
+      A.FA.SanitizeThread -> FFI.functionAttributeKindSanitizeThread
+      A.FA.SanitizeMemory -> FFI.functionAttributeKindSanitizeMemory
 
-instance DecodeM DecodeAST A.A.ParameterAttribute FFI.ParameterAttribute where
+instance DecodeM DecodeAST A.PA.ParameterAttribute FFI.ParameterAttribute where
   decodeM a = do
     enum <- liftIO $ FFI.parameterAttributeKindAsEnum a
     case enum of
@@ -251,7 +254,7 @@ instance DecodeM DecodeAST A.A.ParameterAttribute FFI.ParameterAttribute where
       [parameterAttributeKindP|Returned|] -> return A.PA.Returned
       _ -> error $ "unhandled parameter attribute enum value: " ++ show enum
 
-instance DecodeM DecodeAST A.A.FunctionAttribute FFI.FunctionAttribute where
+instance DecodeM DecodeAST A.FA.FunctionAttribute FFI.FunctionAttribute where
   decodeM a = do
     isString <- decodeM =<< (liftIO $ FFI.isStringAttribute a)
     if isString
@@ -292,6 +295,26 @@ instance DecodeM DecodeAST A.A.FunctionAttribute FFI.FunctionAttribute where
            [functionAttributeKindP|SanitizeMemory|] -> return A.FA.SanitizeMemory
            _ -> error $ "unhandled function attribute enum value: " ++ show enum
             
+allocaAttrBuilder :: (Monad m, MonadAnyCont IO m) => m (Ptr (FFI.AttrBuilder a))
+allocaAttrBuilder = do
+  p <- allocaArray FFI.getAttrBuilderSize
+  anyContToM $ \f -> do
+    ab <- FFI.constructAttrBuilder p
+    r <- f ab
+    FFI.destroyAttrBuilder ab
+    return r
+
+instance EncodeM EncodeAST a (Ptr (FFI.AttrBuilder b) -> EncodeAST ()) => EncodeM EncodeAST (FFI.Index, [a]) (FFI.AttributeSet b) where
+  encodeM (index, as) = scopeAnyCont $ do
+    ab <- allocaAttrBuilder
+    builds <- mapM encodeM as
+    forM builds ($ ab) :: EncodeAST [()]
+    Context context <- gets encodeStateContext
+    liftIO $ FFI.getAttributeSet context index ab
+
+instance EncodeM EncodeAST [A.FA.FunctionAttribute] FFI.FunctionAttributeSet where
+  encodeM fas = encodeM (FFI.functionIndex, fas)
+
 instance DecodeM DecodeAST a (FFI.Attribute b) => DecodeM DecodeAST [a] (FFI.AttributeSet b) where
   decodeM as = do
     np <- alloca
@@ -299,3 +322,60 @@ instance DecodeM DecodeAST a (FFI.Attribute b) => DecodeM DecodeAST [a] (FFI.Att
     n <- peek np
     decodeM (n, as)
             
+data MixedAttributeSet = MixedAttributeSet {
+    functionAttributes :: [Either A.FA.GroupID A.FA.FunctionAttribute],
+    returnAttributes :: [A.PA.ParameterAttribute],
+    parameterAttributes :: Map CUInt [A.PA.ParameterAttribute]
+  }
+  deriving (Eq, Show)
+
+data PreSlot
+  = IndirectFunctionAttributes A.FA.GroupID
+  | DirectFunctionAttributes [A.FA.FunctionAttribute]
+  | ReturnAttributes [A.PA.ParameterAttribute]
+  | ParameterAttributes CUInt [A.PA.ParameterAttribute]    
+
+instance EncodeM EncodeAST PreSlot FFI.MixedAttributeSet where
+  encodeM preSlot = do
+    let forget = liftM FFI.forgetAttributeType
+    case preSlot of
+      IndirectFunctionAttributes gid -> forget (referAttributeGroup gid)
+      DirectFunctionAttributes fas -> forget (encodeM fas :: EncodeAST FFI.FunctionAttributeSet)
+      ReturnAttributes as -> forget (encodeM (FFI.returnIndex, as) :: EncodeAST FFI.ParameterAttributeSet)
+      ParameterAttributes i as -> forget (encodeM (fromIntegral (i + 1) :: FFI.Index, as) :: EncodeAST FFI.ParameterAttributeSet)
+
+instance EncodeM EncodeAST MixedAttributeSet FFI.MixedAttributeSet where
+  encodeM (MixedAttributeSet fAttrs rAttrs pAttrs) = do
+    let directP = DirectFunctionAttributes (rights fAttrs)
+        indirectPs = map IndirectFunctionAttributes (lefts fAttrs)
+        returnP = ReturnAttributes rAttrs
+        paramPs = [ ParameterAttributes x as | (x, as) <- Map.toList pAttrs ]
+    (nAttrs, attrs) <- encodeM ([directP, returnP] ++ indirectPs ++ paramPs)
+    Context context <- gets encodeStateContext
+    liftIO $ FFI.mixAttributeSets context attrs nAttrs
+
+instance DecodeM DecodeAST MixedAttributeSet FFI.MixedAttributeSet where
+  decodeM mas = do
+    numSlots <- if mas == nullPtr then return 0 else liftIO $ FFI.attributeSetNumSlots mas
+    slotIndexes <- forM (take (fromIntegral numSlots) [0..]) $ \s -> do
+      i <- liftIO $ FFI.attributeSetSlotIndex mas s
+      return (i, s)
+    let separate :: Ord k => k -> Map k a -> (Maybe a, Map k a)
+        separate = Map.updateLookupWithKey (\_ _ -> Nothing)
+        indexedSlots = Map.fromList slotIndexes
+    unless (Map.size indexedSlots == length slotIndexes) $
+           fail "unexpected slot index collision decoding mixed AttributeSet"
+    let (functionSlot, otherSlots) = separate FFI.functionIndex (Map.fromList slotIndexes)
+    functionAnnotation <- for (maybeToList functionSlot) $ \slot -> do
+      a <- liftIO $ FFI.attributeSetSlotAttributes mas slot
+      getAttributeGroupID a
+    otherAttributeSets <- for otherSlots $ \slot -> do
+      a <- liftIO $ FFI.attributeSetSlotAttributes mas slot
+      decodeM (a :: FFI.ParameterAttributeSet)
+    let (returnAttributeSet, shiftedParameterAttributeSets) = separate FFI.returnIndex otherAttributeSets
+    return $ MixedAttributeSet {
+                  functionAttributes = fmap Left functionAnnotation,
+                  returnAttributes = join . maybeToList $ returnAttributeSet,
+                  parameterAttributes = Map.mapKeysMonotonic (\x -> fromIntegral x - 1) shiftedParameterAttributeSets
+                }
+

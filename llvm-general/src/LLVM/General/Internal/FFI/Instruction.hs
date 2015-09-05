@@ -11,6 +11,7 @@ import LLVM.General.Prelude
 import Foreign.Ptr
 import Foreign.C
 
+import LLVM.General.Internal.FFI.Attribute
 import LLVM.General.Internal.FFI.PtrHierarchy
 import LLVM.General.Internal.FFI.LLVMCTypes
 
@@ -48,18 +49,12 @@ foreign import ccall unsafe "LLVMSetTailCall" setTailCall ::
 foreign import ccall unsafe "LLVM_General_GetCallInstCalledValue" getCallInstCalledValue ::
   Ptr Instruction -> IO (Ptr Value)
 
-foreign import ccall unsafe "LLVM_General_GetCallInstFunctionAttr" getCallInstFunctionAttr ::
-  Ptr Instruction -> IO FunctionAttr
+foreign import ccall unsafe "LLVM_General_GetCallInstAttributeSet" getCallInstAttributeSet ::
+  Ptr Instruction -> IO MixedAttributeSet
 
-foreign import ccall unsafe "LLVM_General_AddCallInstFunctionAttr" addCallInstFunctionAttr ::
-  Ptr Instruction -> FunctionAttr -> IO ()
-
-foreign import ccall unsafe "LLVM_General_GetCallInstAttr" getCallInstAttr ::
-  Ptr Instruction -> CUInt -> IO ParamAttr
-
-foreign import ccall unsafe "LLVM_General_AddCallInstAttr" addCallInstAttr ::
-  Ptr Instruction -> CUInt -> ParamAttr -> IO ()
-
+foreign import ccall unsafe "LLVM_General_SetCallInstAttributeSet" setCallInstAttributeSet ::
+  Ptr Instruction -> MixedAttributeSet -> IO ()
+                     
 foreign import ccall unsafe "LLVMAddIncoming" addIncoming' ::
   Ptr Instruction -> Ptr (Ptr Value) -> Ptr (Ptr BasicBlock) -> CUInt -> IO ()
 

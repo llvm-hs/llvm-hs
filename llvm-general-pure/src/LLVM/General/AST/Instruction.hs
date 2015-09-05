@@ -12,7 +12,8 @@ import LLVM.General.AST.IntegerPredicate (IntegerPredicate)
 import LLVM.General.AST.FloatingPointPredicate (FloatingPointPredicate)
 import LLVM.General.AST.RMWOperation (RMWOperation)
 import LLVM.General.AST.CallingConvention (CallingConvention)
-import LLVM.General.AST.Attribute (ParameterAttribute, FunctionAttribute)
+import qualified LLVM.General.AST.ParameterAttribute as PA (ParameterAttribute)
+import qualified LLVM.General.AST.FunctionAttribute as FA (FunctionAttribute, GroupID)
 
 -- | <http://llvm.org/docs/LangRef.html#metadata-nodes-and-metadata-strings>
 -- Metadata can be attached to an instruction
@@ -47,10 +48,10 @@ data Terminator
     }
   | Invoke {
       callingConvention' :: CallingConvention,
-      returnAttributes' :: [ParameterAttribute],
+      returnAttributes' :: [PA.ParameterAttribute],
       function' :: CallableOperand,
-      arguments' :: [(Operand, [ParameterAttribute])],
-      functionAttributes' :: [FunctionAttribute],
+      arguments' :: [(Operand, [PA.ParameterAttribute])],
+      functionAttributes' :: [Either FA.GroupID FA.FunctionAttribute],
       returnDest :: Name,
       exceptionDest :: Name,
       metadata' :: InstructionMetadata
@@ -348,10 +349,10 @@ data Instruction
   | Call {
       isTailCall :: Bool,
       callingConvention :: CallingConvention,
-      returnAttributes :: [ParameterAttribute],
+      returnAttributes :: [PA.ParameterAttribute],
       function :: CallableOperand,
-      arguments :: [(Operand, [ParameterAttribute])],
-      functionAttributes :: [FunctionAttribute],
+      arguments :: [(Operand, [PA.ParameterAttribute])],
+      functionAttributes :: [Either FA.GroupID FA.FunctionAttribute],
       metadata :: InstructionMetadata
   }
   | Select { 

@@ -18,9 +18,9 @@ import Foreign.C
 import Data.Map (Map)
 import qualified Data.Map as Map
 
-import qualified LLVM.General.Internal.FFI.LLVMCTypes as FFI
-import qualified LLVM.General.Internal.FFI.PtrHierarchy as FFI
+import qualified LLVM.General.Internal.FFI.Attribute as FFI  
 import qualified LLVM.General.Internal.FFI.Builder as FFI
+import qualified LLVM.General.Internal.FFI.PtrHierarchy as FFI
 import qualified LLVM.General.Internal.FFI.Value as FFI
 
 import qualified LLVM.General.AST as A
@@ -43,7 +43,7 @@ data EncodeState = EncodeState {
       encodeStateBlocks :: Map A.Name (Ptr FFI.BasicBlock),
       encodeStateMDNodes :: Map A.MetadataNodeID (Ptr FFI.MDNode),
       encodeStateNamedTypes :: Map A.Name (Ptr FFI.Type),
-      encodeStateAttributeGroups :: Map A.A.GroupID FFI.FunctionAttr
+      encodeStateAttributeGroups :: Map A.A.GroupID FFI.FunctionAttributeSet
     }
 
 newtype EncodeAST a = EncodeAST { unEncodeAST :: AnyContT (ExceptableT String (StateT EncodeState IO)) a }
@@ -119,7 +119,7 @@ defineGlobal n v = modify $ \b -> b { encodeStateGlobals =  Map.insert n (FFI.up
 defineMDNode :: A.MetadataNodeID -> Ptr FFI.MDNode -> EncodeAST ()
 defineMDNode n v = modify $ \b -> b { encodeStateMDNodes = Map.insert n (FFI.upCast v) (encodeStateMDNodes b) }
 
-defineAttributeGroup :: A.A.GroupID -> FFI.FunctionAttr -> EncodeAST ()
+defineAttributeGroup :: A.A.GroupID -> FFI.FunctionAttributeSet -> EncodeAST ()
 defineAttributeGroup gid attrs = modify $ \b -> b { encodeStateAttributeGroups = Map.insert gid attrs (encodeStateAttributeGroups b) }
 
 refer :: (Show n, Ord n) => (EncodeState -> Map n v) -> n -> EncodeAST v -> EncodeAST v
