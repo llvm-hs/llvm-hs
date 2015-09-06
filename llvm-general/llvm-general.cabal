@@ -49,7 +49,7 @@ library
   ghc-options: -fwarn-unused-imports
   cc-options: -std=c++11
   build-depends:
-    base >= 4.5.0.0 && < 5,
+    base >= 4.6 && < 5,
     utf8-string >= 0.3.7,
     bytestring >= 0.9.1.10,
     transformers >= 0.3.0.0,
@@ -197,7 +197,7 @@ library
 test-suite test
   type: exitcode-stdio-1.0
   build-depends:
-    base >= 3 && < 5,
+    base >= 4.6 && < 5,
     test-framework >= 0.5,
     test-framework-hunit >= 0.2.7,
     HUnit >= 1.2.4.2,
