@@ -31,10 +31,12 @@ import qualified LLVM.General.AST.AddrSpace as A
 import qualified LLVM.General.AST.Float as A
 import qualified LLVM.General.AST.FloatingPointPredicate as A
 import qualified LLVM.General.AST.IntegerPredicate as A
-import qualified LLVM.General.AST.Attribute as A
+import qualified LLVM.General.AST.FunctionAttribute as A
+import qualified LLVM.General.AST.ParameterAttribute as A  
 import qualified LLVM.General.AST.CallingConvention as A
 import qualified LLVM.General.AST.Visibility as A
 import qualified LLVM.General.AST.Linkage as A
+import qualified LLVM.General.AST.ThreadLocalStorage as A.TLS
 import qualified LLVM.General.AST.InlineAssembly as A
 import qualified LLVM.General.AST.RMWOperation as A
 
@@ -76,6 +78,7 @@ fmap concat $ mapM makePrettyShowInstance [
   ''A.SynchronizationScope,
   ''A.MemoryOrdering,
   ''A.GroupID,
+  ''A.TLS.Model,
   ''Either,
   ''Maybe
  ]

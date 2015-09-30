@@ -29,9 +29,3 @@ foreign import ccall unsafe "LLVMGetInitializer" getInitializer ::
 foreign import ccall unsafe "LLVMSetInitializer" setInitializer ::
     Ptr GlobalVariable -> Ptr Constant -> IO ()
 
-foreign import ccall unsafe "LLVMIsThreadLocal" isThreadLocal ::
-    Ptr GlobalVariable -> IO LLVMBool
-
-foreign import ccall unsafe "LLVMSetThreadLocal" setThreadLocal ::
-    Ptr GlobalVariable -> LLVMBool -> IO ()
-

@@ -47,5 +47,10 @@ foreign import ccall unsafe "LLVM_General_HasUnnamedAddr" hasUnnamedAddr ::
 foreign import ccall unsafe "LLVM_General_SetUnnamedAddr" setUnnamedAddr ::
     Ptr GlobalValue -> LLVMBool -> IO ()
 
+foreign import ccall unsafe "LLVM_General_GetThreadLocalMode" getThreadLocalMode ::
+    Ptr GlobalValue -> IO ThreadLocalMode
+
+foreign import ccall unsafe "LLVM_General_SetThreadLocalMode" setThreadLocalMode ::
+    Ptr GlobalValue -> ThreadLocalMode -> IO ()
 
 

@@ -26,4 +26,11 @@
 	macro(Hidden)																	\
 	macro(Protected)															\
 
+#define LLVM_GENERAL_FOR_EACH_THREAD_LOCAL_MODE(macro)  \
+	macro(NotThreadLocal)                                 \
+	macro(GeneralDynamicTLSModel)                         \
+	macro(LocalDynamicTLSModel)                           \
+	macro(InitialExecTLSModel)                            \
+	macro(LocalExecTLSModel)
+
 #endif

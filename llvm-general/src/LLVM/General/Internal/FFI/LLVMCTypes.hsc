@@ -138,6 +138,11 @@ newtype CallConv = CallConv CUInt
 #define CC_Rec(n) { #n, LLVM ## n ## CallConv },
 #{inject CALLCONV, CallConv, CallConv, callConv, CC_Rec}
 
+newtype ThreadLocalMode = ThreadLocalMode CUInt
+  deriving (Eq, Read, Show, Typeable, Data)
+#define TLS_Rec(n) { #n, LLVM ## n },
+#{inject THREAD_LOCAL_MODE, ThreadLocalMode, ThreadLocalMode, threadLocalMode, TLS_Rec}
+
 newtype ValueSubclassId = ValueSubclassId CUInt
   deriving (Eq, Read, Show, Typeable, Data)
 #define VSID_Rec(n) { #n, LLVM ## n ## SubclassId },

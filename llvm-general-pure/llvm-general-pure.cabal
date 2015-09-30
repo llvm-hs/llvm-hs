@@ -60,6 +60,7 @@ library
     LLVM.General.AST.Name
     LLVM.General.AST.Operand
     LLVM.General.AST.RMWOperation
+    LLVM.General.AST.ThreadLocalStorage
     LLVM.General.AST.Type
     LLVM.General.AST.Visibility
     LLVM.General.DataLayout

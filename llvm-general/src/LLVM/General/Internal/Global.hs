@@ -20,6 +20,7 @@ import LLVM.General.Internal.EncodeAST
 
 import qualified LLVM.General.AST.Linkage as A.L
 import qualified LLVM.General.AST.Visibility as A.V
+import qualified LLVM.General.AST.ThreadLocalStorage as A.TLS
 
 genCodingInstance [t| A.L.Linkage |] ''FFI.Linkage [
   (FFI.linkageExternal, A.L.External),
@@ -72,3 +73,18 @@ setAlignment g i = liftIO $ FFI.setAlignment (FFI.upCast g) (fromIntegral i)
 
 getAlignment :: FFI.DescendentOf FFI.GlobalValue v => Ptr v -> DecodeAST Word32
 getAlignment g = liftIO $ fromIntegral <$> FFI.getAlignment (FFI.upCast g)
+
+genCodingInstance [t| Maybe A.TLS.Model |] ''FFI.ThreadLocalMode [
+  (FFI.threadLocalModeNotThreadLocal, Nothing),
+  (FFI.threadLocalModeGeneralDynamicTLSModel, Just A.TLS.GeneralDynamic),
+  (FFI.threadLocalModeLocalDynamicTLSModel, Just A.TLS.LocalDynamic),
+  (FFI.threadLocalModeInitialExecTLSModel, Just A.TLS.InitialExec),
+  (FFI.threadLocalModeLocalExecTLSModel, Just A.TLS.LocalExec)
+ ]
+
+getThreadLocalMode :: FFI.DescendentOf FFI.GlobalValue v => Ptr v -> DecodeAST (Maybe A.TLS.Model)
+getThreadLocalMode g = liftIO $ decodeM =<< FFI.getThreadLocalMode (FFI.upCast g)
+
+setThreadLocalMode :: FFI.DescendentOf FFI.GlobalValue v => Ptr v -> Maybe A.TLS.Model -> EncodeAST ()
+setThreadLocalMode g m = liftIO . FFI.setThreadLocalMode (FFI.upCast g) =<< encodeM m
+                        

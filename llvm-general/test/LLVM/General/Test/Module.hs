@@ -26,7 +26,8 @@ import qualified LLVM.General.AST.Linkage as L
 import qualified LLVM.General.AST.Visibility as V
 import qualified LLVM.General.AST.CallingConvention as CC
 import qualified LLVM.General.AST.FunctionAttribute as FA
-import qualified LLVM.General.AST.ParameterAttribute as PA    
+import qualified LLVM.General.AST.ParameterAttribute as PA
+import qualified LLVM.General.AST.ThreadLocalStorage as TLS
 import qualified LLVM.General.AST.Global as G
 import qualified LLVM.General.AST.Constant as C
 
@@ -45,9 +46,11 @@ handString = "; ModuleID = '<string>'\n\
     \@3 = external global %0\n\
     \@4 = external global [4294967296 x i32]\n\
     \@.argyle = thread_local global i32 0\n\
+    \@5 = thread_local(localdynamic) global i32 1\n\
     \\n\
     \@three = alias private i32 addrspace(3)* @1\n\
     \@two = alias i32 addrspace(3)* @three\n\
+    \@one = thread_local(initialexec) alias i32* @5\n\
     \\n\
     \define i32 @bar() {\n\
     \  %1 = call zeroext i32 @foo(i32 inreg align 16 1, i8 signext 4) #0\n\
@@ -112,7 +115,13 @@ handAST = Module "<string>" Nothing Nothing [
         G.name = Name ".argyle",
         G.type' = i32,
         G.initializer = Just (C.Int 32 0),
-        G.isThreadLocal = True
+        G.threadLocalMode = Just TLS.GeneralDynamic
+      },
+      GlobalDefinition $ globalVariableDefaults {
+        G.name = UnName 5,
+        G.type' = i32,
+        G.threadLocalMode = Just TLS.LocalDynamic,
+        G.initializer = Just (C.Int 32 1)
       },
       GlobalDefinition $ globalAliasDefaults {
          G.name = Name "three",
@@ -124,6 +133,12 @@ handAST = Module "<string>" Nothing Nothing [
         G.name = Name "two",
         G.type' = PointerType i32 (AddrSpace 3),
         G.aliasee = C.GlobalReference (PointerType i32 (AddrSpace 3)) (Name "three")
+      },
+      GlobalDefinition $ globalAliasDefaults {
+        G.name = Name "one",
+        G.type' = ptr i32,
+        G.aliasee = C.GlobalReference (ptr i32) (UnName 5),
+        G.threadLocalMode = Just TLS.InitialExec
       },
       GlobalDefinition $ functionDefaults {
         G.returnType = i32,

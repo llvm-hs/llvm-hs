@@ -11,6 +11,7 @@ import LLVM.General.AST.Instruction (Named, Instruction, Terminator)
 import qualified LLVM.General.AST.Linkage as L
 import qualified LLVM.General.AST.Visibility as V
 import qualified LLVM.General.AST.CallingConvention as CC
+import qualified LLVM.General.AST.ThreadLocalStorage as TLS
 import qualified LLVM.General.AST.Attribute as A
 
 -- | <http://llvm.org/doxygen/classllvm_1_1GlobalValue.html>
@@ -20,7 +21,7 @@ data Global
         name :: Name,
         linkage :: L.Linkage,
         visibility :: V.Visibility,
-        isThreadLocal :: Bool,
+        threadLocalMode :: Maybe TLS.Model,
         addrSpace :: AddrSpace,
         hasUnnamedAddr :: Bool,
         isConstant :: Bool,
@@ -34,6 +35,7 @@ data Global
         name :: Name,
         linkage :: L.Linkage,
         visibility :: V.Visibility,
+        threadLocalMode :: Maybe TLS.Model,
         type' :: Type,
         aliasee :: Constant
       }
@@ -71,7 +73,7 @@ globalVariableDefaults =
   name = error "global variable name not defined",
   linkage = L.External,
   visibility = V.Default,
-  isThreadLocal = False,
+  threadLocalMode = Nothing,
   addrSpace = AddrSpace 0,
   hasUnnamedAddr = False,
   isConstant = False,
@@ -88,6 +90,7 @@ globalAliasDefaults =
     name = error "global alias name not defined",
     linkage = L.External,
     visibility = V.Default,
+    threadLocalMode = Nothing,
     type' = error "global alias type not defined",
     aliasee = error "global alias aliasee not defined"
   }
