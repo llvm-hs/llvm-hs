@@ -69,6 +69,7 @@ fmap concat $ mapM makePrettyShowInstance [
   ''A.SomeFloat,
   ''A.Named,
   ''A.Terminator,
+  ''A.TailCallKind,
   ''A.Instruction,
   ''A.LandingPadClause,
   ''A.InlineAssembly,

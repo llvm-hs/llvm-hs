@@ -103,6 +103,11 @@ data LandingPadClause
     | Filter Constant
     deriving (Eq, Ord, Read, Show, Typeable, Data)
 
+-- | For the call instruction
+-- <http://llvm.org/docs/LangRef.html#call-instruction>
+data TailCallKind = Tail | MustTail
+    deriving (Eq, Ord, Read, Show, Typeable, Data)
+
 -- | non-terminator instructions:
 -- <http://llvm.org/docs/LangRef.html#binaryops>
 -- <http://llvm.org/docs/LangRef.html#bitwiseops>
@@ -347,7 +352,7 @@ data Instruction
       metadata :: InstructionMetadata
   } 
   | Call {
-      isTailCall :: Bool,
+      tailCallKind :: Maybe TailCallKind,
       callingConvention :: CallingConvention,
       returnAttributes :: [PA.ParameterAttribute],
       function :: CallableOperand,

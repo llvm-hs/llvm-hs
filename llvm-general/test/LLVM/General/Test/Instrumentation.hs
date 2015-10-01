@@ -113,7 +113,7 @@ ast = do
     G.basicBlocks = [
       BasicBlock (UnName 0) [
         UnName 1 := Call {
-          isTailCall = False,
+          tailCallKind = Nothing,
           callingConvention = CC.C,
           returnAttributes = [],
           function = Right (ConstantOperand (C.GlobalReference (FunctionType i32 [i32, ptr (ptr i8)] False) (Name "foo"))),

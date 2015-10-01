@@ -40,11 +40,11 @@ foreign import ccall unsafe "LLVMGetInstructionCallConv" getInstructionCallConv 
 foreign import ccall unsafe "LLVMSetInstructionCallConv" setInstructionCallConv ::
   Ptr Instruction -> CallConv -> IO ()
 
-foreign import ccall unsafe "LLVMIsTailCall" isTailCall ::
-  Ptr Instruction -> IO LLVMBool
+foreign import ccall unsafe "LLVM_General_GetTailCallKind" getTailCallKind ::
+  Ptr Instruction -> IO TailCallKind
 
-foreign import ccall unsafe "LLVMSetTailCall" setTailCall ::
-  Ptr Instruction -> LLVMBool -> IO ()
+foreign import ccall unsafe "LLVM_General_SetTailCallKind" setTailCallKind ::
+  Ptr Instruction -> TailCallKind -> IO ()
 
 foreign import ccall unsafe "LLVM_General_GetCallInstCalledValue" getCallInstCalledValue ::
   Ptr Instruction -> IO (Ptr Value)

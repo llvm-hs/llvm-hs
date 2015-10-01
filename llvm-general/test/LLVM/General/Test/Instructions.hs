@@ -560,7 +560,7 @@ tests = testGroup "Instructions" [
           "fence acquire"),
           ("call",
            Do $ Call {
-             isTailCall = False,
+             tailCallKind = Nothing,
              callingConvention = CC.C,
              returnAttributes = [],
              function = Right (ConstantOperand (C.GlobalReference (ptr (FunctionType A.T.void ts False)) (UnName 0))),

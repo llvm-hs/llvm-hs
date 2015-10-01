@@ -53,7 +53,7 @@ handString = "; ModuleID = '<string>'\n\
     \@one = thread_local(initialexec) alias i32* @5\n\
     \\n\
     \define i32 @bar() {\n\
-    \  %1 = call zeroext i32 @foo(i32 inreg align 16 1, i8 signext 4) #0\n\
+    \  %1 = musttail call zeroext i32 @foo(i32 inreg align 16 1, i8 signext 4) #0\n\
     \  ret i32 %1\n\
     \}\n\
     \\n\
@@ -146,7 +146,7 @@ handAST = Module "<string>" Nothing Nothing [
         G.basicBlocks = [
           BasicBlock (UnName 0) [
            UnName 1 := Call {
-             isTailCall = False,
+             tailCallKind = Just MustTail,
              callingConvention = CC.C,
              returnAttributes = [PA.ZeroExt],
              function = Right (ConstantOperand (C.GlobalReference (ptr (FunctionType i32 [i32, i8] False)) (Name "foo"))),

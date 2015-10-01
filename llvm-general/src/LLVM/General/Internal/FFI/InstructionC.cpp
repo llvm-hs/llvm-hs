@@ -90,6 +90,26 @@ void LLVM_General_SetCallInstAttributeSet(LLVMValueRef call_inst, const Attribut
 	CallSite(unwrap<Instruction>(call_inst)).setAttributes(unwrap(asi));
 }
 
+void LLVM_General_TailCallKindEnumMatches() {
+#define CHECK(name)																											\
+	static_assert(																												\
+			unsigned(llvm::CallInst::TCK_ ## name) == unsigned(LLVM_General_TailCallKind_ ## name), \
+			"LLVM_General_TailCallKind enum out of sync w/ llvm::CallInst::TailCallKind for " #name \
+	);
+	LLVM_GENERAL_FOR_EACH_TAIL_CALL_KIND(CHECK)
+#undef CHECK
+}
+
+unsigned LLVM_General_GetTailCallKind(LLVMValueRef call) {
+	LLVM_General_TailCallKindEnumMatches();
+	return unwrap<CallInst>(call)->getTailCallKind();
+}
+
+void LLVM_General_SetTailCallKind(LLVMValueRef call, unsigned kind) {
+	LLVM_General_TailCallKindEnumMatches();
+	return unwrap<CallInst>(call)->setTailCallKind(llvm::CallInst::TailCallKind(kind));
+}
+
 LLVMValueRef LLVM_General_GetAllocaNumElements(LLVMValueRef a) {
 	return wrap(unwrap<AllocaInst>(a)->getArraySize());
 }
@@ -246,4 +266,3 @@ unsigned LLVM_General_GetMetadata(
 }
 
 }
-

@@ -42,6 +42,7 @@ import LLVM.General.Internal.FastMathFlags ()
 import LLVM.General.Internal.Metadata ()
 import LLVM.General.Internal.Operand ()
 import LLVM.General.Internal.RMWOperation ()
+import LLVM.General.Internal.TailCallKind ()
 import LLVM.General.Internal.Type
 import LLVM.General.Internal.Value
 
@@ -268,7 +269,7 @@ $(do
                 "metadata" -> ([], [| meta i |])
                 "iPredicate" -> ([], [| decodeM =<< liftIO (FFI.getICmpPredicate i) |])
                 "fpPredicate" -> ([], [| decodeM =<< liftIO (FFI.getFCmpPredicate i) |])
-                "isTailCall" -> ([], [| decodeM =<< liftIO (FFI.isTailCall i) |])
+                "tailCallKind" -> ([], [| decodeM =<< liftIO (FFI.getTailCallKind i) |])
                 "callingConvention" -> ([], [| decodeM =<< liftIO (FFI.getInstructionCallConv i) |])
                 "attrs" -> ([], [| callInstAttributeSet i |])
                 "returnAttributes" -> (["attrs"], [| return $ returnAttributes $(TH.dyn "attrs") |])
@@ -379,7 +380,7 @@ $(do
                  liftIO $ FFI.addIncoming i ivs3' bs3'
                )
           A.Call {
-            A.isTailCall = tc,
+            A.tailCallKind = tck,
             A.callingConvention = cc,
             A.returnAttributes = rAttrs,
             A.function = f,
@@ -392,9 +393,8 @@ $(do
             i <- liftIO $ FFI.buildCall builder fv argvs n s
             attrs <- encodeM $ MixedAttributeSet fAttrs rAttrs (Map.fromList (zip [0..] argAttrs))
             liftIO $ FFI.setCallInstAttributeSet i attrs     
-            when tc $ do
-              tc <- encodeM tc
-              liftIO $ FFI.setTailCall i tc
+            tck <- encodeM tck
+            liftIO $ FFI.setTailCallKind i tck
             cc <- encodeM cc
             liftIO $ FFI.setInstructionCallConv i cc
             return' i

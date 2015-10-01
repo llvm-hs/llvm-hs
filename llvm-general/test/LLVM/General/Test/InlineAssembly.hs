@@ -29,7 +29,7 @@ tests = testGroup "InlineAssembly" [
                     G.basicBlocks = [
                       BasicBlock (UnName 0) [
                         UnName 1 := Call {
-                          isTailCall = False,
+                          tailCallKind = Nothing,
                           callingConvention = CC.C,
                           returnAttributes = [],
                           function = Left $ InlineAssembly {

@@ -123,6 +123,11 @@ newtype SynchronizationScope = SynchronizationScope CUInt
 #define SS_Rec(n) { #n, LLVM ## n ## SynchronizationScope },
 #{inject SYNCRONIZATION_SCOPE, SynchronizationScope, SynchronizationScope, synchronizationScope, SS_Rec}
 
+newtype TailCallKind = TailCallKind CUInt
+  deriving (Eq, Typeable, Data)
+#define TCK_Rec(n) { #n, LLVM_General_TailCallKind_ ## n },
+#{inject TAIL_CALL_KIND, TailCallKind, TailCallKind, tailCallKind, TCK_Rec}
+
 newtype Linkage = Linkage CUInt
   deriving (Eq, Read, Show, Typeable, Data)
 #define LK_Rec(n) { #n, LLVM ## n ## Linkage },

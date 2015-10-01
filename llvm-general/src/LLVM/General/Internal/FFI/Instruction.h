@@ -54,4 +54,14 @@ LLVM_GENERAL_FOR_EACH_FAST_MATH_FLAG(ENUM_CASE)
 #undef ENUM_CASE
 } LLVMFastMathFlags;
 
+#define LLVM_GENERAL_FOR_EACH_TAIL_CALL_KIND(macro) \
+	macro(None)                                       \
+	macro(Tail)                                       \
+	macro(MustTail)
+
+typedef enum {
+#define ENUM_CASE(x) LLVM_General_TailCallKind_ ## x,
+LLVM_GENERAL_FOR_EACH_TAIL_CALL_KIND(ENUM_CASE)
+#undef ENUM_CASE
+} LLVM_General_TailCallKind;
 #endif
