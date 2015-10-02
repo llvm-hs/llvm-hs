@@ -8,6 +8,7 @@ import LLVM.General.PrettyPrint
 
 import LLVM.General.AST
 import LLVM.General.AST.Type
+import LLVM.General.AST.Global
 import qualified LLVM.General.AST.Linkage as L
 import qualified LLVM.General.AST.Visibility as V
 import qualified LLVM.General.AST.CallingConvention as CC
@@ -16,27 +17,28 @@ import qualified LLVM.General.AST.Constant as C
 tests = testGroup "PrettyPrint" [
   testCase "basic" $ do
     let ast = Module "<string>" Nothing Nothing [
-         GlobalDefinition $ Function L.External V.Default CC.C [] i32 (Name "foo") ([
-             Parameter i32 (Name "x") []
-            ],False)
-            [] Nothing 0 Nothing
-          [
-           BasicBlock (UnName 0) [
-            UnName 1 := Mul {
-              nsw = True,
-              nuw = False,
-              operand0 = ConstantOperand (C.Int 32 1),
-              operand1 = ConstantOperand (C.Int 32 1),
-              metadata = []
-            }
-            ] (
-              Do $ Br (Name "here") []
-            ),
-           BasicBlock (Name "here") [
-            ] (
-              Do $ Ret (Just (LocalReference i32 (UnName 1))) []
-            )
-          ]
+          GlobalDefinition $ functionDefaults {
+            returnType = i32,
+            name = Name "foo",
+            parameters = ([Parameter i32 (Name "x") []], False),
+            basicBlocks = [
+              BasicBlock (UnName 0) [
+                UnName 1 := Mul {
+                  nsw = True,
+                  nuw = False,
+                  operand0 = ConstantOperand (C.Int 32 1),
+                  operand1 = ConstantOperand (C.Int 32 1),
+                  metadata = []
+                }
+               ] (
+                 Do $ Br (Name "here") []
+               ),
+              BasicBlock (Name "here") [
+               ] (
+                 Do $ Ret (Just (LocalReference i32 (UnName 1))) []
+               )
+             ]
+           }
          ]
         s = "A.Module {\n\
             \  A.moduleName = \"<string>\",\n\
@@ -55,6 +57,7 @@ tests = testGroup "PrettyPrint" [
             \      A.G.section = Nothing,\n\
             \      A.G.alignment = 0,\n\
             \      A.G.garbageCollectorName = Nothing,\n\
+            \      A.G.prefix = Nothing,\n\
             \      A.G.basicBlocks = [\n\
             \        A.G.BasicBlock (A.UnName 0) [\n\
             \          A.UnName 1 A.:= A.Mul {\n\

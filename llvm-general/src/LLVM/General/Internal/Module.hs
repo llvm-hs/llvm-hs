@@ -297,13 +297,14 @@ withModuleFromAST context@(Context c) (A.Module moduleId dataLayout triple defin
            setThreadLocalMode a' (A.G.threadLocalMode a)
            (liftIO . FFI.setAliasee a') =<< encodeM (A.G.aliasee a)
            return (FFI.upCast a')
-       (A.Function _ _ cc rAttrs resultType fName (args, isVarArgs) attrs _ _ gc blocks) -> do
+       (A.Function _ _ cc rAttrs resultType fName (args, isVarArgs) attrs _ _ gc prefix blocks) -> do
          typ <- encodeM $ A.FunctionType resultType [t | A.Parameter t _ _ <- args] isVarArgs
          f <- liftIO . withName fName $ \fName -> FFI.addFunction m fName typ
          defineGlobal fName f
          cc <- encodeM cc
          liftIO $ FFI.setFunctionCallConv f cc
          setFunctionAttributes f (MixedAttributeSet attrs rAttrs (Map.fromList $ zip [0..] [pa | A.Parameter _ _ pa <- args]))
+         setPrefixData f prefix
          setSection f (A.G.section g)
          setAlignment f (A.G.alignment g)
          setGC f gc
@@ -413,6 +414,7 @@ moduleAST (Module mod) = runDecodeAST $ do
                  `ap` getSection f
                  `ap` getAlignment f
                  `ap` getGC f
+                 `ap` getPrefixData f
                  `ap` decodeBlocks
         ]
 

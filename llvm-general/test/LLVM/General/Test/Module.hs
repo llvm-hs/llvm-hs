@@ -52,7 +52,7 @@ handString = "; ModuleID = '<string>'\n\
     \@two = unnamed_addr alias i32 addrspace(3)* @three\n\
     \@one = thread_local(initialexec) alias i32* @5\n\
     \\n\
-    \define i32 @bar() {\n\
+    \define i32 @bar() prefix i32 1 {\n\
     \  %1 = musttail call zeroext i32 @foo(i32 inreg align 16 1, i8 signext 4) #0\n\
     \  ret i32 %1\n\
     \}\n\
@@ -144,6 +144,7 @@ handAST = Module "<string>" Nothing Nothing [
       GlobalDefinition $ functionDefaults {
         G.returnType = i32,
         G.name = Name "bar",
+        G.prefix = Just (C.Int 32 1),
         G.basicBlocks = [
           BasicBlock (UnName 0) [
            UnName 1 := Call {

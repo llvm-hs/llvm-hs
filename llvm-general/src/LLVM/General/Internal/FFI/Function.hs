@@ -51,3 +51,13 @@ foreign import ccall unsafe "LLVMGetGC" getGC ::
 
 foreign import ccall unsafe "LLVMSetGC" setGC ::
   Ptr Function -> CString -> IO ()
+
+
+foreign import ccall unsafe "LLVM_General_HasFunctionPrefixData" hasPrefixData ::
+  Ptr Function -> IO LLVMBool
+
+foreign import ccall unsafe "LLVM_General_GetFunctionPrefixData" getPrefixData ::
+  Ptr Function -> IO (Ptr Constant)
+
+foreign import ccall unsafe "LLVM_General_SetFunctionPrefixData" setPrefixData ::
+  Ptr Function -> Ptr Constant -> IO ()

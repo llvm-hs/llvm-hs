@@ -53,6 +53,7 @@ data Global
         section :: Maybe String,
         alignment :: Word32,
         garbageCollectorName :: Maybe String,
+        prefix :: Maybe Constant,
         basicBlocks :: [BasicBlock]
       }
   deriving (Eq, Read, Show, Typeable, Data)
@@ -112,5 +113,6 @@ functionDefaults =
     section = Nothing,
     alignment = 0,
     garbageCollectorName = Nothing,
+    prefix = Nothing,
     basicBlocks = []
   }

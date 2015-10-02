@@ -18,9 +18,11 @@ import LLVM.General.Internal.DecodeAST
 import LLVM.General.Internal.EncodeAST
 import LLVM.General.Internal.Value
 import LLVM.General.Internal.Coding
+import LLVM.General.Internal.Constant ()
 import LLVM.General.Internal.Attribute
 
 import qualified LLVM.General.AST as A
+import qualified LLVM.General.AST.Constant as A
 import qualified LLVM.General.AST.ParameterAttribute as A.PA  
 
 getMixedAttributeSet :: Ptr FFI.Function -> DecodeAST MixedAttributeSet
@@ -46,3 +48,13 @@ getGC f = scopeAnyCont $ decodeM =<< liftIO (FFI.getGC f)
 
 setGC :: Ptr FFI.Function -> Maybe String -> EncodeAST ()
 setGC f gc = scopeAnyCont $ liftIO . FFI.setGC f =<< encodeM gc 
+
+getPrefixData :: Ptr FFI.Function -> DecodeAST (Maybe A.Constant)
+getPrefixData f = do
+  has <- decodeM =<< (liftIO $ FFI.hasPrefixData f)
+  if has
+   then decodeM =<< (liftIO $ FFI.getPrefixData f)
+   else return Nothing
+
+setPrefixData :: Ptr FFI.Function -> Maybe A.Constant -> EncodeAST ()
+setPrefixData f = maybe (return ()) (liftIO . FFI.setPrefixData f <=< encodeM)
