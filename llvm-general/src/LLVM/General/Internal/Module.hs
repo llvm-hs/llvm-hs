@@ -290,6 +290,9 @@ withModuleFromAST context@(Context c) (A.Module moduleId dataLayout triple defin
          as <- encodeM as
          a' <- liftIO $ withName n $ \name -> FFI.justAddAlias m typ as name
          defineGlobal n a'
+         liftIO $ do
+           hua <- encodeM (A.G.hasUnnamedAddr a)
+           FFI.setUnnamedAddr (FFI.upCast a') hua
          return $ do
            setThreadLocalMode a' (A.G.threadLocalMode a)
            (liftIO . FFI.setAliasee a') =<< encodeM (A.G.aliasee a)
@@ -379,7 +382,8 @@ moduleAST (Module mod) = runDecodeAST $ do
                `ap` return n
                `ap` getLinkage a
                `ap` getVisibility a
-               `ap` getThreadLocalMode a                
+               `ap` getThreadLocalMode a
+               `ap` (liftIO $ decodeM =<< FFI.hasUnnamedAddr (FFI.upCast a))
                `ap` typeOf a
                `ap` (decodeM =<< (liftIO $ FFI.getAliasee a)),
 

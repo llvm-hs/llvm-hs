@@ -36,6 +36,7 @@ data Global
         linkage :: L.Linkage,
         visibility :: V.Visibility,
         threadLocalMode :: Maybe TLS.Model,
+        hasUnnamedAddr :: Bool,
         type' :: Type,
         aliasee :: Constant
       }
@@ -91,6 +92,7 @@ globalAliasDefaults =
     linkage = L.External,
     visibility = V.Default,
     threadLocalMode = Nothing,
+    hasUnnamedAddr = False,
     type' = error "global alias type not defined",
     aliasee = error "global alias aliasee not defined"
   }

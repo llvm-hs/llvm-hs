@@ -49,7 +49,7 @@ handString = "; ModuleID = '<string>'\n\
     \@5 = thread_local(localdynamic) global i32 1\n\
     \\n\
     \@three = alias private i32 addrspace(3)* @1\n\
-    \@two = alias i32 addrspace(3)* @three\n\
+    \@two = unnamed_addr alias i32 addrspace(3)* @three\n\
     \@one = thread_local(initialexec) alias i32* @5\n\
     \\n\
     \define i32 @bar() {\n\
@@ -131,6 +131,7 @@ handAST = Module "<string>" Nothing Nothing [
       },
       GlobalDefinition $ globalAliasDefaults {
         G.name = Name "two",
+        G.hasUnnamedAddr = True,
         G.type' = PointerType i32 (AddrSpace 3),
         G.aliasee = C.GlobalReference (PointerType i32 (AddrSpace 3)) (Name "three")
       },
