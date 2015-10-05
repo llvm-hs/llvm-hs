@@ -297,7 +297,7 @@ withModuleFromAST context@(Context c) (A.Module moduleId dataLayout triple defin
            setThreadLocalMode a' (A.G.threadLocalMode a)
            (liftIO . FFI.setAliasee a') =<< encodeM (A.G.aliasee a)
            return (FFI.upCast a')
-       (A.Function _ _ cc rAttrs resultType fName (args, isVarArgs) attrs _ _ gc prefix blocks) -> do
+       (A.Function _ _ _ cc rAttrs resultType fName (args, isVarArgs) attrs _ _ gc prefix blocks) -> do
          typ <- encodeM $ A.FunctionType resultType [t | A.Parameter t _ _ <- args] isVarArgs
          f <- liftIO . withName fName $ \fName -> FFI.addFunction m fName typ
          defineGlobal fName f
@@ -336,6 +336,7 @@ withModuleFromAST context@(Context c) (A.Module moduleId dataLayout triple defin
        g' <- eg'
        setLinkage g' (A.G.linkage g)
        setVisibility g' (A.G.visibility g)
+       setDLLStorageClass g' (A.G.dllStorageClass g)
        return $ return ()
 
   liftIO $ f (Module m)
@@ -364,6 +365,7 @@ moduleAST (Module mod) = runDecodeAST $ do
                `ap` return n
                `ap` getLinkage g
                `ap` getVisibility g
+               `ap` getDLLStorageClass g
                `ap` getThreadLocalMode g
                `ap` return as
                `ap` (liftIO $ decodeM =<< FFI.hasUnnamedAddr (FFI.upCast g))
@@ -383,6 +385,7 @@ moduleAST (Module mod) = runDecodeAST $ do
                `ap` return n
                `ap` getLinkage a
                `ap` getVisibility a
+               `ap` getDLLStorageClass a
                `ap` getThreadLocalMode a
                `ap` (liftIO $ decodeM =<< FFI.hasUnnamedAddr (FFI.upCast a))
                `ap` typeOf a
@@ -405,6 +408,7 @@ moduleAST (Module mod) = runDecodeAST $ do
               return $ return A.Function
                  `ap` getLinkage f
                  `ap` getVisibility f
+                 `ap` getDLLStorageClass f
                  `ap` (liftIO $ decodeM =<< FFI.getFunctionCallConv f)
                  `ap` return rAttrs
                  `ap` return returnType

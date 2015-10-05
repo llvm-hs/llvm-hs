@@ -35,6 +35,7 @@ import qualified LLVM.General.AST.FunctionAttribute as A
 import qualified LLVM.General.AST.ParameterAttribute as A  
 import qualified LLVM.General.AST.CallingConvention as A
 import qualified LLVM.General.AST.Visibility as A
+import qualified LLVM.General.AST.DLL as A.DLL
 import qualified LLVM.General.AST.Linkage as A
 import qualified LLVM.General.AST.ThreadLocalStorage as A.TLS
 import qualified LLVM.General.AST.InlineAssembly as A
@@ -65,6 +66,7 @@ fmap concat $ mapM makePrettyShowInstance [
   ''A.Parameter,
   ''A.CallingConvention,
   ''A.Visibility,
+  ''A.DLL.StorageClass,
   ''A.Linkage,
   ''A.SomeFloat,
   ''A.Named,
@@ -137,6 +139,7 @@ shortASTPrefixScheme = PrefixScheme $ Map.fromList [
   ("LLVM.General.AST.Global", Just "G"),
   ("LLVM.General.AST.CallingConvention", Just "CC"),
   ("LLVM.General.AST.Visibility", Just "V"),
+  ("LLVM.General.AST.DLL", Just "DLL"),
   ("LLVM.General.AST.Linkage", Just "L")
  ]
 

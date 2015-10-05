@@ -6,25 +6,23 @@
 	macro(AvailableExternally)										\
 	macro(LinkOnceAny)														\
 	macro(LinkOnceODR)														\
-	macro(LinkOnceODRAutoHide)										\
 	macro(WeakAny)																\
 	macro(WeakODR)																\
 	macro(Appending)															\
 	macro(Internal)																\
 	macro(Private)																\
-	macro(DLLImport)															\
-	macro(DLLExport)															\
 	macro(ExternalWeak)														\
-	macro(Ghost)																	\
-	macro(Common)																	\
-	macro(LinkerPrivate)													\
-	macro(LinkerPrivateWeak)											\
-
+	macro(Common)
 
 #define LLVM_GENERAL_FOR_EACH_VISIBILITY(macro)	\
 	macro(Default)																\
 	macro(Hidden)																	\
 	macro(Protected)															\
+
+#define LLVM_GENERAL_FOR_EACH_DLL_STORAGE_CLASS(macro)	\
+	macro(Default)                                        \
+	macro(DLLImport)                                      \
+	macro(DLLExport)
 
 #define LLVM_GENERAL_FOR_EACH_THREAD_LOCAL_MODE(macro)  \
 	macro(NotThreadLocal)                                 \

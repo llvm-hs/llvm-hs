@@ -11,6 +11,7 @@ import LLVM.General.AST.Type
 import LLVM.General.AST.Global
 import qualified LLVM.General.AST.Linkage as L
 import qualified LLVM.General.AST.Visibility as V
+import qualified LLVM.General.AST.DLL as DLL
 import qualified LLVM.General.AST.CallingConvention as CC
 import qualified LLVM.General.AST.Constant as C
 
@@ -18,6 +19,7 @@ tests = testGroup "PrettyPrint" [
   testCase "basic" $ do
     let ast = Module "<string>" Nothing Nothing [
           GlobalDefinition $ functionDefaults {
+            dllStorageClass = Just DLL.Export,
             returnType = i32,
             name = Name "foo",
             parameters = ([Parameter i32 (Name "x") []], False),
@@ -48,6 +50,7 @@ tests = testGroup "PrettyPrint" [
             \    A.GlobalDefinition A.G.Function {\n\
             \      A.G.linkage = A.L.External,\n\
             \      A.G.visibility = A.V.Default,\n\
+            \      A.G.dllStorageClass = Just A.DLL.Export,\n\
             \      A.G.callingConvention = A.CC.C,\n\
             \      A.G.returnAttributes = [],\n\
             \      A.G.returnType = A.IntegerType {A.typeBits = 32},\n\
@@ -90,6 +93,7 @@ tests = testGroup "PrettyPrint" [
       \import qualified LLVM.General.AST.Attribute as A.A\n\
       \import qualified LLVM.General.AST.CallingConvention as A.CC\n\
       \import qualified LLVM.General.AST.Constant as A.C\n\
+      \import qualified LLVM.General.AST.DLL as A.DLL\n\
       \import qualified LLVM.General.AST.DataLayout as A\n\
       \import qualified LLVM.General.AST.Float as A\n\
       \import qualified LLVM.General.AST.FloatingPointPredicate as A.FPred\n\

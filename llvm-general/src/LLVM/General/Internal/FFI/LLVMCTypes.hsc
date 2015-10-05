@@ -138,6 +138,11 @@ newtype Visibility = Visibility CUInt
 #define VIS_Rec(n) { #n, LLVM ## n ## Visibility },
 #{inject VISIBILITY, Visibility, Visibility, visibility, VIS_Rec}
 
+newtype DLLStorageClass = DLLStorageClass CUInt
+  deriving (Eq, Read, Show, Typeable, Data)
+#define DLLSC_Rec(n) { #n, LLVM ## n ## StorageClass },
+#{inject DLL_STORAGE_CLASS, DLLStorageClass, DLLStorageClass, dllStorageClass, DLLSC_Rec}
+
 newtype CallConv = CallConv CUInt
   deriving (Eq, Read, Show, Typeable, Data)
 #define CC_Rec(n) { #n, LLVM ## n ## CallConv },

@@ -24,6 +24,7 @@ import qualified LLVM.General.AST.IntegerPredicate as IPred
 
 import qualified LLVM.General.AST.Linkage as L
 import qualified LLVM.General.AST.Visibility as V
+import qualified LLVM.General.AST.DLL as DLL
 import qualified LLVM.General.AST.CallingConvention as CC
 import qualified LLVM.General.AST.FunctionAttribute as FA
 import qualified LLVM.General.AST.ParameterAttribute as PA
@@ -43,7 +44,7 @@ handString = "; ModuleID = '<string>'\n\
     \@0 = global i32 1\n\
     \@1 = external protected addrspace(3) global i32, section \"foo\"\n\
     \@2 = unnamed_addr global i8 2\n\
-    \@3 = external global %0\n\
+    \@3 = external dllimport global %0\n\
     \@4 = external global [4294967296 x i32]\n\
     \@.argyle = thread_local global i32 0\n\
     \@5 = thread_local(localdynamic) global i32 1\n\
@@ -105,6 +106,7 @@ handAST = Module "<string>" Nothing Nothing [
       },
       GlobalDefinition $ globalVariableDefaults {
         G.name = UnName 3,
+        G.dllStorageClass = Just DLL.Import,
         G.type' = NamedTypeReference (UnName 0)
       },
       GlobalDefinition $ globalVariableDefaults {

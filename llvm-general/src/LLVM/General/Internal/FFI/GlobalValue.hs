@@ -35,6 +35,12 @@ foreign import ccall unsafe "LLVMGetVisibility" getVisibility ::
 foreign import ccall unsafe "LLVMSetVisibility" setVisibility ::
     Ptr GlobalValue -> Visibility -> IO ()
 
+foreign import ccall unsafe "LLVMGetDLLStorageClass" getDLLStorageClass ::
+    Ptr GlobalValue -> IO DLLStorageClass
+
+foreign import ccall unsafe "LLVMSetDLLStorageClass" setDLLStorageClass ::
+    Ptr GlobalValue -> DLLStorageClass -> IO ()
+
 foreign import ccall unsafe "LLVMGetAlignment" getAlignment ::
     Ptr GlobalValue -> IO CUInt
 

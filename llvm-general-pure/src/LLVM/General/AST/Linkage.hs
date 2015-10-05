@@ -6,8 +6,6 @@ import LLVM.General.Prelude
 -- | <http://llvm.org/docs/LangRef.html#linkage>
 data Linkage
     = Private
-    | LinkerPrivate
-    | LinkerPrivateWeak
     | Internal
     | AvailableExternally
     | LinkOnce
@@ -18,6 +16,4 @@ data Linkage
     | LinkOnceODR
     | WeakODR
     | External
-    | DLLImport
-    | DLLExport
   deriving (Eq, Read, Show, Typeable, Data)

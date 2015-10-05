@@ -20,6 +20,7 @@ import LLVM.General.Internal.EncodeAST
 
 import qualified LLVM.General.AST.Linkage as A.L
 import qualified LLVM.General.AST.Visibility as A.V
+import qualified LLVM.General.AST.DLL as A.DLL
 import qualified LLVM.General.AST.ThreadLocalStorage as A.TLS
 
 genCodingInstance [t| A.L.Linkage |] ''FFI.Linkage [
@@ -32,12 +33,8 @@ genCodingInstance [t| A.L.Linkage |] ''FFI.Linkage [
   (FFI.linkageAppending, A.L.Appending),
   (FFI.linkageInternal, A.L.Internal),
   (FFI.linkagePrivate, A.L.Private),
-  (FFI.linkageDLLImport, A.L.DLLImport),
-  (FFI.linkageDLLExport, A.L.DLLExport),
   (FFI.linkageExternalWeak, A.L.ExternWeak),
-  (FFI.linkageCommon, A.L.Common),
-  (FFI.linkageLinkerPrivate, A.L.LinkerPrivate),
-  (FFI.linkageLinkerPrivateWeak, A.L.LinkerPrivateWeak)
+  (FFI.linkageCommon, A.L.Common)
  ]
 
 getLinkage :: FFI.DescendentOf FFI.GlobalValue v => Ptr v -> DecodeAST A.L.Linkage
@@ -57,6 +54,18 @@ getVisibility g = liftIO $ decodeM =<< FFI.getVisibility (FFI.upCast g)
 
 setVisibility :: FFI.DescendentOf FFI.GlobalValue v => Ptr v -> A.V.Visibility -> EncodeAST ()
 setVisibility g v = liftIO . FFI.setVisibility (FFI.upCast g) =<< encodeM v
+
+genCodingInstance [t| Maybe A.DLL.StorageClass |] ''FFI.DLLStorageClass [
+  (FFI.dllStorageClassDefault, Nothing),
+  (FFI.dllStorageClassDLLImport, Just A.DLL.Import),
+  (FFI.dllStorageClassDLLExport, Just A.DLL.Export)
+ ]
+
+getDLLStorageClass :: FFI.DescendentOf FFI.GlobalValue v => Ptr v -> DecodeAST (Maybe A.DLL.StorageClass)
+getDLLStorageClass g = liftIO $ decodeM =<< FFI.getDLLStorageClass (FFI.upCast g)
+
+setDLLStorageClass :: FFI.DescendentOf FFI.GlobalValue v => Ptr v -> Maybe A.DLL.StorageClass -> EncodeAST ()
+setDLLStorageClass g sc = liftIO . FFI.setDLLStorageClass (FFI.upCast g) =<< encodeM sc
 
 getSection :: FFI.DescendentOf FFI.GlobalValue v => Ptr v -> DecodeAST (Maybe String)
 getSection g = liftIO $ do

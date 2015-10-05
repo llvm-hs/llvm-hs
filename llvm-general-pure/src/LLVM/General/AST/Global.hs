@@ -10,6 +10,7 @@ import LLVM.General.AST.AddrSpace
 import LLVM.General.AST.Instruction (Named, Instruction, Terminator)
 import qualified LLVM.General.AST.Linkage as L
 import qualified LLVM.General.AST.Visibility as V
+import qualified LLVM.General.AST.DLL as DLL
 import qualified LLVM.General.AST.CallingConvention as CC
 import qualified LLVM.General.AST.ThreadLocalStorage as TLS
 import qualified LLVM.General.AST.Attribute as A
@@ -21,6 +22,7 @@ data Global
         name :: Name,
         linkage :: L.Linkage,
         visibility :: V.Visibility,
+        dllStorageClass :: Maybe DLL.StorageClass,
         threadLocalMode :: Maybe TLS.Model,
         addrSpace :: AddrSpace,
         hasUnnamedAddr :: Bool,
@@ -35,6 +37,7 @@ data Global
         name :: Name,
         linkage :: L.Linkage,
         visibility :: V.Visibility,
+        dllStorageClass :: Maybe DLL.StorageClass,
         threadLocalMode :: Maybe TLS.Model,
         hasUnnamedAddr :: Bool,
         type' :: Type,
@@ -44,6 +47,7 @@ data Global
     | Function {
         linkage :: L.Linkage,
         visibility :: V.Visibility,
+        dllStorageClass :: Maybe DLL.StorageClass,
         callingConvention :: CC.CallingConvention,
         returnAttributes :: [A.ParameterAttribute],
         returnType :: Type,
@@ -75,6 +79,7 @@ globalVariableDefaults =
   name = error "global variable name not defined",
   linkage = L.External,
   visibility = V.Default,
+  dllStorageClass = Nothing,
   threadLocalMode = Nothing,
   addrSpace = AddrSpace 0,
   hasUnnamedAddr = False,
@@ -92,6 +97,7 @@ globalAliasDefaults =
     name = error "global alias name not defined",
     linkage = L.External,
     visibility = V.Default,
+    dllStorageClass = Nothing,
     threadLocalMode = Nothing,
     hasUnnamedAddr = False,
     type' = error "global alias type not defined",
@@ -104,6 +110,7 @@ functionDefaults =
   Function {
     linkage = L.External,
     visibility = V.Default,
+    dllStorageClass = Nothing,
     callingConvention = CC.C,
     returnAttributes = [],
     returnType = error "function return type not defined",

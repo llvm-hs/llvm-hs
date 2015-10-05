@@ -63,6 +63,7 @@ library
     LLVM.General.AST.ThreadLocalStorage
     LLVM.General.AST.Type
     LLVM.General.AST.Visibility
+    LLVM.General.AST.DLL
     LLVM.General.DataLayout
     LLVM.General.PrettyPrint
     LLVM.General.Prelude

@@ -94,6 +94,7 @@ record name fields = do
   name <+> braces (punctuate comma [ n <+> "=" <+> v | (n,v) <- fields ])
 
 ctor :: QTree -> [QTree] -> QTree
+ctor name [] = name
 ctor name fields = do
   p <- asks precedence
   parensIfNeeded appPrec (foldl (<+>) name fields)
