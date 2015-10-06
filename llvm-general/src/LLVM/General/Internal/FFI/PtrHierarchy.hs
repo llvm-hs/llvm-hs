@@ -46,10 +46,15 @@ data GlobalValue
 
 instance ChildOf Constant GlobalValue
 
+-- | <http://llvm.org/doxygen/classllvm_1_1GlobalObject.html>
+data GlobalObject
+
+instance ChildOf GlobalValue GlobalObject
+
 -- | <http://llvm.org/doxygen/classllvm_1_1GlobalVariable.html>
 data GlobalVariable
 
-instance ChildOf GlobalValue GlobalVariable
+instance ChildOf GlobalObject GlobalVariable
 
 -- | <http://llvm.org/doxygen/classllvm_1_1GlobalAlias.html>
 data GlobalAlias
@@ -59,7 +64,7 @@ instance ChildOf GlobalValue GlobalAlias
 -- | <http://llvm.org/doxygen/classllvm_1_1Function.html>
 data Function
 
-instance ChildOf GlobalValue Function
+instance ChildOf GlobalObject Function
 
 -- | <http://llvm.org/doxygen/classllvm_1_1BasicBlock.html>
 data BasicBlock

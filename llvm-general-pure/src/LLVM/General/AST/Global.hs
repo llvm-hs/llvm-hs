@@ -30,6 +30,7 @@ data Global
         type' :: Type,
         initializer :: Maybe Constant,
         section :: Maybe String,
+        comdat :: Maybe String,
         alignment :: Word32
       }
     -- | <http://llvm.org/docs/LangRef.html#aliases>
@@ -55,6 +56,7 @@ data Global
         parameters :: ([Parameter],Bool), -- ^ snd indicates varargs
         functionAttributes :: [Either A.GroupID A.FunctionAttribute],
         section :: Maybe String,
+        comdat :: Maybe String,
         alignment :: Word32,
         garbageCollectorName :: Maybe String,
         prefix :: Maybe Constant,
@@ -87,6 +89,7 @@ globalVariableDefaults =
   type' = error "global variable type not defined",
   initializer = Nothing,
   section = Nothing,
+  comdat = Nothing,
   alignment = 0
   }
 
@@ -118,6 +121,7 @@ functionDefaults =
     parameters = ([], False),
     functionAttributes = [],
     section = Nothing,
+    comdat = Nothing,
     alignment = 0,
     garbageCollectorName = Nothing,
     prefix = Nothing,

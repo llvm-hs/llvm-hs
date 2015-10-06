@@ -6,9 +6,10 @@ module LLVM.General.Internal.Global where
 
 import LLVM.General.Prelude
 
-import Control.Monad.IO.Class
-import Foreign.Ptr
+import Control.Monad.State
 import Control.Monad.AnyCont
+import Foreign.Ptr
+import qualified Data.Map as Map
 
 import qualified LLVM.General.Internal.FFI.PtrHierarchy as FFI
 import qualified LLVM.General.Internal.FFI.LLVMCTypes as FFI
@@ -20,6 +21,7 @@ import LLVM.General.Internal.EncodeAST
 
 import qualified LLVM.General.AST.Linkage as A.L
 import qualified LLVM.General.AST.Visibility as A.V
+import qualified LLVM.General.AST.COMDAT as A.COMDAT
 import qualified LLVM.General.AST.DLL as A.DLL
 import qualified LLVM.General.AST.ThreadLocalStorage as A.TLS
 
@@ -76,6 +78,39 @@ setSection :: FFI.DescendentOf FFI.GlobalValue v => Ptr v -> Maybe String -> Enc
 setSection g s = scopeAnyCont $ do
   s <- encodeM (maybe "" id s)
   liftIO $ FFI.setSection (FFI.upCast g) s
+
+genCodingInstance [t| A.COMDAT.SelectionKind |] ''FFI.COMDATSelectionKind [
+  (FFI.comdatSelectionKindAny, A.COMDAT.Any),
+  (FFI.comdatSelectionKindExactMatch, A.COMDAT.ExactMatch),
+  (FFI.comdatSelectionKindLargest, A.COMDAT.Largest),
+  (FFI.comdatSelectionKindNoDuplicates, A.COMDAT.NoDuplicates),
+  (FFI.comdatSelectionKindSameSize, A.COMDAT.SameSize)
+ ]
+
+instance DecodeM DecodeAST (String, A.COMDAT.SelectionKind) (Ptr FFI.COMDAT) where
+  decodeM c = return (,)
+              `ap` (decodeM $ FFI.getCOMDATName c)
+              `ap` (decodeM =<< liftIO (FFI.getCOMDATSelectionKind c))
+
+getCOMDATName :: FFI.DescendentOf FFI.GlobalValue v => Ptr v -> DecodeAST (Maybe String)
+getCOMDATName g = do
+  c <- liftIO $ FFI.getCOMDAT (FFI.upCast g)
+  if c == nullPtr
+   then return Nothing
+   else do
+     cds <- gets comdats
+     liftM Just $ case Map.lookup c cds of
+       Just (name, _) -> return name
+       Nothing -> do
+          cd@(name, _) <- decodeM c
+          modify $ \s -> s { comdats = Map.insert c cd cds }
+          return name
+
+setCOMDAT :: FFI.DescendentOf FFI.GlobalObject v => Ptr v -> Maybe String -> EncodeAST ()
+setCOMDAT _ Nothing = return ()
+setCOMDAT g (Just name) = do
+  cd <- referCOMDAT name
+  liftIO $ FFI.setCOMDAT (FFI.upCast g) cd
 
 setAlignment :: FFI.DescendentOf FFI.GlobalValue v => Ptr v -> Word32 -> EncodeAST ()
 setAlignment g i = liftIO $ FFI.setAlignment (FFI.upCast g) (fromIntegral i)

@@ -31,6 +31,7 @@ import qualified LLVM.General.AST.ParameterAttribute as PA
 import qualified LLVM.General.AST.ThreadLocalStorage as TLS
 import qualified LLVM.General.AST.Global as G
 import qualified LLVM.General.AST.Constant as C
+import qualified LLVM.General.AST.COMDAT as COMDAT
 
 import qualified LLVM.General.Relocation as R
 import qualified LLVM.General.CodeModel as CM
@@ -41,8 +42,10 @@ handString = "; ModuleID = '<string>'\n\
     \%0 = type { i32, %1*, %0* }\n\
     \%1 = type opaque\n\
     \\n\
+    \$bob = comdat largest\n\
+    \\n\
     \@0 = global i32 1\n\
-    \@1 = external protected addrspace(3) global i32, section \"foo\"\n\
+    \@1 = external protected addrspace(3) global i32, section \"foo\", comdat $bob\n\
     \@2 = unnamed_addr global i8 2\n\
     \@3 = external dllimport global %0\n\
     \@4 = external global [4294967296 x i32]\n\
@@ -96,7 +99,8 @@ handAST = Module "<string>" Nothing Nothing [
         G.visibility = V.Protected,
         G.type' = i32,
         G.addrSpace = AddrSpace 3,
-        G.section = Just "foo"
+        G.section = Just "foo",
+        G.comdat = Just "bob"
       },
       GlobalDefinition $ globalVariableDefaults {
         G.name = UnName 2,
@@ -227,8 +231,9 @@ handAST = Module "<string>" Nothing Nothing [
            )
          ]
         },
-      FunctionAttributes (FA.GroupID 0) [FA.NoUnwind, FA.ReadNone, FA.UWTable, FA.StringAttribute "eep" ""]
-      ]
+      FunctionAttributes (FA.GroupID 0) [FA.NoUnwind, FA.ReadNone, FA.UWTable, FA.StringAttribute "eep" ""],
+      COMDAT "bob" COMDAT.Largest
+     ]
 
 tests = testGroup "Module" [
   testGroup "withModuleFromString" [

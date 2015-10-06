@@ -23,6 +23,10 @@ LLVMValueRef LLVM_General_GetNextAlias(LLVMValueRef a) {
 	return wrap(i);
 }
 
+Comdat *LLVM_General_GetOrInsertCOMDAT(LLVMModuleRef m, const char *name) {
+  return unwrap(m)->getOrInsertComdat(name);
+}
+
 LLVMValueRef LLVM_General_JustAddAlias(LLVMModuleRef m, LLVMTypeRef ty, unsigned addrspace, const char *name) {
 	return wrap(GlobalAlias::create(unwrap(ty), addrspace, GlobalValue::ExternalLinkage, name, 0, unwrap(m)));
 }

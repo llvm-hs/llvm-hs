@@ -58,6 +58,7 @@ tests = testGroup "PrettyPrint" [
             \      A.G.parameters = ([A.G.Parameter A.IntegerType { A.typeBits = 32 } (A.Name \"x\") []], False),\n\
             \      A.G.functionAttributes = [],\n\
             \      A.G.section = Nothing,\n\
+            \      A.G.comdat = Nothing,\n\
             \      A.G.alignment = 0,\n\
             \      A.G.garbageCollectorName = Nothing,\n\
             \      A.G.prefix = Nothing,\n\
@@ -91,6 +92,7 @@ tests = testGroup "PrettyPrint" [
       \import qualified LLVM.General.AST as A\n\
       \import qualified LLVM.General.AST.AddrSpace as A\n\
       \import qualified LLVM.General.AST.Attribute as A.A\n\
+      \import qualified LLVM.General.AST.COMDAT as A.COMDAT\n\
       \import qualified LLVM.General.AST.CallingConvention as A.CC\n\
       \import qualified LLVM.General.AST.Constant as A.C\n\
       \import qualified LLVM.General.AST.DLL as A.DLL\n\

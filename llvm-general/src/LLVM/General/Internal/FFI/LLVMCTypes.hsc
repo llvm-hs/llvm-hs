@@ -138,6 +138,11 @@ newtype Visibility = Visibility CUInt
 #define VIS_Rec(n) { #n, LLVM ## n ## Visibility },
 #{inject VISIBILITY, Visibility, Visibility, visibility, VIS_Rec}
 
+newtype COMDATSelectionKind = COMDATSelectionKind CUInt
+  deriving (Eq, Read, Show, Typeable, Data)
+#define CSK(n) { #n, LLVM_General_COMDAT_Selection_Kind_ ## n },
+#{inject COMDAT_SELECTION_KIND, COMDATSelectionKind, COMDATSelectionKind, comdatSelectionKind, CSK}
+
 newtype DLLStorageClass = DLLStorageClass CUInt
   deriving (Eq, Read, Show, Typeable, Data)
 #define DLLSC_Rec(n) { #n, LLVM ## n ## StorageClass },

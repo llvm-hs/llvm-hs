@@ -236,8 +236,16 @@ withModuleFromAST context@(Context c) (A.Module moduleId dataLayout triple defin
      defineType n t'
      return $ do
        maybe (return ()) (setNamedType t') t
-       return . return . return $ return ()
+       return . return . return . return $ ()
 
+   A.COMDAT n csk -> do
+     n' <- encodeM n
+     csk <- encodeM csk
+     cd <- liftIO $ FFI.getOrInsertCOMDAT m n'
+     liftIO $ FFI.setCOMDATSelectionKind cd csk
+     defineCOMDAT n cd
+     return . return . return . return . return $ ()
+     
    A.MetadataNodeDefinition i os -> return . return $ do
      t <- liftIO $ FFI.createTemporaryMDNodeInContext c
      defineMDNode i t
@@ -282,6 +290,7 @@ withModuleFromAST context@(Context c) (A.Module moduleId dataLayout triple defin
          return $ do
            maybe (return ()) ((liftIO . FFI.setInitializer g') <=< encodeM) (A.G.initializer g)
            setSection g' (A.G.section g)
+           setCOMDAT g' (A.G.comdat g)
            setAlignment g' (A.G.alignment g)
            return (FFI.upCast g')
        (a@A.G.GlobalAlias { A.G.name = n }) -> do
@@ -297,7 +306,7 @@ withModuleFromAST context@(Context c) (A.Module moduleId dataLayout triple defin
            setThreadLocalMode a' (A.G.threadLocalMode a)
            (liftIO . FFI.setAliasee a') =<< encodeM (A.G.aliasee a)
            return (FFI.upCast a')
-       (A.Function _ _ _ cc rAttrs resultType fName (args, isVarArgs) attrs _ _ gc prefix blocks) -> do
+       (A.Function _ _ _ cc rAttrs resultType fName (args, isVarArgs) attrs _ _ _ gc prefix blocks) -> do
          typ <- encodeM $ A.FunctionType resultType [t | A.Parameter t _ _ <- args] isVarArgs
          f <- liftIO . withName fName $ \fName -> FFI.addFunction m fName typ
          defineGlobal fName f
@@ -306,6 +315,7 @@ withModuleFromAST context@(Context c) (A.Module moduleId dataLayout triple defin
          setFunctionAttributes f (MixedAttributeSet attrs rAttrs (Map.fromList $ zip [0..] [pa | A.Parameter _ _ pa <- args]))
          setPrefixData f prefix
          setSection f (A.G.section g)
+         setCOMDAT f (A.G.comdat g)
          setAlignment f (A.G.alignment g)
          setGC f gc
          forM blocks $ \(A.BasicBlock bName _ _) -> do
@@ -375,6 +385,7 @@ moduleAST (Module mod) = runDecodeAST $ do
                       i <- liftIO $ FFI.getInitializer g
                       if i == nullPtr then return Nothing else Just <$> decodeM i)
                `ap` getSection g
+               `ap` getCOMDATName g
                `ap` getAlignment g,
 
           do
@@ -416,6 +427,7 @@ moduleAST (Module mod) = runDecodeAST $ do
                  `ap` return (parameters, isVarArg)
                  `ap` return fAttrs
                  `ap` getSection f
+                 `ap` getCOMDATName f
                  `ap` getAlignment f
                  `ap` getGC f
                  `ap` getPrefixData f
@@ -442,5 +454,7 @@ moduleAST (Module mod) = runDecodeAST $ do
          ags <- gets $ Map.toList . functionAttributeSetIDs
          forM ags $ \(as, gid) -> return A.FunctionAttributes `ap` return gid `ap` decodeM as
 
-       return $ tds ++ ias ++ gs ++ nmds ++ mds ++ ags
+       cds <- gets $ map (uncurry A.COMDAT) . Map.elems . comdats
+
+       return $ tds ++ ias ++ gs ++ nmds ++ mds ++ ags ++ cds
    )

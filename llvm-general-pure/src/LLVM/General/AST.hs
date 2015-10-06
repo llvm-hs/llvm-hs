@@ -25,6 +25,7 @@ import LLVM.General.AST.Operand
 import LLVM.General.AST.Instruction
 import LLVM.General.AST.DataLayout
 import qualified LLVM.General.AST.Attribute as A
+import qualified LLVM.General.AST.COMDAT as COMDAT
 
 -- | Any thing which can be at the top level of a 'Module'
 data Definition 
@@ -34,6 +35,7 @@ data Definition
   | NamedMetadataDefinition String [MetadataNodeID]
   | ModuleInlineAssembly String
   | FunctionAttributes A.GroupID [A.FunctionAttribute]
+  | COMDAT String COMDAT.SelectionKind
     deriving (Eq, Read, Show, Typeable, Data)
 
 -- | <http://llvm.org/docs/LangRef.html#modulestructure>

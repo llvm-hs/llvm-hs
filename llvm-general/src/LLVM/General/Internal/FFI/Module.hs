@@ -9,6 +9,7 @@ import Foreign.Ptr
 import Foreign.C
 
 import LLVM.General.Internal.FFI.Context
+import LLVM.General.Internal.FFI.GlobalValue (COMDAT)
 import LLVM.General.Internal.FFI.LLVMCTypes
 import LLVM.General.Internal.FFI.PtrHierarchy
 import LLVM.General.Internal.FFI.Type
@@ -50,6 +51,9 @@ foreign import ccall unsafe "LLVM_General_GetFirstAlias" getFirstAlias ::
 
 foreign import ccall unsafe "LLVM_General_GetNextAlias" getNextAlias ::
   Ptr GlobalAlias -> IO (Ptr GlobalAlias)
+
+foreign import ccall unsafe "LLVM_General_GetOrInsertCOMDAT" getOrInsertCOMDAT ::
+  Ptr Module -> CString -> IO (Ptr COMDAT)
 
 foreign import ccall unsafe "LLVMGetFirstFunction" getFirstFunction ::
   Ptr Module -> IO (Ptr Function)

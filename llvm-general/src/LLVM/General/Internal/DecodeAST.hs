@@ -21,6 +21,7 @@ import Data.Array (Array)
 import qualified Data.Array as Array
 
 import qualified LLVM.General.Internal.FFI.Attribute as FFI
+import qualified LLVM.General.Internal.FFI.GlobalValue as FFI
 import qualified LLVM.General.Internal.FFI.PtrHierarchy as FFI
 import qualified LLVM.General.Internal.FFI.Value as FFI
 import qualified LLVM.General.Internal.FFI.Type as FFI
@@ -28,6 +29,7 @@ import qualified LLVM.General.Internal.FFI.Type as FFI
 import qualified LLVM.General.AST.Name as A
 import qualified LLVM.General.AST.Operand as A (MetadataNodeID(..))
 import qualified LLVM.General.AST.Attribute as A.A
+import qualified LLVM.General.AST.COMDAT as A.COMDAT
 
 import LLVM.General.Internal.Coding
 import LLVM.General.Internal.String ()
@@ -44,7 +46,8 @@ data DecodeState = DecodeState {
     metadataNodes :: Map (Ptr FFI.MDNode) A.MetadataNodeID,
     metadataKinds :: Array Word String,
     parameterAttributeSets :: Map FFI.ParameterAttributeSet [A.A.ParameterAttribute],
-    functionAttributeSetIDs :: Map FFI.FunctionAttributeSet A.A.GroupID
+    functionAttributeSetIDs :: Map FFI.FunctionAttributeSet A.A.GroupID,
+    comdats :: Map (Ptr FFI.COMDAT) (String, A.COMDAT.SelectionKind)
   }
 initialDecode = DecodeState {
     globalVarNum = Map.empty,
@@ -56,7 +59,8 @@ initialDecode = DecodeState {
     metadataNodes = Map.empty,
     metadataKinds = Array.listArray (1,0) [],
     parameterAttributeSets = Map.empty,
-    functionAttributeSetIDs = Map.empty
+    functionAttributeSetIDs = Map.empty,
+    comdats = Map.empty
   }
 newtype DecodeAST a = DecodeAST { unDecodeAST :: AnyContT (StateT DecodeState IO) a }
   deriving (

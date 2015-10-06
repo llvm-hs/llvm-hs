@@ -19,6 +19,19 @@
 	macro(Hidden)																	\
 	macro(Protected)															\
 
+#define LLVM_GENERAL_FOR_EACH_COMDAT_SELECTION_KIND(macro)	\
+	macro(Any)                                                \
+	macro(ExactMatch)                                         \
+	macro(Largest)                                            \
+	macro(NoDuplicates)                                       \
+	macro(SameSize)
+
+typedef enum {
+#define ENUM_CASE(n) LLVM_General_COMDAT_Selection_Kind_ ## n,
+LLVM_GENERAL_FOR_EACH_COMDAT_SELECTION_KIND(ENUM_CASE)
+#undef ENUM_CASE
+} LLVM_General_COMDAT_Selection_Kind;
+
 #define LLVM_GENERAL_FOR_EACH_DLL_STORAGE_CLASS(macro)	\
 	macro(Default)                                        \
 	macro(DLLImport)                                      \

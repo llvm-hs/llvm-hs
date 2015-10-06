@@ -64,6 +64,7 @@ library
     LLVM.General.AST.Type
     LLVM.General.AST.Visibility
     LLVM.General.AST.DLL
+    LLVM.General.AST.COMDAT
     LLVM.General.DataLayout
     LLVM.General.PrettyPrint
     LLVM.General.Prelude
