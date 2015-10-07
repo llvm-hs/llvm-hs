@@ -2,6 +2,7 @@ module LLVM.General.Test.Tests where
 
 import Test.Framework
 
+import qualified LLVM.General.Test.CallingConvention as CallingConvention
 import qualified LLVM.General.Test.Constants as Constants
 import qualified LLVM.General.Test.DataLayout as DataLayout
 import qualified LLVM.General.Test.ExecutionEngine as ExecutionEngine
@@ -17,6 +18,7 @@ import qualified LLVM.General.Test.Linking as Linking
 import qualified LLVM.General.Test.Instrumentation as Instrumentation
 
 tests = testGroup "llvm-general" [
+    CallingConvention.tests,
     Constants.tests,
     DataLayout.tests,
     ExecutionEngine.tests,

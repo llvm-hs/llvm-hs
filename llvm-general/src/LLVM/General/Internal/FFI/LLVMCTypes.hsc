@@ -18,7 +18,7 @@ import LLVM.General.Prelude
 #include "LLVM/General/Internal/FFI/SMDiagnostic.h"
 #include "LLVM/General/Internal/FFI/InlineAssembly.h"
 #include "LLVM/General/Internal/FFI/Target.h"
-#include "LLVM/General/Internal/FFI/Function.h"
+#include "LLVM/General/Internal/FFI/CallingConvention.h"
 #include "LLVM/General/Internal/FFI/GlobalValue.h"
 #include "LLVM/General/Internal/FFI/Type.h"
 #include "LLVM/General/Internal/FFI/Constant.h"
@@ -148,10 +148,10 @@ newtype DLLStorageClass = DLLStorageClass CUInt
 #define DLLSC_Rec(n) { #n, LLVM ## n ## StorageClass },
 #{inject DLL_STORAGE_CLASS, DLLStorageClass, DLLStorageClass, dllStorageClass, DLLSC_Rec}
 
-newtype CallConv = CallConv CUInt
+newtype CallingConvention = CallingConvention CUInt
   deriving (Eq, Read, Show, Typeable, Data)
-#define CC_Rec(n) { #n, LLVM ## n ## CallConv },
-#{inject CALLCONV, CallConv, CallConv, callConv, CC_Rec}
+#define CC_Rec(l, n) { #l, LLVM_General_CallingConvention_ ## l },
+#{inject CALLING_CONVENTION, CallingConvention, CallingConvention, callingConvention, CC_Rec}
 
 newtype ThreadLocalMode = ThreadLocalMode CUInt
   deriving (Eq, Read, Show, Typeable, Data)

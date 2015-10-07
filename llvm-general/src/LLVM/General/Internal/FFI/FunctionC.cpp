@@ -6,6 +6,7 @@
 
 #include "llvm-c/Core.h"
 #include "LLVM/General/Internal/FFI/AttributeC.hpp"
+#include "LLVM/General/Internal/FFI/CallingConventionC.hpp"
 
 using namespace llvm;
 
@@ -42,6 +43,16 @@ LLVMValueRef LLVM_General_GetFunctionPrefixData(LLVMValueRef f) {
 
 void LLVM_General_SetFunctionPrefixData(LLVMValueRef f, LLVMValueRef p) {
   unwrap<Function>(f)->setPrefixData(unwrap<Constant>(p));
+}
+
+unsigned LLVM_General_GetFunctionCallingConvention(LLVMValueRef f) {
+  LLVM_General_CallingConventionEnumMatches();
+  return unsigned(unwrap<Function>(f)->getCallingConv());
+}
+
+void LLVM_General_SetFunctionCallingConvention(LLVMValueRef f, unsigned cc) {
+  LLVM_General_CallingConventionEnumMatches();
+  unwrap<Function>(f)->setCallingConv(llvm::CallingConv::ID(cc));
 }
 
 }

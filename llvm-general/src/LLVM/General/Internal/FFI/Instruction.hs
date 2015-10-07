@@ -34,11 +34,11 @@ foreign import ccall unsafe "LLVMGetICmpPredicate" getICmpPredicate ::
 foreign import ccall unsafe "LLVM_General_GetFCmpPredicate" getFCmpPredicate ::
   Ptr Instruction -> IO FCmpPredicate
 
-foreign import ccall unsafe "LLVMGetInstructionCallConv" getInstructionCallConv ::
-  Ptr Instruction -> IO CallConv
+foreign import ccall unsafe "LLVM_General_GetCallSiteCallingConvention" getCallSiteCallingConvention ::
+  Ptr Instruction -> IO CallingConvention
 
-foreign import ccall unsafe "LLVMSetInstructionCallConv" setInstructionCallConv ::
-  Ptr Instruction -> CallConv -> IO ()
+foreign import ccall unsafe "LLVM_General_SetCallSiteCallingConvention" setCallSiteCallingConvention ::
+  Ptr Instruction -> CallingConvention -> IO ()
 
 foreign import ccall unsafe "LLVM_General_GetTailCallKind" getTailCallKind ::
   Ptr Instruction -> IO TailCallKind
@@ -46,13 +46,13 @@ foreign import ccall unsafe "LLVM_General_GetTailCallKind" getTailCallKind ::
 foreign import ccall unsafe "LLVM_General_SetTailCallKind" setTailCallKind ::
   Ptr Instruction -> TailCallKind -> IO ()
 
-foreign import ccall unsafe "LLVM_General_GetCallInstCalledValue" getCallInstCalledValue ::
+foreign import ccall unsafe "LLVM_General_GetCallSiteCalledValue" getCallSiteCalledValue ::
   Ptr Instruction -> IO (Ptr Value)
 
-foreign import ccall unsafe "LLVM_General_GetCallInstAttributeSet" getCallInstAttributeSet ::
+foreign import ccall unsafe "LLVM_General_GetCallSiteAttributeSet" getCallSiteAttributeSet ::
   Ptr Instruction -> IO MixedAttributeSet
 
-foreign import ccall unsafe "LLVM_General_SetCallInstAttributeSet" setCallInstAttributeSet ::
+foreign import ccall unsafe "LLVM_General_SetCallSiteAttributeSet" setCallSiteAttributeSet ::
   Ptr Instruction -> MixedAttributeSet -> IO ()
                      
 foreign import ccall unsafe "LLVMAddIncoming" addIncoming' ::

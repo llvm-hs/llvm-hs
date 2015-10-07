@@ -311,7 +311,7 @@ withModuleFromAST context@(Context c) (A.Module moduleId dataLayout triple defin
          f <- liftIO . withName fName $ \fName -> FFI.addFunction m fName typ
          defineGlobal fName f
          cc <- encodeM cc
-         liftIO $ FFI.setFunctionCallConv f cc
+         liftIO $ FFI.setFunctionCallingConvention f cc
          setFunctionAttributes f (MixedAttributeSet attrs rAttrs (Map.fromList $ zip [0..] [pa | A.Parameter _ _ pa <- args]))
          setPrefixData f prefix
          setSection f (A.G.section g)
@@ -420,7 +420,7 @@ moduleAST (Module mod) = runDecodeAST $ do
                  `ap` getLinkage f
                  `ap` getVisibility f
                  `ap` getDLLStorageClass f
-                 `ap` (liftIO $ decodeM =<< FFI.getFunctionCallConv f)
+                 `ap` (liftIO $ decodeM =<< FFI.getFunctionCallingConvention f)
                  `ap` return rAttrs
                  `ap` return returnType
                  `ap` return n

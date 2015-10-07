@@ -20,8 +20,9 @@ extra-source-files:
   src/LLVM/General/Internal/FFI/Attribute.h
   src/LLVM/General/Internal/FFI/AttributeC.hpp
   src/LLVM/General/Internal/FFI/BinaryOperator.h
+  src/LLVM/General/Internal/FFI/CallingConvention.h
+  src/LLVM/General/Internal/FFI/CallingConventionC.hpp
   src/LLVM/General/Internal/FFI/Constant.h
-  src/LLVM/General/Internal/FFI/Function.h
   src/LLVM/General/Internal/FFI/GlobalValue.h
   src/LLVM/General/Internal/FFI/InlineAssembly.h
   src/LLVM/General/Internal/FFI/Instruction.h
@@ -218,6 +219,7 @@ test-suite test
   main-is: Test.hs
   other-modules:
     LLVM.General.Test.Analysis
+    LLVM.General.Test.CallingConvention
     LLVM.General.Test.Constants
     LLVM.General.Test.DataLayout
     LLVM.General.Test.ExecutionEngine

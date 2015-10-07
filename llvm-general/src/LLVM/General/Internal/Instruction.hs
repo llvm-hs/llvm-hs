@@ -50,7 +50,7 @@ import qualified LLVM.General.AST as A
 import qualified LLVM.General.AST.Constant as A.C
 
 callInstAttributeSet :: Ptr FFI.Instruction -> DecodeAST MixedAttributeSet
-callInstAttributeSet = decodeM <=< liftIO . FFI.getCallInstAttributeSet
+callInstAttributeSet = decodeM <=< liftIO . FFI.getCallSiteAttributeSet
 
 meta :: Ptr FFI.Instruction -> DecodeAST A.InstructionMetadata
 meta i = do
@@ -123,9 +123,9 @@ instance DecodeM DecodeAST A.Terminator (Ptr FFI.Instruction) where
            A.metadata' = md
         }
       [instrP|Invoke|] -> do
-        cc <- decodeM =<< liftIO (FFI.getInstructionCallConv i)
+        cc <- decodeM =<< liftIO (FFI.getCallSiteCallingConvention i)
         attrs <- callInstAttributeSet i
-        fv <- liftIO $ FFI.getCallInstCalledValue i
+        fv <- liftIO $ FFI.getCallSiteCalledValue i
         f <- decodeM fv
         args <- forM [1..nOps-3] $ \j -> do
                   let pAttrs = Map.findWithDefault [] (j-1) (parameterAttributes attrs)
@@ -208,9 +208,9 @@ instance EncodeM EncodeAST A.Terminator (Ptr FFI.Instruction) where
         (n, argvs) <- encodeM argvs
         i <- liftIO $ FFI.buildInvoke builder fv argvs n rb eb s
         attrs <- encodeM $ MixedAttributeSet fAttrs rAttrs (Map.fromList (zip [0..] argAttrs))
-        liftIO $ FFI.setCallInstAttributeSet i attrs
+        liftIO $ FFI.setCallSiteAttributeSet i attrs
         cc <- encodeM cc
-        liftIO $ FFI.setInstructionCallConv i cc
+        liftIO $ FFI.setCallSiteCallingConvention i cc
         return $ FFI.upCast i
       A.Resume { 
         A.operand0' = op0
@@ -270,10 +270,10 @@ $(do
                 "iPredicate" -> ([], [| decodeM =<< liftIO (FFI.getICmpPredicate i) |])
                 "fpPredicate" -> ([], [| decodeM =<< liftIO (FFI.getFCmpPredicate i) |])
                 "tailCallKind" -> ([], [| decodeM =<< liftIO (FFI.getTailCallKind i) |])
-                "callingConvention" -> ([], [| decodeM =<< liftIO (FFI.getInstructionCallConv i) |])
+                "callingConvention" -> ([], [| decodeM =<< liftIO (FFI.getCallSiteCallingConvention i) |])
                 "attrs" -> ([], [| callInstAttributeSet i |])
                 "returnAttributes" -> (["attrs"], [| return $ returnAttributes $(TH.dyn "attrs") |])
-                "f" -> ([], [| liftIO $ FFI.getCallInstCalledValue i |])
+                "f" -> ([], [| liftIO $ FFI.getCallSiteCalledValue i |])
                 "function" -> (["f"], [| decodeM $(TH.dyn "f") |])
                 "arguments" -> ([], [| forM [1..nOps-1] $ \j -> do
                                          let pAttrs = Map.findWithDefault [] (j-1) (parameterAttributes $(TH.dyn "attrs"))
@@ -392,11 +392,11 @@ $(do
             (n, argvs) <- encodeM argvs
             i <- liftIO $ FFI.buildCall builder fv argvs n s
             attrs <- encodeM $ MixedAttributeSet fAttrs rAttrs (Map.fromList (zip [0..] argAttrs))
-            liftIO $ FFI.setCallInstAttributeSet i attrs     
+            liftIO $ FFI.setCallSiteAttributeSet i attrs     
             tck <- encodeM tck
             liftIO $ FFI.setTailCallKind i tck
             cc <- encodeM cc
-            liftIO $ FFI.setInstructionCallConv i cc
+            liftIO $ FFI.setCallSiteCallingConvention i cc
             return' i
           A.Select { A.condition' = c, A.trueValue = t, A.falseValue = f } -> do
             c' <- encodeM c

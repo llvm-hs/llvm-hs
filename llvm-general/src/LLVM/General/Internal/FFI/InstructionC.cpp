@@ -12,6 +12,7 @@
 
 #include "LLVM/General/Internal/FFI/AttributeC.hpp"
 #include "LLVM/General/Internal/FFI/Instruction.h"
+#include "LLVM/General/Internal/FFI/CallingConventionC.hpp"
 
 using namespace llvm;
 
@@ -76,18 +77,26 @@ LLVMFastMathFlags LLVM_General_GetFastMathFlags(LLVMValueRef val) {
 	return wrap(unwrap<Instruction>(val)->getFastMathFlags());
 }
 
-LLVMValueRef LLVM_General_GetCallInstCalledValue(
-	LLVMValueRef callInst
-) {
-	return wrap(CallSite(unwrap<Instruction>(callInst)).getCalledValue());
+LLVMValueRef LLVM_General_GetCallSiteCalledValue(LLVMValueRef i) {
+	return wrap(CallSite(unwrap<Instruction>(i)).getCalledValue());
 }
 
-const AttributeSetImpl *LLVM_General_GetCallInstAttributeSet(LLVMValueRef call_inst) {
-	return wrap(CallSite(unwrap<Instruction>(call_inst)).getAttributes());
+const AttributeSetImpl *LLVM_General_GetCallSiteAttributeSet(LLVMValueRef i) {
+	return wrap(CallSite(unwrap<Instruction>(i)).getAttributes());
 }
 
-void LLVM_General_SetCallInstAttributeSet(LLVMValueRef call_inst, const AttributeSetImpl *asi) {
-	CallSite(unwrap<Instruction>(call_inst)).setAttributes(unwrap(asi));
+void LLVM_General_SetCallSiteAttributeSet(LLVMValueRef i, const AttributeSetImpl *asi) {
+	CallSite(unwrap<Instruction>(i)).setAttributes(unwrap(asi));
+}
+
+unsigned LLVM_General_GetCallSiteCallingConvention(LLVMValueRef i) {
+  LLVM_General_CallingConventionEnumMatches();
+  return unsigned(CallSite(unwrap<Instruction>(i)).getCallingConv());
+}
+
+void LLVM_General_SetCallSiteCallingConvention(LLVMValueRef i, unsigned cc) {
+  LLVM_General_CallingConventionEnumMatches();
+  CallSite(unwrap<Instruction>(i)).setCallingConv(llvm::CallingConv::ID(cc));
 }
 
 void LLVM_General_TailCallKindEnumMatches() {
@@ -100,14 +109,14 @@ void LLVM_General_TailCallKindEnumMatches() {
 #undef CHECK
 }
 
-unsigned LLVM_General_GetTailCallKind(LLVMValueRef call) {
+unsigned LLVM_General_GetTailCallKind(LLVMValueRef i) {
 	LLVM_General_TailCallKindEnumMatches();
-	return unwrap<CallInst>(call)->getTailCallKind();
+	return unwrap<CallInst>(i)->getTailCallKind();
 }
 
-void LLVM_General_SetTailCallKind(LLVMValueRef call, unsigned kind) {
+void LLVM_General_SetTailCallKind(LLVMValueRef i, unsigned kind) {
 	LLVM_General_TailCallKindEnumMatches();
-	return unwrap<CallInst>(call)->setTailCallKind(llvm::CallInst::TailCallKind(kind));
+	return unwrap<CallInst>(i)->setTailCallKind(llvm::CallInst::TailCallKind(kind));
 }
 
 LLVMValueRef LLVM_General_GetAllocaNumElements(LLVMValueRef a) {
