@@ -14,8 +14,6 @@ description:
   llvm-general-pure is a set of pure Haskell types and functions for interacting with LLVM <http://llvm.org/>.
   It includes an ADT to represent LLVM IR (<http://llvm.org/docs/LangRef.html>). The llvm-general package
   builds on this one with FFI bindings to LLVM, but llvm-general-pure does not require LLVM to be available.
-  .
-  For haddock, see <http://bscarlet.github.io/llvm-general/3.5.0.0/doc/html/llvm-general-pure/index.html>.
    
 source-repository head
   type: git
