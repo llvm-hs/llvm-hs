@@ -269,11 +269,6 @@ getTargetMachineDataLayout (TargetMachine m) = do
 initializeAllTargets :: IO ()
 initializeAllTargets = FFI.initializeAllTargets
 
-{-# DEPRECATED withDefaultTargetMachine "use withHostTargetMachine or withTargetMachine" #-}
--- | Bracket creation and destruction of a 'TargetMachine' configured for the host.
-withDefaultTargetMachine :: (TargetMachine -> IO a) -> ExceptT String IO a
-withDefaultTargetMachine = withHostTargetMachine
-
 -- | Bracket creation and destruction of a 'TargetMachine' configured for the host
 withHostTargetMachine :: (TargetMachine -> IO a) -> ExceptT String IO a
 withHostTargetMachine f = do
