@@ -19,6 +19,12 @@ source-repository head
   type: git
   location: git://github.com/bscarlet/llvm-general.git
 
+source-repository this
+  type: git
+  location: git://github.com/bscarlet/llvm-general.git
+  branch: llvm-3.5
+  tag: llvm-pure-v3.5.0.0
+
 library
   ghc-options: -fwarn-unused-imports
   build-depends: 
