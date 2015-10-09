@@ -72,5 +72,8 @@ tests = testGroup "Target" [
       withTargetLibraryInfo triple $ \tli -> do
         lf <- getLibraryFunction tli "printf"
         lf @?= Just LF__printf
-   ]
+   ],
+  testCase "Host" $ do
+    features <- getHostCPUFeatures
+    return ()
  ]

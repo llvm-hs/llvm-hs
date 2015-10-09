@@ -258,7 +258,7 @@ tests = testGroup "Optimization" [
         let triple = "x86_64"
         (target, _) <- failInIO $ lookupTarget Nothing triple
         withTargetOptions $ \targetOptions -> do
-          withTargetMachine target triple "" Set.empty targetOptions R.Default CM.Default CGO.Default $ \tm -> do
+          withTargetMachine target triple "" Map.empty targetOptions R.Default CM.Default CGO.Default $ \tm -> do
             optimize (defaultPassSetSpec { 
                         transforms = [ T.defaultLoopVectorize ],
                         dataLayout = moduleDataLayout mIn,

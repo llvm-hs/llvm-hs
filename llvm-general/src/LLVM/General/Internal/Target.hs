@@ -15,8 +15,10 @@ import Control.Monad.AnyCont
 
 import Foreign.Ptr
 import Data.List (intercalate)
-import Data.Set (Set)
-import qualified Data.Set as Set
+import Data.Map (Map)
+import qualified Data.Map as Map
+
+import Text.ParserCombinators.Parsec hiding (many)
 
 import LLVM.General.Internal.Coding
 import LLVM.General.Internal.String ()
@@ -75,12 +77,21 @@ newtype Target = Target (Ptr FFI.Target)
 newtype CPUFeature = CPUFeature String
   deriving (Eq, Ord, Read, Show)
 
-instance EncodeM e String es => EncodeM e (Set CPUFeature) es where
-  encodeM = encodeM . intercalate " " . map (\(CPUFeature f) -> f) . Set.toList
+instance EncodeM e String es => EncodeM e (Map CPUFeature Bool) es where
+  encodeM = encodeM . intercalate "," . map (\(CPUFeature f, enabled) -> (if enabled then "+" else "-") ++ f) . Map.toList
 
-instance (Monad d, DecodeM d String es) => DecodeM d (Set CPUFeature) es where
-  decodeM = liftM (Set.fromList . map CPUFeature . words) . decodeM
-
+instance (Monad d, DecodeM d String es) => DecodeM d (Map CPUFeature Bool) es where
+  decodeM es = do
+    s <- decodeM es
+    let flag = do
+          en <- choice [char '-' >> return False, char '+' >> return True]
+          s <- many1 (noneOf ",")
+          return (CPUFeature s, en)
+        features = liftM Map.fromList (flag `sepBy` (char ','))
+    case parse (do f <- features; eof; return f) "CPU Feature string" (s :: String) of
+      Right features -> return features
+      Left _ -> fail "failure to parse CPUFeature string"
+                       
 -- | Find a 'Target' given an architecture and/or a \"triple\".
 -- | <http://llvm.org/doxygen/structllvm_1_1TargetRegistry.html#a3105b45e546c9cc3cf78d0f2ec18ad89>
 -- | Be sure to run either 'initializeAllTargets' or 'initializeNativeTarget' before expecting this to succeed, depending on what target(s) you want to use.
@@ -191,7 +202,7 @@ withTargetMachine ::
     Target
     -> String -- ^ triple
     -> String -- ^ cpu
-    -> Set CPUFeature -- ^ features
+    -> Map CPUFeature Bool -- ^ features
     -> TargetOptions
     -> Reloc.Model
     -> CodeModel.Model
@@ -255,7 +266,7 @@ getHostCPUName :: IO String
 getHostCPUName = decodeM FFI.getHostCPUName
 
 -- | a space-separated list of LLVM feature names supported by the host CPU
-getHostCPUFeatures :: IO (Set CPUFeature)
+getHostCPUFeatures :: IO (Map CPUFeature Bool)
 getHostCPUFeatures = decodeM =<< FFI.getHostCPUFeatures
 
 -- | 'DataLayout' to use for the given 'TargetMachine'

@@ -10,7 +10,7 @@ import Control.Monad.Trans.Except
 import Data.Bits
 import Data.Word
 
-import qualified Data.Set as Set
+import qualified Data.Map as Map
 
 import LLVM.General.Context
 import LLVM.General.Module
@@ -259,7 +259,7 @@ tests = testGroup "Module" [
       a <- withModuleFromLLVMAssembly' context s $ \m -> do
         (t, _) <- failInIO $ lookupTarget Nothing "x86_64-unknown-linux"
         withTargetOptions $ \to -> do
-          withTargetMachine t "x86_64-unknown-linux" "" Set.empty to R.Default CM.Default CGO.Default $ \tm -> do
+          withTargetMachine t "x86_64-unknown-linux" "" Map.empty to R.Default CM.Default CGO.Default $ \tm -> do
             failInIO $ moduleTargetAssembly tm m
       a @?= "\t.text\n\
             \\t.file\t\"<string>\"\n\

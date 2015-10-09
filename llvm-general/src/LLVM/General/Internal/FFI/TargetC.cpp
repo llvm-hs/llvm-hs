@@ -264,10 +264,11 @@ char *LLVM_General_GetHostCPUFeatures() {
 	StringMap<bool> featureMap;
 	std::string features;
 	if (sys::getHostCPUFeatures(featureMap)) {
+		bool first = true;
 		for(llvm::StringMap<bool>::const_iterator it = featureMap.begin(); it != featureMap.end(); ++it) {
-			if (it->second) {
-				features += it->first().str() + " ";
-			}
+			if (!first) { features += ","; }
+			first = false;
+			features += (it->second ? "+" : "-") + it->first().str();
 		}
 	}
 	return strdup(features.c_str());
