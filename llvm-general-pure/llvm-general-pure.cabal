@@ -16,7 +16,7 @@ description:
   llvm-general-pure is a set of pure Haskell types and functions for interacting with LLVM <http://llvm.org/>.
   It includes an ADT to represent LLVM IR (<http://llvm.org/docs/LangRef.html>). The llvm-general package
   builds on this one with FFI bindings to LLVM, but llvm-general-pure does not require LLVM to be available.
-   
+
 source-repository head
   type: git
   location: git://github.com/bscarlet/llvm-general.git
@@ -29,7 +29,7 @@ source-repository this
 
 library
   ghc-options: -fwarn-unused-imports
-  build-depends: 
+  build-depends:
     base >= 4.6 && < 5,
     transformers >= 0.4.0.0,
     mtl >= 2.2.1,
@@ -81,7 +81,7 @@ library
 
 test-suite test
   type: exitcode-stdio-1.0
-  build-depends:  
+  build-depends:
     base >= 4.6 && < 5,
     test-framework >= 0.5,
     test-framework-hunit >= 0.2.7,
