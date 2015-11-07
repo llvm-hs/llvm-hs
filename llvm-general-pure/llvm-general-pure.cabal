@@ -5,6 +5,8 @@ license-file: LICENSE
 author: Benjamin S.Scarlet <fgthb0@greynode.net>
 maintainer: Benjamin S. Scarlet <fgthb0@greynode.net>
 copyright: (c) 2013 Benjamin S. Scarlet and Google Inc.
+homepage: http://github.com/bscarlet/llvm-general/
+bug-reports: http://github.com/bscarlet/llvm-general/issues
 build-type: Simple
 stability: experimental
 cabal-version: >= 1.8
