@@ -8,6 +8,7 @@ import qualified Data.Map as Map
 import Data.Monoid
 import Data.Char
 import Distribution.Simple
+import Distribution.Simple.PreProcess
 import Distribution.Simple.Program
 import Distribution.Simple.Setup hiding (Flag)
 import Distribution.Simple.LocalBuildInfo
@@ -63,6 +64,7 @@ instance OldHookable (Args -> PackageDescription -> LocalBuildInfo -> UserHooks 
     f packageDescription localBuildInfo userHooks testFlags
     hook args packageDescription localBuildInfo userHooks testFlags
 
+llvmProgram :: Program
 llvmProgram = (simpleProgram "llvm-config") {
   programFindLocation = programSearch (programFindLocation . simpleProgram),
   programFindVersion = 
@@ -74,44 +76,49 @@ llvmProgram = (simpleProgram "llvm-config") {
       \v p -> findProgramVersion "--version" (svnToTag . trim) v p
  }
 
-main = do
-  let (ldLibraryPathVar, ldLibraryPathSep) = 
+getLLVMConfig :: ConfigFlags -> IO (String -> IO String)
+getLLVMConfig configFlags = do
+  let verbosity = fromFlag $ configVerbosity configFlags
+  (program, _, _) <- requireProgramVersion verbosity llvmProgram
+                     (withinVersion llvmVersion)
+                     (configPrograms configFlags)
+  return $ getProgramOutput verbosity program . return
+
+addToLdLibraryPath :: String -> IO ()
+addToLdLibraryPath path = do
+  let (ldLibraryPathVar, ldLibraryPathSep) =
         case buildOS of
           OSX -> ("DYLD_LIBRARY_PATH",":")
           _ -> ("LD_LIBRARY_PATH",":")
-      addToLdLibraryPath s = do
-         v <- try $ getEnv ldLibraryPathVar :: IO (Either SomeException String)
-         setEnv ldLibraryPathVar (s ++ either (const "") (ldLibraryPathSep ++) v)
-      getLLVMConfig configFlags = do
-         let verbosity = fromFlag $ configVerbosity configFlags
-         (program, _, _) <- requireProgramVersion verbosity llvmProgram
-                            (withinVersion llvmVersion)
-                            (configPrograms configFlags)
-         let llvmConfig :: [String] -> IO String
-             llvmConfig = getProgramOutput verbosity program
-         return llvmConfig
-      addLLVMToLdLibraryPath configFlags = do
-        llvmConfig <- getLLVMConfig configFlags
-        [libDir] <- liftM lines $ llvmConfig ["--libdir"]
-        addToLdLibraryPath libDir
-         
-  defaultMainWithHooks simpleUserHooks {
+  v <- try $ getEnv ldLibraryPathVar :: IO (Either SomeException String)
+  setEnv ldLibraryPathVar (path ++ either (const "") (ldLibraryPathSep ++) v)
+
+addLLVMToLdLibraryPath :: ConfigFlags -> IO ()
+addLLVMToLdLibraryPath configFlags = do
+  llvmConfig <- getLLVMConfig configFlags
+  [libDir] <- liftM lines $ llvmConfig "--libdir"
+  addToLdLibraryPath libDir
+                           
+main = do
+  let origUserHooks = simpleUserHooks
+                  
+  defaultMainWithHooks origUserHooks {
     hookedPrograms = [ llvmProgram ],
 
     confHook = \(genericPackageDescription, hookedBuildInfo) configFlags -> do
       llvmConfig <- getLLVMConfig configFlags
 
       llvmCppFlags <- do
-        l <- llvmConfig ["--cppflags"]
+        l <- llvmConfig "--cppflags"
         return $ (filter ("-D" `isPrefixOf`) $ words l) \\ (map ("-D"++) uncheckedHsFFIDefines)
-      includeDirs <- liftM lines $ llvmConfig ["--includedir"]
-      libDirs@[libDir] <- liftM lines $ llvmConfig ["--libdir"]
-      [llvmVersion] <- liftM lines $ llvmConfig ["--version"]
+      includeDirs <- liftM lines $ llvmConfig "--includedir"
+      libDirs@[libDir] <- liftM lines $ llvmConfig "--libdir"
+      [llvmVersion] <- liftM lines $ llvmConfig "--version"
       let sharedLib = case llvmVersion of
                         "3.2" -> "LLVM-3.2svn"
                         x -> "LLVM-" ++ x
-      staticLibs <- liftM (map (fromJust . stripPrefix "-l") . words) $ llvmConfig ["--libs"]
-      systemLibs <- liftM (map (fromJust . stripPrefix "-l") . words) $ llvmConfig ["--system-libs"]
+      staticLibs <- liftM (map (fromJust . stripPrefix "-l") . words) $ llvmConfig "--libs"
+      systemLibs <- liftM (map (fromJust . stripPrefix "-l") . words) $ llvmConfig "--system-libs"
 
       let genericPackageDescription' = genericPackageDescription {
             condLibrary = do
@@ -136,10 +143,17 @@ main = do
       addLLVMToLdLibraryPath configFlags'
       confHook simpleUserHooks (genericPackageDescription', hookedBuildInfo) configFlags',
 
+    hookedPreProcessors =
+      let origHookedPreprocessors = hookedPreProcessors origUserHooks
+          newHsc buildInfo localBuildInfo =
+            maybe ppHsc2hs id (lookup "hsc" origHookedPreprocessors) buildInfo' localBuildInfo
+              where buildInfo' = buildInfo { ccOptions = ccOptions buildInfo \\ ["-std=c++11"] }
+      in [("hsc", newHsc)] ++ origHookedPreprocessors,
+
     buildHook = \packageDescription localBuildInfo userHooks buildFlags -> do
-      addLLVMToLdLibraryPath (configFlags localBuildInfo)
-      buildHook simpleUserHooks packageDescription localBuildInfo userHooks buildFlags,
+          addLLVMToLdLibraryPath (configFlags localBuildInfo)
+          buildHook origUserHooks packageDescription localBuildInfo userHooks buildFlags,
 
     testHook = preHookOld (\_ localBuildInfo _ _ -> addLLVMToLdLibraryPath (configFlags localBuildInfo))
-               (testHook simpleUserHooks)
+               (testHook origUserHooks)
    }
