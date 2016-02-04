@@ -61,7 +61,7 @@ library
     base >= 4.6 && < 5,
     utf8-string >= 0.3.7,
     bytestring >= 0.9.1.10,
-    transformers >= 0.3.0.0 && < 5,
+    transformers >= 0.3.0.0 && < 0.5,
     transformers-compat,
     mtl >= 2.1.3,
     template-haskell >= 2.5.0.0,
