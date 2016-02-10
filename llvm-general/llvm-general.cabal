@@ -1,5 +1,5 @@
 name: llvm-general
-version: 3.5.1.1
+version: 3.5.1.2
 license: BSD3
 license-file: LICENSE
 author: Benjamin S.Scarlet <fgthb0@greynode.net>
@@ -43,7 +43,7 @@ source-repository this
   type: git
   location: git://github.com/bscarlet/llvm-general.git
   branch: llvm-3.5
-  tag: v3.5.1.1
+  tag: v3.5.1.2
 
 flag shared-llvm
   description: link against llvm shared rather than static library
@@ -69,7 +69,7 @@ library
     parsec >= 3.1.3,
     array >= 0.4.0.0,
     setenv >= 0.1.0,
-    llvm-general-pure == 3.5.0.0
+    llvm-general-pure == 3.5.1.0
   extra-libraries: stdc++
   hs-source-dirs: src
   extensions:
@@ -213,8 +213,8 @@ test-suite test
     HUnit >= 1.2.4.2,
     test-framework-quickcheck2 >= 0.3.0.1,
     QuickCheck >= 2.5.1.1,
-    llvm-general == 3.5.1.1,
-    llvm-general-pure == 3.5.0.0,
+    llvm-general == 3.5.1.2,
+    llvm-general-pure == 3.5.1.0,
     containers >= 0.4.2.1,
     mtl >= 2.1,
     transformers >= 0.3.0.0,
