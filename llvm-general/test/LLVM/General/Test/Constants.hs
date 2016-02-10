@@ -149,6 +149,11 @@ tests = testGroup "Constants" [
              (VectorType 2 i32))
          (C.Int 32 1),
       "global i32 extractelement (<2 x i32> bitcast (i64 ptrtoint (i32* @1 to i64) to <2 x i32>), i32 1)"
+    ), (
+     "addrspacecast",
+     (PointerType i32 (AddrSpace 1)),
+     C.AddrSpaceCast (C.GlobalReference (ptr i32) (UnName 1)) (PointerType i32 (AddrSpace 1)),
+     "global i32 addrspace(1)* addrspacecast (i32* @1 to i32 addrspace(1)*)"
 {-
     ), (
 --  This test made llvm abort as of llvm-3.2.  Now, as a new feature in llvm-3.4, it makes it report a fatal error!

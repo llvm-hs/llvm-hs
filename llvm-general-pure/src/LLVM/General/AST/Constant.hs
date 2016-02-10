@@ -168,6 +168,10 @@ data Constant
         operand0 :: Constant,
         type' :: Type
       }
+    | AddrSpaceCast {
+        operand0 :: Constant,
+        type' :: Type
+      }
     | ICmp {
         iPredicate :: IntegerPredicate,
         operand0 :: Constant,
