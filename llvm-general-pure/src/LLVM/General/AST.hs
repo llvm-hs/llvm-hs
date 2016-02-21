@@ -38,7 +38,7 @@ data Definition
   | COMDAT String COMDAT.SelectionKind
     deriving (Eq, Read, Show, Typeable, Data)
 
--- | <http://llvm.org/docs/LangRef.html#modulestructure>
+-- | <http://llvm.org/docs/LangRef.html#module-structure>
 data Module = 
   Module {
     moduleName :: String,
