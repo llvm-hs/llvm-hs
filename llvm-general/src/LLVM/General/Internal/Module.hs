@@ -78,8 +78,7 @@ instance Inject String (Either String Diagnostic) where
     inject = Left
 
 genCodingInstance [t| Bool |] ''FFI.LinkerMode [
-  (FFI.linkerModeDestroySource, False),
-  (FFI.linkerModePreserveSource, True)
+  (FFI.linkerModeDestroySource, False)
  ]
 
 -- | link LLVM modules - move or copy parts of a source module into a destination module.
@@ -113,13 +112,13 @@ instance LLVMAssemblyInput File where
   llvmAssemblyMemoryBuffer (File p) = encodeM (MB.File p)
 
 -- | parse 'Module' from LLVM assembly
-withModuleFromLLVMAssembly :: LLVMAssemblyInput s
-                              => Context -> s -> (Module -> IO a) -> ExceptT (Either String Diagnostic) IO a
+withModuleFromLLVMAssembly :: (LLVMAssemblyInput s, Show s)
+                              => Context -> s -> (Module -> IO a) -> ExceptT String IO a
 withModuleFromLLVMAssembly (Context c) s f = unExceptableT $ flip runAnyContT return $ do
   mb <- llvmAssemblyMemoryBuffer s
-  smDiag <- anyContToM withSMDiagnostic
-  m <- anyContToM $ bracket (FFI.parseLLVMAssembly c mb smDiag) FFI.disposeModule
-  when (m == nullPtr) $ throwError . Right =<< liftIO (getDiagnostic smDiag)
+  msgPtr <- alloca
+  m <- anyContToM $ bracket (FFI.parseLLVMAssembly c mb msgPtr) FFI.disposeModule
+  when (m == nullPtr) $ throwError =<< decodeM msgPtr
   liftIO $ f (Module m)
 
 -- | generate LLVM assembly from a 'Module'
@@ -169,7 +168,7 @@ writeBitcodeToFile :: File -> Module -> ExceptT String IO ()
 writeBitcodeToFile (File path) (Module m) = unExceptableT $ flip runAnyContT return $ do
   withFileRawOStream path False False $ liftIO . FFI.writeBitcode m
 
-targetMachineEmit :: FFI.CodeGenFileType -> TargetMachine -> Module -> Ptr FFI.RawOStream -> ExceptT String IO ()
+targetMachineEmit :: FFI.CodeGenFileType -> TargetMachine -> Module -> Ptr FFI.RawPWriteStream -> ExceptT String IO ()
 targetMachineEmit fileType (TargetMachine tm) (Module m) os = unExceptableT $ flip runAnyContT return $ do
   msgPtr <- alloca
   r <- decodeM =<< (liftIO $ FFI.targetMachineEmit tm m fileType msgPtr os)
@@ -177,11 +176,11 @@ targetMachineEmit fileType (TargetMachine tm) (Module m) os = unExceptableT $ fl
 
 emitToFile :: FFI.CodeGenFileType -> TargetMachine -> File -> Module -> ExceptT String IO ()
 emitToFile fileType tm (File path) m = unExceptableT$ flip runAnyContT return $ do
-  withFileRawOStream path False False $ targetMachineEmit fileType tm m
+  withFileRawPWriteStream path False False $ targetMachineEmit fileType tm m
 
 emitToByteString :: FFI.CodeGenFileType -> TargetMachine -> Module -> ExceptT String IO BS.ByteString
 emitToByteString fileType tm m = unExceptableT $ flip runAnyContT return $ do
-  withBufferRawOStream $ targetMachineEmit fileType tm m
+  withBufferRawPWriteStream $ targetMachineEmit fileType tm m
 
 -- | write target-specific assembly directly into a file
 writeTargetAssemblyToFile :: TargetMachine -> File -> Module -> ExceptT String IO ()
@@ -247,14 +246,15 @@ withModuleFromAST context@(Context c) (A.Module moduleId dataLayout triple defin
      return . return . return . return . return $ ()
      
    A.MetadataNodeDefinition i os -> return . return $ do
-     t <- liftIO $ FFI.createTemporaryMDNodeInContext c
-     defineMDNode i t
-     return $ do
-       n <- encodeM (A.MetadataNode os)
-       liftIO $ FFI.replaceAllUsesWith (FFI.upCast t) (FFI.upCast n)
-       defineMDNode i n
-       liftIO $ FFI.destroyTemporaryMDNode t
-       return $ return ()
+     error "FIXME: createTemporaryMDNodeInContext"
+     -- t <- liftIO $ FFI.createTemporaryMDNodeInContext c
+     -- defineMDNode i t
+     -- return $ do
+     --   n <- encodeM (A.MetadataNode os)
+     --   liftIO $ FFI.replaceAllUsesWith (FFI.upCast t) (FFI.upCast n)
+     --   defineMDNode i n
+     --   liftIO $ FFI.destroyTemporaryMDNode t
+     --   return $ return ()
 
    A.NamedMetadataDefinition n ids -> return . return . return . return $ do
      n <- encodeM n
@@ -356,6 +356,7 @@ withModuleFromAST context@(Context c) (A.Module moduleId dataLayout triple defin
 moduleAST :: Module -> IO A.Module
 moduleAST (Module mod) = runDecodeAST $ do
   c <- return Context `ap` liftIO (FFI.getModuleContext mod)
+  let Context c' = c
   getMetadataKindNames c
   return A.Module
    `ap` (liftIO $ decodeM =<< FFI.getModuleIdentifier mod)

@@ -64,6 +64,7 @@ instance Monad m => EncodeM m A.FA.FunctionAttribute (Ptr FFI.FunctionAttrBuilde
       A.FA.ReadNone -> FFI.functionAttributeKindReadNone
       A.FA.ReadOnly -> FFI.functionAttributeKindReadOnly
       A.FA.NoInline -> FFI.functionAttributeKindNoInline
+      A.FA.NoRecurse -> FFI.functionAttributeKindNoRecurse
       A.FA.AlwaysInline -> FFI.functionAttributeKindAlwaysInline
       A.FA.MinimizeSize -> FFI.functionAttributeKindMinSize
       A.FA.OptimizeForSize -> FFI.functionAttributeKindOptimizeForSize
@@ -124,6 +125,7 @@ instance DecodeM DecodeAST A.FA.FunctionAttribute FFI.FunctionAttribute where
            [functionAttributeKindP|ReadNone|] -> return A.FA.ReadNone
            [functionAttributeKindP|ReadOnly|] -> return A.FA.ReadOnly
            [functionAttributeKindP|NoInline|] -> return A.FA.NoInline
+           [functionAttributeKindP|NoRecurse|] -> return A.FA.NoRecurse
            [functionAttributeKindP|AlwaysInline|] -> return A.FA.AlwaysInline
            [functionAttributeKindP|MinSize|] -> return A.FA.MinimizeSize
            [functionAttributeKindP|OptimizeForSize|] -> return A.FA.OptimizeForSize

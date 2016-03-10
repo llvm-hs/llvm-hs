@@ -1,16 +1,16 @@
 #define __STDC_LIMIT_MACROS
 #include "llvm/IR/LLVMContext.h"
 #include "llvm/IR/DataLayout.h"
+#include "llvm/IR/LegacyPassManager.h"
 #include "llvm/Transforms/Scalar.h"
 #include "llvm/Transforms/IPO.h"
 #include "llvm/Transforms/IPO/PassManagerBuilder.h"
 #include "llvm/Transforms/Vectorize.h"
 #include "llvm/Transforms/Instrumentation.h"
 #include "llvm/CodeGen/Passes.h"
-#include "llvm/PassManager.h"
 #include "llvm-c/Target.h"
 #include "llvm-c/Transforms/PassManagerBuilder.h"
-#include "llvm/Target/TargetLibraryInfo.h"
+#include "llvm/Analysis/TargetLibraryInfo.h"
 #include "llvm/Target/TargetMachine.h"
 
 #include "llvm-c/Core.h"
@@ -54,7 +54,7 @@ inline PassManagerBuilder *unwrap(LLVMPassManagerBuilderRef P) {
 extern "C" {
 
 void LLVM_General_LLVMAddAnalysisPasses(LLVMTargetMachineRef T, LLVMPassManagerRef PM) {
-	unwrap(T)->addAnalysisPasses(*unwrap(PM));
+    LLVMAddAnalysisPasses(T, PM);
 }
 
 #define LLVM_GENERAL_FOR_EACH_PASS_WITHOUT_LLVM_C_BINDING(macro) \
@@ -102,7 +102,7 @@ void LLVM_General_AddLowerInvokePass(LLVMPassManagerRef PM) {
 }
 	
 void LLVM_General_AddSROAPass(LLVMPassManagerRef PM, LLVMBool RequiresDomTree) {
-	unwrap(PM)->add(createSROAPass(RequiresDomTree));
+	unwrap(PM)->add(createSROAPass());
 }
 
 void LLVM_General_AddBasicBlockVectorizePass(
@@ -205,27 +205,6 @@ void LLVM_General_AddBoundsCheckingPass(LLVMPassManagerRef PM) {
 	unwrap(PM)->add(createBoundsCheckingPass());
 }
 
-void LLVM_General_AddDebugGeneratedIRPass(
-	LLVMPassManagerRef PM,
-	LLVMBool hideDebugIntrinsics,
-	LLVMBool hideDebugMetadata,
-	const char *filename,
-	const char *directory
-) {
-	unwrap(PM)->add(
-		createDebugIRPass(
-			hideDebugIntrinsics,
-			hideDebugMetadata,
-			filename,
-			directory
-		)
-	);
-}
-
-void LLVM_General_AddDebugExistingIRPass(LLVMPassManagerRef PM) {
-	unwrap(PM)->add(createDebugIRPass());
-}
-
 void LLVM_General_AddLoopVectorizePass(
 	LLVMPassManagerRef PM,
 	LLVMBool noUnrolling,
@@ -234,14 +213,15 @@ void LLVM_General_AddLoopVectorizePass(
 	unwrap(PM)->add(createLoopVectorizePass(noUnrolling, alwaysVectorize));
 }
 
-void LLVM_General_PassManagerBuilderSetLibraryInfo(
-	LLVMPassManagerBuilderRef PMB,
-	LLVMTargetLibraryInfoRef l
-) {
-	// The PassManager frees the TargetLibraryInfo when done,
-	// but we also free our ref, so give it a new copy.
-	unwrap(PMB)->LibraryInfo = new TargetLibraryInfo(*unwrap(l));
-}
+// TODO (cocreature): Figure out how to convert this to TargetLibraryInfoImplRefs
+// void LLVM_General_PassManagerBuilderSetLibraryInfo(
+// 	LLVMPassManagerBuilderRef PMB,
+// 	LLVMTargetLibraryInfoRef l
+// ) {
+// 	// The PassManager frees the TargetLibraryInfo when done,
+// 	// but we also free our ref, so give it a new copy.
+// 	unwrap(PMB)->LibraryInfo = new TargetLibraryInfoImpl(*unwrap(l));
+// }
 
 void LLVM_General_PassManagerBuilderSetLoopVectorize(
 	LLVMPassManagerBuilderRef PMB,

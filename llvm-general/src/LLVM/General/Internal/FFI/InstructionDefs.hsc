@@ -12,6 +12,7 @@ import LLVM.General.Internal.FFI.LLVMCTypes
 #define FIRST_MEMORY_INST(num) { "Memory" },
 #define FIRST_CAST_INST(num) { "Cast" },
 #define FIRST_OTHER_INST(num) { "Other" },
+#define FIRST_FUNCLETPAD_INST(num) { "FuncletPad" },
 
 #define HANDLE_INST(num,opcode,class) { 0, num, #opcode, #class, },
 
@@ -39,7 +40,7 @@ define hsc_inject() {                                       \
 }
 }
 
-data InstructionKind = Terminator | Binary | Memory | Cast | Other
+data InstructionKind = Terminator | Binary | Memory | Cast | FuncletPad | Other
   deriving (Eq, Ord, Show)
 
 data InstructionDef = InstructionDef {

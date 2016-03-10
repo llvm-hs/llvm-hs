@@ -13,6 +13,7 @@ import LLVM.General.Internal.FFI.ByteRangeCallback
 import LLVM.General.Internal.FFI.LLVMCTypes
 
 data RawOStream
+data RawPWriteStream
 
 type RawOStreamCallback = Ptr RawOStream -> IO ()
 foreign import ccall "wrapper" wrapRawOStreamCallback ::

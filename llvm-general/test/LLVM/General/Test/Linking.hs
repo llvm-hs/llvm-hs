@@ -63,5 +63,5 @@ tests = testGroup "Linking" [
         withModuleFromAST' context ast1 $ \m1 -> do
           runExceptT $ linkModules False m0 m1
           moduleAST m0
-    [ n | GlobalDefinition g <- defs, let Name n = G.name g ] @?= [ "private0", "external0", "external1" ]
+    [ n | GlobalDefinition g <- defs, let Name n = G.name g ] @?= [ "private0", "external0" ]
  ]

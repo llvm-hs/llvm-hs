@@ -33,7 +33,7 @@ getMetadataKindNames :: Context -> DecodeAST ()
 getMetadataKindNames (Context c) = scopeAnyCont $ do
   let g n = do
         ps <- allocaArray n
-        ls <- allocaArray n
+        ls <- allocaArray n 
         n' <- liftIO $ FFI.getMDKindNames c ps ls n
         if n' > n
          then g n'

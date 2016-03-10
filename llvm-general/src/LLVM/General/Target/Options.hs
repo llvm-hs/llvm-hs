@@ -21,18 +21,13 @@ data FloatingPointOperationFusionMode
 -- <http://llvm.org/doxygen/classllvm_1_1TargetOptions.html>
 data Options = Options {
   printMachineCode :: Bool,
-  noFramePointerElimination :: Bool,
   lessPreciseFloatingPointMultiplyAddOption :: Bool,
   unsafeFloatingPointMath :: Bool,
   noInfinitiesFloatingPointMath :: Bool,
   noNaNsFloatingPointMath :: Bool,
   honorSignDependentRoundingFloatingPointMathOption :: Bool,
-  useSoftFloat :: Bool,
   noZerosInBSS :: Bool,
-  jITEmitDebugInfo :: Bool,
-  jITEmitDebugInfoToDisk :: Bool,
   guaranteedTailCallOptimization :: Bool,
-  disableTailCalls :: Bool,
   enableFastInstructionSelection :: Bool,
   positionIndependentExecutable :: Bool,
   useInitArray :: Bool,
@@ -40,7 +35,6 @@ data Options = Options {
   compressDebugSections :: Bool,
   trapUnreachable :: Bool,
   stackAlignmentOverride :: Word32,
-  trapFunctionName :: String,
   floatABIType :: FloatABI,
   allowFloatingPointOperationFusion :: FloatingPointOperationFusionMode
   }

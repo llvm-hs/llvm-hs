@@ -76,25 +76,6 @@ withExecutionEngine c m createEngine f = flip runAnyContT return $ do
   executionEngine <- anyContToM $ bracket (peek outExecutionEngine) FFI.disposeExecutionEngine
   liftIO $ removeModule executionEngine dummyModule
   liftIO $ f executionEngine
-          
--- | <http://llvm.org/doxygen/classllvm_1_1JIT.html>
-newtype JIT = JIT (Ptr FFI.ExecutionEngine)
-
--- | bracket the creation and destruction of a 'JIT'
-withJIT :: 
-  Context
-  -> Word -- ^ optimization level
-  -> (JIT -> IO a)
-  -> IO a
-withJIT c opt f = FFI.linkInJIT >> withJIT' f
-  where withJIT' =
-         withExecutionEngine c Nothing (\e m -> FFI.createJITCompilerForModule e m (fromIntegral opt))
-         . (. JIT)
-
-instance ExecutionEngine JIT (FunPtr ()) where
-  withModuleInEngine (JIT e) m f = withModuleInEngine e m (\(ExecutableModule e m) -> f (ExecutableModule (JIT e) m))
-  getFunction (ExecutableModule (JIT e) m) = getFunction (ExecutableModule e m)
-      
 
 data MCJITState
   = Deferred (forall a . Module -> (Ptr FFI.ExecutionEngine -> IO a) -> IO a)

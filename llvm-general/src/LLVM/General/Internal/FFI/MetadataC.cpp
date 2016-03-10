@@ -1,4 +1,8 @@
 #define __STDC_LIMIT_MACROS
+
+#include <iostream>
+#include "LLVM/General/Internal/FFI/Metadata.hpp"
+
 #include "llvm/Config/llvm-config.h"
 #include "llvm/IR/LLVMContext.h"
 #include "llvm/IR/Metadata.h"
@@ -14,7 +18,7 @@ unsigned LLVM_General_GetMDKindNames(
 	unsigned *l,
 	unsigned n
 ) {
-	SmallVector<StringRef, 16> ns;
+	SmallVector<StringRef, 8> ns;
 	unwrap(c)->getMDKindNames(ns);
 	if (ns.size() <= n) {
 		for(unsigned i=0; i < ns.size(); ++i) {
@@ -25,17 +29,13 @@ unsigned LLVM_General_GetMDKindNames(
 	return ns.size();
 }
 
-unsigned LLVM_General_GetMDNodeNumOperands(LLVMValueRef v) {
+unsigned LLVM_General_GetMDNodeNumOperands(LLVMMetadataRef v) {
 	return unwrap<MDNode>(v)->getNumOperands();
-}
-
-unsigned LLVM_General_MDNodeIsFunctionLocal(LLVMValueRef v) {
-	return unwrap<MDNode>(v)->isFunctionLocal();
 }
 
 void LLVM_General_NamedMetadataAddOperands(
 	NamedMDNode *n,
-	LLVMValueRef *ops,
+	LLVMMetadataRef *ops,
 	unsigned nOps
 ) {
 	for(unsigned i = 0; i != nOps; ++i) n->addOperand(unwrap<MDNode>(ops[i]));
@@ -54,16 +54,17 @@ unsigned LLVM_General_GetNamedMetadataNumOperands(NamedMDNode *n) {
 	return n->getNumOperands();
 }
 
-void LLVM_General_GetNamedMetadataOperands(NamedMDNode *n, LLVMValueRef *dest) {
+void LLVM_General_GetNamedMetadataOperands(NamedMDNode *n, LLVMMetadataRef *dest) {
 	for(unsigned i = 0; i != n->getNumOperands(); ++i)
 		dest[i] = wrap(n->getOperand(i));
 }
 
-LLVMValueRef LLVM_General_CreateTemporaryMDNodeInContext(LLVMContextRef c) {
-	return wrap(MDNode::getTemporary(*unwrap(c), ArrayRef<Value *>()));
-}
+    // TODO (cocreature) : getTemporary now returns a TempMDTuple
+// LLVMMetadataRef LLVM_General_CreateTemporaryMDNodeInContext(LLVMContextRef c) {
+// 	return wrap(MDNode::getTemporary(*unwrap(c), ArrayRef<Metadata *>()));
+// }
 
-void LLVM_General_DestroyTemporaryMDNode(LLVMValueRef v) {
+void LLVM_General_DestroyTemporaryMDNode(LLVMMetadataRef v) {
 	MDNode::deleteTemporary(unwrap<MDNode>(v));
 }
 

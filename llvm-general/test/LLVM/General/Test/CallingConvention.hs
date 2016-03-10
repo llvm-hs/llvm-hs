@@ -33,7 +33,7 @@ tests = testGroup "CallingConvention" [
    ("", CC.C),
    ("fastcc", CC.Fast),
    ("coldcc", CC.Cold),
-   ("cc10", CC.GHC),
+   ("ghccc", CC.GHC),
    ("cc11", CC.HiPE),
    ("webkit_jscc", CC.WebKit_JS),
    ("anyregcc", CC.AnyReg),

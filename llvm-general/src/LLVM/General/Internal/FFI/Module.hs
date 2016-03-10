@@ -73,7 +73,6 @@ foreign import ccall unsafe "LLVMAddGlobalInAddressSpace" addGlobalInAddressSpac
 foreign import ccall unsafe "LLVM_General_JustAddAlias" justAddAlias ::
   Ptr Module -> Ptr Type -> AddrSpace -> CString -> IO (Ptr GlobalAlias)
 
-
 foreign import ccall unsafe "LLVMAddFunction" addFunction ::
   Ptr Module -> CString -> Ptr Type -> IO (Ptr Function)
 

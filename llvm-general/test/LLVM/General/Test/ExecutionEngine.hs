@@ -56,6 +56,5 @@ testJIT withEE = withContext $ \context -> withEE context $ \executionEngine -> 
   s @?= 42
 
 tests = testGroup "ExecutionEngine" [
-  testCase "run something with JIT" $ testJIT (\c -> withJIT c 2),
   testCase "run something with MCJIT" $ testJIT (\c -> withMCJIT c Nothing Nothing Nothing Nothing)
  ]

@@ -10,6 +10,7 @@
 
 #include "llvm-c/Core.h"
 
+#include "LLVM/General/Internal/FFI/Metadata.hpp"
 #include "LLVM/General/Internal/FFI/AttributeC.hpp"
 #include "LLVM/General/Internal/FFI/Instruction.h"
 #include "LLVM/General/Internal/FFI/CallingConventionC.hpp"
@@ -260,7 +261,7 @@ void LLVM_General_GetIndirectBrDests(
 unsigned LLVM_General_GetMetadata(
 	LLVMValueRef i,
 	unsigned *kinds,
-	LLVMValueRef *nodes,
+	LLVMMetadataRef *nodes,
 	unsigned nKinds
 ) {
 	SmallVector<std::pair<unsigned, MDNode *>, 4> mds;

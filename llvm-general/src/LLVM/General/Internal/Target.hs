@@ -14,6 +14,7 @@ import Control.Exception
 import Control.Monad.AnyCont
 
 import Foreign.Ptr
+import Foreign.C.String
 import Data.List (intercalate)
 import Data.Map (Map)
 import qualified Data.Map as Map
@@ -120,18 +121,13 @@ pokeTargetOptions :: TO.Options -> TargetOptions -> IO ()
 pokeTargetOptions hOpts (TargetOptions cOpts) = do
   mapM_ (\(c, ha) -> FFI.setTargetOptionFlag cOpts c =<< encodeM (ha hOpts)) [
     (FFI.targetOptionFlagPrintMachineCode, TO.printMachineCode),
-    (FFI.targetOptionFlagNoFramePointerElim, TO.noFramePointerElimination),
     (FFI.targetOptionFlagLessPreciseFPMADOption, TO.lessPreciseFloatingPointMultiplyAddOption),
     (FFI.targetOptionFlagUnsafeFPMath, TO.unsafeFloatingPointMath),
     (FFI.targetOptionFlagNoInfsFPMath, TO.noInfinitiesFloatingPointMath),
     (FFI.targetOptionFlagNoNaNsFPMath, TO.noNaNsFloatingPointMath),
     (FFI.targetOptionFlagHonorSignDependentRoundingFPMathOption, TO.honorSignDependentRoundingFloatingPointMathOption),
-    (FFI.targetOptionFlagUseSoftFloat, TO.useSoftFloat),
     (FFI.targetOptionFlagNoZerosInBSS, TO.noZerosInBSS),
-    (FFI.targetOptionFlagJITEmitDebugInfo, TO.jITEmitDebugInfo),
-    (FFI.targetOptionFlagJITEmitDebugInfoToDisk, TO.jITEmitDebugInfoToDisk),
     (FFI.targetOptionFlagGuaranteedTailCallOpt, TO.guaranteedTailCallOptimization),
-    (FFI.targetOptionFlagDisableTailCalls, TO.disableTailCalls),
     (FFI.targetOptionFlagEnableFastISel, TO.enableFastInstructionSelection),
     (FFI.targetOptionFlagPositionIndependentExecutable, TO.positionIndependentExecutable),
     (FFI.targetOptionFlagUseInitArray, TO.useInitArray),
@@ -140,9 +136,6 @@ pokeTargetOptions hOpts (TargetOptions cOpts) = do
     (FFI.targetOptionFlagTrapUnreachable, TO.trapUnreachable)
    ]
   FFI.setStackAlignmentOverride cOpts =<< encodeM (TO.stackAlignmentOverride hOpts)
-  flip runAnyContT return $ do
-    n <- encodeM (TO.trapFunctionName hOpts)
-    liftIO $ FFI.setTrapFuncName cOpts n
   FFI.setFloatABIType cOpts =<< encodeM (TO.floatABIType hOpts)
   FFI.setAllowFPOpFusion cOpts =<< encodeM (TO.allowFloatingPointOperationFusion hOpts)
 
@@ -152,8 +145,6 @@ peekTargetOptions (TargetOptions tOpts) = do
   let gof = decodeM <=< FFI.getTargetOptionsFlag tOpts
   printMachineCode
     <- gof FFI.targetOptionFlagPrintMachineCode
-  noFramePointerElimination
-    <- gof FFI.targetOptionFlagNoFramePointerElim
   lessPreciseFloatingPointMultiplyAddOption
     <- gof FFI.targetOptionFlagLessPreciseFPMADOption
   unsafeFloatingPointMath
@@ -164,18 +155,10 @@ peekTargetOptions (TargetOptions tOpts) = do
     <- gof FFI.targetOptionFlagNoNaNsFPMath
   honorSignDependentRoundingFloatingPointMathOption
     <- gof FFI.targetOptionFlagHonorSignDependentRoundingFPMathOption
-  useSoftFloat
-    <- gof FFI.targetOptionFlagUseSoftFloat
   noZerosInBSS
     <- gof FFI.targetOptionFlagNoZerosInBSS
-  jITEmitDebugInfo
-    <- gof FFI.targetOptionFlagJITEmitDebugInfo
-  jITEmitDebugInfoToDisk
-    <- gof FFI.targetOptionFlagJITEmitDebugInfoToDisk
   guaranteedTailCallOptimization
     <- gof FFI.targetOptionFlagGuaranteedTailCallOpt
-  disableTailCalls
-    <- gof FFI.targetOptionFlagDisableTailCalls
   enableFastInstructionSelection
     <- gof FFI.targetOptionFlagEnableFastISel
   positionIndependentExecutable
@@ -189,7 +172,6 @@ peekTargetOptions (TargetOptions tOpts) = do
   trapUnreachable
     <- gof FFI.targetOptionFlagTrapUnreachable
   stackAlignmentOverride <- decodeM =<< FFI.getStackAlignmentOverride tOpts
-  trapFunctionName <- decodeM =<< FFI.getTrapFuncName tOpts
   floatABIType <- decodeM =<< FFI.getFloatABIType tOpts
   allowFloatingPointOperationFusion <- decodeM =<< FFI.getAllowFPOpFusion tOpts
   return TO.Options { .. }
@@ -243,7 +225,7 @@ newtype TargetLowering = TargetLowering (Ptr FFI.TargetLowering)
 
 -- | get the 'TargetLowering' of a 'TargetMachine'
 getTargetLowering :: TargetMachine -> IO TargetLowering
-getTargetLowering (TargetMachine tm) = TargetLowering <$> FFI.getTargetLowering tm
+getTargetLowering (TargetMachine tm) = TargetLowering <$> error "FIXME: getTargetLowering" -- FFI.getTargetLowering tm
 
 -- | Initialize the native target. This function is called automatically in these Haskell bindings
 -- when creating an 'LLVM.General.ExecutionEngine.ExecutionEngine' which will require it, and so it should
@@ -267,7 +249,8 @@ getHostCPUName = decodeM FFI.getHostCPUName
 
 -- | a space-separated list of LLVM feature names supported by the host CPU
 getHostCPUFeatures :: IO (Map CPUFeature Bool)
-getHostCPUFeatures = decodeM =<< FFI.getHostCPUFeatures
+getHostCPUFeatures =
+  decodeM =<< FFI.getHostCPUFeatures
 
 -- | 'DataLayout' to use for the given 'TargetMachine'
 getTargetMachineDataLayout :: TargetMachine -> IO DataLayout
@@ -297,8 +280,8 @@ newtype TargetLibraryInfo = TargetLibraryInfo (Ptr FFI.TargetLibraryInfo)
 -- | Look up a 'LibraryFunction' by its standard name
 getLibraryFunction :: TargetLibraryInfo -> String -> IO (Maybe LibraryFunction)
 getLibraryFunction (TargetLibraryInfo f) name = flip runAnyContT return $ do
-  libFuncP <- alloca
-  name <- encodeM name
+  libFuncP <- alloca :: AnyContT IO (Ptr FFI.LibFunc)
+  name <- (encodeM name :: AnyContT IO CString)
   r <- decodeM =<< (liftIO $ FFI.getLibFunc f name libFuncP)
   forM (if r then Just libFuncP else Nothing) $ decodeM <=< peek
 
@@ -315,9 +298,10 @@ setLibraryFunctionAvailableWithName ::
   -> String -- ^ The function name to be emitted
   -> IO ()
 setLibraryFunctionAvailableWithName (TargetLibraryInfo f) libraryFunction name = flip runAnyContT return $ do
-  name <- encodeM name
-  libraryFunction <- encodeM libraryFunction
-  liftIO $ FFI.libFuncSetAvailableWithName f libraryFunction name
+  --name <- encodeM name
+  -- libraryFunction <- encodeM libraryFunction
+  -- liftIO $ FFI.libFuncSetAvailableWithName f libraryFunction name
+  error "FIXME: libFuncSetAvailableWithName"
 
 -- | look up information about the library functions available on a given platform
 withTargetLibraryInfo ::

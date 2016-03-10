@@ -16,12 +16,12 @@ LLVMModuleRef LLVM_General_ParseBitcode(
 	char **error
 ) {
 	std::string msg;
-	ErrorOr<Module *> m = parseBitcodeFile(unwrap(mb), *unwrap(c));
+	ErrorOr<std::unique_ptr<Module>> m = parseBitcodeFile(unwrap(mb)->getMemBufferRef(), *unwrap(c));
 	if (std::error_code ec = m.getError()) {
 		*error = strdup(ec.message().c_str());
 		return 0;
 	}
-	return wrap(m.get());
+	return wrap(m.get().release());
 }
 
 void LLVM_General_WriteBitcode(LLVMModuleRef m, raw_ostream &os) {

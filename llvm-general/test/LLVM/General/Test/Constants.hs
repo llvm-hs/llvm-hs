@@ -132,7 +132,7 @@ tests = testGroup "Constants" [
       "getelementptr",
       ptr i32,
       C.GetElementPtr True (C.GlobalReference (ptr i32) (UnName 1)) [C.Int 64 27],
-      "global i32* getelementptr inbounds (i32* @1, i64 27)"
+      "global i32* getelementptr inbounds (i32, i32* @1, i64 27)"
     ), (
       "selectvalue",
       i32,

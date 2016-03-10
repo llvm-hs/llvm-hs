@@ -78,7 +78,7 @@ LLVM_GENERAL_FOR_EACH_POSSIBLY_EXACT_BINARY_OPERATOR(ENUM_CASE)
 #undef ENUM_CASE
 
 void LLVM_General_SetFastMathFlags(LLVMBuilderRef b, LLVMFastMathFlags f) {
-	unwrap(b)->SetFastMathFlags(unwrap(f));
+	unwrap(b)->setFastMathFlags(unwrap(f));
 }
 
 LLVMValueRef LLVM_General_BuildLoad(
@@ -178,5 +178,8 @@ LLVMValueRef LLVM_General_BuildInsertValue(
 ) {
 	return wrap(unwrap(b)->CreateInsertValue(unwrap(a), unwrap(v), ArrayRef<unsigned>(idxs, n), name));
 }
+
+//     LLVMValueRef LLVM_General_BuildCleanupPad(LLVMBuilderRef b, LLVM) {
+// }
 
 }

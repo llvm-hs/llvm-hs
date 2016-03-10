@@ -45,16 +45,16 @@ handString = "; ModuleID = '<string>'\n\
     \$bob = comdat largest\n\
     \\n\
     \@0 = global i32 1\n\
-    \@1 = external protected addrspace(3) global i32, section \"foo\", comdat $bob\n\
+    \@1 = external protected addrspace(3) global i32, section \"foo\", comdat($bob)\n\
     \@2 = unnamed_addr global i8 2\n\
     \@3 = external dllimport global %0\n\
     \@4 = external global [4294967296 x i32]\n\
     \@.argyle = thread_local global i32 0\n\
     \@5 = thread_local(localdynamic) global i32 1\n\
     \\n\
-    \@three = alias private i32 addrspace(3)* @1\n\
-    \@two = unnamed_addr alias i32 addrspace(3)* @three\n\
-    \@one = thread_local(initialexec) alias i32* @5\n\
+    \@three = private alias i32, i32 addrspace(3)* @1\n\
+    \@two = unnamed_addr alias i32, i32 addrspace(3)* @three\n\
+    \@one = thread_local(initialexec) alias i32, i32* @5\n\
     \\n\
     \define i32 @bar() prefix i32 1 {\n\
     \  %1 = musttail call zeroext i32 @foo(i32 inreg align 16 1, i8 signext 4) #0\n\
@@ -270,8 +270,8 @@ tests = testGroup "Module" [
             \\t.cfi_startproc\n\
             \\txorl\t%eax, %eax\n\
             \\tretq\n\
-            \.Ltmp0:\n\
-            \\t.size\tmain, .Ltmp0-main\n\
+            \.Lfunc_end0:\n\
+            \\t.size\tmain, .Lfunc_end0-main\n\
             \\t.cfi_endproc\n\
             \\n\
             \\n\

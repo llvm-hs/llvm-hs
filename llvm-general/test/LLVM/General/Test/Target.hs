@@ -25,18 +25,13 @@ instance Arbitrary FloatingPointOperationFusionMode where
 instance Arbitrary Options where
   arbitrary = do
     printMachineCode <- arbitrary
-    noFramePointerElimination <- arbitrary
     lessPreciseFloatingPointMultiplyAddOption <- arbitrary
     unsafeFloatingPointMath <- arbitrary
     noInfinitiesFloatingPointMath <- arbitrary
     noNaNsFloatingPointMath <- arbitrary
     honorSignDependentRoundingFloatingPointMathOption <- arbitrary
-    useSoftFloat <- arbitrary
     noZerosInBSS <- arbitrary
-    jITEmitDebugInfo <- arbitrary
-    jITEmitDebugInfoToDisk <- arbitrary
     guaranteedTailCallOptimization <- arbitrary
-    disableTailCalls <- arbitrary
     enableFastInstructionSelection <- arbitrary
     positionIndependentExecutable <- arbitrary
     useInitArray <- arbitrary
@@ -44,7 +39,6 @@ instance Arbitrary Options where
     compressDebugSections <- arbitrary
     trapUnreachable <- arbitrary
     stackAlignmentOverride <- arbitrary
-    trapFunctionName <- elements [ "foo", "bar", "baz" ]
     floatABIType <- arbitrary
     allowFloatingPointOperationFusion <- arbitrary
     return Options { .. }

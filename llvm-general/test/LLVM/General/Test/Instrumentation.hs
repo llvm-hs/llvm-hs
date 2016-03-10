@@ -148,9 +148,9 @@ tests = testGroup "Instrumentation" [
 -}
      ("MemorySanitizer", defaultMemorySanitizer),
      ("ThreadSanitizer", defaultThreadSanitizer),
-     ("BoundsChecking", BoundsChecking),
+     ("BoundsChecking", BoundsChecking)--,
 --     ("DebugGeneratedIR", defaultDebugGeneratedIR),
-     ("DebugExistingIR", DebugExistingIR)
+--     ("DebugExistingIR", DebugExistingIR)
     ]
    ]
  ]

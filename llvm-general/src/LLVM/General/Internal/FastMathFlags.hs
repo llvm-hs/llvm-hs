@@ -34,10 +34,10 @@ instance EncodeM IO A.FastMathFlags FFI.FastMathFlags where
               ]
 
 instance EncodeM EncodeAST A.FastMathFlags () where
-  encodeM f = do
+  encodeM f = do 
     f <- liftIO $ encodeM f
     builder <- gets encodeStateBuilder
-    anyContToM $ bracket (FFI.setFastMathFlags builder f) (\() -> FFI.setFastMathFlags builder 0)  
+    anyContToM $ bracket (FFI.setFastMathFlags builder f) (\() -> FFI.setFastMathFlags builder 0)
 
 instance Monad m => DecodeM m A.FastMathFlags FFI.FastMathFlags where
   decodeM 0 = return A.NoFastMathFlags

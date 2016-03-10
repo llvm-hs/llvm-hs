@@ -17,10 +17,10 @@ LLVMBool LLVM_General_WithFileRawOStream(
 	const char *&error,
 	void (&callback)(raw_ostream &ostream)
 ) {
-	std::string e;
+	std::error_code e;
 	raw_fd_ostream os(filename, e, (excl ? F_Excl : F_None) | (text ? F_Text : F_None));
-	if (!e.empty()) {
-		error = strdup(e.c_str());
+	if (!e) {
+		error = e.message().c_str();
 		return false;
 	}
 	callback(os);

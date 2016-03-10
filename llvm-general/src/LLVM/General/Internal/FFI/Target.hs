@@ -38,12 +38,6 @@ foreign import ccall unsafe "LLVM_General_SetStackAlignmentOverride" setStackAli
 foreign import ccall unsafe "LLVM_General_GetStackAlignmentOverride" getStackAlignmentOverride ::
   Ptr TargetOptions -> IO CUInt
 
-foreign import ccall unsafe "LLVM_General_SetTrapFuncName" setTrapFuncName ::
-  Ptr TargetOptions -> CString -> IO ()
-
-foreign import ccall unsafe "LLVM_General_GetTrapFuncName" getTrapFuncName ::
-  Ptr TargetOptions -> IO CString
-
 foreign import ccall unsafe "LLVM_General_SetFloatABIType" setFloatABIType ::
   Ptr TargetOptions -> FloatABIType -> IO ()
 
@@ -80,13 +74,13 @@ foreign import ccall unsafe "LLVM_General_TargetMachineEmit" targetMachineEmit :
   -> Ptr Module
   -> CodeGenFileType
   -> Ptr (OwnerTransfered CString)
-  -> Ptr RawOStream
+  -> Ptr RawPWriteStream
   -> IO LLVMBool
 
 data TargetLowering
 
-foreign import ccall unsafe "LLVM_General_GetTargetLowering" getTargetLowering ::
-  Ptr TargetMachine -> IO (Ptr TargetLowering)
+-- foreign import ccall unsafe "LLVM_General_GetTargetLowering" getTargetLowering ::
+--   Ptr TargetMachine -> IO (Ptr TargetLowering)
 
 foreign import ccall unsafe "LLVM_General_GetDefaultTargetTriple" getDefaultTargetTriple :: 
   IO (OwnerTransfered CString)
@@ -97,7 +91,7 @@ foreign import ccall unsafe "LLVM_General_GetProcessTargetTriple" getProcessTarg
 foreign import ccall unsafe "LLVM_General_GetHostCPUName" getHostCPUName :: 
   Ptr CSize -> IO CString
 
-foreign import ccall unsafe "LLVM_General_GetHostCPUFeatures" getHostCPUFeatures :: 
+foreign import ccall unsafe "LLVM_General_GetHostCPUFeatures" getHostCPUFeatures ::
   IO (OwnerTransfered CString)
 
 foreign import ccall unsafe "LLVM_General_GetTargetMachineDataLayout" getTargetMachineDataLayout ::
@@ -114,8 +108,8 @@ foreign import ccall unsafe "LLVM_General_GetLibFunc" getLibFunc ::
 foreign import ccall unsafe "LLVM_General_LibFuncGetName" libFuncGetName ::
   Ptr TargetLibraryInfo -> LibFunc -> Ptr CSize -> IO CString
 
-foreign import ccall unsafe "LLVM_General_LibFuncSetAvailableWithName" libFuncSetAvailableWithName ::
-  Ptr TargetLibraryInfo -> LibFunc -> CString -> IO ()
+-- foreign import ccall unsafe "LLVM_General_LibFuncSetAvailableWithName" libFuncSetAvailableWithName ::
+--   Ptr TargetLibraryInfo -> LibFunc -> CString -> IO ()
 
 foreign import ccall unsafe "LLVM_General_DisposeTargetLibraryInfo" disposeTargetLibraryInfo ::
   Ptr TargetLibraryInfo -> IO ()

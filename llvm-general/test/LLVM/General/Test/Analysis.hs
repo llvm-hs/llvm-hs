@@ -72,8 +72,8 @@ tests = testGroup "Analysis" [
                  \\n\
                  \define double @my_function2(double* %input_0) {\n\
                  \foo:\n\
-                 \  %tmp_input_w0 = getelementptr inbounds double* %input_0, i64 0\n\
-                 \  %0 = load double* %tmp_input_w0, align 8\n\
+                 \  %tmp_input_w0 = getelementptr inbounds double, double* %input_0, i64 0\n\
+                 \  %0 = load double, double* %tmp_input_w0, align 8\n\
                  \  ret double %0\n\
                  \}\n"
            ast = 

@@ -45,9 +45,6 @@ foreign import ccall unsafe "LLVMGetPointerToGlobal" getPointerToGlobal ::
 foreign import ccall unsafe "LLVMLinkInInterpreter" linkInInterpreter :: 
   IO ()
 
-foreign import ccall unsafe "LLVMLinkInJIT" linkInJIT :: 
-  IO ()
-
 foreign import ccall unsafe "LLVMLinkInMCJIT" linkInMCJIT :: 
   IO ()
 

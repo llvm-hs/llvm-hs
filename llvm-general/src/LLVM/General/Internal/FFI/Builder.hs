@@ -157,5 +157,8 @@ foreign import ccall unsafe "LLVM_General_BuildInsertValue" buildInsertValue ::
 foreign import ccall unsafe "LLVMBuildLandingPad" buildLandingPad ::
   Ptr Builder -> Ptr Type -> Ptr Value -> CUInt -> CString -> IO (Ptr Instruction)
 
+-- foreign import ccall unsafe "LLVM_General_BuildCleanupPad" buildCleanupPad' ::
+--   Ptr Builder -> Ptr Type -> Ptr Value -> CUInt -> CString -> IO (Ptr Instruction)
+
 foreign import ccall unsafe "LLVM_General_SetFastMathFlags" setFastMathFlags ::
   Ptr Builder -> FastMathFlags -> IO ()

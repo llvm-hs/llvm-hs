@@ -19,8 +19,6 @@
 	macro(ConstantStruct) \
 	macro(ConstantVector) \
 	macro(ConstantPointerNull) \
-	macro(MDNode) \
-	macro(MDString) \
 	macro(InlineAsm) \
 	macro(Instruction)
 

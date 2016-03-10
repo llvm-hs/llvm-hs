@@ -10,6 +10,7 @@ data FunctionAttribute
     | ReadNone
     | ReadOnly
     | NoInline
+    | NoRecurse
     | AlwaysInline
     | MinimizeSize
     | OptimizeForSize
