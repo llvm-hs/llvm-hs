@@ -298,10 +298,9 @@ setLibraryFunctionAvailableWithName ::
   -> String -- ^ The function name to be emitted
   -> IO ()
 setLibraryFunctionAvailableWithName (TargetLibraryInfo f) libraryFunction name = flip runAnyContT return $ do
-  --name <- encodeM name
-  -- libraryFunction <- encodeM libraryFunction
-  -- liftIO $ FFI.libFuncSetAvailableWithName f libraryFunction name
-  error "FIXME: libFuncSetAvailableWithName"
+  name <- encodeM name
+  libraryFunction <- encodeM libraryFunction
+  liftIO $ FFI.libFuncSetAvailableWithName f libraryFunction name
 
 -- | look up information about the library functions available on a given platform
 withTargetLibraryInfo ::
