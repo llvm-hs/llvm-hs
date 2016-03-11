@@ -50,7 +50,7 @@ foreign import ccall unsafe "LLVMAddTargetData" addDataLayoutPass' ::
 
 addDataLayoutPass = flip addDataLayoutPass'
 
-foreign import ccall unsafe "LLVM_General_LLVMAddAnalysisPasses" addAnalysisPasses ::
+foreign import ccall unsafe "LLVMAddAnalysisPasses" addAnalysisPasses ::
   Ptr TargetMachine -> Ptr PassManager -> IO ()
 
 foreign import ccall unsafe "LLVMAddTargetLibraryInfo" addTargetLibraryInfoPass' ::

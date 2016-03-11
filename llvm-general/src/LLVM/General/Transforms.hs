@@ -124,13 +124,6 @@ data Pass
     }
   | ThreadSanitizer
   | BoundsChecking
-  -- | DebugGeneratedIR {
-  --     hideDebugIntrinsics :: Bool,
-  --     hideDebugMetadata :: Bool,
-  --     fileName :: Maybe FilePath,
-  --     directory :: Maybe FilePath
-  --   }
---  | DebugExistingIR
   deriving (Eq, Ord, Read, Show, Typeable, Data)
 
 -- | Defaults for the 'LoopVectorize' pass
@@ -195,11 +188,3 @@ defaultMemorySanitizer = MemorySanitizer {
 
 -- | Defaults for 'ThreadSanitizer'.
 defaultThreadSanitizer = ThreadSanitizer
-
--- | Defaults for 'DebugGeneratedIR'.
--- defaultDebugGeneratedIR = DebugGeneratedIR {
---   hideDebugIntrinsics = False,
---   hideDebugMetadata = False,
---   fileName = Nothing,
---   directory = Nothing
--- }

@@ -53,10 +53,6 @@ inline TargetLibraryInfoImpl *unwrap(LLVMTargetLibraryInfoRef P) {
 
 extern "C" {
 
-void LLVM_General_LLVMAddAnalysisPasses(LLVMTargetMachineRef T, LLVMPassManagerRef PM) {
-    LLVMAddAnalysisPasses(T, PM);
-}
-
 #define LLVM_GENERAL_FOR_EACH_PASS_WITHOUT_LLVM_C_BINDING(macro) \
 	macro(BreakCriticalEdges) \
 	macro(DeadCodeElimination) \
@@ -101,7 +97,7 @@ void LLVM_General_AddLowerInvokePass(LLVMPassManagerRef PM) {
 	unwrap(PM)->add(createLowerInvokePass());
 }
 	
-void LLVM_General_AddSROAPass(LLVMPassManagerRef PM, LLVMBool RequiresDomTree) {
+void LLVM_General_AddSROAPass(LLVMPassManagerRef PM) {
 	unwrap(PM)->add(createSROAPass());
 }
 

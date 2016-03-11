@@ -16,9 +16,7 @@ LLVMValueRef LLVM_General_GetFirstAlias(LLVMModuleRef m) {
     if (i == mod->alias_end()) {
         return 0;
     }
-    // GlobalAlias* aliaseee = &*i;
-    LLVMValueRef aliasee = wrap(&*i);
-    return aliasee;
+    return wrap(&*i);
 }
 
 LLVMValueRef LLVM_General_GetNextAlias(LLVMValueRef a) {

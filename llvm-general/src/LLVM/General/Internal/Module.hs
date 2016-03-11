@@ -112,7 +112,7 @@ instance LLVMAssemblyInput File where
   llvmAssemblyMemoryBuffer (File p) = encodeM (MB.File p)
 
 -- | parse 'Module' from LLVM assembly
-withModuleFromLLVMAssembly :: (LLVMAssemblyInput s, Show s)
+withModuleFromLLVMAssembly :: LLVMAssemblyInput s
                               => Context -> s -> (Module -> IO a) -> ExceptT String IO a
 withModuleFromLLVMAssembly (Context c) s f = unExceptableT $ flip runAnyContT return $ do
   mb <- llvmAssemblyMemoryBuffer s
@@ -356,7 +356,6 @@ withModuleFromAST context@(Context c) (A.Module moduleId dataLayout triple defin
 moduleAST :: Module -> IO A.Module
 moduleAST (Module mod) = runDecodeAST $ do
   c <- return Context `ap` liftIO (FFI.getModuleContext mod)
-  let Context c' = c
   getMetadataKindNames c
   return A.Module
    `ap` (liftIO $ decodeM =<< FFI.getModuleIdentifier mod)
