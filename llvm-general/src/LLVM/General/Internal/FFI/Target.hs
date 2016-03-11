@@ -108,8 +108,8 @@ foreign import ccall unsafe "LLVM_General_GetLibFunc" getLibFunc ::
 foreign import ccall unsafe "LLVM_General_LibFuncGetName" libFuncGetName ::
   Ptr TargetLibraryInfo -> LibFunc -> Ptr CSize -> IO CString
 
--- foreign import ccall unsafe "LLVM_General_LibFuncSetAvailableWithName" libFuncSetAvailableWithName ::
---   Ptr TargetLibraryInfo -> LibFunc -> CString -> IO ()
+foreign import ccall unsafe "LLVM_General_LibFuncSetAvailableWithName" libFuncSetAvailableWithName ::
+  Ptr TargetLibraryInfo -> LibFunc -> CString -> IO ()
 
 foreign import ccall unsafe "LLVM_General_DisposeTargetLibraryInfo" disposeTargetLibraryInfo ::
   Ptr TargetLibraryInfo -> IO ()

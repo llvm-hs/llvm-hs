@@ -30,6 +30,6 @@ tests = testGroup "llvm-general" [
     Optimization.tests,
     Target.tests,
     Analysis.tests,
-    Linking.tests--,
-    --Instrumentation.tests
+    Linking.tests,
+    Instrumentation.tests
   ]

@@ -40,15 +40,15 @@ inline LLVMTargetMachineRef wrap(const TargetMachine *P) {
 	return reinterpret_cast<LLVMTargetMachineRef>(const_cast<TargetMachine *>(P));
 }
 
-// Taken from llvm/lib/Target/Target.cpp
-inline TargetLibraryInfo *unwrap(LLVMTargetLibraryInfoRef P) {
-  return reinterpret_cast<TargetLibraryInfo*>(P);
-}
-
 // Taken from llvm/lib/Transforms/IPO/PassManagerBuilder.cpp
 inline PassManagerBuilder *unwrap(LLVMPassManagerBuilderRef P) {
     return reinterpret_cast<PassManagerBuilder*>(P);
 }
+
+inline TargetLibraryInfoImpl *unwrap(LLVMTargetLibraryInfoRef P) {
+  return reinterpret_cast<TargetLibraryInfoImpl*>(P);
+}
+
 }
 
 extern "C" {
@@ -213,15 +213,14 @@ void LLVM_General_AddLoopVectorizePass(
 	unwrap(PM)->add(createLoopVectorizePass(noUnrolling, alwaysVectorize));
 }
 
-// TODO (cocreature): Figure out how to convert this to TargetLibraryInfoImplRefs
-// void LLVM_General_PassManagerBuilderSetLibraryInfo(
-// 	LLVMPassManagerBuilderRef PMB,
-// 	LLVMTargetLibraryInfoRef l
-// ) {
-// 	// The PassManager frees the TargetLibraryInfo when done,
-// 	// but we also free our ref, so give it a new copy.
-// 	unwrap(PMB)->LibraryInfo = new TargetLibraryInfoImpl(*unwrap(l));
-// }
+void LLVM_General_PassManagerBuilderSetLibraryInfo(
+	LLVMPassManagerBuilderRef PMB,
+	LLVMTargetLibraryInfoRef l
+) {
+	// The PassManager frees the TargetLibraryInfo when done,
+	// but we also free our ref, so give it a new copy.
+	unwrap(PMB)->LibraryInfo = new TargetLibraryInfoImpl(*unwrap(l));
+}
 
 void LLVM_General_PassManagerBuilderSetLoopVectorize(
 	LLVMPassManagerBuilderRef PMB,

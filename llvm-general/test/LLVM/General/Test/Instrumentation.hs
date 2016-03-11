@@ -7,6 +7,7 @@ import Test.HUnit
 import LLVM.General.Test.Support
 
 import Control.Monad.Trans.Except 
+import Control.Monad.IO.Class
 
 import Data.Functor
 import qualified Data.List as List
@@ -39,7 +40,8 @@ instrument s m = withContext $ \context -> withModuleFromAST' context m $ \mIn' 
 
 ast = do
  dl <- withHostTargetMachine getTargetMachineDataLayout
- return $ Module "<string>" (Just dl) Nothing [
+ triple <- liftIO getDefaultTargetTriple
+ return $ Module "<string>" (Just dl) (Just triple) [
   GlobalDefinition $ functionDefaults {
     G.returnType = i32,
     G.name = Name "foo",
@@ -133,7 +135,7 @@ ast = do
 tests = testGroup "Instrumentation" [
   testGroup "basic" [
     testCase n $ do
-      triple <- getProcessTargetTriple
+      triple <- getProcessTargetTriple 
       withTargetLibraryInfo triple $ \tli -> do
         Right dl <- runExceptT $ withHostTargetMachine getTargetMachineDataLayout
         Right ast <- runExceptT ast

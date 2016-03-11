@@ -34,15 +34,8 @@ inline LLVMTargetMachineRef wrap(const TargetMachine *P) {
   return reinterpret_cast<LLVMTargetMachineRef>(const_cast<TargetMachine *>(P));
 }
 
-// Taken from llvm/lib/Target/Target.cpp
-inline TargetLibraryInfo *unwrap(LLVMTargetLibraryInfoRef P) {
-  return reinterpret_cast<TargetLibraryInfo *>(P);
-}
-
-// Taken from llvm/lib/Target/Target.cpp
-inline LLVMTargetLibraryInfoRef wrap(const TargetLibraryInfo *P) {
-  TargetLibraryInfo *X = const_cast<TargetLibraryInfo *>(P);
-  return reinterpret_cast<LLVMTargetLibraryInfoRef>(X);
+inline TargetLibraryInfoImpl *unwrap(LLVMTargetLibraryInfoRef P) {
+  return reinterpret_cast<TargetLibraryInfoImpl*>(P);
 }
 
 static Reloc::Model unwrap(LLVMRelocMode x) {
@@ -292,10 +285,15 @@ char *LLVM_General_GetTargetMachineDataLayout(LLVMTargetMachineRef t) {
       unwrap(t)->createDataLayout().getStringRepresentation().c_str());
 }
 
+inline LLVMTargetLibraryInfoRef wrap(const TargetLibraryInfoImpl *P) {
+  TargetLibraryInfoImpl *X = const_cast<TargetLibraryInfoImpl*>(P);
+  return reinterpret_cast<LLVMTargetLibraryInfoRef>(X);
+}
+
 LLVMTargetLibraryInfoRef
 LLVM_General_CreateTargetLibraryInfo(const char *triple) {
-    const TargetLibraryInfoImpl* targetLibInfoImpl = new TargetLibraryInfoImpl(Triple(triple));
-  return wrap(new TargetLibraryInfo(*targetLibInfoImpl));
+    const TargetLibraryInfoImpl* p = new TargetLibraryInfoImpl(Triple(triple));
+    return wrap(p);
 }
 
 LLVMBool LLVM_General_GetLibFunc(
@@ -314,19 +312,19 @@ const char *LLVM_General_LibFuncGetName(
 	LLVMLibFunc f,
 	size_t *nameSize
 ) {
-	StringRef s = unwrap(l)->getName(unwrap(f));
+	TargetLibraryInfo impl(*unwrap(l));
+    StringRef s = impl.getName(unwrap(f));
 	*nameSize = s.size();
 	return s.data();
 }
 
-// TODO: requires a targetlibraryinfoimpl
-// void LLVM_General_LibFuncSetAvailableWithName(
-// 	LLVMTargetLibraryInfoRef l,
-// 	LLVMLibFunc f,
-// 	const char *name
-// ) {
-// 	unwrap(l)->setAvailableWithName(unwrap(f), name);
-// }
+void LLVM_General_LibFuncSetAvailableWithName(
+	LLVMTargetLibraryInfoRef l,
+	LLVMLibFunc f,
+	const char *name
+) {
+	unwrap(l)->setAvailableWithName(unwrap(f), name);
+}
 
 void LLVM_General_DisposeTargetLibraryInfo(LLVMTargetLibraryInfoRef l) {
 	delete unwrap(l);
