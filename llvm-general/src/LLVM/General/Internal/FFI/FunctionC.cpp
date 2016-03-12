@@ -55,4 +55,8 @@ void LLVM_General_SetFunctionCallingConvention(LLVMValueRef f, unsigned cc) {
   unwrap<Function>(f)->setCallingConv(llvm::CallingConv::ID(cc));
 }
 
+LLVMBool LLVM_General_HasPersonalityFn(LLVMValueRef Fn) {
+  return unwrap<Function>(Fn)->hasPersonalityFn();
+}
+
 }

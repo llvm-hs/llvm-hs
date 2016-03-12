@@ -154,8 +154,12 @@ foreign import ccall unsafe "LLVM_General_BuildExtractValue" buildExtractValue :
 foreign import ccall unsafe "LLVM_General_BuildInsertValue" buildInsertValue ::
   Ptr Builder -> Ptr Value -> Ptr Value -> Ptr CUInt -> CUInt -> CString -> IO (Ptr Instruction)
 
-foreign import ccall unsafe "LLVMBuildLandingPad" buildLandingPad ::
+foreign import ccall unsafe "LLVMBuildLandingPad" buildLandingPad' ::
   Ptr Builder -> Ptr Type -> Ptr Value -> CUInt -> CString -> IO (Ptr Instruction)
+
+-- | The personality should be set via the function
+buildLandingPad :: Ptr Builder -> Ptr Type -> CUInt -> CString -> IO (Ptr Instruction)
+buildLandingPad builder ty numClauses name = buildLandingPad' builder ty nullPtr numClauses name
 
 -- foreign import ccall unsafe "LLVM_General_BuildCleanupPad" buildCleanupPad' ::
 --   Ptr Builder -> Ptr Type -> Ptr Value -> CUInt -> CString -> IO (Ptr Instruction)

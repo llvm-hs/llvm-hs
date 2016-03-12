@@ -401,7 +401,6 @@ data Instruction
     }
   | LandingPad { 
       type' :: Type,
-      personalityFunction :: Operand,
       cleanup :: Bool,
       clauses :: [LandingPadClause],
       metadata :: InstructionMetadata 

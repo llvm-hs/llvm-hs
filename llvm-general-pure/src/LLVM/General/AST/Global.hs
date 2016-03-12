@@ -60,7 +60,8 @@ data Global
         alignment :: Word32,
         garbageCollectorName :: Maybe String,
         prefix :: Maybe Constant,
-        basicBlocks :: [BasicBlock]
+        basicBlocks :: [BasicBlock],
+        personalityFunction :: Maybe Constant
       }
   deriving (Eq, Read, Show, Typeable, Data)
 
@@ -125,5 +126,6 @@ functionDefaults =
     alignment = 0,
     garbageCollectorName = Nothing,
     prefix = Nothing,
-    basicBlocks = []
+    basicBlocks = [],
+    personalityFunction = Nothing
   }

@@ -237,6 +237,14 @@ LLVMBool LLVM_General_IsCleanup(LLVMValueRef v) {
 	return unwrap<LandingPadInst>(v)->isCleanup();
 }
 
+unsigned LLVM_General_GetNumClauses(LLVMValueRef v) {
+    return unwrap<LandingPadInst>(v)->getNumClauses();
+}
+
+LLVMValueRef LLVM_General_GetClause(LLVMValueRef v, unsigned i) {
+    return wrap(unwrap<LandingPadInst>(v)->getClause(i));
+}
+
 void LLVM_General_GetSwitchCases(
 	LLVMValueRef v,
 	LLVMValueRef *values,

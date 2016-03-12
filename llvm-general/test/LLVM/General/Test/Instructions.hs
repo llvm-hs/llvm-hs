@@ -485,19 +485,18 @@ tests = testGroup "Instructions" [
                 ptr i8,
                 i32
                ],
-             personalityFunction = ConstantOperand (C.GlobalReference (ptr (FunctionType A.T.void ts False)) (UnName 0)),
              cleanup = cp,
              clauses = cls,
              metadata = []
            },
            "landingpad { i8*, i32 }" ++ s)
           | (clsn,cls,clss) <- [
-           -- ("catch",
-           --  [Catch (C.Null (ptr i8))],
-           --  "\n          catch i8* null"),
-           -- ("filter",
-           --  [Filter (C.Null (ArrayType 1 (ptr i8)))],
-           --  "\n          filter [1 x i8*] zeroinitializer")
+           ("catch",
+            [Catch (C.Null (ptr i8))],
+            "\n          catch i8* null"),
+           ("filter",
+            [Filter (C.Null (ArrayType 1 (ptr i8)))],
+            "\n          filter [1 x i8*] zeroinitializer")
           ],
           (cpn, cp, cps) <- [ ("-cleanup", True, "\n          cleanup"), ("", False, "") ],
           let s = cps ++ clss
@@ -770,69 +769,70 @@ tests = testGroup "Instructions" [
        \  ret void\n\
        \}\n"
      ), (
-      --  "invoke",
-      --  Module "<string>" Nothing Nothing [
-      --   GlobalDefinition $ functionDefaults {
-      --     G.returnType = A.T.void,
-      --     G.name = UnName 0,
-      --     G.parameters = ([
-      --       Parameter i32 (UnName 0) [],
-      --       Parameter i16 (UnName 1) []
-      --      ], False),
-      --     G.basicBlocks = [
-      --       BasicBlock (UnName 2) [] (
-      --         Do $ Invoke {
-      --          callingConvention' = CC.C,
-      --          returnAttributes' = [],
-      --          function' = Right (ConstantOperand (C.GlobalReference (ptr (FunctionType A.T.void [i32, i16] False)) (UnName 0))),
-      --          arguments' = [
-      --           (ConstantOperand (C.Int 32 4), []),
-      --           (ConstantOperand (C.Int 16 8), [])
-      --          ],
-      --          functionAttributes' = [],
-      --          returnDest = Name "foo",
-      --          exceptionDest = Name "bar",
-      --          metadata' = []
-      --         }
-      --        ),
-      --       BasicBlock (Name "foo") [] (
-      --         Do $ Ret Nothing []
-      --        ),
-      --       BasicBlock (Name "bar") [
-      --        UnName 3 := LandingPad {
-      --          type' = StructureType False [ 
-      --             ptr i8,
-      --             i32
-      --            ],
-      --          personalityFunction = ConstantOperand C.Null {
-      --            C.constantType = PointerType { pointerReferent = IntegerType { typeBits = 8 }, pointerAddrSpace = AddrSpace 0 }
-      --          },
-      --          cleanup = True,
-      --          clauses = [],
-      --          metadata = []
-      --        }
-      --        ] (
-      --         Do $ Ret Nothing []
-      --        )
-      --      ]
-      --    }
-      --   ],
-      --  "; ModuleID = '<string>'\n\
-      --  \\n\
-      --  \define void @0(i32, i16) personality i8* null {\n\
-      --  \  invoke void @0(i32 4, i16 8)\n\
-      --  \          to label %foo unwind label %bar\n\
-      --  \\n\
-      --  \foo:                                              ; preds = %2\n\
-      --  \  ret void\n\
-      --  \\n\
-      --  \bar:                                              ; preds = %2\n\
-      --  \  %3 = landingpad { i8*, i32 }\n\
-      --  \          cleanup\n\
-      --  \          catch i8* null\n\
-      --  \  ret void\n\
-      --  \}\n"
-      -- ), (
+       "invoke",
+       Module "<string>" Nothing Nothing [
+        GlobalDefinition $ functionDefaults {
+          G.returnType = A.T.void,
+          G.name = UnName 0,
+          G.personalityFunction = Just $ C.GlobalReference
+            (ptr (FunctionType A.T.void [i32,i16] False))
+            (UnName 0)
+          ,
+          G.parameters = ([
+            Parameter i32 (UnName 0) [],
+            Parameter i16 (UnName 1) []
+           ], False),
+          G.basicBlocks = [
+            BasicBlock (UnName 2) [] (
+              Do $ Invoke {
+               callingConvention' = CC.C,
+               returnAttributes' = [],
+               function' = Right (ConstantOperand (C.GlobalReference (ptr (FunctionType A.T.void [i32, i16] False)) (UnName 0))),
+               arguments' = [
+                (ConstantOperand (C.Int 32 4), []),
+                (ConstantOperand (C.Int 16 8), [])
+               ],
+               functionAttributes' = [],
+               returnDest = Name "foo",
+               exceptionDest = Name "bar",
+               metadata' = []
+              }
+             ),
+            BasicBlock (Name "foo") [] (
+              Do $ Ret Nothing []
+             ),
+            BasicBlock (Name "bar") [
+             UnName 3 := LandingPad {
+               type' = StructureType False [
+                  ptr i8,
+                  i32
+                 ],
+               cleanup = True,
+               clauses = [Catch (C.Null (ptr i8))],
+               metadata = []
+             }
+             ] (
+              Do $ Ret Nothing []
+             )
+           ]
+         }
+        ],
+       "; ModuleID = '<string>'\n\
+       \\n\
+       \define void @0(i32, i16) personality void (i32, i16)* @0 {\n\
+       \  invoke void @0(i32 4, i16 8)\n\
+       \          to label %foo unwind label %bar\n\
+       \\n\
+       \foo:                                              ; preds = %2\n\
+       \  ret void\n\
+       \\n\
+       \bar:                                              ; preds = %2\n\
+       \  %3 = landingpad { i8*, i32 }\n\
+       \          cleanup\n\
+       \          catch i8* null\n\
+       \  ret void\n\
+       \}\n"
+      ), (
        "resume",
        Module "<string>" Nothing Nothing [
          GlobalDefinition $ functionDefaults {

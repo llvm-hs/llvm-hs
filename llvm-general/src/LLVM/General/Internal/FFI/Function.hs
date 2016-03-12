@@ -61,3 +61,12 @@ foreign import ccall unsafe "LLVM_General_GetFunctionPrefixData" getPrefixData :
 
 foreign import ccall unsafe "LLVM_General_SetFunctionPrefixData" setPrefixData ::
   Ptr Function -> Ptr Constant -> IO ()
+
+foreign import ccall unsafe "LLVM_General_HasPersonalityFn" hasPersonalityFn ::
+  Ptr Function -> IO LLVMBool
+
+foreign import ccall unsafe "LLVMSetPersonalityFn" setPersonalityFn ::
+  Ptr Function -> Ptr Constant -> IO ()
+
+foreign import ccall unsafe "LLVMGetPersonalityFn" getPersonalityFn ::
+  Ptr Function -> IO (Ptr Constant)

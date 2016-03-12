@@ -131,6 +131,12 @@ foreign import ccall unsafe "LLVMSetCleanup" setCleanup ::
 foreign import ccall unsafe "LLVM_General_IsCleanup" isCleanup ::
   Ptr Instruction -> IO LLVMBool
 
+foreign import ccall unsafe "LLVM_General_GetNumClauses" getNumClauses ::
+  Ptr Instruction -> IO CUInt
+
+foreign import ccall unsafe "LLVM_General_GetClause" getClause ::
+  Ptr Instruction -> CUInt -> IO (Ptr Constant)
+
 foreign import ccall unsafe "LLVMSetMetadata" setMetadata ::
   Ptr Instruction -> MDKindID -> Ptr MDNode -> IO ()
 

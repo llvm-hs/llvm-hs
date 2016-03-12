@@ -44,7 +44,6 @@ import LLVM.General.Internal.BasicBlock
 import LLVM.General.Internal.Coding
 import LLVM.General.Internal.Context
 import LLVM.General.Internal.DecodeAST
-import LLVM.General.Internal.Diagnostic
 import LLVM.General.Internal.EncodeAST
 import LLVM.General.Internal.Function
 import LLVM.General.Internal.Global
@@ -306,7 +305,7 @@ withModuleFromAST context@(Context c) (A.Module moduleId dataLayout triple defin
            setThreadLocalMode a' (A.G.threadLocalMode a)
            (liftIO . FFI.setAliasee a') =<< encodeM (A.G.aliasee a)
            return (FFI.upCast a')
-       (A.Function _ _ _ cc rAttrs resultType fName (args, isVarArgs) attrs _ _ _ gc prefix blocks) -> do
+       (A.Function _ _ _ cc rAttrs resultType fName (args, isVarArgs) attrs _ _ _ gc prefix blocks personality) -> do
          typ <- encodeM $ A.FunctionType resultType [t | A.Parameter t _ _ <- args] isVarArgs
          f <- liftIO . withName fName $ \fName -> FFI.addFunction m fName typ
          defineGlobal fName f
@@ -318,6 +317,7 @@ withModuleFromAST context@(Context c) (A.Module moduleId dataLayout triple defin
          setCOMDAT f (A.G.comdat g)
          setAlignment f (A.G.alignment g)
          setGC f gc
+         setPersonalityFn f personality
          forM blocks $ \(A.BasicBlock bName _ _) -> do
            b <- liftIO $ withName bName $ \bName -> FFI.appendBasicBlockInContext c f bName
            defineBasicBlock fName bName b
@@ -432,6 +432,7 @@ moduleAST (Module mod) = runDecodeAST $ do
                  `ap` getGC f
                  `ap` getPrefixData f
                  `ap` decodeBlocks
+                 `ap` getPersonalityFn f
         ]
 
        tds <- getStructDefinitions
