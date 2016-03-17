@@ -266,6 +266,15 @@ void LLVM_General_GetIndirectBrDests(
 		*dests = wrap(ib->getDestination(i));
 }
 
+inline Metadata **unwrap(LLVMMetadataRef *Vals) {
+  return reinterpret_cast<Metadata**>(Vals);
+}
+
+void LLVM_General_SetMetadata(LLVMValueRef Inst, unsigned KindID, LLVMMetadataRef MD) {
+  MDNode *N = MD ? unwrap<MDNode>(MD) : nullptr;
+  unwrap<Instruction>(Inst)->setMetadata(KindID, N);
+}
+
 unsigned LLVM_General_GetMetadata(
 	LLVMValueRef i,
 	unsigned *kinds,

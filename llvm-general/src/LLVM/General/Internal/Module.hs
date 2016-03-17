@@ -245,15 +245,13 @@ withModuleFromAST context@(Context c) (A.Module moduleId dataLayout triple defin
      return . return . return . return . return $ ()
      
    A.MetadataNodeDefinition i os -> return . return $ do
-     error "FIXME: createTemporaryMDNodeInContext"
-     -- t <- liftIO $ FFI.createTemporaryMDNodeInContext c
-     -- defineMDNode i t
-     -- return $ do
-     --   n <- encodeM (A.MetadataNode os)
-     --   liftIO $ FFI.replaceAllUsesWith (FFI.upCast t) (FFI.upCast n)
-     --   defineMDNode i n
-     --   liftIO $ FFI.destroyTemporaryMDNode t
-     --   return $ return ()
+     t <- liftIO $ FFI.createTemporaryMDNodeInContext c
+     defineMDNode i t
+     return $ do
+       n <- encodeM (A.MetadataNode os)
+       liftIO $ FFI.metadataReplaceAllUsesWith (FFI.upCast t) (FFI.upCast n)
+       defineMDNode i n
+       return $ return ()
 
    A.NamedMetadataDefinition n ids -> return . return . return . return $ do
      n <- encodeM n

@@ -137,7 +137,7 @@ foreign import ccall unsafe "LLVM_General_GetNumClauses" getNumClauses ::
 foreign import ccall unsafe "LLVM_General_GetClause" getClause ::
   Ptr Instruction -> CUInt -> IO (Ptr Constant)
 
-foreign import ccall unsafe "LLVMSetMetadata" setMetadata ::
+foreign import ccall unsafe "LLVM_General_SetMetadata" setMetadata ::
   Ptr Instruction -> MDKindID -> Ptr MDNode -> IO ()
 
 foreign import ccall unsafe "LLVM_General_GetMetadata" getMetadata ::
