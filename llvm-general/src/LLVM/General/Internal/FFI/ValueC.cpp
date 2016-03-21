@@ -1,6 +1,7 @@
 #define __STDC_LIMIT_MACROS
 #include "llvm-c/Core.h"
 #include "llvm/IR/Type.h"
+#include "llvm/IR/DerivedTypes.h"
 #include "llvm/IR/Value.h"
 #include "llvm/IR/Argument.h"
 #include "LLVM/General/Internal/FFI/Value.h"
