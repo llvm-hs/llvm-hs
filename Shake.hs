@@ -38,7 +38,7 @@ import Text.Parsec
 import Text.Parsec.String
 import Data.Version
 
-llvmVersion = "3.5.2"
+llvmVersion = "3.8.0"
 llvmDir = "out" </> ("llvm-" ++ llvmVersion)
 pkgName = "llvm-general"
 
@@ -209,21 +209,22 @@ main = shake shakeOptions {
           command_ [Cwd ghPages] "git" [ "push" ]
 
   llvmDir </> "install/bin/llvm-config" *> \out -> do
+    wipedir llvmDir
+    mkdir llvmDir
     [tarball] <- getDirectoryFiles "." [ "downloads/llvm-" ++ llvmVersion ++ ".src.tar.*" ]
-    buildRoot <- askOracle (BuildRoot ())
     need [ tarball ]
+    untar llvmDir tarball
+    (".":"..":[srcDir]) <- liftM sort $ liftIO $ System.Directory.getDirectoryContents llvmDir
     let buildDir = llvmDir </> "build"
-    wipedir buildDir
     mkdir buildDir
-    untar buildDir tarball
-    (".":"..":[srcDir']) <- liftM sort $ liftIO $ System.Directory.getDirectoryContents buildDir
-    let srcDir = buildDir </> srcDir'
-    command_ [Cwd srcDir] "sh" [
-        "./configure",
+    buildRoot <- askOracle (BuildRoot ())
+    env <- addEnv [("REQUIRES_RTTI", "1")]
+    command_ [Cwd buildDir, env] "sh" [
+        buildRoot </> llvmDir </> srcDir </> "configure",
         "--prefix=" ++ buildRoot </> llvmDir </> "install",
         "--enable-shared"
         ]
-    command_ [Cwd srcDir] "make" [ "-j", "8", "install" ]
+    command_ [Cwd buildDir, env] "make" [ "-j", "8", "install" ]
     wipedir buildDir
 
 
