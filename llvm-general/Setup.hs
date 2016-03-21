@@ -108,9 +108,9 @@ main = do
     confHook = \(genericPackageDescription, hookedBuildInfo) configFlags -> do
       llvmConfig <- getLLVMConfig configFlags
 
-      llvmCppFlags <- do
-        l <- llvmConfig "--cppflags"
-        return $ (filter ("-D" `isPrefixOf`) $ words l) \\ (map ("-D"++) uncheckedHsFFIDefines)
+      llvmCxxFlags <- do
+        l <- llvmConfig "--cxxflags"
+        return $ (words l) \\ (map ("-D"++) uncheckedHsFFIDefines)
       includeDirs <- liftM lines $ llvmConfig "--includedir"
       libDirs@[libDir] <- liftM lines $ llvmConfig "--libdir"
       [llvmVersion] <- liftM lines $ llvmConfig "--version"
@@ -125,7 +125,7 @@ main = do
               libraryCondTree <- condLibrary genericPackageDescription
               return libraryCondTree {
                 condTreeData = condTreeData libraryCondTree <> mempty {
-                    libBuildInfo = mempty { ccOptions = llvmCppFlags }
+                    libBuildInfo = mempty { ccOptions = llvmCxxFlags }
                   },
                 condTreeComponents = condTreeComponents libraryCondTree ++ [
                   (
