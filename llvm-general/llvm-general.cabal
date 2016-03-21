@@ -42,8 +42,8 @@ source-repository head
 source-repository this
   type: git
   location: git://github.com/bscarlet/llvm-general.git
-  branch: llvm-3.5
-  tag: v3.5.1.2
+  branch: llvm-3.8
+  tag: v3.8.0.0
 
 flag shared-llvm
   description: link against llvm shared rather than static library

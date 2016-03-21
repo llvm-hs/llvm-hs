@@ -24,8 +24,8 @@ source-repository head
 source-repository this
   type: git
   location: git://github.com/bscarlet/llvm-general.git
-  branch: llvm-3.5
-  tag: pure-v3.5.1.0
+  branch: llvm-3.8
+  tag: pure-v3.8.0.0
 
 library
   ghc-options: -fwarn-unused-imports
