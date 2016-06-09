@@ -32,6 +32,7 @@ data Operand
   = LocalReference Type Name
   -- | 'Constant's include 'LLVM.General.AST.Constant.GlobalReference', for \@foo
   | ConstantOperand Constant
+  | MetadataOperand Metadata
   deriving (Eq, Ord, Read, Show, Typeable, Data)
 
 -- | The 'LLVM.General.AST.Instruction.Call' instruction is special: the callee can be inline assembly

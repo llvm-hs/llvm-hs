@@ -38,6 +38,10 @@ LLVMMetadataRef LLVM_General_MDValue(LLVMValueRef v) {
     return wrap(ValueAsMetadata::get(unwrap(v)));
 }
 
+LLVMValueRef LLVM_General_MetadataOperand(LLVMContextRef c, LLVMMetadataRef md) {
+    return wrap(MetadataAsValue::get(*unwrap(c), unwrap(md)));
+}
+
 LLVMMetadataRef LLVM_General_IsAMDNode(LLVMMetadataRef md) {
     if (isa<MDNode>(unwrap(md))) {
         return md;
@@ -47,6 +51,10 @@ LLVMMetadataRef LLVM_General_IsAMDNode(LLVMMetadataRef md) {
 
 LLVMValueRef LLVM_General_GetMDValue(LLVMMetadataRef md) {
     return wrap(unwrap<ValueAsMetadata>(md)->getValue());
+}
+
+LLVMMetadataRef LLVM_General_GetMetadataOperand(LLVMValueRef val) {
+    return wrap(unwrap<MetadataAsValue>(val)->getMetadata());
 }
 
 LLVMMetadataRef LLVM_General_MDNodeInContext(LLVMContextRef C,
@@ -62,6 +70,15 @@ LLVMMetadataRef LLVM_General_IsAMDValue(LLVMMetadataRef md) {
     }
     return nullptr;
 }
+
+
+LLVMValueRef LLVM_General_IsAMetadataOperand(LLVMValueRef val) {
+    if (isa<MetadataAsValue>(unwrap(val))) {
+        return val;
+    }
+    return nullptr;
+}
+
 
 unsigned LLVM_General_GetMDKindNames(
 	LLVMContextRef c,

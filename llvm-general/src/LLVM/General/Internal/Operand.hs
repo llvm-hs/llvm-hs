@@ -34,9 +34,12 @@ instance DecodeM DecodeAST A.Operand (Ptr FFI.Value) where
      then
       return A.ConstantOperand `ap` decodeM c
      else
-      do return A.LocalReference
-                   `ap` (decodeM =<< (liftIO $ FFI.typeOf v))
-                   `ap` getLocalName v
+      do m <- liftIO $ FFI.isAMetadataOperand v
+         if (m /= nullPtr)
+            then A.MetadataOperand <$> decodeM m
+            else return A.LocalReference
+                           `ap` (decodeM =<< (liftIO $ FFI.typeOf v))
+                           `ap` getLocalName v
 
 instance DecodeM DecodeAST A.Metadata (Ptr FFI.Metadata) where
   decodeM md = do
@@ -70,7 +73,10 @@ instance EncodeM EncodeAST A.Operand (Ptr FFI.Value) where
       modify $ \s -> s { encodeStateLocals = Map.insert n lv $ encodeStateLocals s }
       return lv
     return $ case lv of DefinedValue v -> v; ForwardValue v -> v
-
+  encodeM (A.MetadataOperand md) = do
+    md' <- encodeM md
+    Context c <- gets encodeStateContext
+    liftIO $ FFI.upCast <$> FFI.metadataOperand c md'
 
 instance EncodeM EncodeAST A.Metadata (Ptr FFI.Metadata) where
   encodeM (A.MDString s) = do
@@ -102,6 +108,9 @@ instance DecodeM DecodeAST [Maybe A.Metadata] (Ptr FFI.MDNode) where
 
 instance DecodeM DecodeAST A.Operand (Ptr FFI.MDValue) where
   decodeM = decodeM <=< liftIO . FFI.getMDValue
+
+instance DecodeM DecodeAST A.Metadata (Ptr FFI.MetadataAsVal) where
+  decodeM = decodeM <=< liftIO . FFI.getMetadataOperand
 
 instance DecodeM DecodeAST A.MetadataNode (Ptr FFI.MDNode) where
   decodeM p = scopeAnyCont $ do

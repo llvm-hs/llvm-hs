@@ -23,8 +23,14 @@ foreign import ccall unsafe "LLVM_General_IsAMDNode" isAMDNode ::
 foreign import ccall unsafe "LLVM_General_IsAMDValue" isAMDValue ::
   Ptr Metadata -> IO (Ptr MDValue)
 
+foreign import ccall unsafe "LLVM_General_IsAMetadataOperand" isAMetadataOperand ::
+  Ptr Value -> IO (Ptr MetadataAsVal)
+
 foreign import ccall unsafe "LLVM_General_GetMDValue" getMDValue ::
   Ptr MDValue -> IO (Ptr Value)
+
+foreign import ccall unsafe "LLVM_General_GetMetadataOperand" getMetadataOperand ::
+  Ptr MetadataAsVal -> IO (Ptr Metadata)
 
 foreign import ccall unsafe "LLVMGetMDKindIDInContext" getMDKindIDInContext' ::
   Ptr Context -> Ptr CChar -> CUInt -> IO MDKindID
@@ -39,6 +45,9 @@ foreign import ccall unsafe "LLVM_General_MDStringInContext" mdStringInContext' 
 
 foreign import ccall unsafe "LLVM_General_MDValue" mdValue ::
   Ptr Value -> IO (Ptr MDValue)
+
+foreign import ccall unsafe "LLVM_General_MetadataOperand" metadataOperand ::
+  Ptr Context -> Ptr Metadata -> IO (Ptr Value)
 
 mdStringInContext ctx (p, n) = mdStringInContext' ctx p n
 

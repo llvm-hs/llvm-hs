@@ -119,3 +119,8 @@ data Type
 
 -- | <http://llvm.org/doxygen/classllvm_1_1Metadata.html>
 data Metadata
+
+-- | <http://www.llvm.org/docs/doxygen/html/classllvm_1_1MetadataAsValue.html>
+data MetadataAsVal
+
+instance ChildOf Value MetadataAsVal
