@@ -2,7 +2,8 @@
   TemplateHaskell,
   QuasiQuotes,
   ViewPatterns,
-  OverloadedStrings
+  OverloadedStrings,
+  CPP
   #-}
 module LLVM.General.Internal.PrettyPrint where
 
@@ -163,8 +164,13 @@ makePrettyShowInstance n = do
   info <- reify n
   let (tvb, cons) = 
         case info of
+#if __GLASGOW_HASKELL__ < 800
           TyConI (DataD _ _ tvb cons _) -> (tvb, cons)
           TyConI (NewtypeD _ _ tvb con _) -> (tvb, [con])
+#else
+          TyConI (DataD _ _ tvb _ cons _) -> (tvb, cons)
+          TyConI (NewtypeD _ _ tvb _ con _) -> (tvb, [con])
+#endif
           x -> error $ "unexpected info: " ++ show x
   cs <- mapM (const $ newName "a") tvb
   let cvs = map varT cs
@@ -189,7 +195,12 @@ makePrettyShowInstance n = do
                    (normalB ss)
                    []
                InfixC (_, n0) conName (_, n1) -> do
+#if __GLASGOW_HASKELL__ < 800
                  DataConI _ _ _ (Fixity prec _) <- reify conName
+#else
+                 justFixity <- reifyFixity conName
+                 let (Fixity prec _) = if isJust justFixity then fromJust justFixity else defaultFixity
+#endif
                  let ns = [n0, n1]
                  [p0,p1] <- mapM (const $ newName "f") ns
                  let ss = [| parensIfNeeded prec (prettyShow $(varE p0) <+> $(simpleName conName) <+> prettyShow $(varE p1)) |]
