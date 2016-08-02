@@ -43,7 +43,6 @@ module Control.Monad.Exceptable (
     ) where
 
 import Prelude
-
 import qualified Control.Monad.Trans.Except as Except
 
 import Control.Monad.Trans
@@ -150,8 +149,20 @@ instance (Read e, Read1 m, Read a) => Read (ExceptableT e m a) where
 instance (Show e, Show1 m, Show a) => Show (ExceptableT e m a) where
     showsPrec d (ExceptableT m) = showsUnary1 "ExceptableT" d m
 
-instance (Read e, Read1 m) => Read1 (ExceptableT e m) where readsPrec1 = readsPrec
-instance (Show e, Show1 m) => Show1 (ExceptableT e m) where showsPrec1 = showsPrec
+instance (Read e, Read1 m) => Read1 (ExceptableT e m) where
+#if __GLASGOW_HASKELL__ < 800
+  readsPrec1 = readsPrec
+#else
+  liftReadsPrec rp rl =
+    readsData $ readsUnaryWith (liftReadsPrec rp rl) "ExceptableT" ExceptableT
+#endif
+instance (Show e, Show1 m) => Show1 (ExceptableT e m) where
+#if __GLASGOW_HASKELL__ < 800
+  showsPrec1 = showsPrec
+#else
+  liftShowsPrec sp sl d (ExceptableT m) =
+    showsUnaryWith (liftShowsPrec sp sl) "ExceptableT" d m
+#endif
 
 runExceptableT :: ExceptableT e m a -> m (Either e a)
 runExceptableT =  Except.runExceptT . unExceptableT

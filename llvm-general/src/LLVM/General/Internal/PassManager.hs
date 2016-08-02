@@ -1,6 +1,7 @@
 {-# LANGUAGE
   TemplateHaskell,
-  MultiParamTypeClasses
+  MultiParamTypeClasses,
+  CPP
   #-}
 module LLVM.General.Internal.PassManager where
 
@@ -108,7 +109,11 @@ createPassManager pss = flip runAnyContT return $ do
       let tm = maybe nullPtr (\(TargetMachine tm) -> tm) tm'
       forM_ ps $ \p -> $(
         do
+#if __GLASGOW_HASKELL__ < 800
           TH.TyConI (TH.DataD _ _ _ cons _) <- TH.reify ''Pass
+#else
+          TH.TyConI (TH.DataD _ _ _ _ cons _) <- TH.reify ''Pass
+#endif
           TH.caseE [| p |] $ flip map cons $ \con -> do
             let
               (n, fns) = case con of
