@@ -15,7 +15,6 @@ import Distribution.Simple.LocalBuildInfo
 import Distribution.PackageDescription
 import Distribution.Version
 import System.Environment
-import System.SetEnv
 import Distribution.System
 
 -- define these selectively in C files (where _not_ using HsFFI.h),
