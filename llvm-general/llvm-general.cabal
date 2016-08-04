@@ -53,6 +53,12 @@ flag debug
   description: compile C(++) shims with debug info for ease of troubleshooting
   default: False
 
+custom-setup
+  setup-depends: base
+               , Cabal
+               , containers
+               , setenv
+
 library
   build-tools: llvm-config
   ghc-options: -fwarn-unused-imports
