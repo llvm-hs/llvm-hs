@@ -10,7 +10,7 @@ import LLVM.General.Prelude
 import Control.Exception
 import Control.Monad.IO.Class
 import Control.Monad.AnyCont
-import Control.Monad.Exceptable
+import Control.Monad.Trans.Except
 
 import Data.IORef
 import Foreign.Ptr
@@ -68,7 +68,7 @@ withExecutionEngine c m createEngine f = flip runAnyContT return $ do
   liftIO initializeNativeTarget
   outExecutionEngine <- alloca
   outErrorCStringPtr <- alloca
-  Module dummyModule <- maybe (anyContToM $ liftM (either undefined id) . runExceptableT . ExceptableT
+  Module dummyModule <- maybe (anyContToM $ liftM (either undefined id) . runExceptT
                                    . withModuleFromAST c (A.Module "" Nothing Nothing []))
                         (return . Module) m
   r <- liftIO $ createEngine outExecutionEngine dummyModule outErrorCStringPtr

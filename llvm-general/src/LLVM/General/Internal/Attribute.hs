@@ -10,7 +10,7 @@ module LLVM.General.Internal.Attribute where
 import LLVM.General.Prelude
 
 import Control.Monad.AnyCont
-import Control.Monad.Exceptable
+import Control.Monad.IO.Class
 import Control.Monad.State (gets)
 
 import Foreign.C (CUInt)

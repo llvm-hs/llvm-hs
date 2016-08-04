@@ -14,9 +14,10 @@ import qualified Language.Haskell.TH.Quote as TH
 import qualified LLVM.General.Internal.InstructionDefs as ID
 import LLVM.General.Internal.InstructionDefs (instrP)
 
-import Control.Monad.Exceptable
 import Control.Monad.AnyCont
+import Control.Monad.IO.Class
 import Control.Monad.State (gets)
+import Control.Monad.Except (throwError)
 
 import Foreign.Ptr
 

@@ -8,7 +8,7 @@ import LLVM.General.Prelude
 
 import Control.Monad.State
 import Control.Monad.AnyCont
-import Control.Monad.Exceptable
+import Control.Monad.Except
 
 import qualified Data.Set as Set
 

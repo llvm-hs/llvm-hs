@@ -8,10 +8,10 @@ module LLVM.General.Internal.Target where
 
 import LLVM.General.Prelude
 
-import Control.Monad.Trans.Except (runExcept)
-import Control.Monad.Exceptable
 import Control.Exception
 import Control.Monad.AnyCont
+import Control.Monad.IO.Class
+import Control.Monad.Except (ExceptT,runExcept,throwError)
 
 import Foreign.Ptr
 import Foreign.C.String
@@ -100,7 +100,7 @@ lookupTarget ::
   Maybe String -- ^ arch
   -> String -- ^ \"triple\" - e.g. x86_64-unknown-linux-gnu
   -> ExceptT String IO (Target, String)
-lookupTarget arch triple = unExceptableT $ flip runAnyContT return $ do
+lookupTarget arch triple = flip runAnyContT return $ do
   cErrorP <- alloca
   cNewTripleP <- alloca
   arch <- encodeM (maybe "" id arch)

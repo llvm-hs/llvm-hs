@@ -2,9 +2,10 @@ module LLVM.General.Internal.DataLayout where
 
 import LLVM.General.Prelude
 
-import Control.Monad.Exceptable
-import Control.Monad.AnyCont
 import Control.Exception
+import Control.Monad.AnyCont
+import Control.Monad.IO.Class
+import Control.Monad.Trans.Except
 
 import Foreign.Ptr
 
