@@ -34,6 +34,7 @@ extra-source-files:
   src/LLVM/General/Internal/FFI/Target.h
   src/LLVM/General/Internal/FFI/Type.h
   src/LLVM/General/Internal/FFI/Value.h
+tested-with: GHC == 7.8.4, GHC == 7.10.3, GHC == 8.0.1
 
 source-repository head
   type: git
@@ -53,12 +54,17 @@ flag debug
   description: compile C(++) shims with debug info for ease of troubleshooting
   default: False
 
+custom-setup
+  setup-depends: base
+               , Cabal
+               , containers
+
 library
   build-tools: llvm-config
   ghc-options: -fwarn-unused-imports
   cc-options: -std=c++11
   build-depends:
-    base >= 4.6 && < 5,
+    base >= 4.7 && < 5,
     utf8-string >= 0.3.7,
     bytestring >= 0.9.1.10,
     transformers >= 0.3.0.0 && < 0.5,
@@ -68,7 +74,6 @@ library
     containers >= 0.4.2.1,
     parsec >= 3.1.3,
     array >= 0.4.0.0,
-    setenv >= 0.1.0,
     llvm-general-pure == 3.8.0.0
   extra-libraries: stdc++
   hs-source-dirs: src
@@ -207,7 +212,7 @@ library
 test-suite test
   type: exitcode-stdio-1.0
   build-depends:
-    base >= 4.6 && < 5,
+    base >= 4.7 && < 5,
     test-framework >= 0.5,
     test-framework-hunit >= 0.2.7,
     HUnit >= 1.2.4.2,
