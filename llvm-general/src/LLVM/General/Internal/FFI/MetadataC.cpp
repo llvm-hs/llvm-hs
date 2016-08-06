@@ -20,18 +20,18 @@ LLVMMetadataRef LLVM_General_IsAMDString(LLVMMetadataRef md) {
     return nullptr;
 }
 
-LLVMMetadataRef LLVM_General_MDStringInContext(LLVMContextRef C,
-                                               const char *Str, unsigned SLen) {
-  return wrap(MDString::get(*unwrap(C), StringRef(Str, SLen)));
+LLVMMetadataRef LLVM_General_MDStringInContext(LLVMContextRef c,
+                                               const char *str, unsigned slen) {
+    return wrap(MDString::get(*unwrap(c), StringRef(str, slen)));
 }
 
-const char *LLVM_General_GetMDString(LLVMMetadataRef MD, unsigned* Len) {
-    if (const MDString *S = dyn_cast<MDString>(unwrap(MD))) {
-      *Len = S->getString().size();
+const char *LLVM_General_GetMDString(LLVMMetadataRef md, unsigned* len) {
+    if (const MDString *S = dyn_cast<MDString>(unwrap(md))) {
+      *len = S->getString().size();
       return S->getString().data();
     }
-  *Len = 0;
-  return nullptr;
+    *len = 0;
+    return nullptr;
 }
 
 LLVMMetadataRef LLVM_General_MDValue(LLVMValueRef v) {
@@ -57,11 +57,10 @@ LLVMMetadataRef LLVM_General_GetMetadataOperand(LLVMValueRef val) {
     return wrap(unwrap<MetadataAsValue>(val)->getMetadata());
 }
 
-LLVMMetadataRef LLVM_General_MDNodeInContext(LLVMContextRef C,
-                                             LLVMMetadataRef *MDs,
-                                             unsigned Count) {
-  return wrap(
-      MDNode::get(*unwrap(C), ArrayRef<Metadata *>(unwrap(MDs), Count)));
+LLVMMetadataRef LLVM_General_MDNodeInContext(LLVMContextRef c,
+                                             LLVMMetadataRef *mds,
+                                             unsigned count) {
+    return wrap(MDNode::get(*unwrap(c), ArrayRef<Metadata *>(unwrap(mds), count)));
 }
 
 LLVMMetadataRef LLVM_General_IsAMDValue(LLVMMetadataRef md) {
@@ -135,17 +134,17 @@ void LLVM_General_DestroyTemporaryMDNode(LLVMMetadataRef v) {
     MDNode::deleteTemporary(unwrap<MDNode>(v));
 }
 
-void LLVM_General_GetMDNodeOperands(LLVMMetadataRef MD, LLVMMetadataRef *Dest) {
-    const auto *N = cast<MDNode>(unwrap(MD));
+void LLVM_General_GetMDNodeOperands(LLVMMetadataRef md, LLVMMetadataRef *dest) {
+    const auto *N = cast<MDNode>(unwrap(md));
     const unsigned numOperands = N->getNumOperands();
     for (unsigned i = 0; i < numOperands; i++)
-        Dest[i] = wrap(N->getOperand(i));
+        dest[i] = wrap(N->getOperand(i));
 }
 
-void LLVM_General_MetadataReplaceAllUsesWith(LLVMMetadataRef MD, LLVMMetadataRef New) {
-  auto *Node = unwrap<MDNode>(MD);
-  Node->replaceAllUsesWith(unwrap<Metadata>(New));
-  MDNode::deleteTemporary(Node);
+void LLVM_General_MetadataReplaceAllUsesWith(LLVMMetadataRef md, LLVMMetadataRef replacement) {
+    auto *Node = unwrap<MDNode>(md);
+    Node->replaceAllUsesWith(unwrap<Metadata>(replacement));
+    MDNode::deleteTemporary(Node);
 }
 
 }
