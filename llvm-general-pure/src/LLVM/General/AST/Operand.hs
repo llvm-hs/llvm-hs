@@ -20,10 +20,11 @@ data MetadataNode
   | MetadataNodeReference MetadataNodeID
   deriving (Eq, Ord, Read, Show, Typeable, Data)
 
+-- | <http://llvm.org/docs/LangRef.html#metadata>
 data Metadata
-  = MDString String
-  | MDNode MetadataNode
-  | MDValue Operand
+  = MDString String -- ^ <http://llvm.org/docs/doxygen/html/classllvm_1_1MDNode.html>
+  | MDNode MetadataNode -- ^ <http://llvm.org/docs/doxygen/html/classllvm_1_1MDNode.html>
+  | MDValue Operand -- ^ <http://llvm.org/docs/doxygen/html/classllvm_1_1ValueAsMetadata.html>
   deriving (Eq, Ord, Read, Show, Typeable, Data)
 
 -- | An 'Operand' is roughly that which is an argument to an 'LLVM.General.AST.Instruction.Instruction'
