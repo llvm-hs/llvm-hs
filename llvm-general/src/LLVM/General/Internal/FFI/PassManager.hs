@@ -1,6 +1,7 @@
 {-# LANGUAGE
   TemplateHaskell,
-  ForeignFunctionInterface
+  ForeignFunctionInterface,
+  CPP
   #-}
 
 module LLVM.General.Internal.FFI.PassManager where
@@ -82,8 +83,11 @@ $(do
            ++ [[t| Ptr TargetMachine |] | needsTargetMachine n]
            ++ map passTypeMapping extraParams)
           (TH.tupleT 0)
-
+#if __GLASGOW_HASKELL__ < 800
   TH.TyConI (TH.DataD _ _ _ cons _) <- TH.reify ''G.Pass
+#else
+  TH.TyConI (TH.DataD _ _ _ _ cons _) <- TH.reify ''G.Pass
+#endif
   liftM concat $ forM cons $ \con -> case con of
     TH.RecC n l -> declareForeign n [ t | (_,_,t) <- l ]
     TH.NormalC n [] -> declareForeign n []

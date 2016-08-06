@@ -1,5 +1,6 @@
 {-# LANGUAGE
-  TemplateHaskell
+  TemplateHaskell,
+  CPP
   #-}
 module LLVM.General.Internal.InstructionDefs (
   astInstructionRecs,
@@ -27,10 +28,14 @@ import qualified LLVM.General.AST.Constant as A.C
 
 $(do
    let ctorRecs t = do
+#if __GLASGOW_HASKELL__ < 800
          TH.TyConI (TH.DataD _ _ _ cons _) <- TH.reify t
+#else
+         TH.TyConI (TH.DataD _ _ _ _ cons _) <- TH.reify t
+#endif
          TH.dataToExpQ (const Nothing) $ [ (TH.nameBase n, rec) | rec@(TH.RecC n _) <- cons ]
 
-   [d| 
+   [d|
       astInstructionRecs = Map.fromList $(ctorRecs ''A.Instruction)
       astConstantRecs = Map.fromList $(ctorRecs ''A.C.Constant)
     |]
