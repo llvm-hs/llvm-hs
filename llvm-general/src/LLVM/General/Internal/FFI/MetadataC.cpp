@@ -132,13 +132,7 @@ LLVMMetadataRef LLVM_General_CreateTemporaryMDNodeInContext(LLVMContextRef c) {
 }
 
 void LLVM_General_DestroyTemporaryMDNode(LLVMMetadataRef v) {
-    std::cerr << "C: destroy temporary: " << v << "\n";
-    MDNode* n = unwrap<MDNode>(v);
-    std::cerr << "unwrapped\n";
-    std::cerr << "temp? " << n->isTemporary() << "\n";
-    n->print(llvm::errs());
-	MDNode::deleteTemporary(unwrap<MDNode>(v));
-    std::cerr << "C: destroyed temporary\n";
+    MDNode::deleteTemporary(unwrap<MDNode>(v));
 }
 
 void LLVM_General_GetMDNodeOperands(LLVMMetadataRef MD, LLVMMetadataRef *Dest) {
