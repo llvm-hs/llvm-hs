@@ -12,6 +12,10 @@ before_cache:
   - rm -fv $HOME/.cabal/packages/hackage.haskell.org/build-reports.log
   - rm -fv $HOME/.cabal/packages/hackage.haskell.org/00-index.tar
 
+env:
+  global:
+    - GCC=gcc-5 GXX=g++-5
+
 matrix:
   include:
     - env: CABALVER=1.24 GHCVER=7.8.4
@@ -27,17 +31,15 @@ matrix:
 before_install:
  - export PATH=/opt/ghc/$GHCVER/bin:/opt/cabal/$CABALVER/bin:$PATH
  - mkdir -p /home/travis/bin
- - ln -s /usr/bin/gcc-5 /home/travis/bin/gcc
- - ln -s /usr/bin/g++-5 /home/travis/bin/g++
  - ln -s /usr/bin/llvm-config-3.8 /home/travis/bin/llvm-config
  - export PATH=/home/travis/bin:$PATH
- - export CC=/usr/bin/gcc-5
- - export CXX=/usr/bin/g++-5
+ - export CC=/usr/bin/$GCC
+ - export CXX=/usr/bin/$GXX
 
 install:
  - llvm-config --version
- - gcc --version
- - g++ --version
+ - $GCC --version
+ - $GXX --version
  - cabal --version
  - BENCH=${BENCH---enable-benchmarks}
  - TEST=${TEST---enable-tests}
@@ -56,7 +58,7 @@ install:
 script:
  - if [ -f configure.ac ]; then autoreconf -i; fi
  # this builds all libraries and executables (including tests/benchmarks)
- - cabal new-build llvm-general-pure llvm-general --with-gcc gcc-5 --ghc-options '-pgmc gcc-5' ${TEST} ${BENCH} # -v2 provides useful information for debugging
+ - cabal new-build llvm-general-pure llvm-general --with-gcc $GCC --ghc-options "-pgmc=${GCC}" ${TEST} ${BENCH} # -v2 provides useful information for debugging
 
  # there's no 'cabal new-test' yet, so let's emulate for now
  - TESTS=("llvm-general-pure-3.8.0.0/build/test/test" "llvm-general-3.8.0.0/build/test/test");
