@@ -6,9 +6,9 @@ module LLVM.General.Internal.Type where
 
 import LLVM.General.Prelude
 
-import Control.Monad.State
 import Control.Monad.AnyCont
-import Control.Monad.Exceptable
+import Control.Monad.Error.Class
+import Control.Monad.State
 
 import qualified Data.Set as Set
 

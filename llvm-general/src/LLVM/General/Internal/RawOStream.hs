@@ -2,8 +2,10 @@ module LLVM.General.Internal.RawOStream where
 
 import LLVM.General.Prelude
 
-import Control.Monad.Exceptable
 import Control.Monad.AnyCont
+import Control.Monad.Error.Class
+import Control.Monad.IO.Class
+import Control.Monad.Trans.Except
 
 import Unsafe.Coerce
 import Data.IORef
@@ -30,7 +32,7 @@ withFileRawOStream path excl text c = do
   msgPtr <- alloca
   errorRef <- liftIO $ newIORef undefined
   succeeded <- decodeM =<< (liftIO $ FFI.withFileRawOStream path excl text msgPtr $ \os -> do
-                              r <- runExceptableT (ExceptableT  $ c os)
+                              r <- runExceptT (c os)
                               writeIORef errorRef r)
   unless succeeded $ do
     s <- decodeM msgPtr
@@ -58,7 +60,7 @@ withBufferRawOStream c = do
         r <- decodeM (start, size)
         writeIORef resultRef (Just r)
       saveError os = do
-        r <- runExceptableT (ExceptableT $ c os)
+        r <- runExceptT (c os)
         writeIORef errorRef r
   liftIO $ FFI.withBufferRawOStream saveBuffer saveError
   e <- liftIO $ readIORef errorRef

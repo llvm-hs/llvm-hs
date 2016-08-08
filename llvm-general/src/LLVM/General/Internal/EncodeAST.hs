@@ -8,9 +8,10 @@ module LLVM.General.Internal.EncodeAST where
 import LLVM.General.Prelude
 
 import Control.Exception
-import Control.Monad.State
-import Control.Monad.Exceptable
 import Control.Monad.AnyCont
+import Control.Monad.Error.Class
+import Control.Monad.State
+import Control.Monad.Trans.Except
 
 import Foreign.Ptr
 import Foreign.C
@@ -48,7 +49,7 @@ data EncodeState = EncodeState {
       encodeStateCOMDATs :: Map String (Ptr FFI.COMDAT)
     }
 
-newtype EncodeAST a = EncodeAST { unEncodeAST :: AnyContT (ExceptableT String (StateT EncodeState IO)) a }
+newtype EncodeAST a = EncodeAST { unEncodeAST :: AnyContT (ExceptT String (StateT EncodeState IO)) a }
     deriving (
        Functor,
        Applicative,
@@ -69,7 +70,7 @@ defineType :: A.Name -> Ptr FFI.Type -> EncodeAST ()
 defineType n t = modify $ \s -> s { encodeStateNamedTypes = Map.insert n t (encodeStateNamedTypes s) }
 
 runEncodeAST :: Context -> EncodeAST a -> ExceptT String IO a
-runEncodeAST context@(Context ctx) (EncodeAST a) = unExceptableT $ makeExceptableT $
+runEncodeAST context@(Context ctx) (EncodeAST a) = ExceptT $
     bracket (FFI.createBuilderInContext ctx) FFI.disposeBuilder $ \builder -> do
       let initEncodeState = EncodeState {
               encodeStateBuilder = builder,
@@ -83,7 +84,7 @@ runEncodeAST context@(Context ctx) (EncodeAST a) = unExceptableT $ makeExceptabl
               encodeStateAttributeGroups = Map.empty,
               encodeStateCOMDATs = Map.empty
             }
-      flip evalStateT initEncodeState . runExceptableT . flip runAnyContT return $ a
+      flip evalStateT initEncodeState . runExceptT . flip runAnyContT return $ a
 
 withName :: A.Name -> (CString -> IO a) -> IO a
 withName (A.Name n) = withCString n
