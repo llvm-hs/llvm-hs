@@ -34,19 +34,25 @@ instance DecodeM DecodeAST A.Operand (Ptr FFI.Value) where
      then
       return A.ConstantOperand `ap` decodeM c
      else
-      do
-        mds <- liftIO $ FFI.isAMDString v
-        if mds /= nullPtr 
-         then return A.MetadataStringOperand `ap` decodeM mds
-         else
-           do
-             mdn <- liftIO $ FFI.isAMDNode v
-             if mdn /= nullPtr
-              then return A.MetadataNodeOperand `ap` decodeM mdn
-              else
-                return A.LocalReference 
-                         `ap` (decodeM =<< (liftIO $ FFI.typeOf v))
-                         `ap` getLocalName v
+      do m <- liftIO $ FFI.isAMetadataOperand v
+         if (m /= nullPtr)
+            then A.MetadataOperand <$> decodeM m
+            else return A.LocalReference
+                           `ap` (decodeM =<< (liftIO $ FFI.typeOf v))
+                           `ap` getLocalName v
+
+instance DecodeM DecodeAST A.Metadata (Ptr FFI.Metadata) where
+  decodeM md = do
+    s <- liftIO $ FFI.isAMDString md
+    if (s /= nullPtr)
+       then A.MDString <$> decodeM s
+       else do n <- liftIO $ FFI.isAMDNode md
+               if (n /= nullPtr)
+                  then A.MDNode <$> decodeM n
+                  else do v <- liftIO $ FFI.isAMDValue md
+                          if (v /= nullPtr)
+                              then A.MDValue <$> decodeM v
+                              else fail "Metadata was not one of [MDString, MDValue, MDNode]"
 
 instance DecodeM DecodeAST A.CallableOperand (Ptr FFI.Value) where
   decodeM v = do
@@ -67,12 +73,20 @@ instance EncodeM EncodeAST A.Operand (Ptr FFI.Value) where
       modify $ \s -> s { encodeStateLocals = Map.insert n lv $ encodeStateLocals s }
       return lv
     return $ case lv of DefinedValue v -> v; ForwardValue v -> v
+  encodeM (A.MetadataOperand md) = do
+    md' <- encodeM md
+    Context c <- gets encodeStateContext
+    liftIO $ FFI.upCast <$> FFI.metadataOperand c md'
 
-  encodeM (A.MetadataStringOperand s) = do
+instance EncodeM EncodeAST A.Metadata (Ptr FFI.Metadata) where
+  encodeM (A.MDString s) = do
     Context c <- gets encodeStateContext
     s <- encodeM s
     liftM FFI.upCast $ liftIO $ FFI.mdStringInContext c s
-  encodeM (A.MetadataNodeOperand mdn) = (FFI.upCast :: Ptr FFI.MDNode -> Ptr FFI.Value) <$> encodeM mdn
+  encodeM (A.MDNode mdn) = (FFI.upCast :: Ptr FFI.MDNode -> Ptr FFI.Metadata) <$> encodeM mdn
+  encodeM (A.MDValue v) = do
+     v <- encodeM v
+     liftIO $ FFI.upCast <$> FFI.mdValue v
 
 instance EncodeM EncodeAST A.CallableOperand (Ptr FFI.Value) where
   encodeM (Right o) = encodeM o
@@ -85,12 +99,18 @@ instance EncodeM EncodeAST A.MetadataNode (Ptr FFI.MDNode) where
     liftIO $ FFI.createMDNodeInContext c ops
   encodeM (A.MetadataNodeReference n) = referMDNode n
 
-instance DecodeM DecodeAST [Maybe A.Operand] (Ptr FFI.MDNode) where
+instance DecodeM DecodeAST [Maybe A.Metadata] (Ptr FFI.MDNode) where
   decodeM p = scopeAnyCont $ do
     n <- liftIO $ FFI.getMDNodeNumOperands p
     ops <- allocaArray n
     liftIO $ FFI.getMDNodeOperands p ops
     decodeM (n, ops)
+
+instance DecodeM DecodeAST A.Operand (Ptr FFI.MDValue) where
+  decodeM = decodeM <=< liftIO . FFI.getMDValue
+
+instance DecodeM DecodeAST A.Metadata (Ptr FFI.MetadataAsVal) where
+  decodeM = decodeM <=< liftIO . FFI.getMetadataOperand
 
 instance DecodeM DecodeAST A.MetadataNode (Ptr FFI.MDNode) where
   decodeM p = scopeAnyCont $ do
@@ -98,9 +118,9 @@ instance DecodeM DecodeAST A.MetadataNode (Ptr FFI.MDNode) where
     -- fl <- decodeM =<< liftIO (FFI.mdNodeIsFunctionLocal p)
     -- if fl
     --  then
-       return A.MetadataNode `ap` decodeM p
-     -- else
-     --   return A.MetadataNodeReference `ap` getMetadataNodeID p
+    --    return A.MetadataNode `ap` decodeM p
+    --  else
+       return A.MetadataNodeReference `ap` getMetadataNodeID p
 
 getMetadataDefinitions :: DecodeAST [A.Definition]
 getMetadataDefinitions = fix $ \continue -> do

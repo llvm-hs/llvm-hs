@@ -5,3 +5,4 @@ out
 .DS_Store
 .cabal-sandbox
 cabal.sandbox.config
+.stack-work

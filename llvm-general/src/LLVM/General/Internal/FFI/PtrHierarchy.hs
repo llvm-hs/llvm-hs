@@ -94,12 +94,17 @@ instance ChildOf Value User
 -- | <http://llvm.org/doxygen/classllvm_1_1MDNode.html>
 data MDNode
 
-instance ChildOf Value MDNode
+instance ChildOf Metadata MDNode
 
 -- | <http://llvm.org/doxygen/classllvm_1_1MDString.html>
 data MDString
 
-instance ChildOf Value MDString
+instance ChildOf Metadata MDString
+
+-- | http://llvm.org/doxygen/classllvm_1_1ValueAsMetadata.html
+data MDValue
+
+instance ChildOf Metadata MDValue
 
 -- | <http://llvm.org/doxygen/classllvm_1_1NamedMDNode.html>
 data NamedMetadata
@@ -112,3 +117,10 @@ instance ChildOf Value InlineAsm
 -- | <http://llvm.org/doxygen/classllvm_1_1Type.html>
 data Type
 
+-- | <http://llvm.org/doxygen/classllvm_1_1Metadata.html>
+data Metadata
+
+-- | <http://www.llvm.org/docs/doxygen/html/classllvm_1_1MetadataAsValue.html>
+data MetadataAsVal
+
+instance ChildOf Value MetadataAsVal

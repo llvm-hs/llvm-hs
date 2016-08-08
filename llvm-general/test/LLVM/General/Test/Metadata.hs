@@ -36,8 +36,8 @@ tests = testGroup "Metadata" [
   --                  (
   --                    "my-metadatum", 
   --                    MetadataNode [
-  --                     Just $ LocalReference i32 (UnName 1),
-  --                     Just $ MetadataStringOperand "super hyper",
+  --                     Just $ MDValue $ LocalReference i32 (UnName 1),
+  --                     Just $ MDString "super hyper",
   --                     Nothing
   --                    ]
   --                  )
@@ -56,35 +56,35 @@ tests = testGroup "Metadata" [
   --           \}\n"
   --   strCheck ast s,
 
-  -- testCase "global" $ do
-  --   let ast = Module "<string>" Nothing Nothing [
-  --         GlobalDefinition $ functionDefaults {
-  --           G.returnType = i32,
-  --           G.name = Name "foo",
-  --           G.basicBlocks = [
-  --             BasicBlock (UnName 0) [
-  --             ] (
-  --               Do $ Ret (Just (ConstantOperand (C.Int 32 0))) [
-  --                 ("my-metadatum", MetadataNodeReference (MetadataNodeID 0))
-  --               ]
-  --             )
-  --            ]
-  --           },
-  --         MetadataNodeDefinition (MetadataNodeID 0) [ Just $ ConstantOperand (C.Int 32 1) ]
-  --        ]
-  --   let s = "; ModuleID = '<string>'\n\
-  --           \\n\
-  --           \define i32 @foo() {\n\
-  --           \  ret i32 0, !my-metadatum !0\n\
-  --           \}\n\
-  --           \\n\
-  --           \!0 = !{ i32 1 }\n"
-  --   strCheck ast s,
+  testCase "global" $ do
+    let ast = Module "<string>" Nothing Nothing [
+          GlobalDefinition $ functionDefaults {
+            G.returnType = i32,
+            G.name = Name "foo",
+            G.basicBlocks = [
+              BasicBlock (UnName 0) [
+              ] (
+                Do $ Ret (Just (ConstantOperand (C.Int 32 0))) [
+                  ("my-metadatum", MetadataNodeReference (MetadataNodeID 0))
+                ]
+              )
+             ]
+            },
+          MetadataNodeDefinition (MetadataNodeID 0) [ Just $ MDValue $ ConstantOperand (C.Int 32 1) ]
+         ]
+    let s = "; ModuleID = '<string>'\n\
+            \\n\
+            \define i32 @foo() {\n\
+            \  ret i32 0, !my-metadatum !0\n\
+            \}\n\
+            \\n\
+            \!0 = !{i32 1}\n"
+    strCheck ast s,
 
   testCase "named" $ do
     let ast = Module "<string>" Nothing Nothing [
           NamedMetadataDefinition "my-module-metadata" [ MetadataNodeID 0 ],
-          MetadataNodeDefinition (MetadataNodeID 0) [ Just $ ConstantOperand (C.Int 32 1) ]
+          MetadataNodeDefinition (MetadataNodeID 0) [ Just $ MDValue $ ConstantOperand (C.Int 32 1) ]
          ]
     let s = "; ModuleID = '<string>'\n\
             \\n\
@@ -102,7 +102,7 @@ tests = testGroup "Metadata" [
             \\n\
             \!my-module-metadata = !{!0}\n\
             \\n\
-            \!0 = metadata !{null}\n"
+            \!0 = !{null}\n"
     strCheck ast s,
 
   testGroup "cyclic" [
@@ -110,18 +110,18 @@ tests = testGroup "Metadata" [
       let ast = Module "<string>" Nothing Nothing [
             NamedMetadataDefinition "my-module-metadata" [MetadataNodeID 0],
             MetadataNodeDefinition (MetadataNodeID 0) [
-              Just $ MetadataNodeOperand (MetadataNodeReference (MetadataNodeID 1)) 
+              Just $ MDNode (MetadataNodeReference (MetadataNodeID 1)) 
              ],
             MetadataNodeDefinition (MetadataNodeID 1) [
-              Just $ MetadataNodeOperand (MetadataNodeReference (MetadataNodeID 0)) 
+              Just $ MDNode (MetadataNodeReference (MetadataNodeID 0)) 
              ]
            ]
       let s = "; ModuleID = '<string>'\n\
               \\n\
               \!my-module-metadata = !{!0}\n\
               \\n\
-              \!0 = metadata !{metadata !1}\n\
-              \!1 = metadata !{metadata !0}\n"
+              \!0 = !{!1}\n\
+              \!1 = !{!0}\n"
       strCheck ast s,
 
     testCase "metadata-global" $ do
@@ -137,7 +137,7 @@ tests = testGroup "Metadata" [
                ]
              },
             MetadataNodeDefinition (MetadataNodeID 0) [
-              Just $ ConstantOperand (C.GlobalReference (ptr (FunctionType A.T.void [] False)) (Name "foo"))
+              Just $ MDValue $ ConstantOperand (C.GlobalReference (ptr (FunctionType A.T.void [] False)) (Name "foo"))
              ]
            ]
       let s = "; ModuleID = '<string>'\n\
@@ -146,7 +146,7 @@ tests = testGroup "Metadata" [
               \  ret void, !my-metadatum !0\n\
               \}\n\
               \\n\
-              \!0 = metadata !{void ()* @foo}\n"
+              \!0 = !{void ()* @foo}\n"
       strCheck ast s
    ]
 

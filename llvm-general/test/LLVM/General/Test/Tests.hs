@@ -25,7 +25,7 @@ tests = testGroup "llvm-general" [
     Global.tests,
     InlineAssembly.tests,
     Instructions.tests,
-    -- Metadata.tests,
+    Metadata.tests,
     Module.tests,
     Optimization.tests,
     Target.tests,

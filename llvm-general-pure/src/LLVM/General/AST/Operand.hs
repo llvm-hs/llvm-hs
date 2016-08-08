@@ -16,8 +16,15 @@ newtype MetadataNodeID = MetadataNodeID Word
 
 -- | <http://llvm.org/docs/LangRef.html#metadata>
 data MetadataNode 
-  = MetadataNode [Maybe Operand]
+  = MetadataNode [Maybe Metadata]
   | MetadataNodeReference MetadataNodeID
+  deriving (Eq, Ord, Read, Show, Typeable, Data)
+
+-- | <http://llvm.org/docs/LangRef.html#metadata>
+data Metadata
+  = MDString String -- ^ <http://llvm.org/docs/doxygen/html/classllvm_1_1MDNode.html>
+  | MDNode MetadataNode -- ^ <http://llvm.org/docs/doxygen/html/classllvm_1_1MDNode.html>
+  | MDValue Operand -- ^ <http://llvm.org/docs/doxygen/html/classllvm_1_1ValueAsMetadata.html>
   deriving (Eq, Ord, Read, Show, Typeable, Data)
 
 -- | An 'Operand' is roughly that which is an argument to an 'LLVM.General.AST.Instruction.Instruction'
@@ -26,8 +33,7 @@ data Operand
   = LocalReference Type Name
   -- | 'Constant's include 'LLVM.General.AST.Constant.GlobalReference', for \@foo
   | ConstantOperand Constant
-  | MetadataStringOperand String
-  | MetadataNodeOperand MetadataNode
+  | MetadataOperand Metadata
   deriving (Eq, Ord, Read, Show, Typeable, Data)
 
 -- | The 'LLVM.General.AST.Instruction.Call' instruction is special: the callee can be inline assembly

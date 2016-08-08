@@ -78,13 +78,14 @@ tests = testGroup "PrettyPrint" [
             \            A.metadata' = []\n\
             \          }\n\
             \        )\n\
-            \      ]\n\
+            \      ],\n\
+            \      A.G.personalityFunction = Nothing\n\
             \    }\n\
             \  ]\n\
             \}"
     showPretty ast @?= s,
   testCase "imports" $ do
-    imports defaultPrefixScheme @?= 
+    imports defaultPrefixScheme @?=
       "import Data.Either\n\
       \import qualified Data.Map as Map\n\
       \import Data.Maybe\n\
@@ -109,4 +110,4 @@ tests = testGroup "PrettyPrint" [
       \import qualified LLVM.General.AST.Type as A\n\
       \import qualified LLVM.General.AST.Visibility as A.V\n"
  ]
-  
+

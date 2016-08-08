@@ -49,6 +49,7 @@ fmap concat $ mapM makePrettyShowInstance [
   ''A.Operand,
   ''A.MetadataNodeID,
   ''A.MetadataNode,
+  ''A.Metadata,
   ''A.Type,
   ''A.Name,
   ''A.Global,
