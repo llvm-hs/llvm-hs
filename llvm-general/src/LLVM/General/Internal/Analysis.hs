@@ -3,8 +3,9 @@ module LLVM.General.Internal.Analysis where
 import LLVM.General.Prelude
 
 import Control.Monad.AnyCont
-import Control.Monad.Except (ExceptT,throwError)
+import Control.Monad.Error.Class
 import Control.Monad.IO.Class
+import Control.Monad.Trans.Except
 
 import qualified LLVM.General.Internal.FFI.Analysis as FFI
 import qualified LLVM.General.Internal.FFI.LLVMCTypes as FFI

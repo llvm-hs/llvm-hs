@@ -8,9 +8,10 @@ module LLVM.General.Internal.EncodeAST where
 import LLVM.General.Prelude
 
 import Control.Exception
-import Control.Monad.State
-import Control.Monad.Except
 import Control.Monad.AnyCont
+import Control.Monad.Error.Class
+import Control.Monad.State
+import Control.Monad.Trans.Except
 
 import Foreign.Ptr
 import Foreign.C

@@ -11,7 +11,8 @@ import LLVM.General.Prelude
 
 import Control.Exception
 import Control.Monad.AnyCont
-import Control.Monad.Except (ExceptT,runExcept,runExceptT,MonadError,throwError)
+import Control.Monad.Error.Class
+import Control.Monad.Trans.Except
 import Control.Monad.State (gets)
 import Control.Monad.Trans
 

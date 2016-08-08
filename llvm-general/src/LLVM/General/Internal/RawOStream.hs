@@ -2,8 +2,10 @@ module LLVM.General.Internal.RawOStream where
 
 import LLVM.General.Prelude
 
-import Control.Monad.Except
 import Control.Monad.AnyCont
+import Control.Monad.Error.Class
+import Control.Monad.IO.Class
+import Control.Monad.Trans.Except
 
 import Unsafe.Coerce
 import Data.IORef

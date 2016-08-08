@@ -4,7 +4,7 @@ import Test.Framework
 import Test.Framework.Providers.HUnit
 import Test.HUnit
 
-import Control.Monad.Except
+import Control.Monad.Trans.Except
 
 import Data.Maybe
 import qualified Data.Set as Set

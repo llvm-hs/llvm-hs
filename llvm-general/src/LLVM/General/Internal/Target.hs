@@ -10,8 +10,9 @@ import LLVM.General.Prelude
 
 import Control.Exception
 import Control.Monad.AnyCont
+import Control.Monad.Error.Class
 import Control.Monad.IO.Class
-import Control.Monad.Except (ExceptT,runExcept,throwError)
+import Control.Monad.Trans.Except
 
 import Foreign.Ptr
 import Foreign.C.String
