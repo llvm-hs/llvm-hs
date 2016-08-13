@@ -75,7 +75,6 @@ library
     parsec >= 3.1.3,
     array >= 0.4.0.0,
     llvm-general-pure == 3.8.0.0
-  extra-libraries: stdc++
   hs-source-dirs: src
   extensions:
     NoImplicitPrelude

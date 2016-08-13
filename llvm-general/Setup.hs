@@ -2,7 +2,7 @@
 import Control.Exception (SomeException, try)
 import Control.Monad
 import Data.Maybe
-import Data.List (isPrefixOf, (\\), intercalate, stripPrefix)
+import Data.List (isPrefixOf, (\\), intercalate, stripPrefix, find)
 import Data.Map (Map)
 import qualified Data.Map as Map
 import Data.Monoid
@@ -97,7 +97,13 @@ addLLVMToLdLibraryPath configFlags = do
   llvmConfig <- getLLVMConfig configFlags
   [libDir] <- liftM lines $ llvmConfig "--libdir"
   addToLdLibraryPath libDir
-                           
+
+-- | These flags are not relevant for us and dropping them allows
+-- linking against LLVM build with Clang using GCC
+ignoredCxxFlags :: [String]
+ignoredCxxFlags =
+  ["-Wcovered-switch-default"] ++ map ("-D" ++) uncheckedHsFFIDefines
+
 main = do
   let origUserHooks = simpleUserHooks
                   
@@ -106,10 +112,13 @@ main = do
 
     confHook = \(genericPackageDescription, hookedBuildInfo) configFlags -> do
       llvmConfig <- getLLVMConfig configFlags
-
       llvmCxxFlags <- do
-        l <- llvmConfig "--cxxflags"
-        return $ (words l) \\ (map ("-D"++) uncheckedHsFFIDefines)
+        rawLlvmCxxFlags <- llvmConfig "--cxxflags"
+        return (words rawLlvmCxxFlags \\ ignoredCxxFlags)
+      let stdLib = maybe "stdc++"
+                         (drop (length stdlibPrefix))
+                         (find (isPrefixOf stdlibPrefix) llvmCxxFlags)
+            where stdlibPrefix = "-stdlib=lib"
       includeDirs <- liftM lines $ llvmConfig "--includedir"
       libDirs@[libDir] <- liftM lines $ llvmConfig "--libdir"
       [llvmVersion] <- liftM lines $ llvmConfig "--version"
@@ -124,7 +133,11 @@ main = do
               libraryCondTree <- condLibrary genericPackageDescription
               return libraryCondTree {
                 condTreeData = condTreeData libraryCondTree <> mempty {
-                    libBuildInfo = mempty { ccOptions = llvmCxxFlags }
+                    libBuildInfo =
+                      mempty {
+                        ccOptions = llvmCxxFlags,
+                        extraLibs = [stdLib]
+                      }
                   },
                 condTreeComponents = condTreeComponents libraryCondTree ++ [
                   (
