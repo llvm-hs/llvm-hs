@@ -69,6 +69,7 @@ tests = testGroup "Analysis" [
     testGroup "regression" [
       testCase "load synchronization" $ do
        let str = "; ModuleID = '<string>'\n\
+                 \source_filename = \"<string>\"\n\
                  \\n\
                  \define double @my_function2(double* %input_0) {\n\
                  \foo:\n\

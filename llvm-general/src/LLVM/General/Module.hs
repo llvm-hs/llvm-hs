@@ -5,6 +5,7 @@ module LLVM.General.Module (
     File(..),
 
     withModuleFromAST,
+    astToFFIModule,
     moduleAST,
 
     withModuleFromLLVMAssembly,

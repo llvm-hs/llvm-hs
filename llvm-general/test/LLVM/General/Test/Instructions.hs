@@ -47,6 +47,7 @@ tests = testGroup "Instructions" [
             }
            ]
           mStr = "; ModuleID = '<string>'\n\
+                 \source_filename = \"<string>\"\n\
                  \\n\
                  \define void @0(i32, float, i32*, i64, i1, <2 x i32>, { i32, i32 }) {\n\
                  \  " ++ namedInstrS ++ "\n\
@@ -604,6 +605,7 @@ tests = testGroup "Instructions" [
            }
           ]
         mStr = "; ModuleID = '<string>'\n\
+               \source_filename = \"<string>\"\n\
                \\n\
                \@0 = constant i32 42\n\
                \\n\
@@ -632,6 +634,7 @@ tests = testGroup "Instructions" [
          }
         ],
        "; ModuleID = '<string>'\n\
+       \source_filename = \"<string>\"\n\
        \\n\
        \define void @0() {\n\
        \  ret void\n\
@@ -653,6 +656,7 @@ tests = testGroup "Instructions" [
          }
         ],
        "; ModuleID = '<string>'\n\
+       \source_filename = \"<string>\"\n\
        \\n\
        \define void @0() {\n\
        \  br label %foo\n\
@@ -677,6 +681,7 @@ tests = testGroup "Instructions" [
           }
         ],
        "; ModuleID = '<string>'\n\
+       \source_filename = \"<string>\"\n\
        \\n\
        \define void @0() {\n\
        \bar:\n\
@@ -711,9 +716,10 @@ tests = testGroup "Instructions" [
           }
         ],
        "; ModuleID = '<string>'\n\
+       \source_filename = \"<string>\"\n\
        \\n\
        \define void @0() {\n\
-       \; <label>:0\n\
+       \; <label>:0:\n\
        \  switch i16 2, label %foo [\n\
        \    i16 0, label %0\n\
        \    i16 2, label %foo\n\
@@ -758,6 +764,7 @@ tests = testGroup "Instructions" [
         ],
 --       \  indirectbr i8* null, [label %foo]\n\
        "; ModuleID = '<string>'\n\
+       \source_filename = \"<string>\"\n\
        \\n\
        \@0 = global i8* blockaddress(@foo, %2)\n\
        \\n\
@@ -765,7 +772,7 @@ tests = testGroup "Instructions" [
        \  %1 = load i8*, i8** @0\n\
        \  indirectbr i8* %1, [label %2]\n\
        \\n\
-       \; <label>:2                                       ; preds = %0\n\
+       \; <label>:2:                                      ; preds = %0\n\
        \  ret void\n\
        \}\n"
      ), (
@@ -818,6 +825,7 @@ tests = testGroup "Instructions" [
          }
         ],
        "; ModuleID = '<string>'\n\
+       \source_filename = \"<string>\"\n\
        \\n\
        \define void @0(i32, i16) personality void (i32, i16)* @0 {\n\
        \  invoke void @0(i32 4, i16 8)\n\
@@ -846,6 +854,7 @@ tests = testGroup "Instructions" [
           }
         ],
        "; ModuleID = '<string>'\n\
+       \source_filename = \"<string>\"\n\
        \\n\
        \define void @0() {\n\
        \  resume i32 1\n\
@@ -864,6 +873,7 @@ tests = testGroup "Instructions" [
          }
         ],
        "; ModuleID = '<string>'\n\
+       \source_filename = \"<string>\"\n\
        \\n\
        \define void @0() {\n\
        \  unreachable\n\

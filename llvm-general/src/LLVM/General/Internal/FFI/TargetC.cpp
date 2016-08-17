@@ -38,18 +38,6 @@ inline TargetLibraryInfoImpl *unwrap(LLVMTargetLibraryInfoRef P) {
   return reinterpret_cast<TargetLibraryInfoImpl*>(P);
 }
 
-static Reloc::Model unwrap(LLVMRelocMode x) {
-  switch (x) {
-#define ENUM_CASE(x, y)                                                        \
-  case LLVMReloc##x:                                                           \
-    return Reloc::y;
-    LLVM_GENERAL_FOR_EACH_RELOC_MODEL(ENUM_CASE)
-#undef ENUM_CASE
-  default:
-    return Reloc::Model(0);
-  }
-}
-
 static CodeGenOpt::Level unwrap(LLVMCodeGenOptLevel x) {
   switch (x) {
 #define ENUM_CASE(x)                                                           \
@@ -234,16 +222,6 @@ LLVM_General_FPOpFusionMode LLVM_General_GetAllowFPOpFusion(TargetOptions *to) {
 
 void LLVM_General_DisposeTargetOptions(TargetOptions *t) { delete t; }
 
-LLVMTargetMachineRef LLVM_General_CreateTargetMachine(
-    LLVMTargetRef target, const char *triple, const char *cpu,
-    const char *features, const TargetOptions *targetOptions,
-    LLVMRelocMode relocModel, LLVMCodeModel codeModel,
-    LLVMCodeGenOptLevel codeGenOptLevel) {
-  return wrap(unwrap(target)->createTargetMachine(
-      triple, cpu, features, *targetOptions, unwrap(relocModel),
-      unwrap(codeModel), unwrap(codeGenOptLevel)));
-}
-
 // const TargetLowering *LLVM_General_GetTargetLowering(LLVMTargetMachineRef t)
 // {
 // 	return unwrap(t)->getTargetLowering();
@@ -338,22 +316,4 @@ void LLVM_General_InitializeAllTargets() {
   // None of the other components are bound yet
 }
 
-LLVMBool LLVM_General_TargetMachineEmit(
-	LLVMTargetMachineRef TM,
-	LLVMModuleRef M,
-	LLVMCodeGenFileType codeGenFileType,
-	char **ErrorMessage,
-	raw_pwrite_stream &dest
-) {
-	TargetMachine &tm = *unwrap(TM);
-    legacy::PassManager passManager;
-	if (tm.addPassesToEmitFile(passManager, dest, unwrap(codeGenFileType)))
-{
-		*ErrorMessage = strdup("TargetMachine can't emit a file of this type");
-		return true;
-	}
-
-	passManager.run(*unwrap(M));
-	return false;
-}
 }

@@ -40,12 +40,36 @@ void LLVM_General_SetCOMDATSelectionKind(Comdat &comdat, unsigned csk) {
   comdat.setSelectionKind(Comdat::SelectionKind(csk));
 }
 
-LLVMBool LLVM_General_HasUnnamedAddr(LLVMValueRef globalVal) {
-	return unwrap<GlobalValue>(globalVal)->hasUnnamedAddr();
+typedef enum {
+    None   = 0,
+    Local  = 1,
+    Global = 2,
+} LLVM_General_UnnamedAddr;
+
+LLVM_General_UnnamedAddr LLVM_General_GetUnnamedAddr(LLVMValueRef globalVal) {
+    GlobalValue::UnnamedAddr addr = unwrap<GlobalValue>(globalVal)->getUnnamedAddr();
+    switch (addr) {
+    case GlobalValue::UnnamedAddr::None:
+        return LLVM_General_UnnamedAddr::None;
+    case GlobalValue::UnnamedAddr::Local:
+        return LLVM_General_UnnamedAddr::Local;
+    case GlobalValue::UnnamedAddr::Global:
+        return LLVM_General_UnnamedAddr::Global;
+    }
 }
 
-void LLVM_General_SetUnnamedAddr(LLVMValueRef globalVal, LLVMBool isUnnamedAddr) {
-	unwrap<GlobalValue>(globalVal)->setUnnamedAddr(isUnnamedAddr);
+void LLVM_General_SetUnnamedAddr(LLVMValueRef globalVal, LLVM_General_UnnamedAddr attr) {
+    switch (attr) {
+    case LLVM_General_UnnamedAddr::None:
+        unwrap<GlobalValue>(globalVal)->setUnnamedAddr(GlobalValue::UnnamedAddr::None);
+        break;
+    case LLVM_General_UnnamedAddr::Local:
+        unwrap<GlobalValue>(globalVal)->setUnnamedAddr(GlobalValue::UnnamedAddr::Local);
+        break;
+    case LLVM_General_UnnamedAddr::Global:
+        unwrap<GlobalValue>(globalVal)->setUnnamedAddr(GlobalValue::UnnamedAddr::Global);
+        break;
+    }
 }
 
 inline void LLVM_General_TLS_Model_Enum_Matches() {

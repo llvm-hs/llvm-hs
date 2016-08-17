@@ -54,6 +54,7 @@ tests = testGroup "InlineAssembly" [
 
               ]
         s = "; ModuleID = '<string>'\n\
+             \source_filename = \"<string>\"\n\
              \\n\
              \define i32 @foo(i32 %x) {\n\
              \  %1 = call i32 asm \"bswap $0\", \"=r,r\"(i32 %x)\n\
@@ -71,6 +72,7 @@ tests = testGroup "InlineAssembly" [
                 }
               ]
         s = "; ModuleID = '<string>'\n\
+             \source_filename = \"<string>\"\n\
              \\n\
              \module asm \"foo\"\n\
              \module asm \"bar\"\n\

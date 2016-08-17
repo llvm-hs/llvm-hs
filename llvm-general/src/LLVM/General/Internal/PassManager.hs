@@ -89,7 +89,6 @@ instance (Monad m, MonadAnyCont IO m) => EncodeM m GCOVVersion CString where
 createPassManager :: PassSetSpec -> IO (Ptr FFI.PassManager)
 createPassManager pss = flip runAnyContT return $ do
   pm <- liftIO $ FFI.createPassManager
-  forM_ (dataLayout pss) $ \dl -> liftIO $ withFFIDataLayout dl $ FFI.addDataLayoutPass pm 
   forM_ (targetLibraryInfo pss) $ \(TargetLibraryInfo tli) -> do
     liftIO $ FFI.addTargetLibraryInfoPass pm tli
   forM_ (targetMachine pss) $ \(TargetMachine tm) -> liftIO $ FFI.addAnalysisPasses tm pm

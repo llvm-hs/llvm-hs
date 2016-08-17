@@ -27,6 +27,7 @@ tests = testGroup "CallingConvention" [
      }
     ]
    }) ("; ModuleID = '<string>'\n\
+       \source_filename = \"<string>\"\n\
        \\n\
        \declare" ++ (if name == "" then "" else (" " ++ name)) ++ " i32 @foo()\n")
    | (name, cc) <- [

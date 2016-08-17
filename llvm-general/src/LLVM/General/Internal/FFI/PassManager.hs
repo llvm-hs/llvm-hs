@@ -46,11 +46,6 @@ foreign import ccall unsafe "LLVMRunFunctionPassManager" runFunctionPassManager 
 foreign import ccall unsafe "LLVMFinalizeFunctionPassManager" finalizeFunctionPassManager ::
   Ptr PassManager -> IO CUInt
 
-foreign import ccall unsafe "LLVMAddTargetData" addDataLayoutPass' ::
-  Ptr DataLayout -> Ptr PassManager -> IO ()
-
-addDataLayoutPass = flip addDataLayoutPass'
-
 foreign import ccall unsafe "LLVMAddAnalysisPasses" addAnalysisPasses ::
   Ptr TargetMachine -> Ptr PassManager -> IO ()
 

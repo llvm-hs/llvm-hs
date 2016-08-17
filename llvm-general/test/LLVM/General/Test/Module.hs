@@ -38,6 +38,7 @@ import qualified LLVM.General.CodeModel as CM
 import qualified LLVM.General.CodeGenOpt as CGO
 
 handString = "; ModuleID = '<string>'\n\
+    \source_filename = \"<string>\"\n\
     \\n\
     \%0 = type { i32, %1*, %0* }\n\
     \%1 = type opaque\n\
@@ -104,7 +105,7 @@ handAST = Module "<string>" Nothing Nothing [
       },
       GlobalDefinition $ globalVariableDefaults {
         G.name = UnName 2,
-        G.hasUnnamedAddr = True,
+        G.unnamedAddr = Just GlobalAddr,
         G.type' = i8,
         G.initializer = Just (C.Int 8 2)
       },
@@ -137,7 +138,7 @@ handAST = Module "<string>" Nothing Nothing [
       },
       GlobalDefinition $ globalAliasDefaults {
         G.name = Name "two",
-        G.hasUnnamedAddr = True,
+        G.unnamedAddr = Just GlobalAddr,
         G.type' = PointerType i32 (AddrSpace 3),
         G.aliasee = C.GlobalReference (PointerType i32 (AddrSpace 3)) (Name "three")
       },
@@ -264,7 +265,7 @@ tests = testGroup "Module" [
       a @?= "\t.text\n\
             \\t.file\t\"<string>\"\n\
             \\t.globl\tmain\n\
-            \\t.align\t16, 0x90\n\
+            \\t.p2align\t4, 0x90\n\
             \\t.type\tmain,@function\n\
             \main:\n\
             \\t.cfi_startproc\n\
@@ -304,6 +305,7 @@ tests = testGroup "Module" [
   testGroup "regression" [
     testCase "minimal type info" $ withContext $ \context -> do
       let s = "; ModuleID = '<string>'\n\
+              \source_filename = \"<string>\"\n\
               \\n\
               \define void @trouble() {\n\
               \entry:\n\
@@ -357,6 +359,7 @@ tests = testGroup "Module" [
 
     testCase "metadata type" $ withContext $ \context -> do
       let s = "; ModuleID = '<string>'\n\
+              \source_filename = \"<string>\"\n\
               \\n\
               \define void @bar(metadata) {\n\
               \  ret void\n\
@@ -436,6 +439,7 @@ tests = testGroup "Module" [
              }
            ]
           s = "; ModuleID = '<string>'\n\
+              \source_filename = \"<string>\"\n\
               \\n\
               \define i32 @foo(i32 %x) {\n\
               \  %1 = mul nsw i32 %x, %x\n\
@@ -485,6 +489,7 @@ tests = testGroup "Module" [
 
       testCase "struct constant" $ do
         let s = "; ModuleID = '<string>'\n\
+                \source_filename = \"<string>\"\n\
                 \\n\
                 \%0 = type { i32 }\n\
                 \\n\

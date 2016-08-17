@@ -12,7 +12,7 @@ using namespace llvm;
 namespace llvm {
 static AtomicOrdering unwrap(LLVMAtomicOrdering l) {
 	switch(l) {
-#define ENUM_CASE(x) case LLVMAtomicOrdering ## x: return x;
+#define ENUM_CASE(x) case LLVMAtomicOrdering ## x: return AtomicOrdering::x;
 LLVM_GENERAL_FOR_EACH_ATOMIC_ORDERING(ENUM_CASE)
 #undef ENUM_CASE
 	default: return AtomicOrdering(0);

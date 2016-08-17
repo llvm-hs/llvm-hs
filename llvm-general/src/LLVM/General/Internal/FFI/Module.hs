@@ -92,5 +92,5 @@ moduleAppendInlineAsm m (ModuleAsm (c, n)) = moduleAppendInlineAsm' m c n
 foreign import ccall unsafe "LLVM_General_ModuleGetInlineAsm" moduleGetInlineAsm ::
   Ptr Module -> IO (ModuleAsm CString)
 
-foreign import ccall unsafe "LLVMLinkModules" linkModules ::
-  Ptr Module -> Ptr Module -> LinkerMode -> Ptr (OwnerTransfered CString) -> IO LLVMBool
+foreign import ccall unsafe "LLVMLinkModules2" linkModules ::
+  Ptr Module -> Ptr Module -> IO LLVMBool

@@ -80,20 +80,22 @@ genCodingInstance [t| Bool |] ''FFI.LinkerMode [
   (FFI.linkerModeDestroySource, False)
  ]
 
--- | link LLVM modules - move or copy parts of a source module into a destination module.
--- Note that this operation is not commutative - not only concretely (e.g. the destination module
--- is modified, becoming the result) but abstractly (e.g. unused private globals in the source
--- module do not appear in the result, but similar globals in the destination remain).
+-- | link LLVM modules - move or copy parts of a source module into a
+-- destination module.  Note that this operation is not commutative -
+-- not only concretely (e.g. the destination module is modified,
+-- becoming the result) but abstractly (e.g. unused private globals in
+-- the source module do not appear in the result, but similar globals
+-- in the destination remain). The source module is destroyed.
 linkModules ::
-  Bool -- ^ True to leave the right module unmodified, False to cannibalize it (for efficiency's sake).
-  -> Module -- ^ The module into which to link
+     Module -- ^ The module into which to link
   -> Module -- ^ The module to link into the other (and cannibalize or not)
   -> ExceptT String IO ()
-linkModules preserveRight (Module m) (Module m') = flip runAnyContT return $ do
-  preserveRight <- encodeM preserveRight
-  msgPtr <- alloca
-  result <- decodeM =<< (liftIO $ FFI.linkModules m m' preserveRight msgPtr)
-  when result $ throwError =<< decodeM msgPtr
+linkModules (Module dest) (Module src) = flip runAnyContT return $ do
+  liftIO $ putStrLn "linkModules"
+  result <- decodeM =<< liftIO (FFI.linkModules dest src)
+  liftIO $ putStrLn "linked modules"
+  -- TODO find error message
+  when result (throwError "Couldn’t link modules")
 
 class LLVMAssemblyInput s where
   llvmAssemblyMemoryBuffer :: (Inject String e, MonadError e m, MonadIO m, MonadAnyCont IO m)
@@ -167,19 +169,21 @@ writeBitcodeToFile :: File -> Module -> ExceptT String IO ()
 writeBitcodeToFile (File path) (Module m) = flip runAnyContT return $ do
   withFileRawOStream path False False $ liftIO . FFI.writeBitcode m
 
-targetMachineEmit :: FFI.CodeGenFileType -> TargetMachine -> Module -> Ptr FFI.RawPWriteStream -> ExceptT String IO ()
-targetMachineEmit fileType (TargetMachine tm) (Module m) os = flip runAnyContT return $ do
+emitToFile :: FFI.CodeGenFileType -> TargetMachine -> File -> Module -> ExceptT String IO ()
+emitToFile fileType (TargetMachine tm) (File path) (Module m) = flip runAnyContT return $ do
   msgPtr <- alloca
-  r <- decodeM =<< (liftIO $ FFI.targetMachineEmit tm m fileType msgPtr os)
+  cPath <- encodeM path
+  r <- decodeM =<< (liftIO $ FFI.targetMachineEmitToFile tm m cPath fileType msgPtr)
   when r $ throwError =<< decodeM msgPtr
 
-emitToFile :: FFI.CodeGenFileType -> TargetMachine -> File -> Module -> ExceptT String IO ()
-emitToFile fileType tm (File path) m = flip runAnyContT return $ do
-  withFileRawPWriteStream path False False $ targetMachineEmit fileType tm m
-
 emitToByteString :: FFI.CodeGenFileType -> TargetMachine -> Module -> ExceptT String IO BS.ByteString
-emitToByteString fileType tm m = flip runAnyContT return $ do
-  withBufferRawPWriteStream $ targetMachineEmit fileType tm m
+emitToByteString fileType (TargetMachine tm) (Module m) = flip runAnyContT return $ do
+  msgPtr <- alloca
+  memBuffer <- alloca
+  r <- decodeM =<< (liftIO $ FFI.targetMachineEmitToMemoryBuffer tm m fileType msgPtr memBuffer)
+  if r
+     then throwError =<< decodeM msgPtr
+     else decodeM =<< peek memBuffer
 
 -- | write target-specific assembly directly into a file
 writeTargetAssemblyToFile :: TargetMachine -> File -> Module -> ExceptT String IO ()
@@ -217,17 +221,39 @@ getDataLayout m = do
   dlString <- decodeM =<< FFI.getDataLayout m
   either fail return . runExcept . parseDataLayout A.BigEndian $ dlString
 
--- | Build an LLVM.General.'Module' from a LLVM.General.AST.'LLVM.General.AST.Module' - i.e.
--- lower an AST from Haskell into C++ objects.
+
+genCodingInstance [t| Maybe A.G.UnnamedAddr |] ''CUInt [
+  ((0 :: CUInt), Nothing),
+  (1, Just A.G.LocalAddr),
+  (2, Just A.G.GlobalAddr)
+ ]
+
+-- | This function will call disposeModule after the callback exits
 withModuleFromAST :: Context -> A.Module -> (Module -> IO a) -> ExceptT String IO a
-withModuleFromAST context@(Context c) (A.Module moduleId dataLayout triple definitions) f = runEncodeAST context $ do
-  moduleId <- encodeM moduleId
-  m <- anyContToM $ bracket (FFI.moduleCreateWithNameInContext moduleId c) FFI.disposeModule
-  maybe (return ()) (setDataLayout m) dataLayout
-  maybe (return ()) (setTargetTriple m) triple
+withModuleFromAST context@(Context c) mod f = runEncodeAST context $ do
+  moduleId <- encodeM (A.moduleName mod)
+  ffiMod <- anyContToM $ bracket (FFI.moduleCreateWithNameInContext moduleId c) FFI.disposeModule
+  astToFFIModule' mod ffiMod
+  liftIO $ f (Module ffiMod)
+
+astToFFIModule :: Context -> A.Module -> ExceptT String IO Module
+astToFFIModule context@(Context c) mod = runEncodeAST context $ do
+  moduleId <- encodeM (A.moduleName mod)
+  ffiMod <- liftIO $ FFI.moduleCreateWithNameInContext moduleId c
+  astToFFIModule' mod ffiMod
+  pure (Module ffiMod)
+
+-- | Build an LLVM.General.'Module' from a
+-- LLVM.General.AST.'LLVM.General.AST.Module' - i.e.  lower an AST
+-- from Haskell into C++ objects. The module is written to the
+-- supplied pointer. You are responsible for calling disposeModule.
+astToFFIModule' :: A.Module -> Ptr FFI.Module -> EncodeAST ()
+astToFFIModule' (A.Module moduleId dataLayout triple definitions) ffiMod = do
+  Context context <- gets encodeStateContext
+  maybe (return ()) (setDataLayout ffiMod) dataLayout
+  maybe (return ()) (setTargetTriple ffiMod) triple
   let sequencePhases :: EncodeAST [EncodeAST (EncodeAST (EncodeAST (EncodeAST ())))] -> EncodeAST ()
       sequencePhases l = (l >>= (sequence >=> sequence >=> sequence >=> sequence)) >> (return ())
-
   sequencePhases $ forM definitions $ \d -> case d of
    A.TypeDefinition n t -> do
      t' <- createNamedType n
@@ -239,13 +265,13 @@ withModuleFromAST context@(Context c) (A.Module moduleId dataLayout triple defin
    A.COMDAT n csk -> do
      n' <- encodeM n
      csk <- encodeM csk
-     cd <- liftIO $ FFI.getOrInsertCOMDAT m n'
+     cd <- liftIO $ FFI.getOrInsertCOMDAT ffiMod n'
      liftIO $ FFI.setCOMDATSelectionKind cd csk
      defineCOMDAT n cd
      return . return . return . return . return $ ()
      
    A.MetadataNodeDefinition i os -> return . return $ do
-     t <- liftIO $ FFI.createTemporaryMDNodeInContext c
+     t <- liftIO $ FFI.createTemporaryMDNodeInContext context
      defineMDNode i t
      return $ do
        n <- encodeM (A.MetadataNode os)
@@ -256,13 +282,16 @@ withModuleFromAST context@(Context c) (A.Module moduleId dataLayout triple defin
    A.NamedMetadataDefinition n ids -> return . return . return . return $ do
      n <- encodeM n
      ids <- encodeM (map A.MetadataNodeReference ids)
-     nm <- liftIO $ FFI.getOrAddNamedMetadata m n
+     nm <- liftIO $ FFI.getOrAddNamedMetadata ffiMod n
      liftIO $ FFI.namedMetadataAddOperands nm ids
      return ()
 
    A.ModuleInlineAssembly s -> do
+     liftIO $ putStrLn "encoding s"
      s <- encodeM s
-     liftIO $ FFI.moduleAppendInlineAsm m (FFI.ModuleAsm s)
+     liftIO $ putStrLn "moduleAppend"
+     liftIO $ FFI.moduleAppendInlineAsm ffiMod (FFI.ModuleAsm s)
+     liftIO $ putStrLn "moduleAppended"
      return . return . return . return . return $ ()
 
    A.FunctionAttributes gid attrs -> do
@@ -275,12 +304,12 @@ withModuleFromAST context@(Context c) (A.Module moduleId dataLayout triple defin
        g@(A.GlobalVariable { A.G.name = n }) -> do
          typ <- encodeM (A.G.type' g)
          g' <- liftIO $ withName n $ \gName ->
-                   FFI.addGlobalInAddressSpace m typ gName
+                   FFI.addGlobalInAddressSpace ffiMod typ gName
                           (fromIntegral ((\(A.AddrSpace a) -> a) $ A.G.addrSpace g))
          defineGlobal n g'
          setThreadLocalMode g' (A.G.threadLocalMode g)
          liftIO $ do
-           hua <- encodeM (A.G.hasUnnamedAddr g)
+           hua <- encodeM (A.G.unnamedAddr g)
            FFI.setUnnamedAddr (FFI.upCast g') hua
            ic <- encodeM (A.G.isConstant g)
            FFI.setGlobalConstant g' ic
@@ -294,10 +323,10 @@ withModuleFromAST context@(Context c) (A.Module moduleId dataLayout triple defin
          let A.PointerType typ as = A.G.type' a
          typ <- encodeM typ
          as <- encodeM as
-         a' <- liftIO $ withName n $ \name -> FFI.justAddAlias m typ as name
+         a' <- liftIO $ withName n $ \name -> FFI.justAddAlias ffiMod typ as name
          defineGlobal n a'
          liftIO $ do
-           hua <- encodeM (A.G.hasUnnamedAddr a)
+           hua <- encodeM (A.G.unnamedAddr a)
            FFI.setUnnamedAddr (FFI.upCast a') hua
          return $ do
            setThreadLocalMode a' (A.G.threadLocalMode a)
@@ -305,7 +334,7 @@ withModuleFromAST context@(Context c) (A.Module moduleId dataLayout triple defin
            return (FFI.upCast a')
        (A.Function _ _ _ cc rAttrs resultType fName (args, isVarArgs) attrs _ _ _ gc prefix blocks personality) -> do
          typ <- encodeM $ A.FunctionType resultType [t | A.Parameter t _ _ <- args] isVarArgs
-         f <- liftIO . withName fName $ \fName -> FFI.addFunction m fName typ
+         f <- liftIO . withName fName $ \fName -> FFI.addFunction ffiMod fName typ
          defineGlobal fName f
          cc <- encodeM cc
          liftIO $ FFI.setFunctionCallingConvention f cc
@@ -317,7 +346,7 @@ withModuleFromAST context@(Context c) (A.Module moduleId dataLayout triple defin
          setGC f gc
          setPersonalityFn f personality
          forM blocks $ \(A.BasicBlock bName _ _) -> do
-           b <- liftIO $ withName bName $ \bName -> FFI.appendBasicBlockInContext c f bName
+           b <- liftIO $ withName bName $ \bName -> FFI.appendBasicBlockInContext context f bName
            defineBasicBlock fName bName b
          phase $ do
            let nParams = length args
@@ -347,8 +376,6 @@ withModuleFromAST context@(Context c) (A.Module moduleId dataLayout triple defin
        setDLLStorageClass g' (A.G.dllStorageClass g)
        return $ return ()
 
-  liftIO $ f (Module m)
-
 -- | Get an LLVM.General.AST.'LLVM.General.AST.Module' from a LLVM.General.'Module' - i.e.
 -- raise C++ objects into an Haskell AST.
 moduleAST :: Module -> IO A.Module
@@ -376,7 +403,7 @@ moduleAST (Module mod) = runDecodeAST $ do
                `ap` getDLLStorageClass g
                `ap` getThreadLocalMode g
                `ap` return as
-               `ap` (liftIO $ decodeM =<< FFI.hasUnnamedAddr (FFI.upCast g))
+               `ap` (liftIO $ decodeM =<< FFI.getUnnamedAddr (FFI.upCast g))
                `ap` (liftIO $ decodeM =<< FFI.isGlobalConstant g)
                `ap` return t
                `ap` (do
@@ -396,7 +423,7 @@ moduleAST (Module mod) = runDecodeAST $ do
                `ap` getVisibility a
                `ap` getDLLStorageClass a
                `ap` getThreadLocalMode a
-               `ap` (liftIO $ decodeM =<< FFI.hasUnnamedAddr (FFI.upCast a))
+               `ap` (liftIO $ decodeM =<< FFI.getUnnamedAddr (FFI.upCast a))
                `ap` typeOf a
                `ap` (decodeM =<< (liftIO $ FFI.getAliasee a)),
 

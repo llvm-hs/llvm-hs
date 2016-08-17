@@ -130,7 +130,6 @@ pokeTargetOptions hOpts (TargetOptions cOpts) = do
     (FFI.targetOptionFlagNoZerosInBSS, TO.noZerosInBSS),
     (FFI.targetOptionFlagGuaranteedTailCallOpt, TO.guaranteedTailCallOptimization),
     (FFI.targetOptionFlagEnableFastISel, TO.enableFastInstructionSelection),
-    (FFI.targetOptionFlagPositionIndependentExecutable, TO.positionIndependentExecutable),
     (FFI.targetOptionFlagUseInitArray, TO.useInitArray),
     (FFI.targetOptionFlagDisableIntegratedAS, TO.disableIntegratedAssembler),
     (FFI.targetOptionFlagCompressDebugSections, TO.compressDebugSections),
@@ -162,8 +161,6 @@ peekTargetOptions (TargetOptions tOpts) = do
     <- gof FFI.targetOptionFlagGuaranteedTailCallOpt
   enableFastInstructionSelection
     <- gof FFI.targetOptionFlagEnableFastISel
-  positionIndependentExecutable
-    <- gof FFI.targetOptionFlagPositionIndependentExecutable
   useInitArray
     <- gof FFI.targetOptionFlagUseInitArray
   disableIntegratedAssembler

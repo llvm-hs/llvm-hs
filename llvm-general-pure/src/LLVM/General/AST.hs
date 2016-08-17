@@ -8,6 +8,7 @@ module LLVM.General.AST (
         globalVariableDefaults,
         globalAliasDefaults,
         functionDefaults,
+  UnnamedAddr(..),
   Parameter(..),
   BasicBlock(..),
   module LLVM.General.AST.Instruction,

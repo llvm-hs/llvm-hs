@@ -34,8 +34,7 @@
 	macro(HonorSignDependentRoundingFPMathOption)					\
 	macro(NoZerosInBSS)																		\
 	macro(GuaranteedTailCallOpt)													\
-	macro(EnableFastISel)																	\
-	macro(PositionIndependentExecutable)									\
+    macro(EnableFastISel)																	\
 	macro(UseInitArray)																		\
 	macro(DisableIntegratedAS)														\
 	macro(CompressDebugSections)													\
