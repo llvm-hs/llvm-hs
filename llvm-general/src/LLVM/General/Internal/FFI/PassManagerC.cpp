@@ -87,7 +87,10 @@ void LLVM_General_AddGlobalValueNumberingPass(LLVMPassManagerRef PM, LLVMBool no
 }
 
 void LLVM_General_AddInternalizePass(LLVMPassManagerRef PM, unsigned nExports, const char **exports) {
-    const std::vector<const char *> exportList(exports, exports + nExports);
+    std::vector<std::string> exportList(nExports);
+    for (unsigned i = 0; i < nExports; ++i) {
+        exportList.at(i) = exports[i];
+    }
     std::function<bool(const GlobalValue &)> mustPreserveGV = [exportList](const GlobalValue & gv) {
         for (const auto& exp : exportList) {
             if (gv.getName().equals(exp)) {
