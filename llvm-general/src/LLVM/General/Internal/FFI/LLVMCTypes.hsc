@@ -118,6 +118,11 @@ newtype MemoryOrdering = MemoryOrdering CUInt
 #define MO_Rec(n) { #n, LLVMAtomicOrdering ## n },
 #{inject ATOMIC_ORDERING, MemoryOrdering, MemoryOrdering, memoryOrdering, MO_Rec}
 
+newtype UnnamedAddr = UnnamedAddr CUInt
+  deriving (Eq, Typeable, Data)
+#define UA_Rec(n) { #n, LLVMUnnamedAddr ## n },
+#{inject UNNAMED_ADDR, UnnamedAddr, UnnamedAddr, unnamedAddr, UA_Rec}
+
 newtype SynchronizationScope = SynchronizationScope CUInt
   deriving (Eq, Typeable, Data)
 #define SS_Rec(n) { #n, LLVM ## n ## SynchronizationScope },

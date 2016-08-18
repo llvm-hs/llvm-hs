@@ -65,10 +65,10 @@ foreign import ccall unsafe "LLVMSetAlignment" setAlignment ::
   Ptr GlobalValue -> CUInt -> IO ()
 
 foreign import ccall unsafe "LLVM_General_GetUnnamedAddr" getUnnamedAddr ::
-  Ptr GlobalValue -> IO CUInt
+  Ptr GlobalValue -> IO UnnamedAddr
 
 foreign import ccall unsafe "LLVM_General_SetUnnamedAddr" setUnnamedAddr ::
-  Ptr GlobalValue -> CUInt -> IO ()
+  Ptr GlobalValue -> UnnamedAddr -> IO ()
 
 foreign import ccall unsafe "LLVM_General_GetThreadLocalMode" getThreadLocalMode ::
   Ptr GlobalValue -> IO ThreadLocalMode

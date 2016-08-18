@@ -222,10 +222,10 @@ getDataLayout m = do
   either fail return . runExcept . parseDataLayout A.BigEndian $ dlString
 
 
-genCodingInstance [t| Maybe A.G.UnnamedAddr |] ''CUInt [
-  ((0 :: CUInt), Nothing),
-  (1, Just A.G.LocalAddr),
-  (2, Just A.G.GlobalAddr)
+genCodingInstance [t| Maybe A.G.UnnamedAddr |] ''FFI.UnnamedAddr [
+  (FFI.unnamedAddrNone, Nothing),
+  (FFI.unnamedAddrLocal, Just A.G.LocalAddr),
+  (FFI.unnamedAddrGlobal, Just A.G.GlobalAddr)
  ]
 
 -- | This function will call disposeModule after the callback exits
