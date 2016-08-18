@@ -42,6 +42,6 @@ LLVM_GENERAL_FOR_EACH_COMDAT_SELECTION_KIND(ENUM_CASE)
 	macro(GeneralDynamicTLSModel)                         \
 	macro(LocalDynamicTLSModel)                           \
 	macro(InitialExecTLSModel)                            \
-    macro(LocalExecTLSModel)
+	macro(LocalExecTLSModel)
 
 #endif
