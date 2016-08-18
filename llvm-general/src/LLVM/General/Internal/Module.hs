@@ -91,9 +91,7 @@ linkModules ::
   -> Module -- ^ The module to link into the other (and cannibalize or not)
   -> ExceptT String IO ()
 linkModules (Module dest) (Module src) = flip runAnyContT return $ do
-  liftIO $ putStrLn "linkModules"
   result <- decodeM =<< liftIO (FFI.linkModules dest src)
-  liftIO $ putStrLn "linked modules"
   -- TODO find error message
   when result (throwError "Couldn’t link modules")
 
@@ -287,11 +285,8 @@ astToFFIModule' (A.Module moduleId dataLayout triple definitions) ffiMod = do
      return ()
 
    A.ModuleInlineAssembly s -> do
-     liftIO $ putStrLn "encoding s"
      s <- encodeM s
-     liftIO $ putStrLn "moduleAppend"
      liftIO $ FFI.moduleAppendInlineAsm ffiMod (FFI.ModuleAsm s)
-     liftIO $ putStrLn "moduleAppended"
      return . return . return . return . return $ ()
 
    A.FunctionAttributes gid attrs -> do
