@@ -16,8 +16,12 @@ data ParameterAttribute
     | Nest
     | ReadNone
     | ReadOnly
+    | WriteOnly
     | InAlloca
     | NonNull
     | Dereferenceable Word64
+    | DereferenceableOrNull Word64
     | Returned
+    | SwiftSelf
+    | SwiftError
   deriving (Eq, Ord, Read, Show, Typeable, Data)

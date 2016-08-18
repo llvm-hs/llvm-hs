@@ -5,8 +5,10 @@ module LLVM.General.Internal.FFI.Attribute where
 
 import LLVM.General.Prelude
 
-import Foreign.Ptr
 import Foreign.C
+import Foreign.Marshal.Alloc
+import Foreign.Ptr
+import Foreign.Storable
 
 import LLVM.General.Internal.FFI.Context
 import LLVM.General.Internal.FFI.LLVMCTypes
@@ -126,6 +128,25 @@ foreign import ccall unsafe "LLVM_General_AttrBuilderAddAlignment" attrBuilderAd
 foreign import ccall unsafe "LLVM_General_AttrBuilderAddStackAlignment" attrBuilderAddStackAlignment ::
   Ptr FunctionAttrBuilder -> Word64 -> IO ()
 
+-- The CInt is 0 if the last value is null and 1 otherwise
+foreign import ccall unsafe "LLVM_General_AttrBuilderAddAllocSize" attrBuilderAddAllocSize ::
+  Ptr FunctionAttrBuilder -> Word64 -> CInt -> Word64 -> IO ()
+
 foreign import ccall unsafe "LLVM_General_AttrBuilderAddDereferenceableAttr" attrBuilderAddDereferenceable ::
   Ptr ParameterAttrBuilder -> Word64 -> IO ()
-                                              
+
+foreign import ccall unsafe "LLVM_General_AttrBuilderAddDereferenceableOrNullAttr" attrBuilderAddDereferenceableOrNull ::
+  Ptr ParameterAttrBuilder -> Word64 -> IO ()
+
+foreign import ccall unsafe "LLVM_General_AttributeGetAllocSizeArgs" attributeGetAllocSizeArgs' ::
+  FunctionAttribute -> Ptr Word64 -> Ptr Word64 -> IO CInt
+
+attributeGetAllocSizeArgs :: FunctionAttribute -> IO (Word64, Maybe Word64)
+attributeGetAllocSizeArgs attrBuilder =
+  alloca $ \x ->
+  alloca $ \y ->
+    do isJust <- attributeGetAllocSizeArgs' attrBuilder x y
+       x' <- peek x
+       if isJust /= 0
+          then peek y >>= \y' -> return (x', Just y')
+          else return (x', Nothing)

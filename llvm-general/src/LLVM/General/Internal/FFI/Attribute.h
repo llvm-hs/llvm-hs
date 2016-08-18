@@ -6,7 +6,7 @@
 // parameter attribute, function result attribute or function attribute.
 #define LLVM_GENERAL_FOR_EACH_ATTRIBUTE_KIND(macro)	\
 	macro(None,F,F,F)                                 \
-    macro(Alignment,T,F,F)                            \
+    macro(Alignment,T,T,F)                            \
     macro(AllocSize,F,F,T)                            \
 	macro(AlwaysInline,F,F,T)                         \
 	macro(ArgMemOnly,T,F,T)                           \
@@ -56,7 +56,7 @@
     macro(SwiftError,T,F,F)                           \
     macro(SwiftSelf,T,F,F)                            \
     macro(UWTable,F,F,T)                              \
-    macro(WriteOnly,T,F,F)                            \
+    macro(WriteOnly,T,F,T)                            \
 	macro(ZExt,T,T,F)                                 \
 	macro(EndAttrKinds,F,F,F)
 

@@ -113,8 +113,31 @@ void LLVM_General_AttrBuilderAddStackAlignment(AttrBuilder &ab, uint64_t v) {
 	ab.addStackAlignmentAttr(v);
 }
 
+void LLVM_General_AttrBuilderAddAllocSize(AttrBuilder &ab, uint64_t x, int optionalIsThere, uint64_t y) {
+    if (optionalIsThere) {
+        ab.addAllocSizeAttr(x, y);
+    } else {
+        ab.addAllocSizeAttr(x, Optional<unsigned>());
+    }
+}
+
 void LLVM_General_AttrBuilderAddDereferenceableAttr(AttrBuilder &ab, uint64_t v) {
 	ab.addDereferenceableAttr(v);
+}
+
+void LLVM_General_AttrBuilderAddDereferenceableOrNullAttr(AttrBuilder &ab, uint64_t v) {
+    ab.addDereferenceableOrNullAttr(v);
+}
+
+int LLVM_General_AttributeGetAllocSizeArgs(const AttributeImpl* a, uint64_t* x, uint64_t* y) {
+    auto pair = unwrap(a).getAllocSizeArgs();
+    *x = pair.first;
+    if (pair.second.hasValue()) {
+        *y = pair.second.getValue();
+        return 1;
+    } else {
+        return 0;
+    }
 }
 
 }

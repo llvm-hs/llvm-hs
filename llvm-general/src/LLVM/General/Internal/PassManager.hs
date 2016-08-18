@@ -23,7 +23,6 @@ import qualified LLVM.General.Internal.FFI.Transforms as FFI
 import LLVM.General.Internal.Module
 import LLVM.General.Internal.Target
 import LLVM.General.Internal.Coding
-import LLVM.General.Internal.DataLayout
 import LLVM.General.Transforms
 
 import LLVM.General.AST.DataLayout
