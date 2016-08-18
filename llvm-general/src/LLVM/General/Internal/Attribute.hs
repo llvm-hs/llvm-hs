@@ -54,9 +54,9 @@ instance Monad m => EncodeM m A.PA.ParameterAttribute (Ptr FFI.ParameterAttrBuil
       A.PA.SwiftSelf -> FFI.parameterAttributeKindSwiftSelf
       A.PA.SwiftError -> FFI.parameterAttributeKindSwiftError
       A.PA.WriteOnly -> FFI.parameterAttributeKindWriteOnly
-      A.PA.Alignment _ -> error "Impossible"
-      A.PA.Dereferenceable _ -> error "Impossible"
-      A.PA.DereferenceableOrNull _ -> error "Impossible"
+      A.PA.Alignment _ -> error $ "llvm-general internal error: cases inconsistent in ParameterAttribute encoding for " ++ show a
+      A.PA.Dereferenceable _ -> error $ "llvm-general internal error: cases inconsistent in ParameterAttribute encoding for " ++ show a
+      A.PA.DereferenceableOrNull _ -> error $ "llvm-general internal error: cases inconsistent in ParameterAttribute encoding for " ++ show a
 
 instance Monad m => EncodeM m A.FA.FunctionAttribute (Ptr FFI.FunctionAttrBuilder -> EncodeAST ()) where
   encodeM (A.FA.StringAttribute kind value) = return $ \b -> do
@@ -103,9 +103,9 @@ instance Monad m => EncodeM m A.FA.FunctionAttribute (Ptr FFI.FunctionAttrBuilde
       A.FA.SanitizeThread -> FFI.functionAttributeKindSanitizeThread
       A.FA.SanitizeMemory -> FFI.functionAttributeKindSanitizeMemory
       A.FA.SafeStack -> FFI.functionAttributeKindSafeStack
-      A.FA.StackAlignment _ -> error "Impossible"
-      A.FA.AllocSize _ _ -> error "Impossible"
-      A.FA.StringAttribute _ _ -> error "Impossible"
+      A.FA.StackAlignment _ -> error $ "llvm-general internal error: cases inconsistent in FunctionAttribute encoding for " ++ show a
+      A.FA.AllocSize _ _ -> error $ "llvm-general internal error: cases inconsistent in FunctionAttribute encoding for " ++ show a
+      A.FA.StringAttribute _ _ -> error $ "llvm-general internal error: cases inconsistent in FunctionAttribute encoding for " ++ show a
 
 instance DecodeM DecodeAST A.PA.ParameterAttribute FFI.ParameterAttribute where
   decodeM a = do
