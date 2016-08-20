@@ -217,13 +217,6 @@ getDataLayout m = do
   dlString <- decodeM =<< FFI.getDataLayout m
   either fail return . runExcept . parseDataLayout A.BigEndian $ dlString
 
-
-genCodingInstance [t| Maybe A.G.UnnamedAddr |] ''FFI.UnnamedAddr [
-  (FFI.unnamedAddrNone, Nothing),
-  (FFI.unnamedAddrLocal, Just A.G.LocalAddr),
-  (FFI.unnamedAddrGlobal, Just A.G.GlobalAddr)
- ]
-
 -- | This function will call disposeModule after the callback exits
 withModuleFromAST :: Context -> A.Module -> (Module -> IO a) -> ExceptT String IO a
 withModuleFromAST context@(Context c) mod f = runEncodeAST context $ do
