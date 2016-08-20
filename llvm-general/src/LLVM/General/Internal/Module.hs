@@ -167,21 +167,19 @@ writeBitcodeToFile :: File -> Module -> ExceptT String IO ()
 writeBitcodeToFile (File path) (Module m) = flip runAnyContT return $ do
   withFileRawOStream path False False $ liftIO . FFI.writeBitcode m
 
-emitToFile :: FFI.CodeGenFileType -> TargetMachine -> File -> Module -> ExceptT String IO ()
-emitToFile fileType (TargetMachine tm) (File path) (Module m) = flip runAnyContT return $ do
+targetMachineEmit :: FFI.CodeGenFileType -> TargetMachine -> Module -> Ptr FFI.RawPWriteStream -> ExceptT String IO ()
+targetMachineEmit fileType (TargetMachine tm) (Module m) os = flip runAnyContT return $ do
   msgPtr <- alloca
-  cPath <- encodeM path
-  r <- decodeM =<< (liftIO $ FFI.targetMachineEmitToFile tm m cPath fileType msgPtr)
+  r <- decodeM =<< (liftIO $ FFI.targetMachineEmit tm m os fileType msgPtr)
   when r $ throwError =<< decodeM msgPtr
 
+emitToFile :: FFI.CodeGenFileType -> TargetMachine -> File -> Module -> ExceptT String IO ()
+emitToFile fileType tm (File path) m = flip runAnyContT return $ do
+  withFileRawPWriteStream path False False $ targetMachineEmit fileType tm m
+
 emitToByteString :: FFI.CodeGenFileType -> TargetMachine -> Module -> ExceptT String IO BS.ByteString
-emitToByteString fileType (TargetMachine tm) (Module m) = flip runAnyContT return $ do
-  msgPtr <- alloca
-  memBuffer <- alloca
-  r <- decodeM =<< (liftIO $ FFI.targetMachineEmitToMemoryBuffer tm m fileType msgPtr memBuffer)
-  if r
-     then throwError =<< decodeM msgPtr
-     else decodeM =<< peek memBuffer
+emitToByteString fileType tm m = flip runAnyContT return $ do
+  withBufferRawPWriteStream $ targetMachineEmit fileType tm m
 
 -- | write target-specific assembly directly into a file
 writeTargetAssemblyToFile :: TargetMachine -> File -> Module -> ExceptT String IO ()

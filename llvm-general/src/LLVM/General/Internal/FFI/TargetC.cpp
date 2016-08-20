@@ -316,4 +316,42 @@ void LLVM_General_InitializeAllTargets() {
   // None of the other components are bound yet
 }
 
+// This is identical to LLVMTargetMachineEmit but LLVM doesn’t expose this function so we copy it here.
+LLVMBool LLVM_General_TargetMachineEmit(
+    LLVMTargetMachineRef T,
+    LLVMModuleRef M,
+    raw_pwrite_stream &OS,
+    LLVMCodeGenFileType codegen,
+    char **ErrorMessage
+) {
+  TargetMachine* TM = unwrap(T);
+  Module* Mod = unwrap(M);
+
+  legacy::PassManager pass;
+
+  std::string error;
+
+  Mod->setDataLayout(TM->createDataLayout());
+
+  TargetMachine::CodeGenFileType ft;
+  switch (codegen) {
+    case LLVMAssemblyFile:
+      ft = TargetMachine::CGFT_AssemblyFile;
+      break;
+    default:
+      ft = TargetMachine::CGFT_ObjectFile;
+      break;
+  }
+  if (TM->addPassesToEmitFile(pass, OS, ft)) {
+    error = "TargetMachine can't emit a file of this type";
+    *ErrorMessage = strdup(error.c_str());
+    return true;
+  }
+
+  pass.run(*Mod);
+
+  OS.flush();
+  return false;
+}
+
 }

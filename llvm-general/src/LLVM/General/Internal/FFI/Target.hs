@@ -70,6 +70,14 @@ foreign import ccall unsafe "LLVMCreateTargetMachine" createTargetMachine ::
 foreign import ccall unsafe "LLVMDisposeTargetMachine" disposeTargetMachine ::
   Ptr TargetMachine -> IO ()
 
+foreign import ccall unsafe "LLVM_General_TargetMachineEmit" targetMachineEmit ::
+  Ptr TargetMachine
+  -> Ptr Module
+  -> Ptr RawPWriteStream
+  -> CodeGenFileType
+  -> Ptr (OwnerTransfered CString)
+  -> IO LLVMBool
+
 foreign import ccall unsafe "LLVMTargetMachineEmitToFile" targetMachineEmitToFile ::
   Ptr TargetMachine
   -> Ptr Module
