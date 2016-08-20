@@ -63,12 +63,12 @@ instance Monad m => EncodeM m A.FA.FunctionAttribute (Ptr FFI.FunctionAttrBuilde
     (kindP, kindLen) <- encodeM kind
     (valueP, valueLen) <- encodeM value
     liftIO $ FFI.attrBuilderAddStringAttribute b kindP kindLen valueP valueLen
-  encodeM a = return $ \b -> liftIO $ case a of
-    A.FA.StackAlignment v -> FFI.attrBuilderAddStackAlignment b v
-    A.FA.AllocSize x y -> case y of
-                            Nothing -> FFI.attrBuilderAddAllocSize b x 0 0
-                            Just y' -> FFI.attrBuilderAddAllocSize b x 1 y'
-    _ -> FFI.attrBuilderAddFunctionAttributeKind b $ case a of
+  encodeM a = return $ \b -> case a of
+    A.FA.StackAlignment v -> liftIO $ FFI.attrBuilderAddStackAlignment b v
+    A.FA.AllocSize x y -> do x' <- encodeM x
+                             y' <- encodeM y
+                             liftIO $ FFI.attrBuilderAddAllocSize b x' y'
+    _ -> liftIO $ FFI.attrBuilderAddFunctionAttributeKind b $ case a of
       A.FA.Convergent -> FFI.functionAttributeKindConvergent
       A.FA.InaccessibleMemOnly -> FFI.functionAttributeKindInaccessibleMemOnly
       A.FA.InaccessibleMemOrArgMemOnly -> FFI.functionAttributeKindInaccessibleMemOrArgMemOnly
@@ -144,8 +144,13 @@ instance DecodeM DecodeAST A.FA.FunctionAttribute FFI.FunctionAttribute where
          enum <- liftIO $ FFI.functionAttributeKindAsEnum a
          case enum of
            [functionAttributeKindP|AllocSize|] -> do
-             (x,y) <- liftIO $ FFI.attributeGetAllocSizeArgs a
-             return (A.FA.AllocSize x y)
+             x <- alloca
+             y <- alloca
+             isJust <- liftIO $ FFI.attributeGetAllocSizeArgs a x y
+             x' <- decodeM =<< peek x
+             y' <- peek y
+             yM <- decodeM (y',isJust)
+             return (A.FA.AllocSize x' yM)
            [functionAttributeKindP|NoReturn|] -> return A.FA.NoReturn
            [functionAttributeKindP|NoUnwind|] -> return A.FA.NoUnwind
            [functionAttributeKindP|ReadNone|] -> return A.FA.ReadNone

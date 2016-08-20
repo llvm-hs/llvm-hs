@@ -38,7 +38,7 @@ data FunctionAttribute
         stringAttributeKind :: String,
         stringAttributeValue :: String -- ^ Use "" for no value -- the two are conflated
       }
-    | AllocSize Word64 (Maybe Word64)
+    | AllocSize Word (Maybe Word)
     | WriteOnly
     | ArgMemOnly
     | Convergent
