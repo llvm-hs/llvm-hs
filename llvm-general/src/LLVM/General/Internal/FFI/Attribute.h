@@ -1,6 +1,9 @@
 #ifndef __LLVM_GENERAL_INTERNAL_FFI__ATTRIBUTES__H__
 #define __LLVM_GENERAL_INTERNAL_FFI__ATTRIBUTES__H__
 
+
+// The last three arguments are flags indicating if this is a
+// parameter attribute, function result attribute or function attribute.
 #define LLVM_GENERAL_FOR_EACH_ATTRIBUTE_KIND(macro)	\
 	macro(None,F,F,F)                                 \
 	macro(Alignment,T,F,F)                            \
