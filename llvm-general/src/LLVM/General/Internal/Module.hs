@@ -69,6 +69,22 @@ import qualified LLVM.General.AST.Global as A.G
 -- | <http://llvm.org/doxygen/classllvm_1_1Module.html>
 newtype Module = Module (Ptr FFI.Module)
 
+-- | A reference to a module that can be deleted to prevent double free errors. See 'deleteModule'.
+newtype ModuleRef = ModuleRef (IORef Module)
+
+newModuleRef :: Module -> IO ModuleRef
+newModuleRef = fmap ModuleRef . newIORef
+
+getModule :: ModuleRef -> IO Module
+getModule (ModuleRef r) = readIORef r
+
+-- | Signal that a module does no longer exist and thus must not be
+-- disposed. It is the responsibility of the caller to ensure that the
+-- module has been disposed. If you use only the functions provided by
+-- llvm-general you should never call this yourself.
+deleteModule :: ModuleRef -> IO ()
+deleteModule (ModuleRef r) = writeIORef r (Module nullPtr)
+
 -- | A newtype to distinguish strings used for paths from other strings
 newtype File = File FilePath
   deriving (Eq, Ord, Read, Show)
@@ -88,11 +104,13 @@ genCodingInstance [t| Bool |] ''FFI.LinkerMode [
 -- in the destination remain). The source module is destroyed.
 linkModules ::
      Module -- ^ The module into which to link
-  -> Module -- ^ The module to link into the other (and cannibalize or not)
+  -> ModuleRef -- ^ The module to link into the other (and cannibalize or not)
   -> ExceptT String IO ()
-linkModules (Module dest) (Module src) = flip runAnyContT return $ do
+linkModules (Module dest) srcRef = flip runAnyContT return $ do
+  (Module src) <- liftIO $ getModule srcRef
   result <- decodeM =<< liftIO (FFI.linkModules dest src)
-  -- TODO find error message
+  -- linkModules takes care of deleting the sourcemodule
+  liftIO $ deleteModule srcRef
   when result (throwError "Couldn’t link modules")
 
 class LLVMAssemblyInput s where
@@ -217,27 +235,34 @@ getDataLayout m = do
   dlString <- decodeM =<< FFI.getDataLayout m
   either fail return . runExcept . parseDataLayout A.BigEndian $ dlString
 
--- | This function will call disposeModule after the callback exits
+-- | This function will call disposeModule after the callback
+-- exits. Setting the IORef to 'nullModule' prevents multiple double
+-- free errors. As long as you only call functions provided by
+-- llvm-general this should not be necessary since llvm-general takes
+-- care of this.
 withModuleFromAST :: Context -> A.Module -> (Module -> IO a) -> ExceptT String IO a
 withModuleFromAST context@(Context c) mod f = runEncodeAST context $ do
   moduleId <- encodeM (A.moduleName mod)
   ffiMod <- anyContToM $ bracket (FFI.moduleCreateWithNameInContext moduleId c) FFI.disposeModule
-  astToFFIModule' mod ffiMod
+  astToFFIModule mod ffiMod
   liftIO $ f (Module ffiMod)
 
-astToFFIModule :: Context -> A.Module -> ExceptT String IO Module
-astToFFIModule context@(Context c) mod = runEncodeAST context $ do
+withModuleRefFromAST :: Context -> A.Module -> (ModuleRef -> IO a) -> ExceptT String IO a
+withModuleRefFromAST context@ (Context c) mod f = runEncodeAST context $ do
   moduleId <- encodeM (A.moduleName mod)
-  ffiMod <- liftIO $ FFI.moduleCreateWithNameInContext moduleId c
-  astToFFIModule' mod ffiMod
-  pure (Module ffiMod)
+  ffiModRef <- anyContToM $
+                 bracket (newModuleRef . Module =<< FFI.moduleCreateWithNameInContext moduleId c)
+                         (getModule >=> \(Module mod) -> FFI.disposeModule mod)
+  (Module ffiMod) <- liftIO $ getModule ffiModRef
+  astToFFIModule mod ffiMod
+  liftIO $ f ffiModRef
 
 -- | Build an LLVM.General.'Module' from a
 -- LLVM.General.AST.'LLVM.General.AST.Module' - i.e.  lower an AST
 -- from Haskell into C++ objects. The module is written to the
 -- supplied pointer. You are responsible for calling disposeModule.
-astToFFIModule' :: A.Module -> Ptr FFI.Module -> EncodeAST ()
-astToFFIModule' (A.Module moduleId dataLayout triple definitions) ffiMod = do
+astToFFIModule :: A.Module -> Ptr FFI.Module -> EncodeAST ()
+astToFFIModule (A.Module moduleId dataLayout triple definitions) ffiMod = do
   Context context <- gets encodeStateContext
   maybe (return ()) (setDataLayout ffiMod) dataLayout
   maybe (return ()) (setTargetTriple ffiMod) triple
