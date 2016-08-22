@@ -29,7 +29,6 @@ extra-source-files:
   src/LLVM/General/Internal/FFI/InlineAssembly.h
   src/LLVM/General/Internal/FFI/Instruction.h
   src/LLVM/General/Internal/FFI/LibFunc.h
-  src/LLVM/General/Internal/FFI/Module.h
   src/LLVM/General/Internal/FFI/SMDiagnostic.h
   src/LLVM/General/Internal/FFI/Target.h
   src/LLVM/General/Internal/FFI/Type.h

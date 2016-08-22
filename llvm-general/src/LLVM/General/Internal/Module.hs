@@ -89,10 +89,6 @@ newtype File = File FilePath
 instance Inject String (Either String Diagnostic) where
     inject = Left
 
-genCodingInstance [t| Bool |] ''FFI.LinkerMode [
-  (FFI.linkerModeDestroySource, False)
- ]
-
 -- | link LLVM modules - move or copy parts of a source module into a
 -- destination module.  Note that this operation is not commutative -
 -- not only concretely (e.g. the destination module is modified,
