@@ -60,7 +60,7 @@ tests = testGroup "Linking" [
 
     Module { moduleDefinitions = defs } <- withContext $ \context -> 
       withModuleFromAST' context ast0 $ \dest -> do
-      withModuleRefFromAST' context ast0 $ \src -> do
+      withModuleFromAST' context ast0 $ \src -> do
         failInIO $ linkModules dest src
         moduleAST dest
     [ n | GlobalDefinition g <- defs, let Name n = G.name g ] @?= [ "private0", "external0" ]

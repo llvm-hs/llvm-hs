@@ -67,23 +67,20 @@ import qualified LLVM.General.AST.AddrSpace as A
 import qualified LLVM.General.AST.Global as A.G
 
 -- | <http://llvm.org/doxygen/classllvm_1_1Module.html>
-newtype Module = Module (Ptr FFI.Module)
+newtype Module = Module (IORef (Ptr FFI.Module))
 
--- | A reference to a module that can be deleted to prevent double free errors. See 'deleteModule'.
-newtype ModuleRef = ModuleRef (IORef Module)
+newModule :: Ptr FFI.Module -> IO (Module)
+newModule m = fmap Module (newIORef m)
 
-newModuleRef :: Module -> IO ModuleRef
-newModuleRef = fmap ModuleRef . newIORef
-
-getModule :: ModuleRef -> IO Module
-getModule (ModuleRef r) = readIORef r
+readModule :: MonadIO m => Module -> m (Ptr FFI.Module)
+readModule (Module ref) = liftIO $ readIORef ref
 
 -- | Signal that a module does no longer exist and thus must not be
 -- disposed. It is the responsibility of the caller to ensure that the
 -- module has been disposed. If you use only the functions provided by
 -- llvm-general you should never call this yourself.
-deleteModule :: ModuleRef -> IO ()
-deleteModule (ModuleRef r) = writeIORef r (Module nullPtr)
+deleteModule :: Module -> IO ()
+deleteModule (Module r) = writeIORef r nullPtr
 
 -- | A newtype to distinguish strings used for paths from other strings
 newtype File = File FilePath
@@ -104,13 +101,14 @@ genCodingInstance [t| Bool |] ''FFI.LinkerMode [
 -- in the destination remain). The source module is destroyed.
 linkModules ::
      Module -- ^ The module into which to link
-  -> ModuleRef -- ^ The module to link into the other (and cannibalize or not)
+  -> Module -- ^ The module to link into the other (this module is destroyed)
   -> ExceptT String IO ()
-linkModules (Module dest) srcRef = flip runAnyContT return $ do
-  (Module src) <- liftIO $ getModule srcRef
-  result <- decodeM =<< liftIO (FFI.linkModules dest src)
+linkModules dest src  = flip runAnyContT return $ do
+  dest' <- readModule dest
+  src' <- readModule src
+  result <- decodeM =<< liftIO (FFI.linkModules dest' src')
   -- linkModules takes care of deleting the sourcemodule
-  liftIO $ deleteModule srcRef
+  liftIO $ deleteModule src
   when result (throwError "Couldn’t link modules")
 
 class LLVMAssemblyInput s where
@@ -134,26 +132,29 @@ withModuleFromLLVMAssembly :: LLVMAssemblyInput s
 withModuleFromLLVMAssembly (Context c) s f = flip runAnyContT return $ do
   mb <- llvmAssemblyMemoryBuffer s
   msgPtr <- alloca
-  m <- anyContToM $ bracket (FFI.parseLLVMAssembly c mb msgPtr) FFI.disposeModule
-  when (m == nullPtr) $ throwError =<< decodeM msgPtr
-  liftIO $ f (Module m)
+  m <- anyContToM $ bracket (newModule =<< FFI.parseLLVMAssembly c mb msgPtr) (FFI.disposeModule <=< readModule)
+  m' <- readModule m
+  when (m' == nullPtr) $ throwError =<< decodeM msgPtr
+  liftIO $ f m
 
 -- | generate LLVM assembly from a 'Module'
 moduleLLVMAssembly :: Module -> IO String
-moduleLLVMAssembly (Module m) = do
+moduleLLVMAssembly m = do
   resultRef <- newIORef Nothing
   let saveBuffer :: Ptr CChar -> CSize -> IO ()
       saveBuffer start size = do
         r <- decodeM (start, fromIntegral size)
         writeIORef resultRef (Just r)
-  FFI.withBufferRawOStream saveBuffer $ FFI.writeLLVMAssembly m
+  m' <- readModule m
+  FFI.withBufferRawOStream saveBuffer $ FFI.writeLLVMAssembly m'
   Just s <- readIORef resultRef
   return s
 
 -- | write LLVM assembly for a 'Module' to a file
 writeLLVMAssemblyToFile :: File -> Module -> ExceptT String IO ()
-writeLLVMAssemblyToFile (File path) (Module m) = flip runAnyContT return $ do
-  withFileRawOStream path False True $ liftIO . FFI.writeLLVMAssembly m
+writeLLVMAssemblyToFile (File path) m = flip runAnyContT return $ do
+  m' <- readModule m
+  withFileRawOStream path False True $ liftIO . (FFI.writeLLVMAssembly m')
 
 class BitcodeInput b where
   bitcodeMemoryBuffer :: (Inject String e, MonadError e m, MonadIO m, MonadAnyCont IO m)
@@ -170,25 +171,29 @@ withModuleFromBitcode :: BitcodeInput b => Context -> b -> (Module -> IO a) -> E
 withModuleFromBitcode (Context c) b f = flip runAnyContT return $ do
   mb <- bitcodeMemoryBuffer b
   msgPtr <- alloca
-  m <- anyContToM $ bracket (FFI.parseBitcode c mb msgPtr) FFI.disposeModule
-  when (m == nullPtr) $ throwError =<< decodeM msgPtr
-  liftIO $ f (Module m)
+  m <- anyContToM $ bracket (newModule =<< FFI.parseBitcode c mb msgPtr) (FFI.disposeModule <=< readModule)
+  m' <- readModule m
+  when (m' == nullPtr) $ throwError =<< decodeM msgPtr
+  liftIO $ f m
 
 -- | generate LLVM bitcode from a 'Module'
 moduleBitcode :: Module -> IO BS.ByteString
-moduleBitcode (Module m) = do
-  r <- runExceptT $ withBufferRawOStream (liftIO . FFI.writeBitcode m)
+moduleBitcode m = do
+  m' <- readModule m
+  r <- runExceptT $ withBufferRawOStream (liftIO . FFI.writeBitcode m')
   either fail return r
 
 -- | write LLVM bitcode from a 'Module' into a file
 writeBitcodeToFile :: File -> Module -> ExceptT String IO ()
-writeBitcodeToFile (File path) (Module m) = flip runAnyContT return $ do
-  withFileRawOStream path False False $ liftIO . FFI.writeBitcode m
+writeBitcodeToFile (File path) m = flip runAnyContT return $ do
+  m' <- readModule m
+  withFileRawOStream path False False $ liftIO . FFI.writeBitcode m'
 
 targetMachineEmit :: FFI.CodeGenFileType -> TargetMachine -> Module -> Ptr FFI.RawPWriteStream -> ExceptT String IO ()
-targetMachineEmit fileType (TargetMachine tm) (Module m) os = flip runAnyContT return $ do
+targetMachineEmit fileType (TargetMachine tm) m os = flip runAnyContT return $ do
   msgPtr <- alloca
-  r <- decodeM =<< (liftIO $ FFI.targetMachineEmit tm m os fileType msgPtr)
+  m' <- readModule m
+  r <- decodeM =<< (liftIO $ FFI.targetMachineEmit tm m' os fileType msgPtr)
   when r $ throwError =<< decodeM msgPtr
 
 emitToFile :: FFI.CodeGenFileType -> TargetMachine -> File -> Module -> ExceptT String IO ()
@@ -243,19 +248,10 @@ getDataLayout m = do
 withModuleFromAST :: Context -> A.Module -> (Module -> IO a) -> ExceptT String IO a
 withModuleFromAST context@(Context c) mod f = runEncodeAST context $ do
   moduleId <- encodeM (A.moduleName mod)
-  ffiMod <- anyContToM $ bracket (FFI.moduleCreateWithNameInContext moduleId c) FFI.disposeModule
-  astToFFIModule mod ffiMod
-  liftIO $ f (Module ffiMod)
-
-withModuleRefFromAST :: Context -> A.Module -> (ModuleRef -> IO a) -> ExceptT String IO a
-withModuleRefFromAST context@ (Context c) mod f = runEncodeAST context $ do
-  moduleId <- encodeM (A.moduleName mod)
-  ffiModRef <- anyContToM $
-                 bracket (newModuleRef . Module =<< FFI.moduleCreateWithNameInContext moduleId c)
-                         (getModule >=> \(Module mod) -> FFI.disposeModule mod)
-  (Module ffiMod) <- liftIO $ getModule ffiModRef
-  astToFFIModule mod ffiMod
-  liftIO $ f ffiModRef
+  m <- anyContToM $ bracket (newModule =<< FFI.moduleCreateWithNameInContext moduleId c) (FFI.disposeModule <=< readModule)
+  m' <- readModule m
+  astToFFIModule mod m'
+  liftIO $ f m
 
 -- | Build an LLVM.General.'Module' from a
 -- LLVM.General.AST.'LLVM.General.AST.Module' - i.e.  lower an AST
@@ -390,20 +386,20 @@ astToFFIModule (A.Module moduleId dataLayout triple definitions) ffiMod = do
 -- | Get an LLVM.General.AST.'LLVM.General.AST.Module' from a LLVM.General.'Module' - i.e.
 -- raise C++ objects into an Haskell AST.
 moduleAST :: Module -> IO A.Module
-moduleAST (Module mod) = runDecodeAST $ do
-  c <- return Context `ap` liftIO (FFI.getModuleContext mod)
+moduleAST mod = runDecodeAST $ do
+  c <- return Context `ap` liftIO (FFI.getModuleContext =<< readModule mod)
   getMetadataKindNames c
   return A.Module
-   `ap` (liftIO $ decodeM =<< FFI.getModuleIdentifier mod)
-   `ap` (liftIO $ getDataLayout mod)
+   `ap` (liftIO $ decodeM =<< FFI.getModuleIdentifier =<< readModule mod)
+   `ap` (liftIO $ getDataLayout =<< readModule mod)
    `ap` (liftIO $ do
-           s <- decodeM <=< FFI.getTargetTriple $ mod
+           s <- decodeM =<< FFI.getTargetTriple =<< readModule mod
            return $ if s == "" then Nothing else Just s)
    `ap` (
      do
        gs <- map A.GlobalDefinition . concat <$> (join . liftM sequence . sequence) [
           do
-            ffiGlobals <- liftIO $ FFI.getXs (FFI.getFirstGlobal mod) FFI.getNextGlobal
+            ffiGlobals <- liftIO $ FFI.getXs (FFI.getFirstGlobal =<< readModule mod) FFI.getNextGlobal
             liftM sequence . forM ffiGlobals $ \g -> do
               A.PointerType t as <- typeOf g
               n <- getGlobalName g
@@ -425,7 +421,7 @@ moduleAST (Module mod) = runDecodeAST $ do
                `ap` getAlignment g,
 
           do
-            ffiAliases <- liftIO $ FFI.getXs (FFI.getFirstAlias mod) FFI.getNextAlias
+            ffiAliases <- liftIO $ FFI.getXs (FFI.getFirstAlias =<< readModule mod) FFI.getNextAlias
             liftM sequence . forM ffiAliases $ \a -> do
               n <- getGlobalName a
               return $ return A.G.GlobalAlias
@@ -439,7 +435,7 @@ moduleAST (Module mod) = runDecodeAST $ do
                `ap` (decodeM =<< (liftIO $ FFI.getAliasee a)),
 
           do
-            ffiFunctions <- liftIO $ FFI.getXs (FFI.getFirstFunction mod) FFI.getNextFunction
+            ffiFunctions <- liftIO $ FFI.getXs (FFI.getFirstFunction =<< readModule mod) FFI.getNextFunction
             liftM sequence . forM ffiFunctions $ \f -> localScope $ do
               A.PointerType (A.FunctionType returnType _ isVarArg) _ <- typeOf f
               n <- getGlobalName f
@@ -473,10 +469,10 @@ moduleAST (Module mod) = runDecodeAST $ do
 
        tds <- getStructDefinitions
 
-       ias <- decodeM =<< liftIO (FFI.moduleGetInlineAsm mod)
+       ias <- decodeM =<< liftIO (FFI.moduleGetInlineAsm =<< readModule mod)
 
        nmds <- do
-         ffiNamedMetadataNodes <- liftIO $ FFI.getXs (FFI.getFirstNamedMetadata mod) FFI.getNextNamedMetadata
+         ffiNamedMetadataNodes <- liftIO $ FFI.getXs (FFI.getFirstNamedMetadata =<< readModule mod) FFI.getNextNamedMetadata
          forM ffiNamedMetadataNodes $ \nm -> scopeAnyCont $ do
               n <- liftIO $ FFI.getNamedMetadataNumOperands nm
               os <- allocaArray n

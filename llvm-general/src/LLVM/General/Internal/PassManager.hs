@@ -140,4 +140,6 @@ withPassManager s = bracket (createPassManager s) FFI.disposePassManager . (. Pa
 
 -- | run the passes in a 'PassManager' on a 'Module', modifying the 'Module'.
 runPassManager :: PassManager -> Module -> IO Bool
-runPassManager (PassManager p) (Module m) = toEnum . fromIntegral <$> FFI.runPassManager p m
+runPassManager (PassManager p) m = do
+  m' <- readModule m
+  toEnum . fromIntegral <$> FFI.runPassManager p m'
