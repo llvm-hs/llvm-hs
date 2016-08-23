@@ -9,7 +9,7 @@
 	macro(Alignment,T,T,F)                            \
 	macro(AllocSize,F,F,T)                            \
 	macro(AlwaysInline,F,F,T)                         \
-	macro(ArgMemOnly,T,F,T)                           \
+	macro(ArgMemOnly,F,F,T)                           \
 	macro(Builtin,F,F,T)                              \
 	macro(ByVal,T,F,F)                                \
 	macro(Cold,F,F,T)                                 \
