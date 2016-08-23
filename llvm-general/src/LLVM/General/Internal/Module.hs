@@ -382,20 +382,21 @@ astToFFIModule (A.Module moduleId dataLayout triple definitions) ffiMod = do
 -- | Get an LLVM.General.AST.'LLVM.General.AST.Module' from a LLVM.General.'Module' - i.e.
 -- raise C++ objects into an Haskell AST.
 moduleAST :: Module -> IO A.Module
-moduleAST mod = runDecodeAST $ do
-  c <- return Context `ap` liftIO (FFI.getModuleContext =<< readModule mod)
+moduleAST m = runDecodeAST $ do
+  mod <- readModule m
+  c <- return Context `ap` liftIO (FFI.getModuleContext mod)
   getMetadataKindNames c
   return A.Module
-   `ap` (liftIO $ decodeM =<< FFI.getModuleIdentifier =<< readModule mod)
-   `ap` (liftIO $ getDataLayout =<< readModule mod)
+   `ap` (liftIO $ decodeM =<< FFI.getModuleIdentifier mod)
+   `ap` (liftIO $ getDataLayout mod)
    `ap` (liftIO $ do
-           s <- decodeM =<< FFI.getTargetTriple =<< readModule mod
+           s <- decodeM =<< FFI.getTargetTriple mod
            return $ if s == "" then Nothing else Just s)
    `ap` (
      do
        gs <- map A.GlobalDefinition . concat <$> (join . liftM sequence . sequence) [
           do
-            ffiGlobals <- liftIO $ FFI.getXs (FFI.getFirstGlobal =<< readModule mod) FFI.getNextGlobal
+            ffiGlobals <- liftIO $ FFI.getXs (FFI.getFirstGlobal mod) FFI.getNextGlobal
             liftM sequence . forM ffiGlobals $ \g -> do
               A.PointerType t as <- typeOf g
               n <- getGlobalName g
@@ -417,7 +418,7 @@ moduleAST mod = runDecodeAST $ do
                `ap` getAlignment g,
 
           do
-            ffiAliases <- liftIO $ FFI.getXs (FFI.getFirstAlias =<< readModule mod) FFI.getNextAlias
+            ffiAliases <- liftIO $ FFI.getXs (FFI.getFirstAlias mod) FFI.getNextAlias
             liftM sequence . forM ffiAliases $ \a -> do
               n <- getGlobalName a
               return $ return A.G.GlobalAlias
@@ -431,7 +432,7 @@ moduleAST mod = runDecodeAST $ do
                `ap` (decodeM =<< (liftIO $ FFI.getAliasee a)),
 
           do
-            ffiFunctions <- liftIO $ FFI.getXs (FFI.getFirstFunction =<< readModule mod) FFI.getNextFunction
+            ffiFunctions <- liftIO $ FFI.getXs (FFI.getFirstFunction mod) FFI.getNextFunction
             liftM sequence . forM ffiFunctions $ \f -> localScope $ do
               A.PointerType (A.FunctionType returnType _ isVarArg) _ <- typeOf f
               n <- getGlobalName f
@@ -465,10 +466,10 @@ moduleAST mod = runDecodeAST $ do
 
        tds <- getStructDefinitions
 
-       ias <- decodeM =<< liftIO (FFI.moduleGetInlineAsm =<< readModule mod)
+       ias <- decodeM =<< liftIO (FFI.moduleGetInlineAsm mod)
 
        nmds <- do
-         ffiNamedMetadataNodes <- liftIO $ FFI.getXs (FFI.getFirstNamedMetadata =<< readModule mod) FFI.getNextNamedMetadata
+         ffiNamedMetadataNodes <- liftIO $ FFI.getXs (FFI.getFirstNamedMetadata mod) FFI.getNextNamedMetadata
          forM ffiNamedMetadataNodes $ \nm -> scopeAnyCont $ do
               n <- liftIO $ FFI.getNamedMetadataNumOperands nm
               os <- allocaArray n
