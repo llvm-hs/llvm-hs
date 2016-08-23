@@ -131,7 +131,7 @@ foreign import ccall unsafe "LLVM_General_AttrBuilderAddAllocSize" attrBuilderAd
   Ptr FunctionAttrBuilder -> CUInt -> CUInt -> LLVMBool -> IO ()
 
 attrBuilderAddAllocSize :: Ptr FunctionAttrBuilder -> CUInt -> (CUInt, LLVMBool) -> IO ()
-attrBuilderAddAllocSize b i (y,isJust) = attrBuilderAddAllocSize' b i y isJust
+attrBuilderAddAllocSize b i (y, isJust) = attrBuilderAddAllocSize' b i y isJust
 
 foreign import ccall unsafe "LLVM_General_AttrBuilderAddDereferenceableAttr" attrBuilderAddDereferenceable ::
   Ptr ParameterAttrBuilder -> Word64 -> IO ()

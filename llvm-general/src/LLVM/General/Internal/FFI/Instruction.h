@@ -4,7 +4,7 @@
 #include "llvm/Config/llvm-config.h"
 
 #define LLVM_GENERAL_FOR_EACH_ATOMIC_ORDERING(macro) \
-    macro(NotAtomic)                 \
+	macro(NotAtomic) \
 	macro(Unordered) \
 	macro(Monotonic) \
 	macro(Acquire) \

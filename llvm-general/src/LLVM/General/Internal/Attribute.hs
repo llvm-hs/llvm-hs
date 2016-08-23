@@ -69,9 +69,10 @@ instance Monad m => EncodeM m A.FA.FunctionAttribute (Ptr FFI.FunctionAttrBuilde
     liftIO $ FFI.attrBuilderAddStringAttribute b kindP kindLen valueP valueLen
   encodeM a = return $ \b -> case a of
     A.FA.StackAlignment v -> liftIO $ FFI.attrBuilderAddStackAlignment b v
-    A.FA.AllocSize x y -> do x' <- encodeM x
-                             y' <- encodeM y
-                             liftIO $ FFI.attrBuilderAddAllocSize b x' y'
+    A.FA.AllocSize x y -> do
+      x' <- encodeM x
+      y' <- encodeM y
+      liftIO $ FFI.attrBuilderAddAllocSize b x' y'
     _ -> liftIO $ FFI.attrBuilderAddFunctionAttributeKind b $ case a of
       A.FA.Convergent -> FFI.functionAttributeKindConvergent
       A.FA.InaccessibleMemOnly -> FFI.functionAttributeKindInaccessibleMemOnly
@@ -153,7 +154,7 @@ instance DecodeM DecodeAST A.FA.FunctionAttribute FFI.FunctionAttribute where
              isJust <- liftIO $ FFI.attributeGetAllocSizeArgs a x y
              x' <- decodeM =<< peek x
              y' <- peek y
-             yM <- decodeM (y',isJust)
+             yM <- decodeM (y', isJust)
              return (A.FA.AllocSize x' yM)
            [functionAttributeKindP|NoReturn|] -> return A.FA.NoReturn
            [functionAttributeKindP|NoUnwind|] -> return A.FA.NoUnwind
