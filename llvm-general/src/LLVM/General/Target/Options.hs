@@ -29,7 +29,6 @@ data Options = Options {
   noZerosInBSS :: Bool,
   guaranteedTailCallOptimization :: Bool,
   enableFastInstructionSelection :: Bool,
-  positionIndependentExecutable :: Bool,
   useInitArray :: Bool,
   disableIntegratedAssembler :: Bool,
   compressDebugSections :: Bool,

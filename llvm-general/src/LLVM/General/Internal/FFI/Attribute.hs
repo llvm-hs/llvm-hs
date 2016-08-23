@@ -5,8 +5,8 @@ module LLVM.General.Internal.FFI.Attribute where
 
 import LLVM.General.Prelude
 
-import Foreign.Ptr
 import Foreign.C
+import Foreign.Ptr
 
 import LLVM.General.Internal.FFI.Context
 import LLVM.General.Internal.FFI.LLVMCTypes
@@ -126,6 +126,18 @@ foreign import ccall unsafe "LLVM_General_AttrBuilderAddAlignment" attrBuilderAd
 foreign import ccall unsafe "LLVM_General_AttrBuilderAddStackAlignment" attrBuilderAddStackAlignment ::
   Ptr FunctionAttrBuilder -> Word64 -> IO ()
 
+-- The CInt is 0 if the last value is null and 1 otherwise
+foreign import ccall unsafe "LLVM_General_AttrBuilderAddAllocSize" attrBuilderAddAllocSize' ::
+  Ptr FunctionAttrBuilder -> CUInt -> CUInt -> LLVMBool -> IO ()
+
+attrBuilderAddAllocSize :: Ptr FunctionAttrBuilder -> CUInt -> (CUInt, LLVMBool) -> IO ()
+attrBuilderAddAllocSize b i (y, isJust) = attrBuilderAddAllocSize' b i y isJust
+
 foreign import ccall unsafe "LLVM_General_AttrBuilderAddDereferenceableAttr" attrBuilderAddDereferenceable ::
   Ptr ParameterAttrBuilder -> Word64 -> IO ()
-                                              
+
+foreign import ccall unsafe "LLVM_General_AttrBuilderAddDereferenceableOrNullAttr" attrBuilderAddDereferenceableOrNull ::
+  Ptr ParameterAttrBuilder -> Word64 -> IO ()
+
+foreign import ccall unsafe "LLVM_General_AttributeGetAllocSizeArgs" attributeGetAllocSizeArgs ::
+  FunctionAttribute -> Ptr CUInt -> Ptr CUInt -> IO LLVMBool

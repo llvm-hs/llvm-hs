@@ -55,8 +55,11 @@ void LLVM_General_SetFunctionCallingConvention(LLVMValueRef f, unsigned cc) {
   unwrap<Function>(f)->setCallingConv(llvm::CallingConv::ID(cc));
 }
 
-LLVMBool LLVM_General_HasPersonalityFn(LLVMValueRef Fn) {
-  return unwrap<Function>(Fn)->hasPersonalityFn();
+// This wrapper is necessary because LLVMSetPersonalityFn fails if
+// personalityFn is a nullptr even though the C++ API allows that.
+void LLVM_General_SetPersonalityFn(LLVMValueRef fn, LLVMValueRef personalityFn) {
+    unwrap<Function>(fn)->setPersonalityFn(personalityFn == nullptr ?
+                                           nullptr : unwrap<Constant>(personalityFn));
 }
 
 }

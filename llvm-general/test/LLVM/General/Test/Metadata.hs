@@ -73,6 +73,7 @@ tests = testGroup "Metadata" [
           MetadataNodeDefinition (MetadataNodeID 0) [ Just $ MDValue $ ConstantOperand (C.Int 32 1) ]
          ]
     let s = "; ModuleID = '<string>'\n\
+            \source_filename = \"<string>\"\n\
             \\n\
             \define i32 @foo() {\n\
             \  ret i32 0, !my-metadatum !0\n\
@@ -87,6 +88,7 @@ tests = testGroup "Metadata" [
           MetadataNodeDefinition (MetadataNodeID 0) [ Just $ MDValue $ ConstantOperand (C.Int 32 1) ]
          ]
     let s = "; ModuleID = '<string>'\n\
+            \source_filename = \"<string>\"\n\
             \\n\
             \!my-module-metadata = !{!0}\n\
             \\n\
@@ -99,6 +101,7 @@ tests = testGroup "Metadata" [
           MetadataNodeDefinition (MetadataNodeID 0) [ Nothing ]
          ]
     let s = "; ModuleID = '<string>'\n\
+            \source_filename = \"<string>\"\n\
             \\n\
             \!my-module-metadata = !{!0}\n\
             \\n\
@@ -117,6 +120,7 @@ tests = testGroup "Metadata" [
              ]
            ]
       let s = "; ModuleID = '<string>'\n\
+              \source_filename = \"<string>\"\n\
               \\n\
               \!my-module-metadata = !{!0}\n\
               \\n\
@@ -141,6 +145,7 @@ tests = testGroup "Metadata" [
              ]
            ]
       let s = "; ModuleID = '<string>'\n\
+              \source_filename = \"<string>\"\n\
               \\n\
               \define void @foo() {\n\
               \  ret void, !my-metadatum !0\n\

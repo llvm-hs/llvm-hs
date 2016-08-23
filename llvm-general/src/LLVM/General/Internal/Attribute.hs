@@ -32,10 +32,15 @@ import LLVM.General.Internal.Context
 import LLVM.General.Internal.EncodeAST
 import LLVM.General.Internal.DecodeAST
 
+inconsistentCases :: Show a => String -> a -> b
+inconsistentCases name attr =
+  error $ "llvm-general internal error: cases inconstistent in " ++ name ++ " encoding for " ++ show attr
+
 instance Monad m => EncodeM m A.PA.ParameterAttribute (Ptr FFI.ParameterAttrBuilder -> EncodeAST ()) where
   encodeM a = return $ \b -> liftIO $ case a of
     A.PA.Alignment v -> FFI.attrBuilderAddAlignment b v
     A.PA.Dereferenceable v -> FFI.attrBuilderAddDereferenceable b v
+    A.PA.DereferenceableOrNull v -> FFI.attrBuilderAddDereferenceableOrNull b v
     _ -> FFI.attrBuilderAddParameterAttributeKind b $ case a of
       A.PA.ZeroExt -> FFI.parameterAttributeKindZExt
       A.PA.SignExt -> FFI.parameterAttributeKindSExt
@@ -50,15 +55,28 @@ instance Monad m => EncodeM m A.PA.ParameterAttribute (Ptr FFI.ParameterAttrBuil
       A.PA.InAlloca -> FFI.parameterAttributeKindInAlloca
       A.PA.NonNull -> FFI.parameterAttributeKindNonNull
       A.PA.Returned -> FFI.parameterAttributeKindReturned
+      A.PA.SwiftSelf -> FFI.parameterAttributeKindSwiftSelf
+      A.PA.SwiftError -> FFI.parameterAttributeKindSwiftError
+      A.PA.WriteOnly -> FFI.parameterAttributeKindWriteOnly
+      A.PA.Alignment _ -> inconsistentCases "ParameterAttribute" a
+      A.PA.Dereferenceable _ -> inconsistentCases "ParameterAttribute" a
+      A.PA.DereferenceableOrNull _ -> inconsistentCases "ParameterAttribute" a
 
 instance Monad m => EncodeM m A.FA.FunctionAttribute (Ptr FFI.FunctionAttrBuilder -> EncodeAST ()) where
   encodeM (A.FA.StringAttribute kind value) = return $ \b -> do
     (kindP, kindLen) <- encodeM kind
     (valueP, valueLen) <- encodeM value
     liftIO $ FFI.attrBuilderAddStringAttribute b kindP kindLen valueP valueLen
-  encodeM a = return $ \b -> liftIO $ case a of
-    A.FA.StackAlignment v -> FFI.attrBuilderAddStackAlignment b v
-    _ -> FFI.attrBuilderAddFunctionAttributeKind b $ case a of
+  encodeM a = return $ \b -> case a of
+    A.FA.StackAlignment v -> liftIO $ FFI.attrBuilderAddStackAlignment b v
+    A.FA.AllocSize x y -> do
+      x' <- encodeM x
+      y' <- encodeM y
+      liftIO $ FFI.attrBuilderAddAllocSize b x' y'
+    _ -> liftIO $ FFI.attrBuilderAddFunctionAttributeKind b $ case a of
+      A.FA.Convergent -> FFI.functionAttributeKindConvergent
+      A.FA.InaccessibleMemOnly -> FFI.functionAttributeKindInaccessibleMemOnly
+      A.FA.InaccessibleMemOrArgMemOnly -> FFI.functionAttributeKindInaccessibleMemOrArgMemOnly
       A.FA.NoReturn -> FFI.functionAttributeKindNoReturn
       A.FA.NoUnwind -> FFI.functionAttributeKindNoUnwind
       A.FA.ReadNone -> FFI.functionAttributeKindReadNone
@@ -68,7 +86,9 @@ instance Monad m => EncodeM m A.FA.FunctionAttribute (Ptr FFI.FunctionAttrBuilde
       A.FA.AlwaysInline -> FFI.functionAttributeKindAlwaysInline
       A.FA.MinimizeSize -> FFI.functionAttributeKindMinSize
       A.FA.OptimizeForSize -> FFI.functionAttributeKindOptimizeForSize
-      A.FA.OptimizeNone -> FFI.functionAttributeKindOptimizeForSize                                                   
+      A.FA.OptimizeNone -> FFI.functionAttributeKindOptimizeForSize
+      A.FA.WriteOnly -> FFI.functionAttributeKindWriteOnly
+      A.FA.ArgMemOnly -> FFI.functionAttributeKindArgMemOnly
       A.FA.StackProtect -> FFI.functionAttributeKindStackProtect
       A.FA.StackProtectReq -> FFI.functionAttributeKindStackProtectReq
       A.FA.StackProtectStrong -> FFI.functionAttributeKindStackProtectStrong
@@ -87,6 +107,10 @@ instance Monad m => EncodeM m A.FA.FunctionAttribute (Ptr FFI.FunctionAttrBuilde
       A.FA.SanitizeAddress -> FFI.functionAttributeKindSanitizeAddress
       A.FA.SanitizeThread -> FFI.functionAttributeKindSanitizeThread
       A.FA.SanitizeMemory -> FFI.functionAttributeKindSanitizeMemory
+      A.FA.SafeStack -> FFI.functionAttributeKindSafeStack
+      A.FA.StackAlignment _ -> inconsistentCases "FunctionAttribute" a
+      A.FA.AllocSize _ _ -> inconsistentCases "FunctionAttribute" a
+      A.FA.StringAttribute _ _ -> inconsistentCases "FunctionAttribute" a
 
 instance DecodeM DecodeAST A.PA.ParameterAttribute FFI.ParameterAttribute where
   decodeM a = do
@@ -103,10 +127,14 @@ instance DecodeM DecodeAST A.PA.ParameterAttribute FFI.ParameterAttribute where
       [parameterAttributeKindP|Nest|] -> return A.PA.Nest
       [parameterAttributeKindP|ReadOnly|] -> return A.PA.ReadOnly
       [parameterAttributeKindP|ReadNone|] -> return A.PA.ReadNone
+      [parameterAttributeKindP|WriteOnly|] -> return A.PA.WriteOnly
       [parameterAttributeKindP|InAlloca|] -> return A.PA.InAlloca
       [parameterAttributeKindP|NonNull|] -> return A.PA.NonNull
       [parameterAttributeKindP|Dereferenceable|] -> return A.PA.Dereferenceable `ap` (liftIO $ FFI.attributeValueAsInt a)
+      [parameterAttributeKindP|DereferenceableOrNull|] -> return A.PA.DereferenceableOrNull `ap` (liftIO $ FFI.attributeValueAsInt a)
       [parameterAttributeKindP|Returned|] -> return A.PA.Returned
+      [parameterAttributeKindP|SwiftSelf|] -> return A.PA.SwiftSelf
+      [parameterAttributeKindP|SwiftError|] -> return A.PA.SwiftError
       _ -> error $ "unhandled parameter attribute enum value: " ++ show enum
 
 instance DecodeM DecodeAST A.FA.FunctionAttribute FFI.FunctionAttribute where
@@ -120,6 +148,14 @@ instance DecodeM DecodeAST A.FA.FunctionAttribute FFI.FunctionAttribute where
        else do
          enum <- liftIO $ FFI.functionAttributeKindAsEnum a
          case enum of
+           [functionAttributeKindP|AllocSize|] -> do
+             x <- alloca
+             y <- alloca
+             isJust <- liftIO $ FFI.attributeGetAllocSizeArgs a x y
+             x' <- decodeM =<< peek x
+             y' <- peek y
+             yM <- decodeM (y', isJust)
+             return (A.FA.AllocSize x' yM)
            [functionAttributeKindP|NoReturn|] -> return A.FA.NoReturn
            [functionAttributeKindP|NoUnwind|] -> return A.FA.NoUnwind
            [functionAttributeKindP|ReadNone|] -> return A.FA.ReadNone
@@ -129,7 +165,7 @@ instance DecodeM DecodeAST A.FA.FunctionAttribute FFI.FunctionAttribute where
            [functionAttributeKindP|AlwaysInline|] -> return A.FA.AlwaysInline
            [functionAttributeKindP|MinSize|] -> return A.FA.MinimizeSize
            [functionAttributeKindP|OptimizeForSize|] -> return A.FA.OptimizeForSize
-           [functionAttributeKindP|OptimizeNone|] -> return A.FA.OptimizeForSize                                                   
+           [functionAttributeKindP|OptimizeNone|] -> return A.FA.OptimizeForSize
            [functionAttributeKindP|StackProtect|] -> return A.FA.StackProtect
            [functionAttributeKindP|StackProtectReq|] -> return A.FA.StackProtectReq
            [functionAttributeKindP|StackProtectStrong|] -> return A.FA.StackProtectStrong
@@ -149,8 +185,14 @@ instance DecodeM DecodeAST A.FA.FunctionAttribute FFI.FunctionAttribute where
            [functionAttributeKindP|SanitizeAddress|] -> return A.FA.SanitizeAddress
            [functionAttributeKindP|SanitizeThread|] -> return A.FA.SanitizeThread
            [functionAttributeKindP|SanitizeMemory|] -> return A.FA.SanitizeMemory
+           [functionAttributeKindP|ArgMemOnly|] -> return A.FA.ArgMemOnly
+           [functionAttributeKindP|Convergent|] -> return A.FA.Convergent
+           [functionAttributeKindP|InaccessibleMemOnly|] -> return A.FA.InaccessibleMemOnly
+           [functionAttributeKindP|InaccessibleMemOrArgMemOnly|] -> return A.FA.InaccessibleMemOrArgMemOnly
+           [functionAttributeKindP|SafeStack|] -> return A.FA.SafeStack
+           [functionAttributeKindP|WriteOnly|] -> return A.FA.WriteOnly
            _ -> error $ "unhandled function attribute enum value: " ++ show enum
-            
+
 allocaAttrBuilder :: (Monad m, MonadAnyCont IO m) => m (Ptr (FFI.AttrBuilder a))
 allocaAttrBuilder = do
   p <- allocaArray FFI.getAttrBuilderSize

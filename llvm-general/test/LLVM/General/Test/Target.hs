@@ -33,7 +33,6 @@ instance Arbitrary Options where
     noZerosInBSS <- arbitrary
     guaranteedTailCallOptimization <- arbitrary
     enableFastInstructionSelection <- arbitrary
-    positionIndependentExecutable <- arbitrary
     useInitArray <- arbitrary
     disableIntegratedAssembler <- arbitrary
     compressDebugSections <- arbitrary

@@ -23,7 +23,6 @@ import LLVM.General.Prelude
 #include "LLVM/General/Internal/FFI/Type.h"
 #include "LLVM/General/Internal/FFI/Constant.h"
 #include "LLVM/General/Internal/FFI/Analysis.h"
-#include "LLVM/General/Internal/FFI/Module.h"
 #include "LLVM/General/Internal/FFI/LibFunc.h"
 
 import Language.Haskell.TH.Quote
@@ -117,6 +116,11 @@ newtype MemoryOrdering = MemoryOrdering CUInt
   deriving (Eq, Typeable, Data)
 #define MO_Rec(n) { #n, LLVMAtomicOrdering ## n },
 #{inject ATOMIC_ORDERING, MemoryOrdering, MemoryOrdering, memoryOrdering, MO_Rec}
+
+newtype UnnamedAddr = UnnamedAddr CUInt
+  deriving (Eq, Typeable, Data)
+#define UA_Rec(n) { #n, LLVMUnnamedAddr ## n },
+#{inject UNNAMED_ADDR, UnnamedAddr, UnnamedAddr, unnamedAddr, UA_Rec}
 
 newtype SynchronizationScope = SynchronizationScope CUInt
   deriving (Eq, Typeable, Data)
@@ -247,11 +251,6 @@ newtype VerifierFailureAction = VerifierFailureAction CUInt
   deriving (Eq, Read, Show, Bits, Typeable, Data, Num)
 #define VFA_Rec(n) { #n, LLVM ## n ## Action },
 #{inject VERIFIER_FAILURE_ACTION, VerifierFailureAction, VerifierFailureAction, verifierFailureAction, VFA_Rec}
-
-newtype LinkerMode = LinkerMode CUInt
-  deriving (Eq, Read, Show, Bits, Typeable, Data, Num)
-#define LM_Rec(n) { #n, LLVMLinker ## n },
-#{inject LINKER_MODE, LinkerMode, LinkerMode, linkerMode, LM_Rec}
 
 newtype LibFunc = LibFunc CUInt
   deriving (Eq, Read, Show, Bits, Typeable, Data, Num, Storable)

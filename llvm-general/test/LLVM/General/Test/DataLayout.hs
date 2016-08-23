@@ -17,7 +17,7 @@ import LLVM.General.AST.DataLayout
 import LLVM.General.AST.AddrSpace
 import qualified LLVM.General.AST.Global as G
 
-m s = "; ModuleID = '<string>'\n" ++ s
+m s = "; ModuleID = '<string>'\nsource_filename = \"<string>\"\n" ++ s
 t s = "target datalayout = \"" ++ s ++ "\"\n"
 ddl = defaultDataLayout BigEndian
 

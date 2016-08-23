@@ -3,7 +3,9 @@
 #include "llvm/IR/DataLayout.h"
 #include "llvm/IR/LegacyPassManager.h"
 #include "llvm/Transforms/Scalar.h"
+#include "llvm/Transforms/Scalar/GVN.h"
 #include "llvm/Transforms/IPO.h"
+#include "llvm/Transforms/IPO/Internalize.h"
 #include "llvm/Transforms/IPO/PassManagerBuilder.h"
 #include "llvm/Transforms/Vectorize.h"
 #include "llvm/Transforms/Instrumentation.h"
@@ -85,8 +87,19 @@ void LLVM_General_AddGlobalValueNumberingPass(LLVMPassManagerRef PM, LLVMBool no
 }
 
 void LLVM_General_AddInternalizePass(LLVMPassManagerRef PM, unsigned nExports, const char **exports) {
-	std::vector<const char *> exportList(exports, exports + nExports);
-	unwrap(PM)->add(createInternalizePass(exportList));
+    std::vector<std::string> exportList(nExports);
+    for (unsigned i = 0; i < nExports; ++i) {
+        exportList.at(i) = exports[i];
+    }
+    std::function<bool(const GlobalValue &)> mustPreserveGV = [exportList](const GlobalValue & gv) {
+        for (const auto& exp : exportList) {
+            if (gv.getName().equals(exp)) {
+                return true;
+            }
+        }
+        return false;
+    };
+    unwrap(PM)->add(createInternalizePass(std::move(mustPreserveGV)));
 }
 
 void LLVM_General_AddLoopStrengthReducePass(LLVMPassManagerRef PM) {

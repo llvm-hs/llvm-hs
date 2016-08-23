@@ -37,7 +37,14 @@ data FunctionAttribute
     | StringAttribute {
         stringAttributeKind :: String,
         stringAttributeValue :: String -- ^ Use "" for no value -- the two are conflated
-      } 
+      }
+    | AllocSize Word (Maybe Word)
+    | WriteOnly
+    | ArgMemOnly
+    | Convergent
+    | InaccessibleMemOnly
+    | InaccessibleMemOrArgMemOnly
+    | SafeStack
   deriving (Eq, Ord, Read, Show, Typeable, Data)
 
 -- | <http://llvm.org/docs/LangRef.html#attribute-groups>

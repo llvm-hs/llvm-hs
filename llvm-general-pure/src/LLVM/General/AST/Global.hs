@@ -25,7 +25,7 @@ data Global
         dllStorageClass :: Maybe DLL.StorageClass,
         threadLocalMode :: Maybe TLS.Model,
         addrSpace :: AddrSpace,
-        hasUnnamedAddr :: Bool,
+        unnamedAddr :: Maybe UnnamedAddr,
         isConstant :: Bool,
         type' :: Type,
         initializer :: Maybe Constant,
@@ -40,7 +40,7 @@ data Global
         visibility :: V.Visibility,
         dllStorageClass :: Maybe DLL.StorageClass,
         threadLocalMode :: Maybe TLS.Model,
-        hasUnnamedAddr :: Bool,
+        unnamedAddr :: Maybe UnnamedAddr,
         type' :: Type,
         aliasee :: Constant
       }
@@ -75,6 +75,9 @@ data Parameter = Parameter Type Name [A.ParameterAttribute]
 data BasicBlock = BasicBlock Name [Named Instruction] (Named Terminator)
   deriving (Eq, Read, Show, Typeable, Data)
 
+data UnnamedAddr = LocalAddr | GlobalAddr
+  deriving (Eq, Read, Show, Typeable, Data)
+
 -- | helper for making 'GlobalVariable's
 globalVariableDefaults :: Global
 globalVariableDefaults = 
@@ -85,7 +88,7 @@ globalVariableDefaults =
   dllStorageClass = Nothing,
   threadLocalMode = Nothing,
   addrSpace = AddrSpace 0,
-  hasUnnamedAddr = False,
+  unnamedAddr = Nothing,
   isConstant = False,
   type' = error "global variable type not defined",
   initializer = Nothing,
@@ -103,7 +106,7 @@ globalAliasDefaults =
     visibility = V.Default,
     dllStorageClass = Nothing,
     threadLocalMode = Nothing,
-    hasUnnamedAddr = False,
+    unnamedAddr = Nothing,
     type' = error "global alias type not defined",
     aliasee = error "global alias aliasee not defined"
   }

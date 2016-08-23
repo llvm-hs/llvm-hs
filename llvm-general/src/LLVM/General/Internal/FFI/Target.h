@@ -35,7 +35,6 @@
 	macro(NoZerosInBSS)																		\
 	macro(GuaranteedTailCallOpt)													\
 	macro(EnableFastISel)																	\
-	macro(PositionIndependentExecutable)									\
 	macro(UseInitArray)																		\
 	macro(DisableIntegratedAS)														\
 	macro(CompressDebugSections)													\

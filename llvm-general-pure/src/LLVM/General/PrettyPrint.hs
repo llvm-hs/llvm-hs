@@ -53,6 +53,7 @@ fmap concat $ mapM makePrettyShowInstance [
   ''A.Type,
   ''A.Name,
   ''A.Global,
+  ''A.UnnamedAddr,
   ''A.AlignmentInfo,
   ''A.AlignType,
   ''A.Mangling,

@@ -21,7 +21,7 @@ namespace llvm {
 
 static LLVMAtomicOrdering wrap(AtomicOrdering l) {
 	switch(l) {
-#define ENUM_CASE(x) case x: return LLVMAtomicOrdering ## x;
+#define ENUM_CASE(x) case AtomicOrdering::x: return LLVMAtomicOrdering ## x;
 LLVM_GENERAL_FOR_EACH_ATOMIC_ORDERING(ENUM_CASE)
 #undef ENUM_CASE
 	default: return LLVMAtomicOrdering(0);

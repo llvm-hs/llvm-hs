@@ -46,7 +46,9 @@ class ExecutionEngine e f | e -> f where
   getFunction :: ExecutableModule e -> A.Name -> IO (Maybe f)
 
 instance ExecutionEngine (Ptr FFI.ExecutionEngine) (FunPtr ()) where
-  withModuleInEngine e (Module m) = bracket_ (FFI.addModule e m) (removeModule e m) . ($ (ExecutableModule e m)) 
+  withModuleInEngine e m f = do
+    m' <- readModule m
+    bracket_ (FFI.addModule e m') (removeModule e m') (f (ExecutableModule e m'))
   getFunction (ExecutableModule e m) (A.Name name) = flip runAnyContT return $ do
     name <- encodeM name
     f <- liftIO $ FFI.getNamedFunction m name
@@ -68,13 +70,14 @@ withExecutionEngine c m createEngine f = flip runAnyContT return $ do
   liftIO initializeNativeTarget
   outExecutionEngine <- alloca
   outErrorCStringPtr <- alloca
-  Module dummyModule <- maybe (anyContToM $ liftM (either undefined id) . runExceptT
-                                   . withModuleFromAST c (A.Module "" Nothing Nothing []))
-                        (return . Module) m
-  r <- liftIO $ createEngine outExecutionEngine dummyModule outErrorCStringPtr
+  dummyModule <- maybe (anyContToM $ liftM (either undefined id) . runExceptT
+                            . withModuleFromAST c (A.Module "" Nothing Nothing []))
+                 (liftIO . newModule) m
+  dummyModule' <- readModule dummyModule
+  r <- liftIO $ createEngine outExecutionEngine dummyModule' outErrorCStringPtr
   when (r /= 0) $ fail =<< decodeM outErrorCStringPtr
   executionEngine <- anyContToM $ bracket (peek outExecutionEngine) FFI.disposeExecutionEngine
-  liftIO $ removeModule executionEngine dummyModule
+  liftIO $ removeModule executionEngine dummyModule'
   liftIO $ f executionEngine
 
 data MCJITState
@@ -108,7 +111,8 @@ withMCJIT c opt cm fpe fisel f = do
           maybe (return ()) (FFI.setMCJITCompilerOptionsNoFramePointerElim p <=< encodeM) fpe
           maybe (return ()) (FFI.setMCJITCompilerOptionsEnableFastISel p <=< encodeM) fisel
           FFI.createMCJITCompilerForModule e m p size s
-  t <- newIORef (Deferred $ \(Module m) -> withExecutionEngine c (Just m) createMCJITCompilerForModule)
+  t <- newIORef (Deferred $ \mod f -> do m' <- readModule mod
+                                         withExecutionEngine c (Just m') createMCJITCompilerForModule f)
   f (MCJIT t)
 
 instance ExecutionEngine MCJIT (FunPtr ()) where

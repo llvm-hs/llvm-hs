@@ -24,6 +24,7 @@ import qualified LLVM.General.AST.Visibility as A.V
 import qualified LLVM.General.AST.COMDAT as A.COMDAT
 import qualified LLVM.General.AST.DLL as A.DLL
 import qualified LLVM.General.AST.ThreadLocalStorage as A.TLS
+import qualified LLVM.General.AST.Global as A.G
 
 genCodingInstance [t| A.L.Linkage |] ''FFI.Linkage [
   (FFI.linkageExternal, A.L.External),
@@ -131,4 +132,9 @@ getThreadLocalMode g = liftIO $ decodeM =<< FFI.getThreadLocalMode (FFI.upCast g
 
 setThreadLocalMode :: FFI.DescendentOf FFI.GlobalValue v => Ptr v -> Maybe A.TLS.Model -> EncodeAST ()
 setThreadLocalMode g m = liftIO . FFI.setThreadLocalMode (FFI.upCast g) =<< encodeM m
-                        
+
+genCodingInstance [t| Maybe A.G.UnnamedAddr |] ''FFI.UnnamedAddr [
+  (FFI.unnamedAddrNone, Nothing),
+  (FFI.unnamedAddrLocal, Just A.G.LocalAddr),
+  (FFI.unnamedAddrGlobal, Just A.G.GlobalAddr)
+ ]
