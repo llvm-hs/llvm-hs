@@ -237,24 +237,14 @@ getDataLayout m = do
   either fail return . runExcept . parseDataLayout A.BigEndian $ dlString
 
 -- | This function will call disposeModule after the callback
--- exits. Setting the IORef to 'nullModule' prevents multiple double
--- free errors. As long as you only call functions provided by
--- llvm-general this should not be necessary since llvm-general takes
--- care of this.
+-- exits. Calling 'deleteModule' prevents double free errors. As long
+-- as you only call functions provided by llvm-general this should not
+-- be necessary since llvm-general takes care of this.
 withModuleFromAST :: Context -> A.Module -> (Module -> IO a) -> ExceptT String IO a
-withModuleFromAST context@(Context c) mod f = runEncodeAST context $ do
-  moduleId <- encodeM (A.moduleName mod)
+withModuleFromAST context@(Context c) (A.Module moduleId dataLayout triple definitions) f = runEncodeAST context $ do
+  moduleId <- encodeM moduleId
   m <- anyContToM $ bracket (newModule =<< FFI.moduleCreateWithNameInContext moduleId c) (FFI.disposeModule <=< readModule)
-  m' <- readModule m
-  astToFFIModule mod m'
-  liftIO $ f m
-
--- | Build an LLVM.General.'Module' from a
--- LLVM.General.AST.'LLVM.General.AST.Module' - i.e.  lower an AST
--- from Haskell into C++ objects. The module is written to the
--- supplied pointer. You are responsible for calling disposeModule.
-astToFFIModule :: A.Module -> Ptr FFI.Module -> EncodeAST ()
-astToFFIModule (A.Module moduleId dataLayout triple definitions) ffiMod = do
+  ffiMod <- readModule m
   Context context <- gets encodeStateContext
   maybe (return ()) (setDataLayout ffiMod) dataLayout
   maybe (return ()) (setTargetTriple ffiMod) triple
@@ -378,6 +368,7 @@ astToFFIModule (A.Module moduleId dataLayout triple definitions) ffiMod = do
        setVisibility g' (A.G.visibility g)
        setDLLStorageClass g' (A.G.dllStorageClass g)
        return $ return ()
+  liftIO $ f m
 
 -- | Get an LLVM.General.AST.'LLVM.General.AST.Module' from a LLVM.General.'Module' - i.e.
 -- raise C++ objects into an Haskell AST.
