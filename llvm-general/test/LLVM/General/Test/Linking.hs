@@ -33,7 +33,7 @@ import qualified LLVM.General.AST.Constant as C
 tests = testGroup "Linking" [
   testCase "basic" $ do
     let 
-      ast0 = Module "<string>" Nothing Nothing [
+      ast0 = Module "<string>" "<string>" Nothing Nothing [
           GlobalDefinition $ functionDefaults {
              G.linkage = L.Private,
              G.returnType = i32,
@@ -45,7 +45,7 @@ tests = testGroup "Linking" [
              G.name = Name "external0"
            }
         ]
-      ast1 = Module "<string>" Nothing Nothing [
+      ast1 = Module "<string>" "<string>" Nothing Nothing [
           GlobalDefinition $ functionDefaults {
              G.linkage = L.Private,
              G.returnType = i32,

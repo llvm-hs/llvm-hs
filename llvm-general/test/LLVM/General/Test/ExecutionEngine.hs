@@ -36,7 +36,7 @@ foreign import ccall "dynamic" mkIO32Stub :: FunPtr (Word32 -> IO Word32) -> (Wo
 
 testJIT :: ExecutionEngine e (FunPtr ()) => (Context -> (e -> IO ()) -> IO ()) -> Assertion
 testJIT withEE = withContext $ \context -> withEE context $ \executionEngine -> do
-  let mAST = Module "runSomethingModule" Nothing Nothing [
+  let mAST = Module "runSomethingModule" "runSomethingModule" Nothing Nothing [
               GlobalDefinition $ functionDefaults {
                 G.returnType = i32,
                 G.name = Name "_foo",

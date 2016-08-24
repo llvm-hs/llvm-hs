@@ -82,7 +82,7 @@ handString = "; ModuleID = '<string>'\n\
     \\n\
     \attributes #0 = { nounwind readnone uwtable \"eep\" }\n"
 
-handAST = Module "<string>" Nothing Nothing [
+handAST = Module "<string>" "<string>" Nothing Nothing [
       TypeDefinition (UnName 0) (
          Just $ StructureType False [
            i32,
@@ -319,7 +319,7 @@ tests = testGroup "Module" [
               \  %x1 = add i32 %x0, %x0\n\
               \  br label %dead0\n\
               \}\n"
-          ast = Module "<string>" Nothing Nothing [
+          ast = Module "<string>" "<string>" Nothing Nothing [
              GlobalDefinition $ functionDefaults {
                 G.returnType = T.void,
                 G.name = Name "trouble",
@@ -364,7 +364,7 @@ tests = testGroup "Module" [
               \define void @bar(metadata) {\n\
               \  ret void\n\
               \}\n"
-          ast = Module "<string>" Nothing Nothing [
+          ast = Module "<string>" "<string>" Nothing Nothing [
              GlobalDefinition $ functionDefaults {
                G.returnType = void,
                G.name = Name "bar",
@@ -377,7 +377,7 @@ tests = testGroup "Module" [
       strCheck ast s,
 
     testCase "set flag on constant expr" $ withContext $ \context -> do
-      let ast = Module "<string>" Nothing Nothing [
+      let ast = Module "<string>" "<string>" Nothing Nothing [
              GlobalDefinition $ functionDefaults {
                G.returnType = i32,
                G.name = Name "foo",
@@ -405,7 +405,7 @@ tests = testGroup "Module" [
       t @?= True,
 
     testCase "Phi node finishes" $ withContext $ \context -> do
-      let ast = Module "<string>" Nothing Nothing [
+      let ast = Module "<string>" "<string>" Nothing Nothing [
             GlobalDefinition $ functionDefaults {
               G.returnType = i32,
               G.name = Name "foo",
@@ -465,7 +465,7 @@ tests = testGroup "Module" [
             cbps = zip [ C.Int 32 i | i <- [0..] ] [ UnName n | n <- ns ]
 
         withContext $ \context -> do
-          let ast = Module "<string>" Nothing Nothing [
+          let ast = Module "<string>" "<string>" Nothing Nothing [
                 GlobalDefinition $ functionDefaults {
                   G.name = Name "foo",
                   G.returnType = i32,
@@ -494,7 +494,7 @@ tests = testGroup "Module" [
                 \%0 = type { i32 }\n\
                 \\n\
                 \@0 = constant %0 { i32 1 }, align 4\n"
-            ast = Module "<string>" Nothing Nothing [
+            ast = Module "<string>" "<string>" Nothing Nothing [
               TypeDefinition (UnName 0) (Just $ StructureType False [i32]),
               GlobalDefinition $ globalVariableDefaults {
                 G.name = UnName 0,
@@ -509,7 +509,7 @@ tests = testGroup "Module" [
         
   testGroup "failures" [
     testCase "bad block reference" $ withContext $ \context -> do
-      let badAST = Module "<string>" Nothing Nothing [
+      let badAST = Module "<string>" "<string>" Nothing Nothing [
             GlobalDefinition $ functionDefaults {
               G.returnType = i32,
               G.name = Name "foo",
@@ -537,7 +537,7 @@ tests = testGroup "Module" [
       t @?= Left "reference to undefined block: Name \"not here\"",
 
     testCase "multiple" $ withContext $ \context -> do
-      let badAST = Module "<string>" Nothing Nothing [
+      let badAST = Module "<string>" "<string>" Nothing Nothing [
             GlobalDefinition $ functionDefaults {
               G.returnType = i32,
               G.name = Name "foo",
@@ -564,6 +564,12 @@ tests = testGroup "Module" [
              }
            ]
       t <- runExceptT $ withModuleFromAST context badAST $ \_ -> return True
-      t @?= Left "reference to undefined local: Name \"unknown\""
+      t @?= Left "reference to undefined local: Name \"unknown\"",
+
+    testCase "sourceFileName" $ withContext $ \context -> do
+      let s = "; ModuleID = '<string>'\n\
+              \source_filename = \"filename\"\n"
+          ast = Module "<string>" "filename" Nothing Nothing []
+      strCheck ast s
    ]
  ]

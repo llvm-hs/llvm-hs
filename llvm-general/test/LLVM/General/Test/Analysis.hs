@@ -78,7 +78,7 @@ tests = testGroup "Analysis" [
                  \  ret double %0\n\
                  \}\n"
            ast = 
-             Module "<string>" Nothing Nothing [
+             Module "<string>" "<string>" Nothing Nothing [
                GlobalDefinition $ functionDefaults {
                  G.returnType = double,
                  G.name = Name "my_function2",

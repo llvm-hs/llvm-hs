@@ -10,6 +10,14 @@ char *LLVM_General_GetModuleIdentifier(LLVMModuleRef val) {
 	return strdup(unwrap(val)->getModuleIdentifier().c_str());
 }
 
+char *LLVM_General_GetSourceFileName(LLVMModuleRef val) {
+	return strdup(unwrap(val)->getSourceFileName().c_str());
+}
+
+void LLVM_General_SetSourceFileName(LLVMModuleRef val, const char* sourceFileName) {
+	return unwrap(val)->setSourceFileName(sourceFileName);
+}
+
 LLVMValueRef LLVM_General_GetFirstAlias(LLVMModuleRef m) {
 	Module *mod = unwrap(m);
 	Module::alias_iterator i = mod->alias_begin();

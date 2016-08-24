@@ -57,7 +57,7 @@ tests = testGroup "Metadata" [
   --   strCheck ast s,
 
   testCase "global" $ do
-    let ast = Module "<string>" Nothing Nothing [
+    let ast = Module "<string>" "<string>" Nothing Nothing [
           GlobalDefinition $ functionDefaults {
             G.returnType = i32,
             G.name = Name "foo",
@@ -83,7 +83,7 @@ tests = testGroup "Metadata" [
     strCheck ast s,
 
   testCase "named" $ do
-    let ast = Module "<string>" Nothing Nothing [
+    let ast = Module "<string>" "<string>" Nothing Nothing [
           NamedMetadataDefinition "my-module-metadata" [ MetadataNodeID 0 ],
           MetadataNodeDefinition (MetadataNodeID 0) [ Just $ MDValue $ ConstantOperand (C.Int 32 1) ]
          ]
@@ -96,7 +96,7 @@ tests = testGroup "Metadata" [
     strCheck ast s,
 
   testCase "null" $ do
-    let ast = Module "<string>" Nothing Nothing [
+    let ast = Module "<string>" "<string>" Nothing Nothing [
           NamedMetadataDefinition "my-module-metadata" [ MetadataNodeID 0 ],
           MetadataNodeDefinition (MetadataNodeID 0) [ Nothing ]
          ]
@@ -110,7 +110,7 @@ tests = testGroup "Metadata" [
 
   testGroup "cyclic" [
     testCase "metadata-only" $ do
-      let ast = Module "<string>" Nothing Nothing [
+      let ast = Module "<string>" "<string>" Nothing Nothing [
             NamedMetadataDefinition "my-module-metadata" [MetadataNodeID 0],
             MetadataNodeDefinition (MetadataNodeID 0) [
               Just $ MDNode (MetadataNodeReference (MetadataNodeID 1)) 
@@ -129,7 +129,7 @@ tests = testGroup "Metadata" [
       strCheck ast s,
 
     testCase "metadata-global" $ do
-      let ast = Module "<string>" Nothing Nothing [
+      let ast = Module "<string>" "<string>" Nothing Nothing [
             GlobalDefinition $ functionDefaults {
               G.returnType = A.T.void,
               G.name = Name "foo",

@@ -20,7 +20,7 @@ import qualified LLVM.General.AST.Global as G
 
 tests = testGroup "InlineAssembly" [
   testCase "expression" $ do
-    let ast = Module "<string>" Nothing Nothing [
+    let ast = Module "<string>" "<string>" Nothing Nothing [
                 GlobalDefinition $ 
                   functionDefaults {
                     G.returnType = i32,
@@ -63,7 +63,7 @@ tests = testGroup "InlineAssembly" [
     strCheck ast s,
 
   testCase "module" $ do
-    let ast = Module "<string>" Nothing Nothing [
+    let ast = Module "<string>" "<string>" Nothing Nothing [
                 ModuleInlineAssembly "foo",
                 ModuleInlineAssembly "bar",
                 GlobalDefinition $ globalVariableDefaults {

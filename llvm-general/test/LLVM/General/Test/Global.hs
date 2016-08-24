@@ -15,7 +15,7 @@ import qualified LLVM.General.AST.Global as G
 tests = testGroup "Global" [
   testGroup "Alignment" [
     testCase name $ withContext $ \context -> do
-      let ast = Module "<string>" Nothing Nothing [ GlobalDefinition g ]
+      let ast = Module "<string>" "<string>" Nothing Nothing [ GlobalDefinition g ]
       ast' <- withModuleFromAST' context ast moduleAST
       ast' @?= ast
     | a <- [0,1],
