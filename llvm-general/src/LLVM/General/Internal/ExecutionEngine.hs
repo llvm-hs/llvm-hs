@@ -71,7 +71,7 @@ withExecutionEngine c m createEngine f = flip runAnyContT return $ do
   outExecutionEngine <- alloca
   outErrorCStringPtr <- alloca
   dummyModule <- maybe (anyContToM $ liftM (either undefined id) . runExceptT
-                            . withModuleFromAST c (A.Module "" Nothing Nothing []))
+                            . withModuleFromAST c (A.Module "" "" Nothing Nothing []))
                  (liftIO . newModule) m
   dummyModule' <- readModule dummyModule
   r <- liftIO $ createEngine outExecutionEngine dummyModule' outErrorCStringPtr

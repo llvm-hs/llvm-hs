@@ -41,7 +41,7 @@ instrument s m = withContext $ \context -> withModuleFromAST' context m $ \mIn' 
 ast = do
  dl <- withHostTargetMachine getTargetMachineDataLayout
  triple <- liftIO getDefaultTargetTriple
- return $ Module "<string>" (Just dl) (Just triple) [
+ return $ Module "<string>" "<string>" (Just dl) (Just triple) [
   GlobalDefinition $ functionDefaults {
     G.returnType = i32,
     G.name = Name "foo",

@@ -40,6 +40,12 @@ foreign import ccall unsafe "LLVMSetTarget" setTargetTriple ::
 foreign import ccall unsafe "LLVM_General_GetModuleIdentifier" getModuleIdentifier ::
   Ptr Module -> IO (OwnerTransfered CString)
 
+foreign import ccall unsafe "LLVM_General_GetSourceFileName" getSourceFileName ::
+  Ptr Module -> IO (OwnerTransfered CString)
+
+foreign import ccall unsafe "LLVM_General_SetSourceFileName" setSourceFileName ::
+  Ptr Module -> Ptr CChar -> IO ()
+
 foreign import ccall unsafe "LLVMGetFirstGlobal" getFirstGlobal ::
   Ptr Module -> IO (Ptr GlobalVariable)
 

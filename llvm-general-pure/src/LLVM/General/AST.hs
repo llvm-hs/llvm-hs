@@ -43,6 +43,7 @@ data Definition
 data Module = 
   Module {
     moduleName :: String,
+    moduleSourceFileName :: String,
     -- | a 'DataLayout', if specified, must match that of the eventual code generator
     moduleDataLayout :: Maybe DataLayout, 
     moduleTargetTriple :: Maybe String,
@@ -54,6 +55,7 @@ data Module =
 defaultModule = 
   Module {
     moduleName = "<string>",
+    moduleSourceFileName = "<string>",
     moduleDataLayout = Nothing,
     moduleTargetTriple = Nothing,
     moduleDefinitions = []

@@ -241,10 +241,12 @@ getDataLayout m = do
 -- as you only call functions provided by llvm-general this should not
 -- be necessary since llvm-general takes care of this.
 withModuleFromAST :: Context -> A.Module -> (Module -> IO a) -> ExceptT String IO a
-withModuleFromAST context@(Context c) (A.Module moduleId dataLayout triple definitions) f = runEncodeAST context $ do
+withModuleFromAST context@(Context c) (A.Module moduleId sourceFileName dataLayout triple definitions) f = runEncodeAST context $ do
   moduleId <- encodeM moduleId
   m <- anyContToM $ bracket (newModule =<< FFI.moduleCreateWithNameInContext moduleId c) (FFI.disposeModule <=< readModule)
   ffiMod <- readModule m
+  sourceFileName' <- encodeM sourceFileName
+  liftIO $ FFI.setSourceFileName ffiMod sourceFileName'
   Context context <- gets encodeStateContext
   maybe (return ()) (setDataLayout ffiMod) dataLayout
   maybe (return ()) (setTargetTriple ffiMod) triple
@@ -379,6 +381,7 @@ moduleAST m = runDecodeAST $ do
   getMetadataKindNames c
   return A.Module
    `ap` (liftIO $ decodeM =<< FFI.getModuleIdentifier mod)
+   `ap` (liftIO $ decodeM =<< FFI.getSourceFileName mod)
    `ap` (liftIO $ getDataLayout mod)
    `ap` (liftIO $ do
            s <- decodeM =<< FFI.getTargetTriple mod

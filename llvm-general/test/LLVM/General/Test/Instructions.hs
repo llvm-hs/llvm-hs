@@ -32,7 +32,7 @@ import qualified LLVM.General.AST.RMWOperation as RMWOp
 tests = testGroup "Instructions" [
   testGroup "regular" [
     testCase name $ do
-      let mAST = Module "<string>" Nothing Nothing [
+      let mAST = Module "<string>" "<string>" Nothing Nothing [
             GlobalDefinition $ functionDefaults {
               G.returnType = A.T.void,
               G.name = UnName 0,
@@ -573,7 +573,7 @@ tests = testGroup "Instructions" [
       )
    ],
   testCase "GEP inBounds constant" $ do
-    let mAST = Module "<string>" Nothing Nothing [
+    let mAST = Module "<string>" "<string>" Nothing Nothing [
           GlobalDefinition $ globalVariableDefaults {
             G.name = Name "fortytwo",
             G.type' = i32,
@@ -621,7 +621,7 @@ tests = testGroup "Instructions" [
     | (name, mAST, mStr) <- [
      (
        "ret",
-       Module "<string>" Nothing Nothing [
+       Module "<string>" "<string>" Nothing Nothing [
         GlobalDefinition $ functionDefaults {
           G.returnType = A.T.void,
           G.name = UnName 0,
@@ -641,7 +641,7 @@ tests = testGroup "Instructions" [
        \}\n"
      ), (
        "br",
-       Module "<string>" Nothing Nothing [
+       Module "<string>" "<string>" Nothing Nothing [
         GlobalDefinition $ functionDefaults {
           G.returnType = A.T.void,
           G.name = UnName 0,
@@ -666,7 +666,7 @@ tests = testGroup "Instructions" [
        \}\n"
      ), (
        "condbr",
-       Module "<string>" Nothing Nothing [
+       Module "<string>" "<string>" Nothing Nothing [
         GlobalDefinition $ functionDefaults {
           G.returnType = A.T.void,
           G.name = UnName 0,
@@ -692,7 +692,7 @@ tests = testGroup "Instructions" [
        \}\n"
      ), (
        "switch",
-       Module "<string>" Nothing Nothing [
+       Module "<string>" "<string>" Nothing Nothing [
          GlobalDefinition $ functionDefaults {
            G.returnType = A.T.void,
            G.name = UnName 0,
@@ -731,7 +731,7 @@ tests = testGroup "Instructions" [
        \}\n"
      ), (
        "indirectbr",
-       Module "<string>" Nothing Nothing [
+       Module "<string>" "<string>" Nothing Nothing [
         GlobalDefinition $ globalVariableDefaults {
           G.name = UnName 0,
           G.type' = ptr i8,
@@ -777,7 +777,7 @@ tests = testGroup "Instructions" [
        \}\n"
      ), (
        "invoke",
-       Module "<string>" Nothing Nothing [
+       Module "<string>" "<string>" Nothing Nothing [
         GlobalDefinition $ functionDefaults {
           G.returnType = A.T.void,
           G.name = UnName 0,
@@ -842,7 +842,7 @@ tests = testGroup "Instructions" [
        \}\n"
       ), (
        "resume",
-       Module "<string>" Nothing Nothing [
+       Module "<string>" "<string>" Nothing Nothing [
          GlobalDefinition $ functionDefaults {
            G.returnType = A.T.void,
            G.name = UnName 0,
@@ -861,7 +861,7 @@ tests = testGroup "Instructions" [
        \}\n"
      ), (
        "unreachable",
-       Module "<string>" Nothing Nothing [
+       Module "<string>" "<string>" Nothing Nothing [
         GlobalDefinition $ functionDefaults {
           G.returnType = A.T.void,
           G.name = UnName 0,

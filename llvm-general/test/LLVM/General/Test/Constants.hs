@@ -168,7 +168,7 @@ tests = testGroup "Constants" [
 -}
     )
    ],
-   let mAST = Module "<string>" Nothing Nothing [
+   let mAST = Module "<string>" "<string>" Nothing Nothing [
              GlobalDefinition $ globalVariableDefaults {
                G.name = UnName 0, G.type' = type', G.initializer = Just value 
              },

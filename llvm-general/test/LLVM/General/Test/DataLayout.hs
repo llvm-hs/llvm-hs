@@ -22,7 +22,7 @@ t s = "target datalayout = \"" ++ s ++ "\"\n"
 ddl = defaultDataLayout BigEndian
 
 tests = testGroup "DataLayout" [
-  testCase name $ strCheckC (Module "<string>" mdl Nothing []) (m sdl) (m sdlc)
+  testCase name $ strCheckC (Module "<string>" "<string>" mdl Nothing []) (m sdl) (m sdlc)
   | (name, mdl, sdl, sdlc) <- [
    ("none", Nothing, "", "")
   ] ++ [

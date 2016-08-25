@@ -34,7 +34,7 @@ import qualified LLVM.General.CodeModel as CM
 import qualified LLVM.General.CodeGenOpt as CGO
 
 handAST = 
-  Module "<string>" Nothing Nothing [
+  Module "<string>" "<string>" Nothing Nothing [
       GlobalDefinition $ functionDefaults {
         G.returnType = i32,
         G.name = Name "foo",
@@ -112,7 +112,7 @@ tests = testGroup "Optimization" [
   testCase "curated" $ do
     mOut <- optimize defaultCuratedPassSetSpec handAST
 
-    mOut @?= Module "<string>" Nothing Nothing [
+    mOut @?= Module "<string>" "<string>" Nothing Nothing [
       GlobalDefinition $ functionDefaults {
         G.returnType = i32,
          G.name = Name "foo",
@@ -132,7 +132,7 @@ tests = testGroup "Optimization" [
     testCase "ConstantPropagation" $ do
       mOut <- optimize defaultPassSetSpec { transforms = [T.ConstantPropagation] } handAST
 
-      mOut @?= Module "<string>" Nothing Nothing [
+      mOut @?= Module "<string>" "<string>" Nothing Nothing [
         GlobalDefinition $ functionDefaults {
           G.returnType = i32,
           G.name = Name "foo",
@@ -175,7 +175,7 @@ tests = testGroup "Optimization" [
 
     testCase "BasicBlockVectorization" $ do
       let
-        mIn = Module "<string>" Nothing Nothing [
+        mIn = Module "<string>" "<string>" Nothing Nothing [
           GlobalDefinition $ functionDefaults {
            G.returnType = double,
             G.name = Name "foo",
@@ -210,6 +210,7 @@ tests = testGroup "Optimization" [
         mIn = 
           Module {
             moduleName = "<string>",
+            moduleSourceFileName = "<string>",
             moduleDataLayout = Just $ (defaultDataLayout BigEndian) { 
               typeLayouts = Map.singleton (VectorAlign, 128) (AlignmentInfo 128 Nothing)
              },
@@ -273,7 +274,7 @@ tests = testGroup "Optimization" [
       withContext $ \context -> do
         withPassManager (defaultPassSetSpec { transforms = [T.LowerInvoke] }) $ \passManager -> do
           let astIn = 
-                Module "<string>" Nothing Nothing [
+                Module "<string>" "<string>" Nothing Nothing [
                   GlobalDefinition $ functionDefaults {
                     G.returnType = i32,
                     G.name = Name "foo",
@@ -289,7 +290,7 @@ tests = testGroup "Optimization" [
           astOut <- withModuleFromAST' context astIn $ \mIn -> do
             runPassManager passManager mIn
             moduleAST mIn
-          astOut @?= Module "<string>" Nothing Nothing [
+          astOut @?= Module "<string>" "<string>" Nothing Nothing [
                   GlobalDefinition $ functionDefaults {
                     G.returnType = i32,
                     G.name = Name "foo",
