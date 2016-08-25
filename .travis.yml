@@ -7,6 +7,8 @@ cache:
   directories:
     - $HOME/.cabal/packages
     - $HOME/.cabal/store
+    - $HOME/llvm-3.9
+    - $HOME/llvm-3.9.0rc2.src
 
 before_cache:
   - rm -fv $HOME/.cabal/packages/hackage.haskell.org/build-reports.log
@@ -20,23 +22,31 @@ matrix:
   include:
     - env: CABALVER=1.24 GHCVER=7.8.4
       compiler: ": #GHC 7.8.4"
-      addons: {apt: {packages: [cabal-install-1.24,ghc-7.8.4,llvm-3.9-dev,gcc-5,g++-5], sources: [hvr-ghc,llvm-toolchain-precise,ubuntu-toolchain-r-test]}}
+      addons: {apt: {packages: [cabal-install-1.24,ghc-7.8.4,gcc-5,g++-5], sources: [hvr-ghc,llvm-toolchain-precise,ubuntu-toolchain-r-test]}}
     - env: CABALVER=1.24 GHCVER=7.10.3
       compiler: ": #GHC 7.10.3"
-      addons: {apt: {packages: [cabal-install-1.24,ghc-7.10.3,llvm-3.9-dev,gcc-5,g++-5], sources: [hvr-ghc,llvm-toolchain-precise,ubuntu-toolchain-r-test]}}
+      addons: {apt: {packages: [cabal-install-1.24,ghc-7.10.3,gcc-5,g++-5], sources: [hvr-ghc,llvm-toolchain-precise,ubuntu-toolchain-r-test]}}
     - env: CABALVER=1.24 GHCVER=8.0.1
       compiler: ": #GHC 8.0.1"
-      addons: {apt: {packages: [cabal-install-1.24,ghc-8.0.1,llvm-3.9-dev,gcc-5,g++-5], sources: [hvr-ghc,llvm-toolchain-precise,ubuntu-toolchain-r-test]}}
+      addons: {apt: {packages: [cabal-install-1.24,ghc-8.0.1,gcc-5,g++-5], sources: [hvr-ghc,llvm-toolchain-precise,ubuntu-toolchain-r-test]}}
 
 before_install:
  - export PATH=/opt/ghc/$GHCVER/bin:/opt/cabal/$CABALVER/bin:$PATH
- - mkdir -p /home/travis/bin
- - ln -s /usr/bin/llvm-config-3.9 /home/travis/bin/llvm-config
- - export PATH=/home/travis/bin:$PATH
+ - mkdir -p $HOME/bin
+ - export PATH=$HOME/bin:$PATH
  - export CC=/usr/bin/$GCC
  - export CXX=/usr/bin/$GXX
 
 install:
+ - curl https://cmake.org/files/v3.6/cmake-3.6.1-Linux-x86_64.tar.gz | tar -xzf - -C $HOME
+ - export PATH=$HOME/cmake-3.6.1-Linux-x86_64/bin:$PATH
+ - curl http://llvm.org/pre-releases/3.9.0/rc2/llvm-3.9.0rc2.src.tar.xz | tar -xJf - -C $HOME
+ - cd $HOME/llvm-3.9.0rc2.src
+ - mkdir -p build && cd build
+ - cmake -DCMAKE_BUILD_TYPE=Release -DCMAKE_INSTALL_PREFIX=$HOME/llvm-3.9 ..
+ - make install
+ - cd $TRAVIS_BUILD_DIR
+ - ln -s $HOME/llvm-3.9/bin/llvm-config $HOME/bin/llvm-config
  - llvm-config --version
  - $GCC --version
  - $GXX --version
