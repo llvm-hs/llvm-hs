@@ -16,6 +16,7 @@ import qualified LLVM.General.Test.Target as Target
 import qualified LLVM.General.Test.Analysis as Analysis
 import qualified LLVM.General.Test.Linking as Linking
 import qualified LLVM.General.Test.Instrumentation as Instrumentation
+import qualified LLVM.General.Test.OrcJIT as OrcJIT
 
 tests = testGroup "llvm-general" [
     CallingConvention.tests,
@@ -27,6 +28,7 @@ tests = testGroup "llvm-general" [
     Instructions.tests,
     Metadata.tests,
     Module.tests,
+    OrcJIT.tests,
     Optimization.tests,
     Target.tests,
     Analysis.tests,

@@ -13,6 +13,7 @@ import LLVM.General.Internal.FFI.LLVMCTypes
 import LLVM.General.Internal.FFI.MemoryBuffer
 import LLVM.General.Internal.FFI.Module
 import LLVM.General.Internal.FFI.RawOStream
+import LLVM.General.Internal.FFI.DataLayout
 
 data Target
 
@@ -132,3 +133,6 @@ foreign import ccall unsafe "LLVM_General_DisposeTargetLibraryInfo" disposeTarge
   Ptr TargetLibraryInfo -> IO ()
 
 foreign import ccall unsafe "LLVM_General_InitializeAllTargets" initializeAllTargets :: IO ()
+
+foreign import ccall unsafe "LLVMCreateTargetDataLayout" createTargetDataLayout ::
+  Ptr TargetMachine -> IO (Ptr DataLayout)

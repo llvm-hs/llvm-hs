@@ -9,9 +9,10 @@ import LLVM.General.Prelude
 
 #define __STDC_LIMIT_MACROS
 #include "llvm-c/Core.h"
+#include "llvm-c/Linker.h"
+#include "llvm-c/OrcBindings.h"
 #include "llvm-c/Target.h"
 #include "llvm-c/TargetMachine.h"
-#include "llvm-c/Linker.h"
 #include "LLVM/General/Internal/FFI/Attribute.h"
 #include "LLVM/General/Internal/FFI/Instruction.h" 
 #include "LLVM/General/Internal/FFI/Value.h"
@@ -24,6 +25,7 @@ import LLVM.General.Prelude
 #include "LLVM/General/Internal/FFI/Constant.h"
 #include "LLVM/General/Internal/FFI/Analysis.h"
 #include "LLVM/General/Internal/FFI/LibFunc.h"
+#include "LLVM/General/Internal/FFI/OrcJIT.h"
 
 import Language.Haskell.TH.Quote
 
@@ -256,3 +258,8 @@ newtype LibFunc = LibFunc CUInt
   deriving (Eq, Read, Show, Bits, Typeable, Data, Num, Storable)
 #define LF_Rec(n) { #n, LLVMLibFunc__ ## n },
 #{inject LIB_FUNC, LibFunc, LibFunc, libFunc__, LF_Rec}
+
+newtype JITSymbolFlags = JITSymbolFlags CUInt
+  deriving (Eq, Read, Show, Bits, Typeable, Data, Num, Storable)
+#define SF_Rec(n) { #n, LLVMJITSymbolFlag ## n },
+#{inject JIT_SYMBOL_FLAG, JITSymbolFlags, JITSymbolFlags, jitSymbolFlags, SF_Rec}
