@@ -17,7 +17,7 @@ import qualified LLVM.General.AST.Constant as C
 
 tests = testGroup "PrettyPrint" [
   testCase "basic" $ do
-    let ast = Module "<string>" Nothing Nothing [
+    let ast = Module "<string>" "<string>" Nothing Nothing [
           GlobalDefinition $ functionDefaults {
             dllStorageClass = Just DLL.Export,
             returnType = i32,
@@ -44,6 +44,7 @@ tests = testGroup "PrettyPrint" [
          ]
         s = "A.Module {\n\
             \  A.moduleName = \"<string>\",\n\
+            \  A.moduleSourceFileName = \"<string>\",\n\
             \  A.moduleDataLayout = Nothing,\n\
             \  A.moduleTargetTriple = Nothing,\n\
             \  A.moduleDefinitions = [\n\
