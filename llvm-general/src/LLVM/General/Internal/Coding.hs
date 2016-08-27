@@ -103,7 +103,7 @@ instance Monad m => DecodeM m (Maybe Word) (CUInt, FFI.LLVMBool) where
   decodeM (a, isJust) = do
     isJust' <- decodeM isJust
     if isJust'
-       then fmap Just (decodeM a)
+       then liftM Just (decodeM a)
        else return Nothing
 
 instance Monad m => EncodeM m Word CUInt where
