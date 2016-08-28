@@ -64,8 +64,8 @@ newtype ModuleSet = ModuleSet (Ptr FFI.ModuleSetHandle)
 
 newtype ObjectLinkingLayer = ObjectLinkingLayer (Ptr FFI.ObjectLinkingLayer)
 
-instance Applicative m => EncodeM m JITSymbolFlags FFI.JITSymbolFlags where
-  encodeM f = pure $ foldr1 (.|.) [
+instance Monad m => EncodeM m JITSymbolFlags FFI.JITSymbolFlags where
+  encodeM f = return $ foldr1 (.|.) [
       if a f
          then b
          else 0
@@ -75,15 +75,15 @@ instance Applicative m => EncodeM m JITSymbolFlags FFI.JITSymbolFlags where
         ]
     ]
 
-instance Applicative m => DecodeM m JITSymbolFlags FFI.JITSymbolFlags where
+instance Monad m => DecodeM m JITSymbolFlags FFI.JITSymbolFlags where
   decodeM f =
-    pure $ JITSymbolFlags {
+    return $ JITSymbolFlags {
       jitSymbolWeak = FFI.jitSymbolFlagsWeak .&. f /= 0,
       jitSymbolExported = FFI.jitSymbolFlagsExported .&. f /= 0
     }
 
 instance MonadIO m => EncodeM m JITSymbol (Ptr FFI.JITSymbol -> IO ()) where
-  encodeM (JITSymbol addr flags) = pure $ \jitSymbol -> do
+  encodeM (JITSymbol addr flags) = return $ \jitSymbol -> do
     flags' <- encodeM flags
     FFI.setJITSymbol jitSymbol (FFI.TargetAddress (fromIntegral addr)) flags'
 
@@ -91,7 +91,7 @@ instance MonadIO m => DecodeM m JITSymbol (Ptr FFI.JITSymbol) where
   decodeM jitSymbol = do
     FFI.TargetAddress addr <- liftIO $ FFI.getAddress jitSymbol
     flags <- liftIO $ decodeM =<< FFI.getFlags jitSymbol
-    pure (JITSymbol (fromIntegral addr) flags)
+    return (JITSymbol (fromIntegral addr) flags)
 
 instance MonadIO m =>
   EncodeM

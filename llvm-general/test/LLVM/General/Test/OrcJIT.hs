@@ -32,7 +32,7 @@ withTestModule :: (Module -> IO a) -> IO a
 withTestModule f = withContext $ \context -> withModuleFromLLVMAssembly' context testModule f
 
 myTestFuncImpl :: IO Word32
-myTestFuncImpl = pure 42
+myTestFuncImpl = return 42
 
 foreign import ccall "wrapper"
   wrapTestFunc :: IO Word32 -> IO (FunPtr (IO Word32))
@@ -41,14 +41,14 @@ foreign import ccall "dynamic"
   mkMain :: FunPtr (IO Word32) -> IO Word32
 
 nullResolver :: MangledSymbol -> IO JITSymbol
-nullResolver s = putStrLn "nullresolver" >> pure (JITSymbol 0 (JITSymbolFlags False False))
+nullResolver s = putStrLn "nullresolver" >> return (JITSymbol 0 (JITSymbolFlags False False))
 
 resolver :: MangledSymbol -> IRCompileLayer -> MangledSymbol -> IO JITSymbol
 resolver testFunc compileLayer symbol
   | symbol == testFunc = do
       funPtr <- wrapTestFunc myTestFuncImpl
       let addr = ptrToWordPtr (castFunPtrToPtr funPtr)
-      pure (JITSymbol addr (JITSymbolFlags False True))
+      return (JITSymbol addr (JITSymbolFlags False True))
   | otherwise = findSymbol compileLayer symbol True
 
 tests :: Test
