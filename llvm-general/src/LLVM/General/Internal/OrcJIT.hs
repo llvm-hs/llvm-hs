@@ -119,7 +119,7 @@ allocFunPtr cleanups alloc = mask $ \restore -> do
 
 withIRCompileLayer :: ObjectLinkingLayer -> TargetMachine -> (IRCompileLayer -> IO a) -> IO a
 withIRCompileLayer (ObjectLinkingLayer oll) (TargetMachine tm) f = flip runAnyContT return $ do
-  dl <- anyContToM $ bracket (FFI.createTargetDataLayout tm) (const $ pure ()) -- FFI.disposeDataLayout
+  dl <- anyContToM $ bracket (FFI.createTargetDataLayout tm) FFI.disposeDataLayout
   cl <- anyContToM $ bracket (FFI.createIRCompileLayer oll tm) FFI.disposeIRCompileLayer
   cleanup <- anyContToM $ bracket (newIORef []) (sequence <=< readIORef)
   liftIO $ f (IRCompileLayer cl dl cleanup)
