@@ -1,25 +1,25 @@
 {-# LANGUAGE MultiParamTypeClasses #-}
 module LLVM.General.Internal.OrcJIT where
 
-import           LLVM.General.Prelude
+import LLVM.General.Prelude
 
-import           Control.Exception
-import           Control.Monad.AnyCont
-import           Control.Monad.IO.Class
-import           Data.Bits
-import           Data.ByteString (ByteString, packCString, useAsCString)
-import           Data.IORef
-import           Foreign.C.String
-import           Foreign.Marshal.Array (withArrayLen)
-import           Foreign.Ptr
+import Control.Exception
+import Control.Monad.AnyCont
+import Control.Monad.IO.Class
+import Data.Bits
+import Data.ByteString (ByteString, packCString, useAsCString)
+import Data.IORef
+import Foreign.C.String
+import Foreign.Marshal.Array (withArrayLen)
+import Foreign.Ptr
 
-import           LLVM.General.Internal.Coding
+import LLVM.General.Internal.Coding
 import qualified LLVM.General.Internal.FFI.DataLayout as FFI
 import qualified LLVM.General.Internal.FFI.LLVMCTypes as FFI
 import qualified LLVM.General.Internal.FFI.OrcJIT as FFI
 import qualified LLVM.General.Internal.FFI.Target as FFI
-import           LLVM.General.Internal.Module
-import           LLVM.General.Internal.Target
+import LLVM.General.Internal.Module
+import LLVM.General.Internal.Target
 
 newtype MangledSymbol = MangledSymbol ByteString
   deriving (Show, Eq, Ord)
