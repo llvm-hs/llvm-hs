@@ -94,14 +94,11 @@ instance MonadIO m => DecodeM m JITSymbol (Ptr FFI.JITSymbol) where
     return (JITSymbol (fromIntegral addr) flags)
 
 instance MonadIO m =>
-  EncodeM
-    m
-    SymbolResolver
-    (IORef [IO ()] -> IO (FunPtr FFI.SymbolResolverFn, FunPtr FFI.SymbolResolverFn)) where
+  EncodeM m SymbolResolver (IORef [IO ()] -> IO (Ptr FFI.LambdaResolver)) where
   encodeM (SymbolResolver dylib external) = return $ \cleanups -> do
     dylib' <- allocFunPtr cleanups (encodeM dylib)
     external' <- allocFunPtr cleanups (encodeM external)
-    return (dylib', external')
+    FFI.createLambdaResolver dylib' external'
 
 instance MonadIO m => EncodeM m SymbolResolverFn (FunPtr FFI.SymbolResolverFn) where
   encodeM callback =

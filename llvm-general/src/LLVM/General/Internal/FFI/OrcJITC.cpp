@@ -17,6 +17,10 @@ typedef llvm::orc::IRCompileLayer<llvm::orc::ObjectLinkingLayer<>>
     *LLVMIRCompileLayerRef;
 typedef llvm::orc::JITSymbol *LLVMJITSymbolRef;
 typedef llvm::orc::ObjectLinkingLayer<>::ObjSetHandleT *LLVMModuleSetHandleRef;
+typedef llvm::orc::LambdaResolver<
+    std::function<RuntimeDyld::SymbolInfo(const std::string &name)>,
+    std::function<RuntimeDyld::SymbolInfo(const std::string &name)>>
+    *LLVMLambdaResolverRef;
 
 static std::string mangle(StringRef name, LLVMTargetDataRef dataLayout) {
     std::string mangledName;
@@ -50,23 +54,32 @@ LLVMJITSymbolRef LLVM_General_IRCompileLayer_findSymbol(
 
 void LLVM_General_disposeJITSymbol(LLVMJITSymbolRef symbol) { delete symbol; }
 
+LLVMLambdaResolverRef LLVM_General_createLambdaResolver(
+    void (*dylibResolver)(const char *, LLVMJITSymbolRef),
+    void (*externalResolver)(const char *, LLVMJITSymbolRef)) {
+    std::function<RuntimeDyld::SymbolInfo(const std::string &name)>
+        dylibResolverFun = [dylibResolver](
+            const std::string &name) -> RuntimeDyld::SymbolInfo {
+        JITSymbol symbol(nullptr);
+        dylibResolver(name.c_str(), &symbol);
+        return symbol.toRuntimeDyldSymbol();
+    };
+    std::function<RuntimeDyld::SymbolInfo(const std::string &name)>
+        externalResolverFun = [externalResolver](
+            const std::string &name) -> RuntimeDyld::SymbolInfo {
+        JITSymbol symbol(nullptr);
+        externalResolver(name.c_str(), &symbol);
+        return symbol.toRuntimeDyldSymbol();
+    };
+    auto lambdaResolver =
+        createLambdaResolver(dylibResolverFun, externalResolverFun);
+    return lambdaResolver.release();
+}
+
 LLVMModuleSetHandleRef LLVM_General_IRCompileLayer_addModuleSet(
     LLVMIRCompileLayerRef compileLayer, LLVMTargetDataRef dataLayout,
     LLVMModuleRef *modules, unsigned moduleCount,
-    void (*dylibResolver)(const char *, LLVMJITSymbolRef),
-    void (*externalResolver)(const char *, LLVMJITSymbolRef)) {
-    auto lambdaResolver = createLambdaResolver(
-        [dylibResolver,
-         externalResolver](const std::string &name) -> RuntimeDyld::SymbolInfo {
-            JITSymbol symbol(nullptr);
-            dylibResolver(name.c_str(), &symbol);
-            return symbol.toRuntimeDyldSymbol();
-        },
-        [&](const std::string &name) -> RuntimeDyld::SymbolInfo {
-            JITSymbol symbol(nullptr);
-            externalResolver(name.c_str(), &symbol);
-            return symbol.toRuntimeDyldSymbol();
-        });
+    LLVMLambdaResolverRef resolver) {
     std::vector<Module *> moduleVec(moduleCount);
     for (unsigned i = 0; i < moduleCount; ++i) {
         moduleVec.at(i) = unwrap(modules[i]);
@@ -75,9 +88,8 @@ LLVMModuleSetHandleRef LLVM_General_IRCompileLayer_addModuleSet(
         }
     }
     return new IRCompileLayer<ObjectLinkingLayer<>>::ModuleSetHandleT(
-        compileLayer->addModuleSet(moduleVec,
-                                   make_unique<SectionMemoryManager>(),
-                                   std::move(lambdaResolver)));
+        compileLayer->addModuleSet(
+            moduleVec, make_unique<SectionMemoryManager>(), resolver));
 }
 
 void LLVM_General_IRCompileLayer_removeModuleSet(

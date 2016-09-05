@@ -13,9 +13,10 @@ import LLVM.General.Internal.FFI.Module
 import LLVM.General.Internal.FFI.Target
 
 data IRCompileLayer
-data ObjectLinkingLayer
 data JITSymbol
+data LambdaResolver
 data ModuleSetHandle
+data ObjectLinkingLayer
 
 newtype TargetAddress = TargetAddress Word64
 
@@ -36,23 +37,17 @@ foreign import ccall safe "LLVM_General_IRCompileLayer_findSymbol" findSymbol ::
 foreign import ccall safe "LLVM_General_disposeJITSymbol" disposeSymbol ::
   Ptr JITSymbol -> IO ()
 
-addModuleSet ::
-  Ptr IRCompileLayer ->
-  Ptr DataLayout ->
-  Ptr (Ptr Module) ->
-  CUInt ->
-  (FunPtr SymbolResolverFn, FunPtr SymbolResolverFn) ->
-  IO (Ptr ModuleSetHandle)
-addModuleSet cl dl modules count (dylib, external) =
-  addModuleSet' cl dl modules count dylib external
+foreign import ccall safe "LLVM_General_createLambdaResolver" createLambdaResolver ::
+  FunPtr SymbolResolverFn ->
+  FunPtr SymbolResolverFn ->
+  IO (Ptr LambdaResolver)
 
-foreign import ccall safe "LLVM_General_IRCompileLayer_addModuleSet" addModuleSet' ::
+foreign import ccall safe "LLVM_General_IRCompileLayer_addModuleSet" addModuleSet ::
   Ptr IRCompileLayer ->
   Ptr DataLayout ->
   Ptr (Ptr Module) ->
   CUInt ->
-  FunPtr SymbolResolverFn ->
-  FunPtr SymbolResolverFn ->
+  Ptr LambdaResolver ->
   IO (Ptr ModuleSetHandle)
 
 foreign import ccall safe "LLVM_General_IRCompileLayer_removeModuleSet" removeModuleSet ::
