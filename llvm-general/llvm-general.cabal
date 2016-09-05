@@ -30,7 +30,6 @@ extra-source-files:
   src/LLVM/General/Internal/FFI/Instruction.h
   src/LLVM/General/Internal/FFI/LibFunc.h
   src/LLVM/General/Internal/FFI/OrcJIT.h
-  src/LLVM/General/Internal/FFI/OrcJIT.hpp
   src/LLVM/General/Internal/FFI/SMDiagnostic.h
   src/LLVM/General/Internal/FFI/Target.h
   src/LLVM/General/Internal/FFI/Type.h

@@ -1,14 +1,22 @@
-#include "LLVM/General/Internal/FFI/OrcJIT.hpp"
-
+#include "LLVM/General/Internal/FFI/OrcJIT.h"
+#include "LLVM/General/Internal/FFI/Target.hpp"
 #include "llvm/ExecutionEngine/Orc/CompileUtils.h"
+#include "llvm/ExecutionEngine/Orc/IRCompileLayer.h"
+#include "llvm/ExecutionEngine/Orc/JITSymbol.h"
 #include "llvm/ExecutionEngine/Orc/LambdaResolver.h"
-
+#include "llvm/ExecutionEngine/Orc/ObjectLinkingLayer.h"
 #include "llvm/IR/Mangler.h"
 
 #include <type_traits>
 
 using namespace llvm;
 using namespace orc;
+
+typedef llvm::orc::ObjectLinkingLayer<> *LLVMObjectLinkingLayerRef;
+typedef llvm::orc::IRCompileLayer<llvm::orc::ObjectLinkingLayer<>>
+    *LLVMIRCompileLayerRef;
+typedef llvm::orc::JITSymbol *LLVMJITSymbolRef;
+typedef llvm::orc::ObjectLinkingLayer<>::ObjSetHandleT *LLVMModuleSetHandleRef;
 
 static std::string mangle(StringRef name, LLVMTargetDataRef dataLayout) {
     std::string mangledName;
@@ -20,6 +28,7 @@ static std::string mangle(StringRef name, LLVMTargetDataRef dataLayout) {
     return mangledName;
 }
 
+extern "C" {
 LLVMIRCompileLayerRef
 LLVM_General_createIRCompileLayer(LLVMObjectLinkingLayerRef objectLayer,
                                   LLVMTargetMachineRef tm) {
@@ -131,4 +140,5 @@ void LLVM_General_getMangledSymbol(char **mangledSymbol, const char *symbol,
 
 void LLVM_General_disposeMangledSymbol(char *mangledSymbol) {
     delete[] mangledSymbol;
+}
 }
