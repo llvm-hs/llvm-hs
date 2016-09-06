@@ -2,6 +2,7 @@
 #include "llvm-c/Target.h"
 #include "LLVM/General/Internal/FFI/LibFunc.h"
 #include "LLVM/General/Internal/FFI/Target.h"
+#include "LLVM/General/Internal/FFI/Target.hpp"
 #include "llvm-c/Core.h"
 #include "llvm-c/TargetMachine.h"
 #include "llvm/ADT/Triple.h"
@@ -24,14 +25,6 @@ static Target *unwrap(LLVMTargetRef P) { return reinterpret_cast<Target *>(P); }
 // Taken from llvm/lib/Target/TargetMachineC.cpp
 static LLVMTargetRef wrap(const Target *P) {
   return reinterpret_cast<LLVMTargetRef>(const_cast<Target *>(P));
-}
-// Taken from llvm/lib/Target/TargetMachineC.cpp
-inline TargetMachine *unwrap(LLVMTargetMachineRef P) {
-  return reinterpret_cast<TargetMachine *>(P);
-}
-// Taken from llvm/lib/Target/TargetMachineC.cpp
-inline LLVMTargetMachineRef wrap(const TargetMachine *P) {
-  return reinterpret_cast<LLVMTargetMachineRef>(const_cast<TargetMachine *>(P));
 }
 
 inline TargetLibraryInfoImpl *unwrap(LLVMTargetLibraryInfoRef P) {
