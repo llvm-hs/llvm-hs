@@ -1,6 +1,7 @@
 {-# LANGUAGE FlexibleInstances #-}
 import Control.Exception (SomeException, try)
 import Control.Monad
+import Data.Functor
 import Data.Maybe
 import Data.List (isPrefixOf, (\\), intercalate, stripPrefix, find)
 import Data.Map (Map)
@@ -104,6 +105,9 @@ ignoredCxxFlags :: [String]
 ignoredCxxFlags =
   ["-Wcovered-switch-default"] ++ map ("-D" ++) uncheckedHsFFIDefines
 
+ignoredCFlags :: [String]
+ignoredCFlags = ["-Wcovered-switch-default", "-Wdelete-non-virtual-dtor"]
+
 main = do
   let origUserHooks = simpleUserHooks
                   
@@ -158,8 +162,17 @@ main = do
     hookedPreProcessors =
       let origHookedPreprocessors = hookedPreProcessors origUserHooks
           newHsc buildInfo localBuildInfo =
-            maybe ppHsc2hs id (lookup "hsc" origHookedPreprocessors) buildInfo' localBuildInfo
-              where buildInfo' = buildInfo { ccOptions = ccOptions buildInfo \\ ["-std=c++11"] }
+              PreProcessor {
+                  platformIndependent = platformIndependent (origHsc buildInfo localBuildInfo),
+                  runPreProcessor = \inFiles outFiles verbosity -> do
+                      llvmConfig <- getLLVMConfig (configFlags localBuildInfo)
+                      llvmCFlags <- do
+                          rawLlvmCFlags <- llvmConfig "--cflags"
+                          return (words rawLlvmCFlags \\ ignoredCFlags)
+                      let buildInfo' = buildInfo { ccOptions = llvmCFlags }
+                      runPreProcessor (origHsc buildInfo' localBuildInfo) inFiles outFiles verbosity
+              }
+              where origHsc = fromMaybe ppHsc2hs (lookup "hsc" origHookedPreprocessors)
       in [("hsc", newHsc)] ++ origHookedPreprocessors,
 
     buildHook = \packageDescription localBuildInfo userHooks buildFlags -> do
