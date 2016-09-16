@@ -9,10 +9,7 @@ import Foreign.Ptr
 
 import LLVM.General.Internal.FFI.DataLayout
 import LLVM.General.Internal.FFI.LLVMCTypes
-import LLVM.General.Internal.FFI.Module
-import LLVM.General.Internal.FFI.Target
 
-data IRCompileLayer
 data JITSymbol
 data LambdaResolver
 data ModuleSetHandle
@@ -25,15 +22,6 @@ type SymbolResolverFn = CString -> Ptr JITSymbol -> IO ()
 foreign import ccall "wrapper" wrapSymbolResolverFn ::
   SymbolResolverFn -> IO (FunPtr SymbolResolverFn)
 
-foreign import ccall safe "LLVM_General_createIRCompileLayer" createIRCompileLayer ::
-  Ptr ObjectLinkingLayer -> Ptr TargetMachine -> IO (Ptr IRCompileLayer)
-
-foreign import ccall safe "LLVM_General_disposeIRCompileLayer" disposeIRCompileLayer ::
-  Ptr IRCompileLayer -> IO ()
-
-foreign import ccall safe "LLVM_General_IRCompileLayer_findSymbol" findSymbol ::
-  Ptr IRCompileLayer -> Ptr DataLayout -> CString -> LLVMBool -> IO (Ptr JITSymbol)
-
 foreign import ccall safe "LLVM_General_disposeJITSymbol" disposeSymbol ::
   Ptr JITSymbol -> IO ()
 
@@ -41,17 +29,6 @@ foreign import ccall safe "LLVM_General_createLambdaResolver" createLambdaResolv
   FunPtr SymbolResolverFn ->
   FunPtr SymbolResolverFn ->
   IO (Ptr LambdaResolver)
-
-foreign import ccall safe "LLVM_General_IRCompileLayer_addModuleSet" addModuleSet ::
-  Ptr IRCompileLayer ->
-  Ptr DataLayout ->
-  Ptr (Ptr Module) ->
-  CUInt ->
-  Ptr LambdaResolver ->
-  IO (Ptr ModuleSetHandle)
-
-foreign import ccall safe "LLVM_General_IRCompileLayer_removeModuleSet" removeModuleSet ::
-  Ptr IRCompileLayer -> Ptr ModuleSetHandle -> IO ()
 
 foreign import ccall safe "LLVM_General_createObjectLinkingLayer" createObjectLinkingLayer ::
   IO (Ptr ObjectLinkingLayer)

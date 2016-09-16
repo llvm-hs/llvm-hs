@@ -15,6 +15,8 @@ import Foreign.Ptr
 import LLVM.General.Context
 import LLVM.General.Module
 import LLVM.General.OrcJIT
+import LLVM.General.OrcJIT.IRCompileLayer (IRCompileLayer, withIRCompileLayer)
+import qualified LLVM.General.OrcJIT.IRCompileLayer as IRCompileLayer
 import LLVM.General.Target
 
 testModule :: String
@@ -49,7 +51,7 @@ resolver testFunc compileLayer symbol
       funPtr <- wrapTestFunc myTestFuncImpl
       let addr = ptrToWordPtr (castFunPtrToPtr funPtr)
       return (JITSymbol addr (JITSymbolFlags False True))
-  | otherwise = findSymbol compileLayer symbol True
+  | otherwise = IRCompileLayer.findSymbol compileLayer symbol True
 
 tests :: Test
 tests =
@@ -59,14 +61,14 @@ tests =
         failInIO $ withHostTargetMachine $ \tm ->
           withObjectLinkingLayer $ \objectLayer ->
             withIRCompileLayer objectLayer tm $ \compileLayer -> do
-              testFunc <- mangleSymbol compileLayer "testFunc"
-              withModuleSet
+              testFunc <- IRCompileLayer.mangleSymbol compileLayer "testFunc"
+              IRCompileLayer.withModuleSet
                 compileLayer
                 [mod]
                 (SymbolResolver (resolver testFunc compileLayer) nullResolver) $
                 \moduleSet -> do
-                  mainSymbol <- mangleSymbol compileLayer "main"
-                  JITSymbol mainFn _ <- findSymbol compileLayer mainSymbol True
+                  mainSymbol <- IRCompileLayer.mangleSymbol compileLayer "main"
+                  JITSymbol mainFn _ <- IRCompileLayer.findSymbol compileLayer mainSymbol True
                   result <- mkMain (castPtrToFunPtr (wordPtrToPtr mainFn))
                   result @?= 42
   ]
