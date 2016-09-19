@@ -1,5 +1,6 @@
 module LLVM.General.OrcJIT.IRCompileLayer (
     IRCompileLayer,
+    ModuleSet,
     findSymbol,
     mangleSymbol,
     withIRCompileLayer,

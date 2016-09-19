@@ -2,7 +2,6 @@ module LLVM.General.OrcJIT (
     JITSymbol(..),
     JITSymbolFlags(..),
     MangledSymbol,
-    ModuleSet,
     ObjectLinkingLayer,
     SymbolResolver(..),
     SymbolResolverFn,

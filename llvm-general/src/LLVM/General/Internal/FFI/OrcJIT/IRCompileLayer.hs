@@ -13,6 +13,7 @@ import Foreign.Ptr
 import Foreign.C
 
 data IRCompileLayer
+data ModuleSetHandle
 
 foreign import ccall safe "LLVM_General_createIRCompileLayer" createIRCompileLayer ::
   Ptr ObjectLinkingLayer -> Ptr TargetMachine -> IO (Ptr IRCompileLayer)
@@ -32,4 +33,4 @@ foreign import ccall safe "LLVM_General_IRCompileLayer_removeModuleSet" removeMo
   Ptr IRCompileLayer -> Ptr ModuleSetHandle -> IO ()
 
 foreign import ccall safe "LLVM_General_IRCompileLayer_findSymbol" findSymbol ::
-  Ptr IRCompileLayer -> Ptr DataLayout -> CString -> LLVMBool -> IO (Ptr JITSymbol)
+  Ptr IRCompileLayer -> CString -> LLVMBool -> IO (Ptr JITSymbol)

@@ -6,16 +6,12 @@ import           LLVM.General.Prelude
 import           Control.Exception
 import           Control.Monad.AnyCont
 import           Control.Monad.IO.Class
-import           Data.Bits
-import           Data.ByteString (ByteString, packCString, useAsCString)
 import           Data.IORef
-import           Foreign.C.String
 import           Foreign.Marshal.Array (withArrayLen)
 import           Foreign.Ptr
 
 import           LLVM.General.Internal.Coding
 import qualified LLVM.General.Internal.FFI.DataLayout as FFI
-import qualified LLVM.General.Internal.FFI.LLVMCTypes as FFI
 import qualified LLVM.General.Internal.FFI.OrcJIT as FFI
 import qualified LLVM.General.Internal.FFI.OrcJIT.IRCompileLayer as FFI
 import qualified LLVM.General.Internal.FFI.Target as FFI
@@ -30,6 +26,8 @@ data IRCompileLayer =
     cleanupActions :: !(IORef [IO ()])
   }
   deriving Eq
+
+newtype ModuleSet = ModuleSet (Ptr FFI.ModuleSetHandle)
 
 withIRCompileLayer :: ObjectLinkingLayer -> TargetMachine -> (IRCompileLayer -> IO a) -> IO a
 withIRCompileLayer (ObjectLinkingLayer oll) (TargetMachine tm) f = flip runAnyContT return $ do
@@ -48,11 +46,11 @@ mangleSymbol (IRCompileLayer _ dl _) symbol = flip runAnyContT return $ do
   decodeM =<< peek mangledSymbol
 
 findSymbol :: IRCompileLayer -> MangledSymbol -> Bool -> IO JITSymbol
-findSymbol (IRCompileLayer cl dl _) symbol exportedSymbolsOnly = flip runAnyContT return $ do
+findSymbol (IRCompileLayer cl _ _) symbol exportedSymbolsOnly = flip runAnyContT return $ do
   symbol' <- encodeM symbol
   exportedSymbolsOnly' <- encodeM exportedSymbolsOnly
   symbol <- anyContToM $ bracket
-    (FFI.findSymbol cl dl symbol' exportedSymbolsOnly') FFI.disposeSymbol
+    (FFI.findSymbol cl symbol' exportedSymbolsOnly') FFI.disposeSymbol
   decodeM symbol
 
 addModuleSet :: IRCompileLayer -> [Module] -> SymbolResolver -> IO ModuleSet

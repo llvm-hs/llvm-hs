@@ -12,7 +12,6 @@ import LLVM.General.Internal.FFI.LLVMCTypes
 
 data JITSymbol
 data LambdaResolver
-data ModuleSetHandle
 data ObjectLinkingLayer
 
 newtype TargetAddress = TargetAddress Word64

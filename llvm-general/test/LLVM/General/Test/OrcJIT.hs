@@ -17,6 +17,8 @@ import LLVM.General.Module
 import LLVM.General.OrcJIT
 import LLVM.General.OrcJIT.IRCompileLayer (IRCompileLayer, withIRCompileLayer)
 import qualified LLVM.General.OrcJIT.IRCompileLayer as IRCompileLayer
+import LLVM.General.OrcJIT.CompileOnDemandLayer (CompileOnDemandLayer, withIndirectStubsManagerBuilder, withJITCompileCallbackManager, withCompileOnDemandLayer)
+import qualified LLVM.General.OrcJIT.CompileOnDemandLayer as CODLayer
 import LLVM.General.Target
 
 testModule :: String
@@ -53,6 +55,14 @@ resolver testFunc compileLayer symbol
       return (JITSymbol addr (JITSymbolFlags False True))
   | otherwise = IRCompileLayer.findSymbol compileLayer symbol True
 
+codResolver :: MangledSymbol -> CompileOnDemandLayer -> MangledSymbol -> IO JITSymbol
+codResolver testFunc compileLayer symbol
+  | symbol == testFunc = do
+      funPtr <- wrapTestFunc myTestFuncImpl
+      let addr = ptrToWordPtr (castFunPtrToPtr funPtr)
+      return (JITSymbol addr (JITSymbolFlags False True))
+  | otherwise = CODLayer.findSymbol compileLayer symbol True
+
 tests :: Test
 tests =
   testGroup "OrcJit" [
@@ -70,5 +80,25 @@ tests =
                   mainSymbol <- IRCompileLayer.mangleSymbol compileLayer "main"
                   JITSymbol mainFn _ <- IRCompileLayer.findSymbol compileLayer mainSymbol True
                   result <- mkMain (castPtrToFunPtr (wordPtrToPtr mainFn))
-                  result @?= 42
+                  result @?= 42,
+
+    testCase "lazy compilation" $ do
+      withTestModule $ \mod ->
+        failInIO $ withHostTargetMachine $ \tm -> do
+          triple <- getTargetMachineTriple tm
+          withObjectLinkingLayer $ \objectLayer ->
+            withIRCompileLayer objectLayer tm $ \baseLayer ->
+              withIndirectStubsManagerBuilder triple $ \stubsMgr ->
+                withJITCompileCallbackManager triple Nothing $ \callbackMgr ->
+                  withCompileOnDemandLayer baseLayer (\x -> return [x]) callbackMgr stubsMgr False $ \compileLayer -> do
+                    testFunc <- CODLayer.mangleSymbol compileLayer "testFunc"
+                    CODLayer.withModuleSet
+                      compileLayer
+                      [mod]
+                      (SymbolResolver (codResolver testFunc compileLayer) nullResolver) $
+                      \moduleSet -> do
+                        mainSymbol <- CODLayer.mangleSymbol compileLayer "main"
+                        JITSymbol mainFn _ <- CODLayer.findSymbol compileLayer mainSymbol True
+                        result <- mkMain (castPtrToFunPtr (wordPtrToPtr mainFn))
+                        result @?= 42
   ]

@@ -47,8 +47,6 @@ data SymbolResolver =
     externalResolver :: !SymbolResolverFn
   }
 
-newtype ModuleSet = ModuleSet (Ptr FFI.ModuleSetHandle)
-
 newtype ObjectLinkingLayer = ObjectLinkingLayer (Ptr FFI.ObjectLinkingLayer)
 
 instance Monad m => EncodeM m JITSymbolFlags FFI.JITSymbolFlags where
