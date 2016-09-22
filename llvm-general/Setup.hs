@@ -103,10 +103,10 @@ addLLVMToLdLibraryPath configFlags = do
 -- linking against LLVM build with Clang using GCC
 ignoredCxxFlags :: [String]
 ignoredCxxFlags =
-  ["-Wcovered-switch-default"] ++ map ("-D" ++) uncheckedHsFFIDefines
+  ["-Wcovered-switch-default", "-fcolor-diagnostics"] ++ map ("-D" ++) uncheckedHsFFIDefines
 
 ignoredCFlags :: [String]
-ignoredCFlags = ["-Wcovered-switch-default", "-Wdelete-non-virtual-dtor"]
+ignoredCFlags = ["-Wcovered-switch-default", "-Wdelete-non-virtual-dtor", "-fcolor-diagnostics"]
 
 main = do
   let origUserHooks = simpleUserHooks
