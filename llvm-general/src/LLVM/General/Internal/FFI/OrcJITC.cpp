@@ -1,7 +1,9 @@
 #include "LLVM/General/Internal/FFI/OrcJIT.h"
 #include "LLVM/General/Internal/FFI/Target.hpp"
+#include "llvm/ExecutionEngine/Orc/CompileOnDemandLayer.h"
 #include "llvm/ExecutionEngine/Orc/CompileUtils.h"
 #include "llvm/ExecutionEngine/Orc/IRCompileLayer.h"
+#include "llvm/ExecutionEngine/Orc/IndirectionUtils.h"
 #include "llvm/ExecutionEngine/Orc/JITSymbol.h"
 #include "llvm/ExecutionEngine/Orc/LambdaResolver.h"
 #include "llvm/ExecutionEngine/Orc/ObjectLinkingLayer.h"
@@ -14,13 +16,23 @@ using namespace orc;
 
 typedef llvm::orc::ObjectLinkingLayer<> *LLVMObjectLinkingLayerRef;
 typedef llvm::orc::IRCompileLayer<llvm::orc::ObjectLinkingLayer<>>
-    *LLVMIRCompileLayerRef;
+    LLVMIRCompileLayer;
+typedef LLVMIRCompileLayer *LLVMIRCompileLayerRef;
+typedef llvm::orc::CompileOnDemandLayer<LLVMIRCompileLayer>
+    LLVMCompileOnDemandLayer;
+typedef LLVMCompileOnDemandLayer *LLVMCompileOnDemandLayerRef;
+typedef llvm::orc::JITCompileCallbackManager *LLVMJITCompileCallbackManagerRef;
 typedef llvm::orc::JITSymbol *LLVMJITSymbolRef;
-typedef llvm::orc::ObjectLinkingLayer<>::ObjSetHandleT *LLVMModuleSetHandleRef;
+typedef LLVMIRCompileLayer::ModuleSetHandleT *LLVMModuleSetHandleRef;
+typedef LLVMCompileOnDemandLayer::ModuleSetHandleT *LLVMCODModuleSetHandleRef;
 typedef llvm::orc::LambdaResolver<
     std::function<RuntimeDyld::SymbolInfo(const std::string &name)>,
     std::function<RuntimeDyld::SymbolInfo(const std::string &name)>>
-    *LLVMLambdaResolverRef;
+    LLVMLambdaResolver;
+typedef LLVMLambdaResolver *LLVMLambdaResolverRef;
+typedef llvm::orc::IndirectStubsManager *LLVMIndirectStubsManagerRef;
+typedef std::function<std::unique_ptr<llvm::orc::IndirectStubsManager>()>
+    *LLVMIndirectStubsManagerBuilderRef;
 
 static std::string mangle(StringRef name, LLVMTargetDataRef dataLayout) {
     std::string mangledName;
@@ -30,6 +42,19 @@ static std::string mangle(StringRef name, LLVMTargetDataRef dataLayout) {
                                    *unwrap(dataLayout));
     }
     return mangledName;
+}
+
+static std::vector<Module *> getModules(LLVMModuleRef *modules,
+                                        unsigned moduleCount,
+                                        LLVMTargetDataRef dataLayout) {
+    std::vector<Module *> moduleVec(moduleCount);
+    for (unsigned i = 0; i < moduleCount; ++i) {
+        moduleVec.at(i) = unwrap(modules[i]);
+        if (moduleVec.at(i)->getDataLayout().isDefault()) {
+            moduleVec.at(i)->setDataLayout(*unwrap(dataLayout));
+        }
+    }
+    return moduleVec;
 }
 
 extern "C" {
@@ -45,9 +70,10 @@ void LLVM_General_disposeIRCompileLayer(LLVMIRCompileLayerRef compileLayer) {
     delete compileLayer;
 }
 
-LLVMJITSymbolRef LLVM_General_IRCompileLayer_findSymbol(
-    LLVMIRCompileLayerRef compileLayer, LLVMTargetDataRef dataLayout,
-    const char *name, LLVMBool exportedSymbolsOnly) {
+LLVMJITSymbolRef
+LLVM_General_IRCompileLayer_findSymbol(LLVMIRCompileLayerRef compileLayer,
+                                       const char *name,
+                                       LLVMBool exportedSymbolsOnly) {
     JITSymbol symbol = compileLayer->findSymbol(name, exportedSymbolsOnly);
     return new JITSymbol(symbol);
 }
@@ -80,13 +106,8 @@ LLVMModuleSetHandleRef LLVM_General_IRCompileLayer_addModuleSet(
     LLVMIRCompileLayerRef compileLayer, LLVMTargetDataRef dataLayout,
     LLVMModuleRef *modules, unsigned moduleCount,
     LLVMLambdaResolverRef resolver) {
-    std::vector<Module *> moduleVec(moduleCount);
-    for (unsigned i = 0; i < moduleCount; ++i) {
-        moduleVec.at(i) = unwrap(modules[i]);
-        if (moduleVec.at(i)->getDataLayout().isDefault()) {
-            moduleVec.at(i)->setDataLayout(*unwrap(dataLayout));
-        }
-    }
+    std::vector<Module *> moduleVec =
+        getModules(modules, moduleCount, dataLayout);
     return new IRCompileLayer<ObjectLinkingLayer<>>::ModuleSetHandleT(
         compileLayer->addModuleSet(
             moduleVec, make_unique<SectionMemoryManager>(), resolver));
@@ -152,5 +173,84 @@ void LLVM_General_getMangledSymbol(char **mangledSymbol, const char *symbol,
 
 void LLVM_General_disposeMangledSymbol(char *mangledSymbol) {
     delete[] mangledSymbol;
+}
+
+LLVMJITCompileCallbackManagerRef LLVM_General_createLocalCompileCallbackManager(
+    const char *triple, llvm::orc::TargetAddress errorHandler) {
+    return llvm::orc::createLocalCompileCallbackManager(Triple(triple),
+                                                        errorHandler)
+        .release();
+}
+
+void LLVM_General_disposeCallbackManager(
+    LLVMJITCompileCallbackManagerRef callbackManager) {
+    delete callbackManager;
+}
+
+LLVMIndirectStubsManagerBuilderRef
+LLVM_General_createLocalIndirectStubsManagerBuilder(const char *triple) {
+    return new std::function<std::unique_ptr<IndirectStubsManager>()>(
+        llvm::orc::createLocalIndirectStubsManagerBuilder(Triple(triple)));
+}
+
+void LLVM_General_disposeIndirectStubsManagerBuilder(
+    LLVMIndirectStubsManagerBuilderRef stubsManager) {
+    delete stubsManager;
+}
+
+void LLVM_General_insertFun(std::set<llvm::Function *> *set,
+                            llvm::Function *f) {
+    set->insert(f);
+}
+
+LLVMCompileOnDemandLayerRef LLVM_General_createCompileOnDemandLayer(
+    LLVMIRCompileLayerRef compileLayer,
+    void (*partitioningFtor)(llvm::Function *, std::set<llvm::Function *> *set),
+    LLVMJITCompileCallbackManagerRef callbackManager,
+    LLVMIndirectStubsManagerBuilderRef stubsManager,
+    LLVMBool cloneStubsIntoPartitions) {
+    return new LLVMCompileOnDemandLayer(
+        *compileLayer,
+        [partitioningFtor](llvm::Function &f) -> std::set<llvm::Function *> {
+            std::set<llvm::Function *> result;
+            partitioningFtor(&f, &result);
+            return result;
+        },
+        *callbackManager, *stubsManager, cloneStubsIntoPartitions);
+}
+
+void LLVM_General_disposeCompileOnDemandLayer(
+    LLVMCompileOnDemandLayerRef codLayer) {
+    delete codLayer;
+}
+
+LLVMCODModuleSetHandleRef LLVM_General_CompileOnDemandLayer_addModuleSet(
+    LLVMCompileOnDemandLayerRef compileLayer, LLVMTargetDataRef dataLayout,
+    LLVMModuleRef *modules, unsigned moduleCount,
+    LLVMLambdaResolverRef resolver) {
+    std::vector<Module *> moduleVec =
+        getModules(modules, moduleCount, dataLayout);
+    // We need to copy the resolver to make the use of unique_ptr (required by
+    // the LLVM API) safe
+    std::unique_ptr<LLVMLambdaResolver> uniqueResolver(
+        new LLVMLambdaResolver(*resolver));
+    return new LLVMCompileOnDemandLayer::ModuleSetHandleT(
+        compileLayer->addModuleSet(moduleVec,
+                                   make_unique<SectionMemoryManager>(),
+                                   std::move(uniqueResolver)));
+}
+
+void LLVM_General_CompileOnDemandLayer_removeModuleSet(
+    LLVMCompileOnDemandLayerRef compileLayer,
+    LLVMCODModuleSetHandleRef moduleSetHandle) {
+    compileLayer->removeModuleSet(*moduleSetHandle);
+    delete moduleSetHandle;
+}
+
+LLVMJITSymbolRef LLVM_General_CompileOnDemandLayer_findSymbol(
+    LLVMCompileOnDemandLayerRef compileLayer, const char *name,
+    LLVMBool exportedSymbolsOnly) {
+    JITSymbol symbol = compileLayer->findSymbol(name, exportedSymbolsOnly);
+    return new JITSymbol(symbol);
 }
 }

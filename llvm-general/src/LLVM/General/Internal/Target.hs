@@ -233,6 +233,10 @@ initializeNativeTarget = do
   failure <- decodeM =<< liftIO FFI.initializeNativeTarget
   when failure $ fail "native target initialization failed"
 
+-- | the target triple corresponding to the target machine
+getTargetMachineTriple :: TargetMachine -> IO String
+getTargetMachineTriple (TargetMachine m) = decodeM =<< FFI.getTargetMachineTriple m
+
 -- | the default target triple that LLVM has been configured to produce code for
 getDefaultTargetTriple :: IO String
 getDefaultTargetTriple = decodeM =<< FFI.getDefaultTargetTriple

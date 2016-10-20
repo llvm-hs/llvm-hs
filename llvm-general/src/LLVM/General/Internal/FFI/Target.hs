@@ -100,6 +100,9 @@ data TargetLowering
 -- foreign import ccall unsafe "LLVM_General_GetTargetLowering" getTargetLowering ::
 --   Ptr TargetMachine -> IO (Ptr TargetLowering)
 
+foreign import ccall unsafe "LLVMGetTargetMachineTriple" getTargetMachineTriple ::
+  Ptr TargetMachine -> IO (OwnerTransfered CString)
+
 foreign import ccall unsafe "LLVM_General_GetDefaultTargetTriple" getDefaultTargetTriple :: 
   IO (OwnerTransfered CString)
 

@@ -95,6 +95,8 @@ library
     LLVM.General.ExecutionEngine
     LLVM.General.Module
     LLVM.General.OrcJIT
+    LLVM.General.OrcJIT.CompileOnDemandLayer
+    LLVM.General.OrcJIT.IRCompileLayer
     LLVM.General.PassManager
     LLVM.General.Relocation
     LLVM.General.Target
@@ -135,6 +137,8 @@ library
     LLVM.General.Internal.Metadata
     LLVM.General.Internal.Module
     LLVM.General.Internal.OrcJIT
+    LLVM.General.Internal.OrcJIT.CompileOnDemandLayer
+    LLVM.General.Internal.OrcJIT.IRCompileLayer
     LLVM.General.Internal.Operand
     LLVM.General.Internal.PassManager
     LLVM.General.Internal.RawOStream
@@ -172,6 +176,8 @@ library
     LLVM.General.Internal.FFI.Metadata
     LLVM.General.Internal.FFI.Module
     LLVM.General.Internal.FFI.OrcJIT
+    LLVM.General.Internal.FFI.OrcJIT.CompileOnDemandLayer
+    LLVM.General.Internal.FFI.OrcJIT.IRCompileLayer
     LLVM.General.Internal.FFI.PassManager
     LLVM.General.Internal.FFI.PtrHierarchy
     LLVM.General.Internal.FFI.RawOStream
