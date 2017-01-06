@@ -47,7 +47,7 @@ install:
  - cd $HOME/llvm-src
  - mkdir -p build && cd build
  - cmake -DCMAKE_BUILD_TYPE=Release -DCMAKE_INSTALL_PREFIX=$HOME/llvm-build ..
- - make install
+ - make install -j
  - cd $TRAVIS_BUILD_DIR
  - ln -s $HOME/llvm-build/bin/llvm-config $HOME/bin/llvm-config
  - llvm-config --version
