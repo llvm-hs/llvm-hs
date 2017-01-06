@@ -7,8 +7,8 @@ cache:
   directories:
     - $HOME/.cabal/packages
     - $HOME/.cabal/store
-    - $HOME/llvm-3.9
-    - $HOME/llvm-3.9.0rc2.src
+    - $HOME/llvm-build
+    - $HOME/llvm-src
 
 before_cache:
   - rm -fv $HOME/.cabal/packages/hackage.haskell.org/build-reports.log
@@ -16,7 +16,9 @@ before_cache:
 
 env:
   global:
-    - GCC=gcc-5 GXX=g++-5
+    - GCC=gcc-5
+    - GXX=g++-5
+    - LLVM_VER=3.9.1
 
 matrix:
   include:
@@ -40,13 +42,14 @@ before_install:
 install:
  - curl https://cmake.org/files/v3.6/cmake-3.6.1-Linux-x86_64.tar.gz | tar -xzf - -C $HOME
  - export PATH=$HOME/cmake-3.6.1-Linux-x86_64/bin:$PATH
- - curl http://llvm.org/pre-releases/3.9.0/rc2/llvm-3.9.0rc2.src.tar.xz | tar -xJf - -C $HOME
- - cd $HOME/llvm-3.9.0rc2.src
+ - curl http://llvm.org/pre-releases/${LLVM_VER}/llvm-${LLVM_VER}.src.tar.xz | tar -xJf - -C $HOME
+ - mv $HOME/llvm-${LLVM_EXACT_VER}.src/* $HOME/llvm-src
+ - cd $HOME/llvm-src
  - mkdir -p build && cd build
- - cmake -DCMAKE_BUILD_TYPE=Release -DCMAKE_INSTALL_PREFIX=$HOME/llvm-3.9 ..
+ - cmake -DCMAKE_BUILD_TYPE=Release -DCMAKE_INSTALL_PREFIX=$HOME/llvm-build ..
  - make install
  - cd $TRAVIS_BUILD_DIR
- - ln -s $HOME/llvm-3.9/bin/llvm-config $HOME/bin/llvm-config
+ - ln -s $HOME/llvm-build/bin/llvm-config $HOME/bin/llvm-config
  - llvm-config --version
  - $GCC --version
  - $GXX --version
