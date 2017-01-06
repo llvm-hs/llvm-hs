@@ -46,8 +46,8 @@ install:
  - mv $HOME/llvm-${LLVM_VER}.src/* $HOME/llvm-src
  - cd $HOME/llvm-src
  - mkdir -p build && cd build
- - cmake -DCMAKE_BUILD_TYPE=Release -DCMAKE_INSTALL_PREFIX=$HOME/llvm-build ..
- - make install -j
+ - cmake -DCMAKE_BUILD_TYPE=Release -DCMAKE_INSTALL_PREFIX=$HOME/llvm-build -DLLVM_PARALLEL_LINK_JOBS=1 -DLLVM_TARGETS_TO_BUILD=X86 ..
+ - make install -j3
  - cd $TRAVIS_BUILD_DIR
  - ln -s $HOME/llvm-build/bin/llvm-config $HOME/bin/llvm-config
  - llvm-config --version
