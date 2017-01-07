@@ -160,16 +160,6 @@ unsigned LLVM_General_GetStackAlignmentOverride(TargetOptions *to) {
   return to->StackAlignmentOverride;
 }
 
-// TODO (cocreature): See
-// http://lists.llvm.org/pipermail/llvm-commits/Week-of-Mon-20150629/285229.html
-// void LLVM_General_SetTrapFuncName(TargetOptions *to, const char *v) {
-// 	to->TrapFuncName = v;
-// }
-
-// const char *LLVM_General_GetTrapFuncName(TargetOptions *to) {
-// 	return to->TrapFuncName.c_str();
-// }
-
 void LLVM_General_SetFloatABIType(TargetOptions *to, LLVM_General_FloatABI v) {
   to->FloatABIType = unwrap(v);
 }
