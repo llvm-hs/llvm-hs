@@ -9,3 +9,4 @@ cabal.sandbox.config
 /dist-newstyle/
 *~
 /stack.yaml
+cabal.project.local
