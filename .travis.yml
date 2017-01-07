@@ -43,7 +43,9 @@ install:
  - curl https://cmake.org/files/v3.6/cmake-3.6.1-Linux-x86_64.tar.gz | tar -xzf - -C $HOME
  - export PATH=$HOME/cmake-3.6.1-Linux-x86_64/bin:$PATH
  - curl http://releases.llvm.org/${LLVM_VER}/llvm-${LLVM_VER}.src.tar.xz | tar -xJf - -C $HOME
- - mv $HOME/llvm-${LLVM_VER}.src/* $HOME/llvm-src
+# mv cannot replace existing files so we need to use cp & rm
+ - cp -r $HOME/llvm-${LLVM_VER}.src/* $HOME/llvm-src
+ - rm -rf $HOME/llvm-${LLVM_VER}.src/
  - cd $HOME/llvm-src
  - mkdir -p build && cd build
  - cmake -DCMAKE_BUILD_TYPE=Release -DCMAKE_INSTALL_PREFIX=$HOME/llvm-build -DLLVM_PARALLEL_LINK_JOBS=1 -DLLVM_TARGETS_TO_BUILD=X86 ..
