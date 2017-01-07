@@ -9,7 +9,7 @@ import LLVM.General.Test.Support
 import Control.Monad.Trans.Except 
 import Control.Monad.IO.Class
 
-import Data.Functor
+import Data.Functor hiding (void)
 import qualified Data.List as List
 import qualified Data.Set as Set
 import qualified Data.Map as Map
@@ -42,6 +42,12 @@ ast = do
  dl <- withHostTargetMachine getTargetMachineDataLayout
  triple <- liftIO getDefaultTargetTriple
  return $ Module "<string>" "<string>" (Just dl) (Just triple) [
+  -- This function is needed for AddressSanitizerModule
+  GlobalDefinition $ functionDefaults {
+    G.returnType = void,
+    G.name = Name "asan.module_ctor",
+    G.basicBlocks = [BasicBlock (UnName 0) [] (Do (Ret Nothing []))]
+  },
   GlobalDefinition $ functionDefaults {
     G.returnType = i32,
     G.name = Name "foo",
@@ -145,7 +151,7 @@ tests = testGroup "Instrumentation" [
     | (n,p) <- [
      ("GCOVProfiler", defaultGCOVProfiler),
      ("AddressSanitizer", defaultAddressSanitizer),
-     -- ("AddressSanitizerModule", defaultAddressSanitizerModule),
+     ("AddressSanitizerModule", defaultAddressSanitizerModule),
      ("MemorySanitizer", defaultMemorySanitizer),
      ("ThreadSanitizer", defaultThreadSanitizer),
      ("BoundsChecking", BoundsChecking)--,
