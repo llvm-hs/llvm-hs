@@ -169,7 +169,7 @@ main = do
                       llvmCFlags <- do
                           rawLlvmCFlags <- llvmConfig "--cflags"
                           return (words rawLlvmCFlags \\ ignoredCFlags)
-                      let buildInfo' = buildInfo { ccOptions = llvmCFlags }
+                      let buildInfo' = buildInfo { ccOptions = "-Wno-variadic-macros" : llvmCFlags }
                       runPreProcessor (origHsc buildInfo' localBuildInfo) inFiles outFiles verbosity
               }
               where origHsc = fromMaybe ppHsc2hs (lookup "hsc" origHookedPreprocessors)

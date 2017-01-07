@@ -18,7 +18,6 @@ import LLVM.General.Internal.FFI.PtrHierarchy
 import LLVM.General.Internal.FFI.Cleanup
 import LLVM.General.Internal.FFI.Module
 import LLVM.General.Internal.FFI.Target
-import LLVM.General.Internal.FFI.DataLayout
 import LLVM.General.Internal.FFI.Transforms
 
 import qualified LLVM.General.Transforms as G

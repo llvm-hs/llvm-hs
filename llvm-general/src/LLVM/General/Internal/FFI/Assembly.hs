@@ -11,7 +11,6 @@ import LLVM.General.Internal.FFI.Context
 import LLVM.General.Internal.FFI.MemoryBuffer
 import LLVM.General.Internal.FFI.Module
 import LLVM.General.Internal.FFI.RawOStream
-import LLVM.General.Internal.FFI.SMDiagnostic
 import LLVM.General.Internal.FFI.LLVMCTypes
 
 import Foreign.C

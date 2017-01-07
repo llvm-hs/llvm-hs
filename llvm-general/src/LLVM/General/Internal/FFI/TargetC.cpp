@@ -21,26 +21,12 @@ using namespace llvm;
 
 namespace llvm {
 // Taken from llvm/lib/Target/TargetMachineC.cpp
-static Target *unwrap(LLVMTargetRef P) { return reinterpret_cast<Target *>(P); }
-// Taken from llvm/lib/Target/TargetMachineC.cpp
 static LLVMTargetRef wrap(const Target *P) {
   return reinterpret_cast<LLVMTargetRef>(const_cast<Target *>(P));
 }
 
 inline TargetLibraryInfoImpl *unwrap(LLVMTargetLibraryInfoRef P) {
   return reinterpret_cast<TargetLibraryInfoImpl*>(P);
-}
-
-static CodeGenOpt::Level unwrap(LLVMCodeGenOptLevel x) {
-  switch (x) {
-#define ENUM_CASE(x)                                                           \
-  case LLVMCodeGenLevel##x:                                                    \
-    return CodeGenOpt::x;
-    LLVM_GENERAL_FOR_EACH_CODE_GEN_OPT_LEVEL(ENUM_CASE)
-#undef ENUM_CASE
-  default:
-    return CodeGenOpt::Level(0);
-  }
 }
 
 static FloatABI::ABIType unwrap(LLVM_General_FloatABI x) {
@@ -112,18 +98,6 @@ static LLVM_General_FPOpFusionMode wrap(FPOpFusion::FPOpFusionMode x) {
 #undef ENUM_CASE
   default:
     return LLVM_General_FPOpFusionMode(0);
-  }
-}
-
-static TargetMachine::CodeGenFileType unwrap(LLVMCodeGenFileType x) {
-  switch (x) {
-#define ENUM_CASE(x)                                                           \
-  case LLVM##x##File:                                                          \
-    return TargetMachine::CGFT_##x##File;
-    LLVM_GENERAL_FOR_EACH_CODE_GEN_FILE_TYPE(ENUM_CASE)
-#undef ENUM_CASE
-  default:
-    return TargetMachine::CodeGenFileType(0);
   }
 }
 }
