@@ -100,7 +100,7 @@ isVectory Module { moduleDefinitions = ds } =
   (@? "Module is not vectory") $ not $ null [ i 
     | GlobalDefinition (Function { G.basicBlocks = b }) <- ds,
       BasicBlock _ is _ <- b,
-      _ := i@(InsertElement {}) <- is
+      _ := i@(ExtractElement {}) <- is
    ]
 
 optimize :: PassSetSpec -> A.Module -> IO A.Module
