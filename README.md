@@ -32,6 +32,17 @@ then:
 $ apt-get install llvm-3.9-dev
 ```
 
+### Loading llvm-hs in stack ghci
+
+If you are seeing linker errors when running `stack ghci`, you need to
+add the following lines to your `stack.yaml`. The exact options needed
+might vary between systems.
+
+```
+ghc-options:
+  llvm-general: -pgml g++ -optl-Wl,-lLLVM
+```
+
 ## Versioning
 
 Trying to represent the version of LLVM in the version number but also
