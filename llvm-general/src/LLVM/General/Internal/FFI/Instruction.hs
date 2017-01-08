@@ -128,13 +128,13 @@ foreign import ccall unsafe "LLVMAddClause" addClause ::
 foreign import ccall unsafe "LLVMSetCleanup" setCleanup ::
   Ptr Instruction -> LLVMBool -> IO ()
 
-foreign import ccall unsafe "LLVM_General_IsCleanup" isCleanup ::
+foreign import ccall unsafe "LLVMIsCleanup" isCleanup ::
   Ptr Instruction -> IO LLVMBool
 
-foreign import ccall unsafe "LLVM_General_GetNumClauses" getNumClauses ::
+foreign import ccall unsafe "LLVMGetNumClauses" getNumClauses ::
   Ptr Instruction -> IO CUInt
 
-foreign import ccall unsafe "LLVM_General_GetClause" getClause ::
+foreign import ccall unsafe "LLVMGetClause" getClause ::
   Ptr Instruction -> CUInt -> IO (Ptr Constant)
 
 foreign import ccall unsafe "LLVM_General_SetMetadata" setMetadata ::
