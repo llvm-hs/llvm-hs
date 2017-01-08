@@ -8,5 +8,5 @@ cabal.sandbox.config
 .stack-work
 /dist-newstyle/
 *~
-/stack.yaml
 cabal.project.local
+*.dwo

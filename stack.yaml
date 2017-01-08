@@ -1,0 +1,10 @@
+resolver: lts-7.8
+
+packages:
+- 'llvm-general'
+- 'llvm-general-pure'
+flags:
+  llvm-general:
+    shared-llvm: true
+
+extra-package-dbs: []
