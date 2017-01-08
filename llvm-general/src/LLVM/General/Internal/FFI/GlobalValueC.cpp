@@ -23,20 +23,18 @@ const char *LLVM_General_GetCOMDATName(const Comdat &comdat, size_t &size) {
   return ref.data();
 }
 
-inline void LLVM_General_COMDAT_Selection_Kind_Enum_Matches() {
-#define ENUM_CASE(n) static_assert(unsigned(Comdat::n) == unsigned(LLVM_General_COMDAT_Selection_Kind_ ## n), \
-  "COMDAT SelectionKind Enum mismatch");
-	LLVM_GENERAL_FOR_EACH_COMDAT_SELECTION_KIND(ENUM_CASE)
+#define ENUM_CASE(n)                                                           \
+    static_assert(unsigned(Comdat::n) ==                                       \
+                      unsigned(LLVM_General_COMDAT_Selection_Kind_##n),        \
+                  "COMDAT SelectionKind Enum mismatch");
+LLVM_GENERAL_FOR_EACH_COMDAT_SELECTION_KIND(ENUM_CASE)
 #undef ENUM_CASE
-}
 
 unsigned LLVM_General_GetCOMDATSelectionKind(const Comdat &comdat) {
-  LLVM_General_COMDAT_Selection_Kind_Enum_Matches();
   return unsigned(comdat.getSelectionKind());
 }
 
 void LLVM_General_SetCOMDATSelectionKind(Comdat &comdat, unsigned csk) {
-  LLVM_General_COMDAT_Selection_Kind_Enum_Matches();
   comdat.setSelectionKind(Comdat::SelectionKind(csk));
 }
 
@@ -66,20 +64,18 @@ void LLVM_General_SetUnnamedAddr(LLVMValueRef globalVal, LLVMUnnamedAddr attr) {
     unwrap<GlobalValue>(globalVal)->setUnnamedAddr(wrap(attr));
 }
 
-inline void LLVM_General_TLS_Model_Enum_Matches() {
-#define ENUM_CASE(n) static_assert(unsigned(GlobalValue::n) == unsigned(LLVM ## n), "TLS Model Enum mismatch");
-	LLVM_GENERAL_FOR_EACH_THREAD_LOCAL_MODE(ENUM_CASE)
+#define ENUM_CASE(n)                                                           \
+    static_assert(unsigned(GlobalValue::n) == unsigned(LLVM##n),               \
+                  "TLS Model Enum mismatch");
+LLVM_GENERAL_FOR_EACH_THREAD_LOCAL_MODE(ENUM_CASE)
 #undef ENUM_CASE
-}
 
 LLVMThreadLocalMode LLVM_General_GetThreadLocalMode(LLVMValueRef globalVal) {
-	LLVM_General_TLS_Model_Enum_Matches();
-	return LLVMThreadLocalMode(unwrap<GlobalValue>(globalVal)->getThreadLocalMode());
+    return LLVMThreadLocalMode(unwrap<GlobalValue>(globalVal)->getThreadLocalMode());
 }
 
 void LLVM_General_SetThreadLocalMode(LLVMValueRef globalVal, LLVMThreadLocalMode mode) {
-	LLVM_General_TLS_Model_Enum_Matches();
-	unwrap<GlobalValue>(globalVal)->setThreadLocalMode(GlobalValue::ThreadLocalMode(mode));
+    unwrap<GlobalValue>(globalVal)->setThreadLocalMode(GlobalValue::ThreadLocalMode(mode));
 }
 
 }

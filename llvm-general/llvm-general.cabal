@@ -23,7 +23,6 @@ extra-source-files:
   src/LLVM/General/Internal/FFI/AttributeC.hpp
   src/LLVM/General/Internal/FFI/BinaryOperator.h
   src/LLVM/General/Internal/FFI/CallingConvention.h
-  src/LLVM/General/Internal/FFI/CallingConventionC.hpp
   src/LLVM/General/Internal/FFI/Constant.h
   src/LLVM/General/Internal/FFI/GlobalValue.h
   src/LLVM/General/Internal/FFI/InlineAssembly.h
@@ -195,6 +194,7 @@ library
     src/LLVM/General/Internal/FFI/AttributeC.cpp
     src/LLVM/General/Internal/FFI/BitcodeC.cpp
     src/LLVM/General/Internal/FFI/BuilderC.cpp
+    src/LLVM/General/Internal/FFI/CallingConventionC.cpp
     src/LLVM/General/Internal/FFI/ConstantC.cpp
     src/LLVM/General/Internal/FFI/CommandLineC.cpp
     src/LLVM/General/Internal/FFI/ExecutionEngineC.cpp
