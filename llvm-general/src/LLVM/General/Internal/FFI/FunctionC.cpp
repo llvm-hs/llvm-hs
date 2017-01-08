@@ -12,19 +12,6 @@ using namespace llvm;
 
 extern "C" {
 
-// LLVMAttribute LLVM_General_GetFunctionRetAttr(LLVMValueRef f) {
-// 	return LLVM(LLVMAttribute)unwrap<Function>(f)->getAttributes().Raw(AttributeSet::ReturnIndex);
-// }
-
-// void LLVM_General_AddFunctionRetAttr(LLVMValueRef v, LLVMAttribute attr) {
-// 	Function &f = *unwrap<Function>(v);
-// 	LLVMContext &context = f.getContext();
-// 	AttrBuilder attrBuilder(attr);
-// 	f.setAttributes(
-// 		f.getAttributes().addAttributes(context, AttributeSet::ReturnIndex, AttributeSet::get(context, AttributeSet::ReturnIndex, attrBuilder))
-// 	);
-// }
-
 const AttributeSetImpl *LLVM_General_GetFunctionMixedAttributeSet(LLVMValueRef f) {
 	return wrap(unwrap<Function>(f)->getAttributes());
 }
