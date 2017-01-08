@@ -242,6 +242,7 @@ unsigned LLVM_General_GetNumClauses(LLVMValueRef v) {
 }
 
 LLVMValueRef LLVM_General_GetClause(LLVMValueRef v, unsigned i) {
+    unwrap<LandingPadInst>(v)->dump();
     return wrap(unwrap<LandingPadInst>(v)->getClause(i));
 }
 
