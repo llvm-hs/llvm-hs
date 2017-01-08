@@ -31,14 +31,6 @@ void LLVM_General_SetFunctionPrefixData(LLVMValueRef f, LLVMValueRef p) {
   unwrap<Function>(f)->setPrefixData(unwrap<Constant>(p));
 }
 
-unsigned LLVM_General_GetFunctionCallingConvention(LLVMValueRef f) {
-  return unsigned(unwrap<Function>(f)->getCallingConv());
-}
-
-void LLVM_General_SetFunctionCallingConvention(LLVMValueRef f, unsigned cc) {
-  unwrap<Function>(f)->setCallingConv(llvm::CallingConv::ID(cc));
-}
-
 // This wrapper is necessary because LLVMSetPersonalityFn fails if
 // personalityFn is a nullptr even though the C++ API allows that.
 void LLVM_General_SetPersonalityFn(LLVMValueRef fn, LLVMValueRef personalityFn) {

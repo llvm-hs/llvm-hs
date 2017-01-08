@@ -15,10 +15,10 @@ import LLVM.General.Internal.FFI.Context
 import LLVM.General.Internal.FFI.LLVMCTypes
 import LLVM.General.Internal.FFI.PtrHierarchy
 
-foreign import ccall unsafe "LLVM_General_GetFunctionCallingConvention" getFunctionCallingConvention ::
+foreign import ccall unsafe "LLVMGetFunctionCallConv" getFunctionCallingConvention ::
   Ptr Function -> IO CallingConvention
 
-foreign import ccall unsafe "LLVM_General_SetFunctionCallingConvention" setFunctionCallingConvention ::
+foreign import ccall unsafe "LLVMSetFunctionCallConv" setFunctionCallingConvention ::
   Ptr Function -> CallingConvention -> IO ()
 
 foreign import ccall unsafe "LLVM_General_GetFunctionMixedAttributeSet" getMixedAttributeSet ::
