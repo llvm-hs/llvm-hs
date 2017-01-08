@@ -13,6 +13,25 @@ We love all kinds of contributions so feel free to open issues for
 missing LLVM features, report & fix bugs or report API
 inconveniences.
 
+## Building
+
+Example using Homebrew on Mac OS X:
+
+```bash
+$ brew update
+$ brew install libffi
+$ brew install homebrew/versions/llvm39 --all-targets
+```
+
+For Debian/Ubuntu based Linux distributions, the LLVM.org website provides
+binary distribution packages. Check [apt.llvm.org](apt.llvm.org) for
+instructions for adding the correct package database for your OS version, and
+then:
+
+```bash
+$ apt-get install llvm-3.9-dev
+```
+
 ## Versioning
 
 Trying to represent the version of LLVM in the version number but also
