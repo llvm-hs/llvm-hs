@@ -153,7 +153,7 @@ tests = testGroup "Instrumentation" [
      ("AddressSanitizer", defaultAddressSanitizer),
      ("AddressSanitizerModule", defaultAddressSanitizerModule),
      ("MemorySanitizer", defaultMemorySanitizer),
-     -- ("ThreadSanitizer", defaultThreadSanitizer),
+     ("ThreadSanitizer", defaultThreadSanitizer),
      ("BoundsChecking", BoundsChecking)--,
     ]
    ]
