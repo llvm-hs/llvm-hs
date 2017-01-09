@@ -23,7 +23,7 @@ import Distribution.System
 -- without checking they're already defined and so causes warnings.
 uncheckedHsFFIDefines = ["__STDC_LIMIT_MACROS"]
 
-llvmVersion = Version [3,9] []
+llvmVersion = Version [4,0] []
 
 llvmConfigNames = [
   "llvm-config-" ++ (intercalate "." . map show . versionBranch $ llvmVersion),

@@ -4,7 +4,7 @@
 #include "llvm/ExecutionEngine/Orc/CompileUtils.h"
 #include "llvm/ExecutionEngine/Orc/IRCompileLayer.h"
 #include "llvm/ExecutionEngine/Orc/IndirectionUtils.h"
-#include "llvm/ExecutionEngine/Orc/JITSymbol.h"
+#include "llvm/ExecutionEngine/JITSymbol.h"
 #include "llvm/ExecutionEngine/Orc/LambdaResolver.h"
 #include "llvm/ExecutionEngine/Orc/ObjectLinkingLayer.h"
 #include "llvm/IR/Mangler.h"
@@ -22,12 +22,12 @@ typedef llvm::orc::CompileOnDemandLayer<LLVMIRCompileLayer>
     LLVMCompileOnDemandLayer;
 typedef LLVMCompileOnDemandLayer *LLVMCompileOnDemandLayerRef;
 typedef llvm::orc::JITCompileCallbackManager *LLVMJITCompileCallbackManagerRef;
-typedef llvm::orc::JITSymbol *LLVMJITSymbolRef;
+typedef llvm::JITSymbol *LLVMJITSymbolRef;
 typedef LLVMIRCompileLayer::ModuleSetHandleT *LLVMModuleSetHandleRef;
 typedef LLVMCompileOnDemandLayer::ModuleSetHandleT *LLVMCODModuleSetHandleRef;
 typedef llvm::orc::LambdaResolver<
-    std::function<RuntimeDyld::SymbolInfo(const std::string &name)>,
-    std::function<RuntimeDyld::SymbolInfo(const std::string &name)>>
+    std::function<JITSymbol(const std::string &name)>,
+    std::function<JITSymbol(const std::string &name)>>
     LLVMLambdaResolver;
 typedef LLVMLambdaResolver *LLVMLambdaResolverRef;
 typedef llvm::orc::IndirectStubsManager *LLVMIndirectStubsManagerRef;
@@ -83,19 +83,19 @@ void LLVM_General_disposeJITSymbol(LLVMJITSymbolRef symbol) { delete symbol; }
 LLVMLambdaResolverRef LLVM_General_createLambdaResolver(
     void (*dylibResolver)(const char *, LLVMJITSymbolRef),
     void (*externalResolver)(const char *, LLVMJITSymbolRef)) {
-    std::function<RuntimeDyld::SymbolInfo(const std::string &name)>
+    std::function<JITSymbol(const std::string &name)>
         dylibResolverFun = [dylibResolver](
-            const std::string &name) -> RuntimeDyld::SymbolInfo {
+            const std::string &name) -> JITSymbol {
         JITSymbol symbol(nullptr);
         dylibResolver(name.c_str(), &symbol);
-        return symbol.toRuntimeDyldSymbol();
+        return symbol;
     };
-    std::function<RuntimeDyld::SymbolInfo(const std::string &name)>
+    std::function<JITSymbol(const std::string &name)>
         externalResolverFun = [externalResolver](
-            const std::string &name) -> RuntimeDyld::SymbolInfo {
+            const std::string &name) -> JITSymbol {
         JITSymbol symbol(nullptr);
         externalResolver(name.c_str(), &symbol);
-        return symbol.toRuntimeDyldSymbol();
+        return symbol;
     };
     auto lambdaResolver =
         createLambdaResolver(dylibResolverFun, externalResolverFun);
@@ -149,7 +149,7 @@ LLVMJITSymbolFlags wrap(JITSymbolFlags f) {
     return LLVMJITSymbolFlags(r);
 }
 
-llvm::orc::TargetAddress
+JITTargetAddress
 LLVM_General_JITSymbol_getAddress(LLVMJITSymbolRef symbol) {
     return symbol->getAddress();
 }
@@ -159,7 +159,7 @@ LLVMJITSymbolFlags LLVM_General_JITSymbol_getFlags(LLVMJITSymbolRef symbol) {
 }
 
 void LLVM_General_setJITSymbol(LLVMJITSymbolRef symbol,
-                               llvm::orc::TargetAddress addr,
+                               JITTargetAddress addr,
                                LLVMJITSymbolFlags flags) {
     *symbol = JITSymbol(addr, unwrap(flags));
 }
@@ -176,7 +176,7 @@ void LLVM_General_disposeMangledSymbol(char *mangledSymbol) {
 }
 
 LLVMJITCompileCallbackManagerRef LLVM_General_createLocalCompileCallbackManager(
-    const char *triple, llvm::orc::TargetAddress errorHandler) {
+    const char *triple, JITTargetAddress errorHandler) {
     return llvm::orc::createLocalCompileCallbackManager(Triple(triple),
                                                         errorHandler)
         .release();

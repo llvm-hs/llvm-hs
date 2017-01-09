@@ -1,5 +1,5 @@
 name: llvm-general-pure
-version: 3.9.0.0
+version: 4.0.0.0
 license: BSD3
 license-file: LICENSE
 author: Benjamin S.Scarlet <fgthb0@greynode.net>
@@ -25,8 +25,8 @@ source-repository head
 source-repository this
   type: git
   location: git://github.com/bscarlet/llvm-general.git
-  branch: llvm-3.9
-  tag: pure-v3.9.0.0
+  branch: llvm-4
+  tag: pure-v4.0.0.0
 
 library
   ghc-options: -fwarn-unused-imports
@@ -89,7 +89,7 @@ test-suite test
     HUnit >= 1.2.4.2,
     test-framework-quickcheck2 >= 0.3.0.1,
     QuickCheck >= 2.5.1.1,
-    llvm-general-pure == 3.9.0.0,
+    llvm-general-pure == 4.0.0.0,
     transformers >= 0.3,
     transformers-compat >= 0.4,
     containers >= 0.4.2.1,

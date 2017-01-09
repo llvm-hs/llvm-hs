@@ -13,7 +13,6 @@
 #include "LLVM/General/Internal/FFI/Metadata.hpp"
 #include "LLVM/General/Internal/FFI/AttributeC.hpp"
 #include "LLVM/General/Internal/FFI/Instruction.h"
-#include "LLVM/General/Internal/FFI/CallingConventionC.hpp"
 
 using namespace llvm;
 
@@ -91,33 +90,27 @@ void LLVM_General_SetCallSiteAttributeSet(LLVMValueRef i, const AttributeSetImpl
 }
 
 unsigned LLVM_General_GetCallSiteCallingConvention(LLVMValueRef i) {
-  LLVM_General_CallingConventionEnumMatches();
   return unsigned(CallSite(unwrap<Instruction>(i)).getCallingConv());
 }
 
 void LLVM_General_SetCallSiteCallingConvention(LLVMValueRef i, unsigned cc) {
-  LLVM_General_CallingConventionEnumMatches();
   CallSite(unwrap<Instruction>(i)).setCallingConv(llvm::CallingConv::ID(cc));
 }
 
-void LLVM_General_TailCallKindEnumMatches() {
-#define CHECK(name)																											\
-	static_assert(																												\
-			unsigned(llvm::CallInst::TCK_ ## name) == unsigned(LLVM_General_TailCallKind_ ## name), \
-			"LLVM_General_TailCallKind enum out of sync w/ llvm::CallInst::TailCallKind for " #name \
-	);
-	LLVM_GENERAL_FOR_EACH_TAIL_CALL_KIND(CHECK)
+#define CHECK(name)                                                            \
+    static_assert(unsigned(llvm::CallInst::TCK_##name) ==                      \
+                      unsigned(LLVM_General_TailCallKind_##name),              \
+                  "LLVM_General_TailCallKind enum out of sync w/ "             \
+                  "llvm::CallInst::TailCallKind for " #name);
+LLVM_GENERAL_FOR_EACH_TAIL_CALL_KIND(CHECK)
 #undef CHECK
-}
 
 unsigned LLVM_General_GetTailCallKind(LLVMValueRef i) {
-	LLVM_General_TailCallKindEnumMatches();
-	return unwrap<CallInst>(i)->getTailCallKind();
+    return unwrap<CallInst>(i)->getTailCallKind();
 }
 
 void LLVM_General_SetTailCallKind(LLVMValueRef i, unsigned kind) {
-	LLVM_General_TailCallKindEnumMatches();
-	return unwrap<CallInst>(i)->setTailCallKind(llvm::CallInst::TailCallKind(kind));
+    return unwrap<CallInst>(i)->setTailCallKind(llvm::CallInst::TailCallKind(kind));
 }
 
 LLVMValueRef LLVM_General_GetAllocaNumElements(LLVMValueRef a) {
@@ -231,18 +224,6 @@ void LLVM_General_GetInstStructureIndices(LLVMValueRef v, unsigned *is) {
 	if (ExtractValueInst *i = dyn_cast<ExtractValueInst>(unwrap(v))) a = i->getIndices();
 	if (InsertValueInst *i = dyn_cast<InsertValueInst>(unwrap(v))) a = i->getIndices();
 	std::copy(a.begin(), a.end(), is);
-}
-
-LLVMBool LLVM_General_IsCleanup(LLVMValueRef v) {
-	return unwrap<LandingPadInst>(v)->isCleanup();
-}
-
-unsigned LLVM_General_GetNumClauses(LLVMValueRef v) {
-    return unwrap<LandingPadInst>(v)->getNumClauses();
-}
-
-LLVMValueRef LLVM_General_GetClause(LLVMValueRef v, unsigned i) {
-    return wrap(unwrap<LandingPadInst>(v)->getClause(i));
 }
 
 void LLVM_General_GetSwitchCases(

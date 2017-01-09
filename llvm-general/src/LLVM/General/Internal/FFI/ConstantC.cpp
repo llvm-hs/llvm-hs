@@ -14,10 +14,10 @@ namespace llvm {
 
 static const struct fltSemantics &unwrap(LLVMFloatSemantics s) {
 	switch(s) {
-#define ENUM_CASE(x) case LLVMFloatSemantics ## x: return APFloat::x;
+#define ENUM_CASE(x) case LLVMFloatSemantics ## x: return APFloat::x();
 LLVM_GENERAL_FOR_EACH_FLOAT_SEMANTICS(ENUM_CASE)
 #undef ENUM_CASE
-	default: return APFloat::Bogus;
+    default: return APFloat::Bogus();
 	}
 }
 

@@ -1,5 +1,5 @@
 name: llvm-general
-version: 3.9.0.0
+version: 4.0.0.0
 license: BSD3
 license-file: LICENSE
 author: Benjamin S.Scarlet <fgthb0@greynode.net>
@@ -23,7 +23,6 @@ extra-source-files:
   src/LLVM/General/Internal/FFI/AttributeC.hpp
   src/LLVM/General/Internal/FFI/BinaryOperator.h
   src/LLVM/General/Internal/FFI/CallingConvention.h
-  src/LLVM/General/Internal/FFI/CallingConventionC.hpp
   src/LLVM/General/Internal/FFI/Constant.h
   src/LLVM/General/Internal/FFI/GlobalValue.h
   src/LLVM/General/Internal/FFI/InlineAssembly.h
@@ -43,8 +42,8 @@ source-repository head
 source-repository this
   type: git
   location: git://github.com/bscarlet/llvm-general.git
-  branch: llvm-3.9
-  tag: v3.9.0.0
+  branch: llvm-4
+  tag: v4.0.0.0
 
 flag shared-llvm
   description: link against llvm shared rather than static library
@@ -73,7 +72,7 @@ library
     containers >= 0.4.2.1,
     parsec >= 3.1.3,
     array >= 0.4.0.0,
-    llvm-general-pure == 3.9.0.0
+    llvm-general-pure == 4.0.0.0
   hs-source-dirs: src
   extensions:
     NoImplicitPrelude
@@ -195,6 +194,7 @@ library
     src/LLVM/General/Internal/FFI/AttributeC.cpp
     src/LLVM/General/Internal/FFI/BitcodeC.cpp
     src/LLVM/General/Internal/FFI/BuilderC.cpp
+    src/LLVM/General/Internal/FFI/CallingConventionC.cpp
     src/LLVM/General/Internal/FFI/ConstantC.cpp
     src/LLVM/General/Internal/FFI/CommandLineC.cpp
     src/LLVM/General/Internal/FFI/ExecutionEngineC.cpp
@@ -225,8 +225,8 @@ test-suite test
     HUnit >= 1.2.4.2,
     test-framework-quickcheck2 >= 0.3.0.1,
     QuickCheck >= 2.5.1.1,
-    llvm-general == 3.9.0.0,
-    llvm-general-pure == 3.9.0.0,
+    llvm-general == 4.0.0.0,
+    llvm-general-pure == 4.0.0.0,
     containers >= 0.4.2.1,
     mtl >= 2.1,
     transformers >= 0.3.0.0,

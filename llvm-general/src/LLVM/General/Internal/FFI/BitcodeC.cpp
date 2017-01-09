@@ -4,7 +4,8 @@
 #include "llvm-c/Core.h"
 #include "llvm/Support/raw_ostream.h"
 #include "llvm/Support/MemoryBuffer.h"
-#include "llvm/Bitcode/ReaderWriter.h"
+#include "llvm/Bitcode/BitcodeReader.h"
+#include "llvm/Bitcode/BitcodeWriter.h"
 
 using namespace llvm;
 
@@ -15,13 +16,14 @@ LLVMModuleRef LLVM_General_ParseBitcode(
 	LLVMMemoryBufferRef mb, 
 	char **error
 ) {
-	std::string msg;
-	ErrorOr<std::unique_ptr<Module>> m = parseBitcodeFile(unwrap(mb)->getMemBufferRef(), *unwrap(c));
-	if (std::error_code ec = m.getError()) {
-		*error = strdup(ec.message().c_str());
-		return 0;
-	}
-	return wrap(m.get().release());
+    Expected<std::unique_ptr<Module>> moduleOrErr = parseBitcodeFile(unwrap(mb)->getMemBufferRef(), *unwrap(c));
+    if (Error err = moduleOrErr.takeError()) {
+        handleAllErrors(std::move(err), [&](ErrorInfoBase &eib) {
+                *error = strdup(eib.message().c_str());
+            });
+        return nullptr;
+    }
+    return wrap(moduleOrErr.get().release());
 }
 
 void LLVM_General_WriteBitcode(LLVMModuleRef m, raw_ostream &os) {

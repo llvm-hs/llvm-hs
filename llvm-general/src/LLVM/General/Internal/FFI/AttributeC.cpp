@@ -4,6 +4,12 @@
 
 extern "C" {
 
+static_assert(sizeof(AttributeSet) == sizeof(AttributeSetImpl *),
+              "AttributeSet implementation has changed");
+
+static_assert(sizeof(Attribute) == sizeof(AttributeImpl *),
+              "Attribute implementation has changed");
+
 unsigned LLVM_General_AttributeSetNumSlots(const AttributeSetImpl *a) {
 	return unwrap(a).getNumSlots();
 }
@@ -34,7 +40,6 @@ const AttributeImpl *const *LLVM_General_AttributeSetGetAttributes(AttributeSetI
 	return reinterpret_cast<const AttributeImpl *const *>(b);
 }
 
-inline void LLVM_General_AttributeEnumMatches() {
 #define CHECK(name,p,r,f)																								\
 	static_assert(																												\
 		unsigned(llvm::Attribute::name) == unsigned(LLVM_General_AttributeKind_ ## name), \
@@ -42,11 +47,9 @@ inline void LLVM_General_AttributeEnumMatches() {
 	);
 	LLVM_GENERAL_FOR_EACH_ATTRIBUTE_KIND(CHECK)
 #undef CHECK
-}
 
 unsigned LLVM_General_AttributeKindAsEnum(const AttributeImpl *a) {
-	LLVM_General_AttributeEnumMatches();
-	return unwrap(a).getKindAsEnum();
+    return unwrap(a).getKindAsEnum();
 }
 
 uint64_t LLVM_General_AttributeValueAsInt(const AttributeImpl *a) {
@@ -95,8 +98,7 @@ void LLVM_General_DestroyAttrBuilder(AttrBuilder *a) {
 }
 
 void LLVM_General_AttrBuilderAddAttributeKind(AttrBuilder &ab, unsigned kind) {
-	LLVM_General_AttributeEnumMatches();
-	ab.addAttribute(Attribute::AttrKind(kind));
+    ab.addAttribute(Attribute::AttrKind(kind));
 }
 
 void LLVM_General_AttrBuilderAddStringAttribute(
