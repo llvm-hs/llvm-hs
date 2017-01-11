@@ -58,7 +58,4 @@ to earlier versions are not provided.
 
 ## How is this related to llvm-general?
 
-This project is a fork of `llvm-general`. `llvm-general` is a great
-project but after trying to contribute our ideas with limited success
-and the fact that the single maintainer slows down progress has led to
-creating a fork.
+This project is a fork of the venerable `llvm-general` that aims to improve the public release story, and better provide the interfaces needed for any Haskell project looking to leverage LLVM. Contributions are encouraged.
