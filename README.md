@@ -40,7 +40,7 @@ might vary between systems.
 
 ```
 ghc-options:
-  llvm-general: -pgml g++ -optl-Wl,-lLLVM
+  llvm-hs: -pgml g++ -optl-Wl,-lLLVM
 ```
 
 ## Versioning
@@ -56,6 +56,6 @@ component indicates the version of LLVM. A special case are the
 versions `3.major.minor` that represent bindings to LLVM 3.9. Bindings
 to earlier versions are not provided.
 
-## How is this related to llvm-general?
+## How is this related to llvm-hs?
 
 This project is a fork of the venerable `llvm-general` that aims to improve the public release story, and better provide the interfaces needed for any Haskell project looking to leverage LLVM. Contributions are encouraged.
