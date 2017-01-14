@@ -1,0 +1,101 @@
+name: llvm-hs-pure
+version: 4.0.0.0
+license: BSD3
+license-file: LICENSE
+author: Anthony Cowley, Stephen Diehl, Moritz Kiefer <moritz.kiefer@purelyfunctional.org>, Benjamin S. Scarlet
+maintainer: Anthony Cowley, Stephen Diehl, Moritz Kiefer <moritz.kiefer@purelyfunctional.org>
+copyright: (c) 2013 Benjamin S. Scarlet and Google Inc.
+homepage: http://github.com/llvm-hs/llvm-hs/
+bug-reports: http://github.com/llvm-hs/llvm-hs/issues
+build-type: Simple
+stability: experimental
+cabal-version: >= 1.8
+category: Compilers/Interpreters, Code Generation
+synopsis: Pure Haskell LLVM functionality (no FFI).
+description:
+  llvm-hs-pure is a set of pure Haskell types and functions for interacting with LLVM <http://llvm.org/>.
+  It includes an ADT to represent LLVM IR (<http://llvm.org/docs/LangRef.html>). The llvm-hs package
+  builds on this one with FFI bindings to LLVM, but llvm-hs-pure does not require LLVM to be available.
+tested-with: GHC == 7.8.4, GHC == 7.10.3, GHC == 8.0.1
+
+source-repository head
+  type: git
+  location: git://github.com/llvm-hs/llvm-hs.git
+  branch: llvm-4
+
+library
+  ghc-options: -fwarn-unused-imports
+  build-depends:
+    base >= 4.6 && < 5,
+    transformers >= 0.3 && < 0.6,
+    transformers-compat >= 0.4,
+    mtl >= 2.1,
+    template-haskell >= 2.5.0.0,
+    containers >= 0.4.2.1,
+    parsec >= 3.1.3
+  hs-source-dirs: src
+  extensions:
+    NoImplicitPrelude
+    TupleSections
+    DeriveDataTypeable
+    EmptyDataDecls
+    FlexibleContexts
+    FlexibleInstances
+    StandaloneDeriving
+    ConstraintKinds
+  exposed-modules:
+    LLVM.AST
+    LLVM.AST.AddrSpace
+    LLVM.AST.InlineAssembly
+    LLVM.AST.Attribute
+    LLVM.AST.ParameterAttribute
+    LLVM.AST.FunctionAttribute
+    LLVM.AST.CallingConvention
+    LLVM.AST.Constant
+    LLVM.AST.DataLayout
+    LLVM.AST.Float
+    LLVM.AST.FloatingPointPredicate
+    LLVM.AST.Global
+    LLVM.AST.Instruction
+    LLVM.AST.IntegerPredicate
+    LLVM.AST.Linkage
+    LLVM.AST.Name
+    LLVM.AST.Operand
+    LLVM.AST.RMWOperation
+    LLVM.AST.ThreadLocalStorage
+    LLVM.AST.Type
+    LLVM.AST.Visibility
+    LLVM.AST.DLL
+    LLVM.AST.COMDAT
+    LLVM.DataLayout
+    LLVM.PrettyPrint
+    LLVM.Prelude
+    LLVM.TH
+
+  other-modules:
+    LLVM.Internal.PrettyPrint
+
+test-suite test
+  type: exitcode-stdio-1.0
+  build-depends:
+    base >= 4.6 && < 5,
+    test-framework >= 0.5,
+    test-framework-hunit >= 0.2.7,
+    HUnit >= 1.2.4.2,
+    test-framework-quickcheck2 >= 0.3.0.1,
+    QuickCheck >= 2.5.1.1,
+    llvm-hs-pure == 4.0.0.0,
+    transformers >= 0.3,
+    transformers-compat >= 0.4,
+    containers >= 0.4.2.1,
+    mtl >= 2.1
+  hs-source-dirs: test
+  extensions:
+    TupleSections
+    FlexibleInstances
+    FlexibleContexts
+  main-is: Test.hs
+  other-modules:
+    LLVM.Test.DataLayout
+    LLVM.Test.PrettyPrint
+    LLVM.Test.Tests

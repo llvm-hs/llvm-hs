@@ -1,2 +1,2 @@
-packages: ./llvm-general/
-          ./llvm-general-pure/
+packages: ./llvm-hs/
+          ./llvm-hs-pure/

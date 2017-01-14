@@ -1,0 +1,252 @@
+name: llvm-hs
+version: 4.0.0.0
+license: BSD3
+license-file: LICENSE
+author: Anthony Cowley, Stephen Diehl, Moritz Kiefer <moritz.kiefer@purelyfunctional.org>, Benjamin S. Scarlet
+maintainer: Anthony Cowley, Stephen Diehl, Moritz Kiefer <moritz.kiefer@purelyfunctional.org>
+copyright: (c) 2013 Benjamin S. Scarlet and Google Inc.
+homepage: http://github.com/llvm-hs/llvm-hs/
+bug-reports: http://github.com/llvm-hs/llvm-hs/issues
+build-type: Custom
+stability: experimental
+cabal-version: >= 1.8
+category: Compilers/Interpreters, Code Generation
+synopsis: General purpose LLVM bindings
+description:
+  llvm-hs is a set of Haskell bindings for LLVM <http://llvm.org/>. Unlike other current Haskell bindings,
+  it uses an ADT to represent LLVM IR (<http://llvm.org/docs/LangRef.html>), and so offers two advantages: it
+  handles almost all of the stateful complexities of using the LLVM API to build IR; and it supports moving IR not
+  only from Haskell into LLVM C++ objects, but the other direction - from LLVM C++ into Haskell.
+extra-source-files:
+  src/LLVM/Internal/FFI/Analysis.h
+  src/LLVM/Internal/FFI/Attribute.h
+  src/LLVM/Internal/FFI/AttributeC.hpp
+  src/LLVM/Internal/FFI/BinaryOperator.h
+  src/LLVM/Internal/FFI/CallingConvention.h
+  src/LLVM/Internal/FFI/Constant.h
+  src/LLVM/Internal/FFI/GlobalValue.h
+  src/LLVM/Internal/FFI/InlineAssembly.h
+  src/LLVM/Internal/FFI/Instruction.h
+  src/LLVM/Internal/FFI/LibFunc.h
+  src/LLVM/Internal/FFI/OrcJIT.h
+  src/LLVM/Internal/FFI/SMDiagnostic.h
+  src/LLVM/Internal/FFI/Target.h
+  src/LLVM/Internal/FFI/Type.h
+  src/LLVM/Internal/FFI/Value.h
+tested-with: GHC == 7.8.4, GHC == 7.10.3, GHC == 8.0.1
+
+source-repository head
+  type: git
+  location: git://github.com/llvm-hs/llvm-hs.git
+  branch: llvm-4
+
+flag shared-llvm
+  description: link against llvm shared rather than static library
+  default: False
+
+flag debug
+  description: compile C(++) shims with debug info for ease of troubleshooting
+  default: False
+
+custom-setup
+  setup-depends: base
+               , Cabal
+               , containers
+
+library
+  build-tools: llvm-config
+  ghc-options: -fwarn-unused-imports
+  build-depends:
+    base >= 4.7 && < 5,
+    utf8-string >= 0.3.7,
+    bytestring >= 0.9.1.10,
+    transformers >= 0.3 && < 0.6,
+    transformers-compat >= 0.4,
+    mtl >= 2.1.3,
+    template-haskell >= 2.5.0.0,
+    containers >= 0.4.2.1,
+    parsec >= 3.1.3,
+    array >= 0.4.0.0,
+    llvm-hs-pure == 4.0.0.0
+  hs-source-dirs: src
+  extensions:
+    NoImplicitPrelude
+    TupleSections
+    DeriveDataTypeable
+    EmptyDataDecls
+    FlexibleContexts
+    FlexibleInstances
+    StandaloneDeriving
+    ConstraintKinds
+  exposed-modules:
+    LLVM
+    LLVM.Analysis
+    LLVM.CodeGenOpt
+    LLVM.CodeModel
+    LLVM.CommandLine
+    LLVM.Context
+    LLVM.Diagnostic
+    LLVM.ExecutionEngine
+    LLVM.Module
+    LLVM.OrcJIT
+    LLVM.OrcJIT.CompileOnDemandLayer
+    LLVM.OrcJIT.IRCompileLayer
+    LLVM.PassManager
+    LLVM.Relocation
+    LLVM.Target
+    LLVM.Target.LibraryFunction
+    LLVM.Target.Options
+    LLVM.Threading
+    LLVM.Transforms
+
+  other-modules:
+    Control.Monad.AnyCont
+    Control.Monad.AnyCont.Class
+    Control.Monad.Trans.AnyCont
+    LLVM.Internal.Analysis
+    LLVM.Internal.Atomicity
+    LLVM.Internal.Attribute
+    LLVM.Internal.BasicBlock
+    LLVM.Internal.CallingConvention
+    LLVM.Internal.Coding
+    LLVM.Internal.CommandLine
+    LLVM.Internal.Constant
+    LLVM.Internal.Context
+    LLVM.Internal.DataLayout
+    LLVM.Internal.DecodeAST
+    LLVM.Internal.Diagnostic
+    LLVM.Internal.EncodeAST
+    LLVM.Internal.ExecutionEngine
+    LLVM.Internal.FastMathFlags
+    LLVM.Internal.FloatingPointPredicate
+    LLVM.Internal.Function
+    LLVM.Internal.Global
+    LLVM.Internal.Inject
+    LLVM.Internal.InlineAssembly
+    LLVM.Internal.Instruction
+    LLVM.Internal.InstructionDefs
+    LLVM.Internal.IntegerPredicate
+    LLVM.Internal.LibraryFunction
+    LLVM.Internal.MemoryBuffer
+    LLVM.Internal.Metadata
+    LLVM.Internal.Module
+    LLVM.Internal.OrcJIT
+    LLVM.Internal.OrcJIT.CompileOnDemandLayer
+    LLVM.Internal.OrcJIT.IRCompileLayer
+    LLVM.Internal.Operand
+    LLVM.Internal.PassManager
+    LLVM.Internal.RawOStream
+    LLVM.Internal.RMWOperation
+    LLVM.Internal.String
+    LLVM.Internal.TailCallKind
+    LLVM.Internal.Target
+    LLVM.Internal.Threading
+    LLVM.Internal.Type
+    LLVM.Internal.Value
+    LLVM.Internal.FFI.Analysis
+    LLVM.Internal.FFI.Attribute
+    LLVM.Internal.FFI.Assembly
+    LLVM.Internal.FFI.BasicBlock
+    LLVM.Internal.FFI.BinaryOperator
+    LLVM.Internal.FFI.Bitcode
+    LLVM.Internal.FFI.Builder
+    LLVM.Internal.FFI.ByteRangeCallback
+    LLVM.Internal.FFI.Cleanup
+    LLVM.Internal.FFI.CommandLine
+    LLVM.Internal.FFI.Constant
+    LLVM.Internal.FFI.Context
+    LLVM.Internal.FFI.DataLayout
+    LLVM.Internal.FFI.ExecutionEngine
+    LLVM.Internal.FFI.Function
+    LLVM.Internal.FFI.GlobalAlias
+    LLVM.Internal.FFI.GlobalValue
+    LLVM.Internal.FFI.GlobalVariable
+    LLVM.Internal.FFI.InlineAssembly
+    LLVM.Internal.FFI.Instruction
+    LLVM.Internal.FFI.InstructionDefs
+    LLVM.Internal.FFI.Iterate
+    LLVM.Internal.FFI.LLVMCTypes
+    LLVM.Internal.FFI.MemoryBuffer
+    LLVM.Internal.FFI.Metadata
+    LLVM.Internal.FFI.Module
+    LLVM.Internal.FFI.OrcJIT
+    LLVM.Internal.FFI.OrcJIT.CompileOnDemandLayer
+    LLVM.Internal.FFI.OrcJIT.IRCompileLayer
+    LLVM.Internal.FFI.PassManager
+    LLVM.Internal.FFI.PtrHierarchy
+    LLVM.Internal.FFI.RawOStream
+    LLVM.Internal.FFI.SMDiagnostic
+    LLVM.Internal.FFI.Target
+    LLVM.Internal.FFI.Threading
+    LLVM.Internal.FFI.Transforms
+    LLVM.Internal.FFI.Type
+    LLVM.Internal.FFI.User
+    LLVM.Internal.FFI.Value
+
+  include-dirs: src
+  c-sources:
+    src/LLVM/Internal/FFI/AssemblyC.cpp
+    src/LLVM/Internal/FFI/AttributeC.cpp
+    src/LLVM/Internal/FFI/BitcodeC.cpp
+    src/LLVM/Internal/FFI/BuilderC.cpp
+    src/LLVM/Internal/FFI/CallingConventionC.cpp
+    src/LLVM/Internal/FFI/ConstantC.cpp
+    src/LLVM/Internal/FFI/CommandLineC.cpp
+    src/LLVM/Internal/FFI/ExecutionEngineC.cpp
+    src/LLVM/Internal/FFI/FunctionC.cpp
+    src/LLVM/Internal/FFI/GlobalAliasC.cpp
+    src/LLVM/Internal/FFI/GlobalValueC.cpp
+    src/LLVM/Internal/FFI/InlineAssemblyC.cpp
+    src/LLVM/Internal/FFI/InstructionC.cpp
+    src/LLVM/Internal/FFI/MetadataC.cpp
+    src/LLVM/Internal/FFI/ModuleC.cpp
+    src/LLVM/Internal/FFI/OrcJITC.cpp
+    src/LLVM/Internal/FFI/RawOStreamC.cpp
+    src/LLVM/Internal/FFI/PassManagerC.cpp
+    src/LLVM/Internal/FFI/SMDiagnosticC.cpp
+    src/LLVM/Internal/FFI/TargetC.cpp
+    src/LLVM/Internal/FFI/TypeC.cpp
+    src/LLVM/Internal/FFI/ValueC.cpp
+
+  if flag(debug)
+    cc-options: -g
+
+test-suite test
+  type: exitcode-stdio-1.0
+  build-depends:
+    base >= 4.7 && < 5,
+    test-framework >= 0.5,
+    test-framework-hunit >= 0.2.7,
+    HUnit >= 1.2.4.2,
+    test-framework-quickcheck2 >= 0.3.0.1,
+    QuickCheck >= 2.5.1.1,
+    llvm-hs == 4.0.0.0,
+    llvm-hs-pure == 4.0.0.0,
+    containers >= 0.4.2.1,
+    mtl >= 2.1,
+    transformers >= 0.3.0.0,
+    transformers-compat
+  hs-source-dirs: test
+  extensions:
+    TupleSections
+    FlexibleInstances
+    FlexibleContexts
+  main-is: Test.hs
+  other-modules:
+    LLVM.Test.Analysis
+    LLVM.Test.CallingConvention
+    LLVM.Test.Constants
+    LLVM.Test.DataLayout
+    LLVM.Test.ExecutionEngine
+    LLVM.Test.Global
+    LLVM.Test.InlineAssembly
+    LLVM.Test.Instructions
+    LLVM.Test.Instrumentation
+    LLVM.Test.Linking
+    LLVM.Test.Metadata
+    LLVM.Test.Module
+    LLVM.Test.OrcJIT
+    LLVM.Test.Optimization
+    LLVM.Test.Support
+    LLVM.Test.Target
+    LLVM.Test.Tests

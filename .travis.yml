@@ -76,10 +76,10 @@ install:
 script:
  - if [ -f configure.ac ]; then autoreconf -i; fi
  # this builds all libraries and executables (including tests/benchmarks)
- - cabal new-build llvm-general-pure llvm-general --with-gcc $GCC --ghc-options "-pgmc=${GCC}" ${TEST} ${BENCH} # -v2 provides useful information for debugging
+ - cabal new-build llvm-hs-pure llvm-hs --with-gcc $GCC --ghc-options "-pgmc=${GCC}" ${TEST} ${BENCH} # -v2 provides useful information for debugging
 
  # there's no 'cabal new-test' yet, so let's emulate for now
- - TESTS=("llvm-general-pure-4.0.0.0/build/test/test" "llvm-general-4.0.0.0/build/test/test");
+ - TESTS=("llvm-hs-pure-4.0.0.0/build/test/test" "llvm-hs-4.0.0.0/build/test/test");
    RC=true; for T in ${TESTS[@]}; do echo "== $T ==";
    if dist-newstyle/build/$T; then echo "= $T OK =";
    else echo "= $T FAILED ="; RC=false; fi; done; $RC
