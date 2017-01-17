@@ -21,12 +21,19 @@ using namespace llvm;
 
 namespace llvm {
 // Taken from llvm/lib/Target/TargetMachineC.cpp
+// These functions need to be marked as static to avoid undefined behavior
+// due to multiple definitions
 static LLVMTargetRef wrap(const Target *P) {
   return reinterpret_cast<LLVMTargetRef>(const_cast<Target *>(P));
 }
 
-inline TargetLibraryInfoImpl *unwrap(LLVMTargetLibraryInfoRef P) {
+static inline TargetLibraryInfoImpl *unwrap(LLVMTargetLibraryInfoRef P) {
   return reinterpret_cast<TargetLibraryInfoImpl*>(P);
+}
+
+static inline LLVMTargetLibraryInfoRef wrap(const TargetLibraryInfoImpl *P) {
+  TargetLibraryInfoImpl *X = const_cast<TargetLibraryInfoImpl*>(P);
+  return reinterpret_cast<LLVMTargetLibraryInfoRef>(X);
 }
 
 static FloatABI::ABIType unwrap(LLVM_Hs_FloatABI x) {
@@ -218,11 +225,6 @@ char *LLVM_Hs_GetHostCPUFeatures() {
 char *LLVM_Hs_GetTargetMachineDataLayout(LLVMTargetMachineRef t) {
   return strdup(
       unwrap(t)->createDataLayout().getStringRepresentation().c_str());
-}
-
-inline LLVMTargetLibraryInfoRef wrap(const TargetLibraryInfoImpl *P) {
-  TargetLibraryInfoImpl *X = const_cast<TargetLibraryInfoImpl*>(P);
-  return reinterpret_cast<LLVMTargetLibraryInfoRef>(X);
 }
 
 LLVMTargetLibraryInfoRef

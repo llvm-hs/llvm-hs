@@ -139,7 +139,7 @@ static JITSymbolFlags unwrap(LLVMJITSymbolFlags f) {
     return flags;
 }
 
-LLVMJITSymbolFlags wrap(JITSymbolFlags f) {
+static LLVMJITSymbolFlags wrap(JITSymbolFlags f) {
     unsigned r = 0;
 #define ENUM_CASE(x)                                                           \
     if ((char)(f & JITSymbolFlags::x))                                         \
