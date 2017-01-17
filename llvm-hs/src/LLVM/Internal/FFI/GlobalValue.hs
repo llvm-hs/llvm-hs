@@ -25,8 +25,8 @@ foreign import ccall unsafe "LLVMGetLinkage" getLinkage ::
 foreign import ccall unsafe "LLVMSetLinkage" setLinkage ::
   Ptr GlobalValue -> Linkage -> IO ()
 
-foreign import ccall unsafe "LLVMGetSection" getSection ::
-  Ptr GlobalValue -> IO CString
+foreign import ccall unsafe "LLVM_Hs_GetSection" getSection ::
+  Ptr GlobalValue -> Ptr CSize -> IO CString
 
 foreign import ccall unsafe "LLVMSetSection" setSection ::
   Ptr GlobalValue -> CString -> IO ()

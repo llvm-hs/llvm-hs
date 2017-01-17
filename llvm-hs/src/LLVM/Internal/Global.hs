@@ -71,9 +71,15 @@ setDLLStorageClass :: FFI.DescendentOf FFI.GlobalValue v => Ptr v -> Maybe A.DLL
 setDLLStorageClass g sc = liftIO . FFI.setDLLStorageClass (FFI.upCast g) =<< encodeM sc
 
 getSection :: FFI.DescendentOf FFI.GlobalValue v => Ptr v -> DecodeAST (Maybe String)
-getSection g = liftIO $ do
-  s <- decodeM =<< FFI.getSection (FFI.upCast g)
-  return $ if (s == "") then Nothing else Just s
+getSection g = do
+  sectionLengthPtr <- alloca
+  sectionNamePtr <- liftIO $ FFI.getSection (FFI.upCast g) sectionLengthPtr
+  if sectionNamePtr == nullPtr then
+    return Nothing
+    else
+      do sectionLength <- peek sectionLengthPtr
+         sectionName <- decodeM (sectionNamePtr, sectionLength)
+         return (Just sectionName)
 
 setSection :: FFI.DescendentOf FFI.GlobalValue v => Ptr v -> Maybe String -> EncodeAST ()
 setSection g s = scopeAnyCont $ do
