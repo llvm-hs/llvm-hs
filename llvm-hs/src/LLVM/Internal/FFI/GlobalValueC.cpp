@@ -30,6 +30,12 @@ const char *LLVM_Hs_GetCOMDATName(const Comdat &comdat, size_t &size) {
 LLVM_HS_FOR_EACH_COMDAT_SELECTION_KIND(ENUM_CASE)
 #undef ENUM_CASE
 
+const char* LLVM_Hs_GetSection(LLVMValueRef globalVal, size_t* strLength) {
+    const auto& section = unwrap<GlobalValue>(globalVal)->getSection();
+    *strLength = section.size();
+    return section.data();
+}
+
 unsigned LLVM_Hs_GetCOMDATSelectionKind(const Comdat &comdat) {
   return unsigned(comdat.getSelectionKind());
 }

@@ -46,9 +46,9 @@ install:
 # # mv cannot replace existing files so we need to use cp & rm
 #  - rsync -ac $HOME/llvm-${LLVM_VER}.src/ $HOME/llvm-src
 # Temporarily use a snapshot until there is a release
- - curl -L https://github.com/llvm-mirror/llvm/archive/f7babeb5d8e4d5d3b069fdda72285671fa74a2de.zip -o llvm.zip
+ - curl -L https://github.com/llvm-mirror/llvm/archive/9f6ca5d7e66edccaacd196fdca06a4e788d5e5b7.zip -o llvm.zip
  - unzip -q llvm.zip -d $HOME
- - rsync -ac $HOME/llvm-f7babeb5d8e4d5d3b069fdda72285671fa74a2de/ $HOME/llvm-src
+ - rsync -ac $HOME/llvm-9f6ca5d7e66edccaacd196fdca06a4e788d5e5b7/ $HOME/llvm-src
  - cd $HOME/llvm-src
  - mkdir -p build && cd build
  - cmake -DCMAKE_BUILD_TYPE=Release -DCMAKE_INSTALL_PREFIX=$HOME/llvm-build -DLLVM_PARALLEL_LINK_JOBS=1 -DLLVM_TARGETS_TO_BUILD=X86 ..
