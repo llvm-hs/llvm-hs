@@ -372,6 +372,113 @@ withModuleFromAST context@(Context c) (A.Module moduleId sourceFileName dataLayo
        return $ return ()
   liftIO $ f m
 
+
+-- This returns a nested DecodeAST to allow interleaving of different
+-- decoding steps. Take a look at the call site in moduleAST for more
+-- details.
+decodeGlobalVariables :: Ptr FFI.Module -> DecodeAST (DecodeAST [A.G.Global])
+decodeGlobalVariables mod = do
+  ffiGlobals <- liftIO $ FFI.getXs (FFI.getFirstGlobal mod) FFI.getNextGlobal
+  fmap sequence . forM ffiGlobals $ \g -> do
+    A.PointerType t as <- typeOf g
+    n <- getGlobalName g
+    return $
+      A.GlobalVariable
+        <$> return n
+        <*> getLinkage g
+        <*> getVisibility g
+        <*> getDLLStorageClass g
+        <*> getThreadLocalMode g
+        <*> return as
+        <*> (liftIO $ decodeM =<< FFI.getUnnamedAddr (FFI.upCast g))
+        <*> (liftIO $ decodeM =<< FFI.isGlobalConstant g)
+        <*> return t
+        <*> (do i <- liftIO $ FFI.getInitializer g
+                if i == nullPtr
+                  then return Nothing
+                  else Just <$> decodeM i)
+        <*> getSection g
+        <*> getCOMDATName g
+        <*> getAlignment g
+
+-- This returns a nested DecodeAST to allow interleaving of different
+-- decoding steps. Take a look at the call site in moduleAST for more
+-- details.
+decodeGlobalAliases :: Ptr FFI.Module -> DecodeAST (DecodeAST [A.G.Global])
+decodeGlobalAliases mod = do
+  ffiAliases <- liftIO $ FFI.getXs (FFI.getFirstAlias mod) FFI.getNextAlias
+  fmap sequence . forM ffiAliases $ \a -> do
+    n <- getGlobalName a
+    return $
+      A.G.GlobalAlias
+        <$> return n
+        <*> getLinkage a
+        <*> getVisibility a
+        <*> getDLLStorageClass a
+        <*> getThreadLocalMode a
+        <*> (liftIO $ decodeM =<< FFI.getUnnamedAddr (FFI.upCast a))
+        <*> typeOf a
+        <*> (decodeM =<< (liftIO $ FFI.getAliasee a))
+
+-- This returns a nested DecodeAST to allow interleaving of different
+-- decoding steps. Take a look at the call site in moduleAST for more
+-- details.
+decodeFunctions :: Ptr FFI.Module -> DecodeAST (DecodeAST [A.G.Global])
+decodeFunctions mod = do
+  ffiFunctions <-
+    liftIO $ FFI.getXs (FFI.getFirstFunction mod) FFI.getNextFunction
+  fmap sequence . forM ffiFunctions $ \f ->
+    localScope $ do
+      A.PointerType (A.FunctionType returnType _ isVarArg) _ <- typeOf f
+      n <- getGlobalName f
+      MixedAttributeSet fAttrs rAttrs pAttrs <- getMixedAttributeSet f
+      parameters <- getParameters f pAttrs
+      decodeBlocks <- do
+        ffiBasicBlocks <-
+          liftIO $ FFI.getXs (FFI.getFirstBasicBlock f) FFI.getNextBasicBlock
+        fmap sequence . forM ffiBasicBlocks $ \b -> do
+          n <- getLocalName b
+          decodeInstructions <- getNamedInstructions b
+          decodeTerminator <- getBasicBlockTerminator b
+          return $
+            A.BasicBlock
+              <$> return n
+              <*> decodeInstructions
+              <*> decodeTerminator
+      return $
+        A.Function
+          <$> getLinkage f
+          <*> getVisibility f
+          <*> getDLLStorageClass f
+          <*> (liftIO $ decodeM =<< FFI.getFunctionCallingConvention f)
+          <*> return rAttrs
+          <*> return returnType
+          <*> return n
+          <*> return (parameters, isVarArg)
+          <*> return fAttrs
+          <*> getSection f
+          <*> getCOMDATName f
+          <*> getAlignment f
+          <*> getGC f
+          <*> getPrefixData f
+          <*> decodeBlocks
+          <*> getPersonalityFn f
+
+decodeNamedMetadataDefinitions :: Ptr FFI.Module -> DecodeAST [A.Definition]
+decodeNamedMetadataDefinitions mod = do
+  ffiNamedMetadataNodes <-
+    liftIO $ FFI.getXs (FFI.getFirstNamedMetadata mod) FFI.getNextNamedMetadata
+  forM ffiNamedMetadataNodes $ \nm ->
+    scopeAnyCont $ do
+      n <- liftIO $ FFI.getNamedMetadataNumOperands nm
+      os <- allocaArray n
+      liftIO $ FFI.getNamedMetadataOperands nm os
+      A.NamedMetadataDefinition
+        <$> (decodeM $ FFI.getNamedMetadataName nm)
+        <*> fmap
+              (map (\(A.MetadataNodeReference mid) -> mid))
+              (decodeM (n, os))
+
 -- | Get an LLVM.AST.'LLVM.AST.Module' from a LLVM.'Module' - i.e.
 -- raise C++ objects into an Haskell AST.
 moduleAST :: Module -> IO A.Module
@@ -379,106 +486,41 @@ moduleAST m = runDecodeAST $ do
   mod <- readModule m
   c <- return Context `ap` liftIO (FFI.getModuleContext mod)
   getMetadataKindNames c
-  return A.Module
-   `ap` (liftIO $ decodeM =<< FFI.getModuleIdentifier mod)
-   `ap` (liftIO $ decodeM =<< FFI.getSourceFileName mod)
-   `ap` (liftIO $ getDataLayout mod)
-   `ap` (liftIO $ do
+  A.Module
+    <$> (liftIO $ decodeM =<< FFI.getModuleIdentifier mod)
+    <*> (liftIO $ decodeM =<< FFI.getSourceFileName mod)
+    <*> (liftIO $ getDataLayout mod)
+    <*> (liftIO $ do
            s <- decodeM =<< FFI.getTargetTriple mod
            return $ if s == "" then Nothing else Just s)
-   `ap` (
-     do
-       gs <- map A.GlobalDefinition . concat <$> (join . liftM sequence . sequence) [
-          do
-            ffiGlobals <- liftIO $ FFI.getXs (FFI.getFirstGlobal mod) FFI.getNextGlobal
-            liftM sequence . forM ffiGlobals $ \g -> do
-              A.PointerType t as <- typeOf g
-              n <- getGlobalName g
-              return $ return A.GlobalVariable
-               `ap` return n
-               `ap` getLinkage g
-               `ap` getVisibility g
-               `ap` getDLLStorageClass g
-               `ap` getThreadLocalMode g
-               `ap` return as
-               `ap` (liftIO $ decodeM =<< FFI.getUnnamedAddr (FFI.upCast g))
-               `ap` (liftIO $ decodeM =<< FFI.isGlobalConstant g)
-               `ap` return t
-               `ap` (do
-                      i <- liftIO $ FFI.getInitializer g
-                      if i == nullPtr then return Nothing else Just <$> decodeM i)
-               `ap` getSection g
-               `ap` getCOMDATName g
-               `ap` getAlignment g,
-
-          do
-            ffiAliases <- liftIO $ FFI.getXs (FFI.getFirstAlias mod) FFI.getNextAlias
-            liftM sequence . forM ffiAliases $ \a -> do
-              n <- getGlobalName a
-              return $ return A.G.GlobalAlias
-               `ap` return n
-               `ap` getLinkage a
-               `ap` getVisibility a
-               `ap` getDLLStorageClass a
-               `ap` getThreadLocalMode a
-               `ap` (liftIO $ decodeM =<< FFI.getUnnamedAddr (FFI.upCast a))
-               `ap` typeOf a
-               `ap` (decodeM =<< (liftIO $ FFI.getAliasee a)),
-
-          do
-            ffiFunctions <- liftIO $ FFI.getXs (FFI.getFirstFunction mod) FFI.getNextFunction
-            liftM sequence . forM ffiFunctions $ \f -> localScope $ do
-              A.PointerType (A.FunctionType returnType _ isVarArg) _ <- typeOf f
-              n <- getGlobalName f
-              MixedAttributeSet fAttrs rAttrs pAttrs <- getMixedAttributeSet f
-              parameters <- getParameters f pAttrs
-              decodeBlocks <- do
-                ffiBasicBlocks <- liftIO $ FFI.getXs (FFI.getFirstBasicBlock f) FFI.getNextBasicBlock
-                liftM sequence . forM ffiBasicBlocks $ \b -> do
-                  n <- getLocalName b
-                  decodeInstructions <- getNamedInstructions b
-                  decodeTerminator <- getBasicBlockTerminator b
-                  return $ return A.BasicBlock `ap` return n `ap` decodeInstructions `ap` decodeTerminator
-              return $ return A.Function
-                 `ap` getLinkage f
-                 `ap` getVisibility f
-                 `ap` getDLLStorageClass f
-                 `ap` (liftIO $ decodeM =<< FFI.getFunctionCallingConvention f)
-                 `ap` return rAttrs
-                 `ap` return returnType
-                 `ap` return n
-                 `ap` return (parameters, isVarArg)
-                 `ap` return fAttrs
-                 `ap` getSection f
-                 `ap` getCOMDATName f
-                 `ap` getAlignment f
-                 `ap` getGC f
-                 `ap` getPrefixData f
-                 `ap` decodeBlocks
-                 `ap` getPersonalityFn f
-        ]
-
-       tds <- getStructDefinitions
-
-       ias <- decodeM =<< liftIO (FFI.moduleGetInlineAsm mod)
-
-       nmds <- do
-         ffiNamedMetadataNodes <- liftIO $ FFI.getXs (FFI.getFirstNamedMetadata mod) FFI.getNextNamedMetadata
-         forM ffiNamedMetadataNodes $ \nm -> scopeAnyCont $ do
-              n <- liftIO $ FFI.getNamedMetadataNumOperands nm
-              os <- allocaArray n
-              liftIO $ FFI.getNamedMetadataOperands nm os
-              return A.NamedMetadataDefinition
-                 `ap` (decodeM $ FFI.getNamedMetadataName nm)
-                 `ap` liftM (map (\(A.MetadataNodeReference mid) -> mid)) (decodeM (n, os))
-
-       mds <- getMetadataDefinitions
-
-       ags <- do
-         ags <- gets $ Map.toList . functionAttributeSetIDs
-         forM ags $ \(as, gid) -> return A.FunctionAttributes `ap` return gid `ap` decodeM as
-
-       cds <- gets $ map (uncurry A.COMDAT) . Map.elems . comdats
-
-       return $ tds ++ ias ++ gs ++ nmds ++ mds ++ ags ++ cds
-   )
+    <*> (do
+      globalDefinitions <-
+        map A.GlobalDefinition . concat <$>
+        -- Variables, aliases & functions can reference each other. To
+        -- resolve this references properly during decoding a two step
+        -- process is used: In the first step, the names of the
+        -- different definitions are stored. In the second step we can
+        -- then decode the definitions and look up the previously
+        -- stored references.
+        (join . fmap sequence . sequence)
+          [ decodeGlobalVariables mod
+          , decodeGlobalAliases mod
+          , decodeFunctions mod
+          ]
+      structDefinitions <- getStructDefinitions
+      inlineAsm <- decodeM =<< liftIO (FFI.moduleGetInlineAsm mod)
+      namedMetadata <- decodeNamedMetadataDefinitions mod
+      metadata <- getMetadataDefinitions
+      functionAttributes <- do
+        functionAttributes <- gets $ Map.toList . functionAttributeSetIDs
+        forM functionAttributes $ \(as, gid) ->
+          A.FunctionAttributes <$> return gid <*> decodeM as
+      comdats <- gets $ map (uncurry A.COMDAT) . Map.elems . comdats
+      return $
+        structDefinitions ++
+        inlineAsm ++
+        globalDefinitions ++
+        namedMetadata ++
+        metadata ++
+        functionAttributes ++
+        comdats)
