@@ -24,15 +24,15 @@ import LLVM.Internal.FFI.LLVMCTypes
 
 #{
 define hsc_inject() {                                       \
-  hsc_printf(" [ ");                                       \
+  hsc_printf("[");                                       \
   struct inst *i;                                           \
   const char *kind;                                         \
   int first = 1;                                            \
   for(i = insts; i->kind || i->opcode; ++i) {               \
     if (i->kind) { kind = i->kind; continue; }              \
-    if (!first) { hsc_printf(", "); } else { first = 0; }  \
+    if (!first) { hsc_printf("\n   ,"); } else { first = 0; }  \
     hsc_printf(                                             \
-        "  (CPPOpcode %d,\"%s\",\"%s\", %s)",               \
+        " (CPPOpcode %d,\"%s\",\"%s\", %s)",               \
         i->opcode, i->name, i->clas, kind                   \
       );                                                    \
   }                                                         \
@@ -54,7 +54,8 @@ data InstructionDef = InstructionDef {
 instructionDefs :: [InstructionDef]
 instructionDefs = [ 
  InstructionDef o an acn k
- | (o, an, acn, k) <- #{inject},
+ | (o, an, acn, k) <-
+   #{inject},
  an /= "UserOp1" && an /= "UserOp2"
  ]
 
