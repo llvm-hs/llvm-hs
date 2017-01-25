@@ -143,3 +143,7 @@ foreign import ccall unsafe "LLVMPPCFP128TypeInContext" ppcFP128TypeInContext ::
 -- | <http://llvm.org/doxygen/classllvm_1_1Type.html#a28fdf240b8220065bc60d6d1b1a2f174>
 foreign import ccall unsafe "LLVM_Hs_MetadataTypeInContext" metadataTypeInContext ::
   Ptr Context -> IO (Ptr Type)
+
+-- | <http://llvm.org/docs/doxygen/html/Core_8cpp.html#a5d3702e198e2373db7e31bb18879efc3>
+foreign import ccall unsafe "LLVM_Hs_TokenTypeInContext" tokenTypeInContext ::
+  Ptr Context -> IO (Ptr Type)

@@ -17,6 +17,7 @@
 	macro(Pointer) \
 	macro(Vector) \
 	macro(Metadata) \
-	macro(X86_MMX) 
+	macro(X86_MMX) \
+	macro(Token)
 
 #endif

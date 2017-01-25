@@ -102,6 +102,7 @@ instance EncodeM EncodeAST A.Type (Ptr FFI.Type) where
         liftIO $ FFI.structTypeInContext context ets packed
       A.NamedTypeReference n -> lookupNamedType n
       A.MetadataType -> liftIO $ FFI.metadataTypeInContext context
+      A.TokenType -> liftIO $ FFI.tokenTypeInContext context
 
 instance DecodeM DecodeAST A.Type (Ptr FFI.Type) where
   decodeM t = scopeAnyCont $ do
@@ -143,6 +144,7 @@ instance DecodeM DecodeAST A.Type (Ptr FFI.Type) where
         return A.ArrayType
          `ap` (decodeM =<< liftIO (FFI.getArrayLength t))
          `ap` (decodeM =<< liftIO (FFI.getElementType t))
+      [typeKindP|Token|] -> return A.TokenType
       _ -> error $ "unhandled type kind " ++ show k
 
 createNamedType :: A.Name -> EncodeAST (Ptr FFI.Type)
