@@ -153,6 +153,14 @@ instance DecodeM DecodeAST A.Terminator (Ptr FFI.Instruction) where
         return A.Unreachable {
           A.metadata' = md
         }
+      [instrP|CleanupRet|] -> do
+        dest <- decodeM =<< liftIO (FFI.upCast <$> (FFI.getCleanupPad i) :: IO (Ptr FFI.Value))
+        unwindDest <- decodeM =<< liftIO (FFI.getUnwindDest i)
+        return A.CleanupRet {
+          A.cleanupPad = dest,
+          A.unwindDest = unwindDest,
+          A.metadata' = md
+        }
 
 instance EncodeM EncodeAST A.Terminator (Ptr FFI.Instruction) where
   encodeM t = scopeAnyCont $ do
@@ -223,6 +231,13 @@ instance EncodeM EncodeAST A.Terminator (Ptr FFI.Instruction) where
       } -> do
         i <- liftIO $ FFI.buildUnreachable builder
         return $ FFI.upCast i
+      A.CleanupRet {
+        A.cleanupPad = cleanupPad,
+        A.unwindDest = unwindDest
+      } -> do
+        cleanupPad' <- encodeM cleanupPad
+        unwindDest' <- encodeM unwindDest
+        liftIO $ FFI.buildCleanupRet builder cleanupPad' unwindDest'
     setMD t' (A.metadata' t)
     return t'      
 
@@ -321,9 +336,15 @@ $(do
                           decodeM (n, a) |])
                 "rmwOperation" -> ([], [| decodeM =<< liftIO (FFI.getAtomicRMWBinOp i) |])
                 "cleanup" -> ([], [| decodeM =<< liftIO (FFI.isCleanup i) |])
+                "parentPad" -> ([], [| decodeM =<< liftIO (FFI.getParentPad i) |])
+                "args" -> ([], [| do numArgs <- liftIO (FFI.getNumArgOperands i)
+                                     if (numArgs == 0)
+                                       then return []
+                                       else forM [0..numArgs-1] $ \op ->
+                                              decodeM =<< liftIO (FFI.getArgOperand i op) |])
                 _ -> ([], [| error $ "unrecognized instruction field or depenency thereof: " ++ show s |])
           in
-          TH.caseE [| n |] [ 
+          TH.caseE [| n |] [
             TH.match opcodeP (TH.normalB (TH.doE handlerBody)) []
             | (lrn, iDef) <- Map.toList ID.instructionDefs,
               ID.instructionKind iDef /= ID.Terminator,
@@ -470,6 +491,11 @@ $(do
              i <- liftIO $ FFI.buildAlloca builder alt' n' s
              unless (alignment == 0) $ liftIO $ FFI.setInstrAlignment i (fromIntegral alignment)
              return' i
+          A.CleanupPad { A.parentPad = parentPad, A.args = args } -> do
+            parentPad' <- encodeM parentPad
+            (numArgs, args') <- encodeM args
+            i <- liftIO $ FFI.buildCleanupPad builder parentPad' args' numArgs s
+            return' i
           o -> $(TH.caseE [| o |] [
                    TH.match 
                    (TH.recP fullName [ (f,) <$> (TH.varP . TH.mkName . TH.nameBase $ f) | f <- fieldNames ])

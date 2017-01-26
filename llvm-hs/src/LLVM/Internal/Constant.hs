@@ -104,6 +104,9 @@ instance EncodeM EncodeAST A.Constant (Ptr FFI.Constant) where
         Just nm -> do
           t <- lookupNamedType nm
           liftIO $ FFI.constNamedStruct t ms
+    A.C.TokenNone -> do
+      Context context <- gets encodeStateContext
+      liftIO $ FFI.getConstTokenNone context
     o -> $(do
       let constExprInfo =  ID.outerJoin ID.astConstantRecs (ID.innerJoin ID.astInstructionRecs ID.instructionDefs)
       TH.caseE [| o |] $ do
@@ -237,6 +240,7 @@ instance DecodeM DecodeAST A.Constant (Ptr FFI.Constant) where
                           (TH.normalB (evalState (foldM apWrapper [| return $(TH.conE n) |] fs) 0))
                           []
              )
+      [valueSubclassIdP|ConstantTokenNone|] -> return A.C.TokenNone
       _ -> error $ "unhandled constant valueSubclassId: " ++ show valueSubclassId
 
 

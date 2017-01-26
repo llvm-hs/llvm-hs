@@ -273,4 +273,23 @@ unsigned LLVM_Hs_GetMetadata(
 	return mds.size();
 }
 
+LLVMValueRef LLVM_Hs_GetCleanupPad(LLVMValueRef i) {
+    return wrap(unwrap<CleanupReturnInst>(i)->getCleanupPad());
+}
+
+LLVMBasicBlockRef LLVM_Hs_GetUnwindDest(LLVMValueRef i) {
+    return wrap(unwrap<CleanupReturnInst>(i)->getUnwindDest());
+}
+
+LLVMValueRef LLVM_Hs_GetParentPad(LLVMValueRef i) {
+    return wrap(unwrap<FuncletPadInst>(i)->getParentPad());
+}
+
+unsigned LLVM_Hs_GetNumArgOperands(LLVMValueRef i) {
+    return unwrap<FuncletPadInst>(i)->getNumArgOperands();
+}
+
+LLVMValueRef LLVM_Hs_GetArgOperand(LLVMValueRef i, unsigned op) {
+    return wrap(unwrap<FuncletPadInst>(i)->getArgOperand(op));
+}
 }

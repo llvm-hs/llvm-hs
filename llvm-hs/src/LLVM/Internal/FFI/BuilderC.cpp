@@ -179,7 +179,17 @@ LLVMValueRef LLVM_Hs_BuildInsertValue(
 	return wrap(unwrap(b)->CreateInsertValue(unwrap(a), unwrap(v), ArrayRef<unsigned>(idxs, n), name));
 }
 
-//     LLVMValueRef LLVM_Hs_BuildCleanupPad(LLVMBuilderRef b, LLVM) {
-// }
+LLVMValueRef LLVM_Hs_BuildCleanupPad(LLVMBuilderRef b, LLVMValueRef parentPad,
+                                     LLVMValueRef *args, unsigned numArgs,
+                                     const char *name) {
+  return wrap(unwrap(b)->CreateCleanupPad(unwrap(parentPad),
+                                          makeArrayRef(unwrap(args), numArgs),
+                                          name));
+}
 
+LLVMValueRef LLVM_Hs_BuildCleanupRet(LLVMBuilderRef b, LLVMValueRef cleanupPad,
+                                     LLVMBasicBlockRef unwindDest) {
+    return wrap(unwrap(b)->CreateCleanupRet(unwrap<CleanupPadInst>(cleanupPad),
+                                            unwrap(unwindDest)));
+}
 }

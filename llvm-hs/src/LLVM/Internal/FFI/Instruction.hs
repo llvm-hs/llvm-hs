@@ -142,3 +142,18 @@ foreign import ccall unsafe "LLVM_Hs_SetMetadata" setMetadata ::
 
 foreign import ccall unsafe "LLVM_Hs_GetMetadata" getMetadata ::
   Ptr Instruction -> Ptr MDKindID -> Ptr (Ptr MDNode) -> CUInt -> IO CUInt
+
+foreign import ccall unsafe "LLVM_Hs_GetCleanupPad" getCleanupPad ::
+  Ptr Instruction -> IO (Ptr Instruction)
+
+foreign import ccall unsafe "LLVM_Hs_GetUnwindDest" getUnwindDest ::
+  Ptr Instruction -> IO (Ptr BasicBlock)
+
+foreign import ccall unsafe "LLVM_Hs_GetParentPad" getParentPad ::
+  Ptr Instruction -> IO (Ptr Value)
+
+foreign import ccall unsafe "LLVM_Hs_GetNumArgOperands" getNumArgOperands ::
+  Ptr Instruction -> IO CUInt
+
+foreign import ccall unsafe "LLVM_Hs_GetArgOperand" getArgOperand ::
+  Ptr Instruction -> CUInt -> IO (Ptr Value)
