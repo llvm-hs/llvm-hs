@@ -106,4 +106,9 @@ void LLVM_Hs_GetConstantFloatWords(LLVMValueRef v, uint64_t *bits) {
 	for(unsigned i=0; i != a.getNumWords(); ++i) bits[i] = a.getRawData()[i];
 }
 
+LLVMValueRef LLVM_Hs_GetConstTokenNone(LLVMContextRef context) {
+	return wrap(ConstantTokenNone::get(*unwrap(context)));
+}
+
+
 }

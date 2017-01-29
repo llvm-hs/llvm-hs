@@ -63,6 +63,11 @@ data Terminator
   | Unreachable {
       metadata' :: InstructionMetadata
     }
+  | CleanupRet {
+      cleanupPad :: Operand,
+      unwindDest :: Maybe Name,
+      metadata' :: InstructionMetadata
+    }
   deriving (Eq, Read, Show, Typeable, Data)
 
 -- | <http://llvm.org/docs/LangRef.html#fast-math-flags>
@@ -407,7 +412,12 @@ data Instruction
     }
   | CatchPad {type' :: Type,
               metadata :: InstructionMetadata}
-  | CleanupPad {metadata :: InstructionMetadata}
+  | CleanupPad {
+      parentPad :: Operand,
+      args :: [Operand],
+      metadata :: InstructionMetadata
+    }
+
   deriving (Eq, Read, Show, Typeable, Data)
 
 -- | Instances of instructions may be given a name, allowing their results to be referenced as 'Operand's.

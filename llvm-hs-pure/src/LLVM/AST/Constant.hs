@@ -31,6 +31,7 @@ data Constant
     | Undef { constantType :: Type }
     | BlockAddress { blockAddressFunction :: Name, blockAddressBlock :: Name }
     | GlobalReference Type Name
+    | TokenNone
     | Add { 
         nsw :: Bool,
         nuw :: Bool,

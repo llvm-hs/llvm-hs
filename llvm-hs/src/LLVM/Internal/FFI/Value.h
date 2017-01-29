@@ -17,6 +17,7 @@
 	macro(ConstantFP) \
 	macro(ConstantArray) \
 	macro(ConstantStruct) \
+	macro(ConstantTokenNone) \
 	macro(ConstantVector) \
 	macro(ConstantPointerNull) \
 	macro(InlineAsm) \
