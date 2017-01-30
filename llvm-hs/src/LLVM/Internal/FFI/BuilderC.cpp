@@ -189,7 +189,11 @@ LLVMValueRef LLVM_Hs_BuildCleanupPad(LLVMBuilderRef b, LLVMValueRef parentPad,
 
 LLVMValueRef LLVM_Hs_BuildCleanupRet(LLVMBuilderRef b, LLVMValueRef cleanupPad,
                                      LLVMBasicBlockRef unwindDest) {
-    return wrap(unwrap(b)->CreateCleanupRet(unwrap<CleanupPadInst>(cleanupPad),
+    // Due to the way name resolution works in llvm-hs, cleanupPad might not
+    // actually be a CleanupPadInst. However, it will later be replaced by one.
+    // Pretending that we have one is thus ok here.
+    auto cleanupPad_ = static_cast<CleanupPadInst*>(unwrap<Value>(cleanupPad));
+    return wrap(unwrap(b)->CreateCleanupRet(cleanupPad_,
                                             unwrap(unwindDest)));
 }
 }
