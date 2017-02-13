@@ -1062,7 +1062,7 @@ tests = testGroup "Instructions" [
            },
            GlobalDefinition functionDefaults {
              G.returnType = VoidType,
-             G.name = Name "cleanupret1",
+             G.name = Name "catchret0",
              G.basicBlocks = [
                G.BasicBlock (Name "entry") [] (
                  Do Invoke {
@@ -1083,18 +1083,23 @@ tests = testGroup "Instructions" [
                    functionAttributes' = []
                  }
                ),
+               G.BasicBlock (Name "pad") [] (
+                 Name "cs1" := CatchSwitch {
+                   parentPad' = ConstantOperand C.TokenNone,
+                   catchHandlers = [Name "catch"],
+                   defaultUnwindDest = Nothing,
+                   metadata' = []
+                 }
+               ),
                G.BasicBlock
-                 (Name "cleanup")
-                 []
-                 (Do CleanupRet {
-                    cleanupPad = LocalReference TokenType (Name "cp"),
-                    unwindDest = Nothing,
-                    metadata' = []
-                 }),
-               G.BasicBlock
-                 (Name "pad")
-                 [Name "cp" := CleanupPad { parentPad = ConstantOperand C.TokenNone, args = [], metadata = [] }]
-                 (Do Br { dest = Name "cleanup", metadata' = [] }),
+                 (Name "catch")
+                 [Name "cp" := CatchPad { catchSwitch = LocalReference TokenType (Name "cs1"), args = [ConstantOperand C.Int { C.integerBits = 7, C.integerValue = 4 }], metadata = [] }] (
+                 Do CatchRet {
+                   catchPad = LocalReference TokenType (Name "cp"),
+                   successor = Name "exit",
+                   metadata' = []
+                 }
+               ),
                G.BasicBlock (Name "exit") [] (Do Ret { returnOperand = Nothing, metadata' = [] })
              ],
              G.personalityFunction = Just (
@@ -1115,7 +1120,7 @@ tests = testGroup "Instructions" [
        \\n\
        \define void @catchret0() personality i32 (...)* @__gxx_personality_v0 {\n\
        \entry:\n\
-       \  invoke void @_Z3quxv() #0\n\
+       \  invoke void @_Z3quxv()\n\
        \          to label %exit unwind label %pad\n\
        \\n\
        \pad:                                              ; preds = %entry\n\

@@ -170,6 +170,9 @@ foreign import ccall unsafe "LLVM_Hs_CatchSwitch_GetNumHandlers" catchSwitchGetN
 foreign import ccall unsafe "LLVM_Hs_CatchSwitch_GetHandler" catchSwitchGetHandler ::
   Ptr Instruction -> CUInt -> IO (Ptr BasicBlock)
 
+foreign import ccall unsafe "LLVM_Hs_CatchSwitch_AddHandler" catchSwitchAddHandler ::
+  Ptr Instruction -> Ptr BasicBlock -> IO ()
+
 foreign import ccall unsafe "LLVM_Hs_CatchRet_GetCatchPad" catchRetGetCatchPad ::
   Ptr Instruction -> IO (Ptr Value)
 

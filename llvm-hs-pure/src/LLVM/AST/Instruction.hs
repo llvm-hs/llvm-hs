@@ -421,8 +421,11 @@ data Instruction
       clauses :: [LandingPadClause],
       metadata :: InstructionMetadata 
     }
-  | CatchPad {type' :: Type,
-              metadata :: InstructionMetadata}
+  | CatchPad {
+      catchSwitch :: Operand,
+      args :: [Operand],
+      metadata :: InstructionMetadata
+    }
   | CleanupPad {
       parentPad :: Operand,
       args :: [Operand],
