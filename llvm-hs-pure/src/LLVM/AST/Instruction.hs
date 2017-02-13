@@ -68,6 +68,17 @@ data Terminator
       unwindDest :: Maybe Name,
       metadata' :: InstructionMetadata
     }
+  | CatchRet {
+      catchPad :: Operand,
+      successor :: Name,
+      metadata' :: InstructionMetadata
+    }
+  | CatchSwitch {
+      parentPad' :: Operand,
+      catchHandlers :: [Name], -- TODO Use Data.List.NonEmpty because this list has to be nonempty
+      defaultUnwindDest :: Maybe Name,
+      metadata' :: InstructionMetadata
+    }
   deriving (Eq, Read, Show, Typeable, Data)
 
 -- | <http://llvm.org/docs/LangRef.html#fast-math-flags>

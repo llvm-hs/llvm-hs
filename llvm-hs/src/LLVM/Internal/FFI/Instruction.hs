@@ -157,3 +157,21 @@ foreign import ccall unsafe "LLVM_Hs_GetNumArgOperands" getNumArgOperands ::
 
 foreign import ccall unsafe "LLVM_Hs_GetArgOperand" getArgOperand ::
   Ptr Instruction -> CUInt -> IO (Ptr Value)
+
+foreign import ccall unsafe "LLVM_Hs_CatchSwitch_GetParentPad" catchSwitchGetParentPad ::
+  Ptr Instruction -> IO (Ptr Value)
+
+foreign import ccall unsafe "LLVM_Hs_CatchSwitch_GetUnwindDest" catchSwitchGetUnwindDest ::
+  Ptr Instruction -> IO (Ptr BasicBlock)
+
+foreign import ccall unsafe "LLVM_Hs_CatchSwitch_GetNumHandlers" catchSwitchGetNumHandlers ::
+  Ptr Instruction -> IO CUInt
+
+foreign import ccall unsafe "LLVM_Hs_CatchSwitch_GetHandler" catchSwitchGetHandler ::
+  Ptr Instruction -> CUInt -> IO (Ptr BasicBlock)
+
+foreign import ccall unsafe "LLVM_Hs_CatchRet_GetCatchPad" catchRetGetCatchPad ::
+  Ptr Instruction -> IO (Ptr Value)
+
+foreign import ccall unsafe "LLVM_Hs_CatchRet_GetSuccessor" catchRetGetSuccessor ::
+  Ptr Instruction -> IO (Ptr BasicBlock)

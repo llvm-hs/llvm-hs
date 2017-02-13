@@ -292,4 +292,32 @@ unsigned LLVM_Hs_GetNumArgOperands(LLVMValueRef i) {
 LLVMValueRef LLVM_Hs_GetArgOperand(LLVMValueRef i, unsigned op) {
     return wrap(unwrap<FuncletPadInst>(i)->getArgOperand(op));
 }
+
+LLVMValueRef LLVM_Hs_CatchSwitch_GetParentPad(LLVMValueRef i) {
+    fprintf(stderr, "getparendpad\n");
+    return wrap(unwrap<CatchSwitchInst>(i)->getParentPad());
+}
+
+LLVMBasicBlockRef LLVM_Hs_CatchSwitch_GetUnwindDest(LLVMValueRef i) {
+    fprintf(stderr, "getunwinddest\n");
+    return wrap(unwrap<CatchSwitchInst>(i)->getUnwindDest());
+}
+
+unsigned LLVM_Hs_CatchSwitch_GetNumHandlers(LLVMValueRef i) {
+    fprintf(stderr, "getnumhandlers\n");
+    return unwrap<CatchSwitchInst>(i)->getNumHandlers();
+}
+
+LLVMBasicBlockRef LLVM_Hs_CatchSwitch_GetHandler(LLVMValueRef instr, unsigned i) {
+    fprintf(stderr, "getHandler\n");
+    return wrap(*(unwrap<CatchSwitchInst>(instr)->handler_begin() + i));
+}
+
+LLVMValueRef LLVM_Hs_CatchRet_GetCatchPad(LLVMValueRef i) {
+    return wrap(unwrap<CatchReturnInst>(i)->getCatchPad());
+}
+
+LLVMBasicBlockRef LLVM_Hs_CatchRet_GetSuccessor(LLVMValueRef i) {
+    return wrap(unwrap<CatchReturnInst>(i)->getSuccessor());
+}
 }

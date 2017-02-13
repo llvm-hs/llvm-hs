@@ -1043,6 +1043,91 @@ tests = testGroup "Instructions" [
        \exit:                                             ; preds = %entry\n\
        \  ret void\n\
        \}\n"
+     ), ( -- This testcase is taken from test/Feature/exception.ll in LLVM
+       "catchret0",
+       Module {
+         moduleName = "<string>",
+         moduleSourceFileName = "<string>",
+         moduleDataLayout = Nothing,
+         moduleTargetTriple = Nothing,
+         moduleDefinitions = [
+           GlobalDefinition functionDefaults {
+             G.returnType = VoidType,
+             G.name = Name "_Z3quxv"
+           },
+           GlobalDefinition functionDefaults {
+             G.returnType = IntegerType {typeBits = 32},
+             G.name = Name "__gxx_personality_v0",
+             G.parameters = ([], True)
+           },
+           GlobalDefinition functionDefaults {
+             G.returnType = VoidType,
+             G.name = Name "cleanupret1",
+             G.basicBlocks = [
+               G.BasicBlock (Name "entry") [] (
+                 Do Invoke {
+                   callingConvention' = CC.C,
+                   returnAttributes' = [],
+                   function' = Right (
+                     ConstantOperand (
+                       C.GlobalReference PointerType {
+                         pointerReferent = FunctionType {resultType = VoidType, argumentTypes = [], isVarArg = False},
+                         pointerAddrSpace = AddrSpace 0
+                       } (Name "_Z3quxv")
+                     )
+                   ),
+                   arguments' = [],
+                   returnDest = Name "exit",
+                   exceptionDest = Name "pad",
+                   metadata' = [],
+                   functionAttributes' = []
+                 }
+               ),
+               G.BasicBlock
+                 (Name "cleanup")
+                 []
+                 (Do CleanupRet {
+                    cleanupPad = LocalReference TokenType (Name "cp"),
+                    unwindDest = Nothing,
+                    metadata' = []
+                 }),
+               G.BasicBlock
+                 (Name "pad")
+                 [Name "cp" := CleanupPad { parentPad = ConstantOperand C.TokenNone, args = [], metadata = [] }]
+                 (Do Br { dest = Name "cleanup", metadata' = [] }),
+               G.BasicBlock (Name "exit") [] (Do Ret { returnOperand = Nothing, metadata' = [] })
+             ],
+             G.personalityFunction = Just (
+               C.GlobalReference PointerType {
+                 pointerReferent = FunctionType {resultType = IntegerType { typeBits = 32 }, argumentTypes = [], isVarArg = True},
+                 pointerAddrSpace = AddrSpace 0
+               } (Name "__gxx_personality_v0")
+             )
+           }
+         ]
+       },
+       "; ModuleID = '<string>'\n\
+       \source_filename = \"<string>\"\n\
+       \\n\
+       \declare void @_Z3quxv()\n\
+       \\n\
+       \declare i32 @__gxx_personality_v0(...)\n\
+       \\n\
+       \define void @catchret0() personality i32 (...)* @__gxx_personality_v0 {\n\
+       \entry:\n\
+       \  invoke void @_Z3quxv() #0\n\
+       \          to label %exit unwind label %pad\n\
+       \\n\
+       \pad:                                              ; preds = %entry\n\
+       \  %cs1 = catchswitch within none [label %catch] unwind to caller\n\
+       \\n\
+       \catch:                                            ; preds = %pad\n\
+       \  %cp = catchpad within %cs1 [i7 4]\n\
+       \  catchret from %cp to label %exit\n\
+       \\n\
+       \exit:                                             ; preds = %catch, %entry\n\
+       \  ret void\n\
+       \}\n"
      )
     ]
    ]

@@ -161,6 +161,26 @@ instance DecodeM DecodeAST A.Terminator (Ptr FFI.Instruction) where
           A.unwindDest = unwindDest,
           A.metadata' = md
         }
+      [instrP|CatchRet|] -> do
+        catchPad <- decodeM =<< liftIO (FFI.catchRetGetCatchPad i)
+        successor <- decodeM =<< liftIO (FFI.catchRetGetSuccessor i)
+        return A.CatchRet {
+          A.catchPad = catchPad,
+          A.successor = successor,
+          A.metadata' = md
+        }
+      [instrP|CatchSwitch|] -> do
+        parentPad' <- decodeM =<< liftIO (FFI.catchSwitchGetParentPad i)
+        numHandlers <- liftIO (FFI.catchSwitchGetNumHandlers i)
+        -- assert (numHandlers > 0)
+        handlers <- forM [0..numHandlers - 1] $ decodeM <=< liftIO . FFI.catchSwitchGetHandler i
+        unwindDest <- decodeM =<< liftIO (FFI.catchSwitchGetUnwindDest i)
+        return A.CatchSwitch {
+          A.parentPad' = parentPad',
+          A.catchHandlers = handlers,
+          A.defaultUnwindDest = unwindDest,
+          A.metadata' = md
+        }
 
 instance EncodeM EncodeAST A.Terminator (Ptr FFI.Instruction) where
   encodeM t = scopeAnyCont $ do
