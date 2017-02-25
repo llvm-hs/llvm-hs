@@ -67,7 +67,7 @@ instance OldHookable (Args -> PackageDescription -> LocalBuildInfo -> UserHooks 
 llvmProgram :: Program
 llvmProgram = (simpleProgram "llvm-config") {
   programFindLocation = programSearch (programFindLocation . simpleProgram),
-  programFindVersion = 
+  programFindVersion =
     let
       stripSuffix suf str = let r = reverse in liftM r (stripPrefix (r suf) (r str))
       svnToTag v = maybe v (++"-svn") (stripSuffix "svn" v)
@@ -76,13 +76,13 @@ llvmProgram = (simpleProgram "llvm-config") {
       \v p -> findProgramVersion "--version" (svnToTag . trim) v p
  }
 
-getLLVMConfig :: ConfigFlags -> IO (String -> IO String)
+getLLVMConfig :: ConfigFlags -> IO ([String] -> IO String)
 getLLVMConfig configFlags = do
   let verbosity = fromFlag $ configVerbosity configFlags
   (program, _, _) <- requireProgramVersion verbosity llvmProgram
                      (withinVersion llvmVersion)
                      (configPrograms configFlags)
-  return $ getProgramOutput verbosity program . return
+  return $ getProgramOutput verbosity program
 
 addToLdLibraryPath :: String -> IO ()
 addToLdLibraryPath path = do
@@ -96,7 +96,7 @@ addToLdLibraryPath path = do
 addLLVMToLdLibraryPath :: ConfigFlags -> IO ()
 addLLVMToLdLibraryPath configFlags = do
   llvmConfig <- getLLVMConfig configFlags
-  [libDir] <- liftM lines $ llvmConfig "--libdir"
+  [libDir] <- liftM lines $ llvmConfig ["--libdir"]
   addToLdLibraryPath libDir
 
 -- | These flags are not relevant for us and dropping them allows
@@ -110,27 +110,26 @@ ignoredCFlags = ["-Wcovered-switch-default", "-Wdelete-non-virtual-dtor", "-fcol
 
 main = do
   let origUserHooks = simpleUserHooks
-                  
+
   defaultMainWithHooks origUserHooks {
     hookedPrograms = [ llvmProgram ],
 
     confHook = \(genericPackageDescription, hookedBuildInfo) configFlags -> do
       llvmConfig <- getLLVMConfig configFlags
       llvmCxxFlags <- do
-        rawLlvmCxxFlags <- llvmConfig "--cxxflags"
+        rawLlvmCxxFlags <- llvmConfig ["--cxxflags"]
         return (words rawLlvmCxxFlags \\ ignoredCxxFlags)
       let stdLib = maybe "stdc++"
                          (drop (length stdlibPrefix))
                          (find (isPrefixOf stdlibPrefix) llvmCxxFlags)
             where stdlibPrefix = "-stdlib=lib"
-      includeDirs <- liftM lines $ llvmConfig "--includedir"
-      libDirs@[libDir] <- liftM lines $ llvmConfig "--libdir"
-      [llvmVersion] <- liftM lines $ llvmConfig "--version"
-      let sharedLib = case llvmVersion of
-                        "3.2" -> "LLVM-3.2svn"
-                        x -> "LLVM-" ++ x
-      staticLibs <- liftM (map (fromJust . stripPrefix "-l") . words) $ llvmConfig "--libs"
-      systemLibs <- liftM (map (fromJust . stripPrefix "-l") . words) $ llvmConfig "--system-libs"
+      includeDirs <- liftM lines $ llvmConfig ["--includedir"]
+      libDirs@[libDir] <- liftM lines $ llvmConfig ["--libdir"]
+      [llvmVersion] <- liftM lines $ llvmConfig ["--version"]
+      let getLibs = liftM (map (fromJust . stripPrefix "-l") . words) . llvmConfig
+      sharedLibs <- getLibs ["--libs", "--link-shared"]
+      staticLibs <- getLibs ["--libs", "--link-static"]
+      systemLibs <- getLibs ["--system-libs"]
 
       let genericPackageDescription' = genericPackageDescription {
             condLibrary = do
@@ -146,10 +145,10 @@ main = do
                 condTreeComponents = condTreeComponents libraryCondTree ++ [
                   (
                     Var (Flag (FlagName "shared-llvm")),
-                    CondNode (mempty { libBuildInfo = mempty { extraLibs = [sharedLib] ++ systemLibs } }) [] [],
+                    CondNode (mempty { libBuildInfo = mempty { extraLibs = sharedLibs ++ systemLibs } }) [] [],
                     Just (CondNode (mempty { libBuildInfo = mempty { extraLibs = staticLibs ++ systemLibs } }) [] [])
                   )
-                ] 
+                ]
               }
            }
           configFlags' = configFlags {
@@ -167,7 +166,7 @@ main = do
                   runPreProcessor = \inFiles outFiles verbosity -> do
                       llvmConfig <- getLLVMConfig (configFlags localBuildInfo)
                       llvmCFlags <- do
-                          rawLlvmCFlags <- llvmConfig "--cflags"
+                          rawLlvmCFlags <- llvmConfig ["--cflags"]
                           return (words rawLlvmCFlags \\ ignoredCFlags)
                       let buildInfo' = buildInfo { ccOptions = "-Wno-variadic-macros" : llvmCFlags }
                       runPreProcessor (origHsc buildInfo' localBuildInfo) inFiles outFiles verbosity
