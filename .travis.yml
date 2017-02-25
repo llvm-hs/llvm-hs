@@ -7,8 +7,8 @@ cache:
   directories:
     - $HOME/.cabal/packages
     - $HOME/.cabal/store
-    - $HOME/llvm-build
-    - $HOME/llvm-src
+    - $HOME/llvm-build-3.9.1
+    - $HOME/llvm-src-3.9.1
 
 before_cache:
   - rm -fv $HOME/.cabal/packages/hackage.haskell.org/build-reports.log
@@ -44,13 +44,13 @@ install:
  - export PATH=$HOME/cmake-3.6.1-Linux-x86_64/bin:$PATH
  - curl http://releases.llvm.org/${LLVM_VER}/llvm-${LLVM_VER}.src.tar.xz | tar -xJf - -C $HOME
 # mv cannot replace existing files so we need to use cp & rm
- - rsync -ac $HOME/llvm-${LLVM_VER}.src/ $HOME/llvm-src
- - cd $HOME/llvm-src
+ - rsync -ac $HOME/llvm-${LLVM_VER}.src/ $HOME/llvm-src-${LLVM_VER}
+ - cd $HOME/llvm-src-${LLVM_VER}
  - mkdir -p build && cd build
- - cmake -DCMAKE_BUILD_TYPE=Release -DCMAKE_INSTALL_PREFIX=$HOME/llvm-build -DLLVM_PARALLEL_LINK_JOBS=1 -DLLVM_TARGETS_TO_BUILD=X86 ..
+ - cmake -DCMAKE_BUILD_TYPE=Release -DCMAKE_INSTALL_PREFIX=$HOME/llvm-build-${LLVM_VER} -DLLVM_PARALLEL_LINK_JOBS=1 -DLLVM_TARGETS_TO_BUILD=X86 ..
  - make install -j3
  - cd $TRAVIS_BUILD_DIR
- - ln -s $HOME/llvm-build/bin/llvm-config $HOME/bin/llvm-config
+ - ln -s $HOME/llvm-build-${LLVM_VER}/bin/llvm-config $HOME/bin/llvm-config
  - llvm-config --version
  - $GCC --version
  - $GXX --version
