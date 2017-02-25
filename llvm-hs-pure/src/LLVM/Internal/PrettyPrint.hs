@@ -12,6 +12,7 @@ import LLVM.Prelude
 import LLVM.TH 
 import Language.Haskell.TH.Quote
 
+import Data.List.NonEmpty (NonEmpty)
 import Data.Monoid
 import Data.String
 import Data.Maybe
@@ -111,6 +112,8 @@ class Show a => PrettyShow a where
 instance PrettyShow a => PrettyShow [a] where
   prettyShow = prettyShowList
 
+instance PrettyShow a => PrettyShow (NonEmpty a) where
+  prettyShow = prettyShowList . toList
 
 appPrec = 10
 appPrec1 = 11

@@ -15,6 +15,8 @@ import LLVM.AST.CallingConvention (CallingConvention)
 import qualified LLVM.AST.ParameterAttribute as PA (ParameterAttribute)
 import qualified LLVM.AST.FunctionAttribute as FA (FunctionAttribute, GroupID)
 
+import Data.List.NonEmpty
+
 -- | <http://llvm.org/docs/LangRef.html#metadata-nodes-and-metadata-strings>
 -- Metadata can be attached to an instruction
 type InstructionMetadata = [(String, MetadataNode)]
@@ -75,7 +77,7 @@ data Terminator
     }
   | CatchSwitch {
       parentPad' :: Operand,
-      catchHandlers :: [Name], -- TODO Use Data.List.NonEmpty because this list has to be nonempty
+      catchHandlers :: NonEmpty Name,
       defaultUnwindDest :: Maybe Name,
       metadata' :: InstructionMetadata
     }

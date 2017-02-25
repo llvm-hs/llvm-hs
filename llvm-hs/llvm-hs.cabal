@@ -48,6 +48,10 @@ flag debug
   description: compile C(++) shims with debug info for ease of troubleshooting
   default: False
 
+flag semigroups
+  description: Add semigroups to build-depends for Data.List.NonEmpty. This will be selected automatically by cabal.
+  default: False
+
 custom-setup
   setup-depends: base
                , Cabal
@@ -56,8 +60,14 @@ custom-setup
 library
   build-tools: llvm-config
   ghc-options: -fwarn-unused-imports
+  if flag(semigroups)
+    build-depends:
+      base >= 4.7 && < 4.9,
+      semigroups >= 0.18 && < 0.19
+  else
+    build-depends:
+      base >= 4.9 && < 5
   build-depends:
-    base >= 4.7 && < 5,
     utf8-string >= 0.3.7,
     bytestring >= 0.9.1.10,
     transformers >= 0.3 && < 0.6,
@@ -213,8 +223,14 @@ library
 
 test-suite test
   type: exitcode-stdio-1.0
+  if flag(semigroups)
+    build-depends:
+      base >= 4.7 && < 4.9,
+      semigroups >= 0.18 && < 0.19
+  else
+    build-depends:
+      base >= 4.9 && < 5
   build-depends:
-    base >= 4.7 && < 5,
     test-framework >= 0.5,
     test-framework-hunit >= 0.2.7,
     HUnit >= 1.2.4.2,

@@ -8,6 +8,7 @@ import LLVM.Test.Support
 
 import Control.Monad
 import Data.Functor
+import Data.List.NonEmpty (NonEmpty((:|)))
 import Data.Maybe
 import Foreign.Ptr
 import Data.Word
@@ -1086,7 +1087,7 @@ tests = testGroup "Instructions" [
                G.BasicBlock (Name "pad") [] (
                  Name "cs1" := CatchSwitch {
                    parentPad' = ConstantOperand C.TokenNone,
-                   catchHandlers = [Name "catch"],
+                   catchHandlers = (Name "catch" :| []),
                    defaultUnwindDest = Nothing,
                    metadata' = []
                  }
@@ -1183,7 +1184,7 @@ tests = testGroup "Instructions" [
                G.BasicBlock (Name "pad") [] (
                  Name "cs1" := CatchSwitch {
                    parentPad' = ConstantOperand C.TokenNone,
-                   catchHandlers = [Name "catch"],
+                   catchHandlers = (Name "catch" :| []),
                    defaultUnwindDest = Nothing,
                    metadata' = []
                  }

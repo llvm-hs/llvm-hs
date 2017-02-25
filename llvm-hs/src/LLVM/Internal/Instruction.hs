@@ -21,8 +21,11 @@ import Control.Monad.State (gets)
 
 import Foreign.Ptr
 
+import Control.Exception (assert)
 import qualified Data.Map as Map
 import qualified Data.List as List
+import Data.List.NonEmpty (NonEmpty((:|)))
+import qualified Data.List.NonEmpty as NonEmpty
 
 import qualified LLVM.Internal.FFI.PtrHierarchy as FFI
 import qualified LLVM.Internal.FFI.BinaryOperator as FFI
@@ -172,8 +175,8 @@ instance DecodeM DecodeAST A.Terminator (Ptr FFI.Instruction) where
       [instrP|CatchSwitch|] -> do
         parentPad' <- decodeM =<< liftIO (FFI.catchSwitchGetParentPad i)
         numHandlers <- liftIO (FFI.catchSwitchGetNumHandlers i)
-        -- assert (numHandlers > 0)
-        handlers <- forM [0..numHandlers - 1] $ decodeM <=< liftIO . FFI.catchSwitchGetHandler i
+        handlers <- assert (numHandlers > 0) $
+          forM (0 :| [1..numHandlers - 1]) $ decodeM <=< liftIO . FFI.catchSwitchGetHandler i
         unwindDest <- decodeM =<< liftIO (FFI.catchSwitchGetUnwindDest i)
         return A.CatchSwitch {
           A.parentPad' = parentPad',
@@ -272,7 +275,7 @@ instance EncodeM EncodeAST A.Terminator (Ptr FFI.Instruction) where
       } -> do
         parentPad' <- encodeM parentPad
         unwindDest' <- encodeM unwindDest
-        let numHandlers = fromIntegral (length catchHandlers)
+        let numHandlers = fromIntegral (NonEmpty.length catchHandlers)
         i <- liftIO $ FFI.buildCatchSwitch builder parentPad' unwindDest' numHandlers
         mapM_ (liftIO . FFI.catchSwitchAddHandler i <=< encodeM) catchHandlers
         return i
