@@ -21,8 +21,11 @@ import Control.Monad.State (gets)
 
 import Foreign.Ptr
 
+import Control.Exception (assert)
 import qualified Data.Map as Map
 import qualified Data.List as List
+import Data.List.NonEmpty (NonEmpty((:|)))
+import qualified Data.List.NonEmpty as NonEmpty
 
 import qualified LLVM.Internal.FFI.PtrHierarchy as FFI
 import qualified LLVM.Internal.FFI.BinaryOperator as FFI
@@ -161,6 +164,26 @@ instance DecodeM DecodeAST A.Terminator (Ptr FFI.Instruction) where
           A.unwindDest = unwindDest,
           A.metadata' = md
         }
+      [instrP|CatchRet|] -> do
+        catchPad <- decodeM =<< liftIO (FFI.catchRetGetCatchPad i)
+        successor <- decodeM =<< liftIO (FFI.catchRetGetSuccessor i)
+        return A.CatchRet {
+          A.catchPad = catchPad,
+          A.successor = successor,
+          A.metadata' = md
+        }
+      [instrP|CatchSwitch|] -> do
+        parentPad' <- decodeM =<< liftIO (FFI.catchSwitchGetParentPad i)
+        numHandlers <- liftIO (FFI.catchSwitchGetNumHandlers i)
+        handlers <- assert (numHandlers > 0) $
+          forM (0 :| [1..numHandlers - 1]) $ decodeM <=< liftIO . FFI.catchSwitchGetHandler i
+        unwindDest <- decodeM =<< liftIO (FFI.catchSwitchGetUnwindDest i)
+        return A.CatchSwitch {
+          A.parentPad' = parentPad',
+          A.catchHandlers = handlers,
+          A.defaultUnwindDest = unwindDest,
+          A.metadata' = md
+        }
 
 instance EncodeM EncodeAST A.Terminator (Ptr FFI.Instruction) where
   encodeM t = scopeAnyCont $ do
@@ -238,6 +261,24 @@ instance EncodeM EncodeAST A.Terminator (Ptr FFI.Instruction) where
         cleanupPad' <- encodeM cleanupPad
         unwindDest' <- encodeM unwindDest
         liftIO $ FFI.buildCleanupRet builder cleanupPad' unwindDest'
+      A.CatchRet {
+        A.catchPad = catchPad,
+        A.successor = successor
+      } -> do
+        catchPad' <- encodeM catchPad
+        successor' <- encodeM successor
+        liftIO $ FFI.buildCatchRet builder catchPad' successor'
+      A.CatchSwitch {
+        A.parentPad' = parentPad,
+        A.catchHandlers = catchHandlers,
+        A.defaultUnwindDest = unwindDest
+      } -> do
+        parentPad' <- encodeM parentPad
+        unwindDest' <- encodeM unwindDest
+        let numHandlers = fromIntegral (NonEmpty.length catchHandlers)
+        i <- liftIO $ FFI.buildCatchSwitch builder parentPad' unwindDest' numHandlers
+        mapM_ (liftIO . FFI.catchSwitchAddHandler i <=< encodeM) catchHandlers
+        return i
     setMD t' (A.metadata' t)
     return t'      
 
@@ -337,6 +378,7 @@ $(do
                 "rmwOperation" -> ([], [| decodeM =<< liftIO (FFI.getAtomicRMWBinOp i) |])
                 "cleanup" -> ([], [| decodeM =<< liftIO (FFI.isCleanup i) |])
                 "parentPad" -> ([], [| decodeM =<< liftIO (FFI.getParentPad i) |])
+                "catchSwitch" -> ([], [| decodeM =<< liftIO (FFI.getParentPad i) |])
                 "args" -> ([], [| do numArgs <- liftIO (FFI.getNumArgOperands i)
                                      if (numArgs == 0)
                                        then return []
@@ -495,6 +537,11 @@ $(do
             parentPad' <- encodeM parentPad
             (numArgs, args') <- encodeM args
             i <- liftIO $ FFI.buildCleanupPad builder parentPad' args' numArgs s
+            return' i
+          A.CatchPad { A.catchSwitch = catchSwitch, A.args = args } -> do
+            catchSwitch' <- encodeM catchSwitch
+            (numArgs, args') <- encodeM args
+            i <- liftIO $ FFI.buildCatchPad builder catchSwitch' args' numArgs s
             return' i
           o -> $(TH.caseE [| o |] [
                    TH.match 

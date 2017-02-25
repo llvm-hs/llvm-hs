@@ -65,6 +65,11 @@ foreign import ccall unsafe "LLVMBuildUnreachable" buildUnreachable ::
 foreign import ccall unsafe "LLVM_Hs_BuildCleanupRet" buildCleanupRet ::
   Ptr Builder -> Ptr Value -> Ptr BasicBlock -> IO (Ptr Instruction)
 
+foreign import ccall unsafe "LLVM_Hs_BuildCatchRet" buildCatchRet ::
+  Ptr Builder -> Ptr Value -> Ptr BasicBlock -> IO (Ptr Instruction)
+
+foreign import ccall unsafe "LLVM_Hs_BuildCatchSwitch" buildCatchSwitch ::
+  Ptr Builder -> Ptr Value -> Ptr BasicBlock -> CUInt -> IO (Ptr Instruction)
 
 $(do
   liftM concat $ sequence $ do
@@ -165,6 +170,9 @@ buildLandingPad :: Ptr Builder -> Ptr Type -> CUInt -> CString -> IO (Ptr Instru
 buildLandingPad builder ty numClauses name = buildLandingPad' builder ty nullPtr numClauses name
 
 foreign import ccall unsafe "LLVM_Hs_BuildCleanupPad" buildCleanupPad ::
+  Ptr Builder -> Ptr Value -> Ptr (Ptr Value) -> CUInt -> CString -> IO (Ptr Instruction)
+
+foreign import ccall unsafe "LLVM_Hs_BuildCatchPad" buildCatchPad ::
   Ptr Builder -> Ptr Value -> Ptr (Ptr Value) -> CUInt -> CString -> IO (Ptr Instruction)
 
 foreign import ccall unsafe "LLVM_Hs_SetFastMathFlags" setFastMathFlags ::

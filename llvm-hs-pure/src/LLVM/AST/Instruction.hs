@@ -15,6 +15,8 @@ import LLVM.AST.CallingConvention (CallingConvention)
 import qualified LLVM.AST.ParameterAttribute as PA (ParameterAttribute)
 import qualified LLVM.AST.FunctionAttribute as FA (FunctionAttribute, GroupID)
 
+import Data.List.NonEmpty
+
 -- | <http://llvm.org/docs/LangRef.html#metadata-nodes-and-metadata-strings>
 -- Metadata can be attached to an instruction
 type InstructionMetadata = [(String, MetadataNode)]
@@ -66,6 +68,17 @@ data Terminator
   | CleanupRet {
       cleanupPad :: Operand,
       unwindDest :: Maybe Name,
+      metadata' :: InstructionMetadata
+    }
+  | CatchRet {
+      catchPad :: Operand,
+      successor :: Name,
+      metadata' :: InstructionMetadata
+    }
+  | CatchSwitch {
+      parentPad' :: Operand,
+      catchHandlers :: NonEmpty Name,
+      defaultUnwindDest :: Maybe Name,
       metadata' :: InstructionMetadata
     }
   deriving (Eq, Read, Show, Typeable, Data)
@@ -410,8 +423,11 @@ data Instruction
       clauses :: [LandingPadClause],
       metadata :: InstructionMetadata 
     }
-  | CatchPad {type' :: Type,
-              metadata :: InstructionMetadata}
+  | CatchPad {
+      catchSwitch :: Operand,
+      args :: [Operand],
+      metadata :: InstructionMetadata
+    }
   | CleanupPad {
       parentPad :: Operand,
       args :: [Operand],

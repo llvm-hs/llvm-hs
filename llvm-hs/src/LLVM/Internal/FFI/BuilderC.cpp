@@ -187,6 +187,14 @@ LLVMValueRef LLVM_Hs_BuildCleanupPad(LLVMBuilderRef b, LLVMValueRef parentPad,
                                           name));
 }
 
+LLVMValueRef LLVM_Hs_BuildCatchPad(LLVMBuilderRef b, LLVMValueRef catchSwitch,
+                                   LLVMValueRef *args, unsigned numArgs,
+                                   const char *name) {
+    return wrap(unwrap(b)->CreateCatchPad(unwrap(catchSwitch),
+                                          makeArrayRef(unwrap(args), numArgs),
+                                          name));
+}
+
 LLVMValueRef LLVM_Hs_BuildCleanupRet(LLVMBuilderRef b, LLVMValueRef cleanupPad,
                                      LLVMBasicBlockRef unwindDest) {
     // Due to the way name resolution works in llvm-hs, cleanupPad might not
@@ -195,5 +203,21 @@ LLVMValueRef LLVM_Hs_BuildCleanupRet(LLVMBuilderRef b, LLVMValueRef cleanupPad,
     auto cleanupPad_ = static_cast<CleanupPadInst*>(unwrap<Value>(cleanupPad));
     return wrap(unwrap(b)->CreateCleanupRet(cleanupPad_,
                                             unwrap(unwindDest)));
+}
+
+LLVMValueRef LLVM_Hs_BuildCatchRet(LLVMBuilderRef b, LLVMValueRef catchPad,
+                                   LLVMBasicBlockRef successor) {
+    // Due to the way name resolution works in llvm-hs, catchPad might not
+    // actually be a CatchPadInst. However, it will later be replaced by one.
+    // Pretending that we have one is thus ok here.
+    auto catchPad_ = static_cast<CatchPadInst *>(unwrap<Value>(catchPad));
+    return wrap(unwrap(b)->CreateCatchRet(catchPad_, unwrap(successor)));
+}
+
+LLVMValueRef LLVM_Hs_BuildCatchSwitch(LLVMBuilderRef b, LLVMValueRef parentPad,
+                                      LLVMBasicBlockRef unwindDest,
+                                      unsigned numHandlers) {
+    return wrap(unwrap(b)->CreateCatchSwitch(unwrap(parentPad),
+                                             unwrap(unwindDest), numHandlers));
 }
 }
