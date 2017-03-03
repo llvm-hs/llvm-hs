@@ -37,8 +37,8 @@ data Type
   | NamedTypeReference Name
   -- | <http://llvm.org/docs/LangRef.html#metadata-type>
   | MetadataType -- only to be used as a parameter type for a few intrinsics
-  | TokenType
   -- | <http://llvm.org/docs/LangRef.html#token-type>
+  | TokenType
   deriving (Eq, Ord, Read, Show, Typeable, Data)
 
 -- | An abbreviation for 'VoidType'
