@@ -28,9 +28,11 @@ extra-source-files:
   src/LLVM/Internal/FFI/InlineAssembly.h
   src/LLVM/Internal/FFI/Instruction.h
   src/LLVM/Internal/FFI/LibFunc.h
+  src/LLVM/Internal/FFI/Metadata.hpp
   src/LLVM/Internal/FFI/OrcJIT.h
   src/LLVM/Internal/FFI/SMDiagnostic.h
   src/LLVM/Internal/FFI/Target.h
+  src/LLVM/Internal/FFI/Target.hpp
   src/LLVM/Internal/FFI/Type.h
   src/LLVM/Internal/FFI/Value.h
 tested-with: GHC == 7.8.4, GHC == 7.10.3, GHC == 8.0.2
