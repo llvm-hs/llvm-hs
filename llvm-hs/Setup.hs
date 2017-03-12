@@ -108,6 +108,16 @@ ignoredCxxFlags =
 ignoredCFlags :: [String]
 ignoredCFlags = ["-Wcovered-switch-default", "-Wdelete-non-virtual-dtor", "-fcolor-diagnostics"]
 
+-- | Header directories are added separately to configExtraIncludeDirs
+isIncludeFlag :: String -> Bool
+isIncludeFlag flag = "-I" `isPrefixOf` flag
+
+isIgnoredCFlag :: String -> Bool
+isIgnoredCFlag flag = flag `elem` ignoredCFlags || isIncludeFlag flag
+
+isIgnoredCxxFlag :: String -> Bool
+isIgnoredCxxFlag flag = flag `elem` ignoredCxxFlags || isIncludeFlag flag
+
 main = do
   let origUserHooks = simpleUserHooks
 
@@ -118,7 +128,7 @@ main = do
       llvmConfig <- getLLVMConfig configFlags
       llvmCxxFlags <- do
         rawLlvmCxxFlags <- llvmConfig ["--cxxflags"]
-        return (words rawLlvmCxxFlags \\ ignoredCxxFlags)
+        return . filter (not . isIgnoredCxxFlag) $ words rawLlvmCxxFlags
       let stdLib = maybe "stdc++"
                          (drop (length stdlibPrefix))
                          (find (isPrefixOf stdlibPrefix) llvmCxxFlags)
@@ -163,7 +173,7 @@ main = do
                       llvmConfig <- getLLVMConfig (configFlags localBuildInfo)
                       llvmCFlags <- do
                           rawLlvmCFlags <- llvmConfig ["--cflags"]
-                          return (words rawLlvmCFlags \\ ignoredCFlags)
+                          return . filter (not . isIgnoredCFlag) $ words rawLlvmCFlags
                       let buildInfo' = buildInfo { ccOptions = "-Wno-variadic-macros" : llvmCFlags }
                       runPreProcessor (origHsc buildInfo' localBuildInfo) inFiles outFiles verbosity
               }
