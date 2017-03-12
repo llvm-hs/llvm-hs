@@ -156,6 +156,9 @@ unsigned LLVM_Hs_GetTargetOptionFlag(TargetOptions *to,
     return to->op;
     LLVM_HS_FOR_EACH_TARGET_OPTION_FLAG(ENUM_CASE)
 #undef ENUM_CASE
+  default:
+    assert(false && "Unknown target option flag");
+    return 0;
   }
 }
 
