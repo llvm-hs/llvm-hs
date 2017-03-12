@@ -36,6 +36,15 @@ then:
 $ apt-get install llvm-4.0-dev
 ```
 
+### Nix
+
+Nix users can use the following commands to build the library:
+
+```bash
+$ nix-shell
+$ cabal new-build llvm-hs
+```
+
 ### Building from source
 
 Example of building LLVM from source. Detailed build instructions are available
