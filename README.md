@@ -29,7 +29,7 @@ instructions for adding the correct package database for your OS version, and
 then:
 
 ```bash
-$ apt-get install llvm-3.9-dev
+$ apt-get install llvm-4.0-dev
 ```
 
 ## Versioning
