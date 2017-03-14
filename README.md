@@ -13,15 +13,19 @@ We love all kinds of contributions so feel free to open issues for
 missing LLVM features, report & fix bugs or report API
 inconveniences.
 
-## Building
+## Installing LLVM
 
-Example using Homebrew on Mac OS X:
+### Homebrew
+
+Example using Homebrew on macOS:
 
 ```bash
 $ brew update
 $ brew install libffi
 $ brew install homebrew/versions/llvm39 --all-targets
 ```
+
+### Debian/Ubuntu
 
 For Debian/Ubuntu based Linux distributions, the LLVM.org website provides
 binary distribution packages. Check [apt.llvm.org](apt.llvm.org) for
@@ -31,6 +35,48 @@ then:
 ```bash
 $ apt-get install llvm-4.0-dev
 ```
+
+### Building from source
+
+Example of building LLVM from source. Detailed build instructions are available
+on the LLVM.org website [here](http://llvm.org/docs/CMake.html). [CMake
+3.4.3](http://www.cmake.org/cmake/resources/software.html) and a recent C++
+compiler are required, at least Clang 3.1, GCC 4.8, or Visual Studio 2015
+(Update 3).
+
+  1. Download and unpack the [LLVM-4.0 source code](http://releases.llvm.org/4.0.0/llvm-4.0.0.src.tar.xz).
+     We'll refer to the path the source tree was unpacked to as `LLVM_SRC`.
+
+  2. Create a temporary build directory and `cd` to it, for example:
+     ```sh
+     mkdir /tmp/build
+     cd /tmp/build
+     ```
+
+  3. Execute the following to configure the build. Here, `INSTALL_PREFIX` is
+     where LLVM is to be installed, for example `/usr/local`:
+     ```sh
+     cmake $LLVM_SRC -DCMAKE_INSTALL_PREFIX=$INSTALL_PREFIX -DLLVM_BUILD_LLVM_DYLIB=True -DLLVM_LINK_LLVM_DYLIB=True
+     ```
+     See [options and variables](http://llvm.org/docs/CMake.html#options-and-variables)
+     for a list of additional build parameters you can specify.
+
+  4. Build and install:
+     ```sh
+     cmake --build .
+     cmake --build . --target install
+     ```
+
+  5. For macOS only, some additional steps are useful to work around issues related
+     to [System Integrity Protection](https://en.wikipedia.org/wiki/System_Integrity_Protection):
+     ```sh
+     cd $INSTALL_PREFIX/lib
+     ln -s libLLVM.dylib libLLVM-4.0.dylib
+     install_name_tool -id $PWD/libLTO.dylib libLTO.dylib
+     install_name_tool -id $PWD/libLLVM.dylib libLLVM.dylib
+     install_name_tool -change '@rpath/libLLVM.dylib' $PWD/libLLVM.dylib libLTO.dylib
+     ```
+
 
 ## Versioning
 
