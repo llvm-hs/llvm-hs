@@ -18,7 +18,7 @@ import Distribution.Version
 import System.Environment
 import Distribution.System
 
--- define these selectively in C files (where _not_ using HsFFI.h),
+-- define these selectively in C files (we are _not_ using HsFFI.h),
 -- rather than universally in the ccOptions, because HsFFI.h currently defines them
 -- without checking they're already defined and so causes warnings.
 uncheckedHsFFIDefines = ["__STDC_LIMIT_MACROS"]
