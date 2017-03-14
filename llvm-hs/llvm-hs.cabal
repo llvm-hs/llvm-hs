@@ -238,7 +238,7 @@ test-suite test
     HUnit >= 1.2.4.2,
     test-framework-quickcheck2 >= 0.3.0.1,
     QuickCheck >= 2.5.1.1,
-    llvm-hs == 4.0.0.0,
+    llvm-hs,
     llvm-hs-pure == 4.0.0.0,
     containers >= 0.4.2.1,
     mtl >= 2.1,
