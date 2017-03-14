@@ -44,7 +44,7 @@ source-repository head
 
 flag shared-llvm
   description: link against llvm shared rather than static library
-  default: False
+  default: True
 
 flag debug
   description: compile C(++) shims with debug info for ease of troubleshooting
