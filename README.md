@@ -45,6 +45,13 @@ $ nix-shell
 $ cabal new-build llvm-hs
 ```
 
+The Nix shell uses a pinned version of nixpkgs by default.
+You can define the `nixpkgs` argument to use a different nixpkgs tree:
+
+```bash
+$ nix-shell --arg nixpkgs '<nixpkgs>'
+```
+
 ### Building from source
 
 Example of building LLVM from source. Detailed build instructions are available
