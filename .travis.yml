@@ -38,6 +38,7 @@ before_install:
  - export PATH=$HOME/bin:$PATH
  - export CC=/usr/bin/$GCC
  - export CXX=/usr/bin/$GXX
+ - export LD_LIBRARY_PATH=$HOME/llvm-build/lib:$LD_LIBRARY_PATH
 
 install:
  - curl https://cmake.org/files/v3.6/cmake-3.6.1-Linux-x86_64.tar.gz | tar -xzf - -C $HOME
@@ -51,7 +52,7 @@ install:
  - rsync -ac $HOME/llvm-9f6ca5d7e66edccaacd196fdca06a4e788d5e5b7/ $HOME/llvm-src
  - cd $HOME/llvm-src
  - mkdir -p build && cd build
- - cmake -DCMAKE_BUILD_TYPE=Release -DCMAKE_INSTALL_PREFIX=$HOME/llvm-build -DLLVM_PARALLEL_LINK_JOBS=1 -DLLVM_TARGETS_TO_BUILD=X86 ..
+ - cmake -DCMAKE_BUILD_TYPE=Release -DCMAKE_INSTALL_PREFIX=$HOME/llvm-build -DLLVM_PARALLEL_LINK_JOBS=1 -DLLVM_TARGETS_TO_BUILD=X86 -DLLVM_BUILD_LLVM_DYLIB=True -DLLVM_LINK_LLVM_DYLIB=True ..
  - make install -j3
  - cd $TRAVIS_BUILD_DIR
  - ln -s $HOME/llvm-build/bin/llvm-config $HOME/bin/llvm-config
