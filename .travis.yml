@@ -51,7 +51,7 @@ install:
  - rsync -ac $HOME/llvm-9f6ca5d7e66edccaacd196fdca06a4e788d5e5b7/ $HOME/llvm-src
  - cd $HOME/llvm-src
  - mkdir -p build && cd build
- - cmake -DCMAKE_BUILD_TYPE=Release -DCMAKE_INSTALL_PREFIX=$HOME/llvm-build -DLLVM_PARALLEL_LINK_JOBS=1 -DLLVM_TARGETS_TO_BUILD=X86 ..
+ - cmake -DCMAKE_BUILD_TYPE=Release -DCMAKE_INSTALL_PREFIX=$HOME/llvm-build -DLLVM_PARALLEL_LINK_JOBS=1 -DLLVM_TARGETS_TO_BUILD=X86 -DLLVM_BUILD_LLVM_DYLIB=True -DLLVM_LINK_LLVM_DYLIB=True ..
  - make install -j3
  - cd $TRAVIS_BUILD_DIR
  - ln -s $HOME/llvm-build/bin/llvm-config $HOME/bin/llvm-config
