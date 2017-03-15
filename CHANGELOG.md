@@ -4,3 +4,4 @@
 * Support for LLVM 4.0
 * Improved support for LLVM’s exception handling instructions
 * `-fshared-llvm` is now supported on windows (thanks to @RyanGLScott)
+* Default to `-fshared-llvm`
