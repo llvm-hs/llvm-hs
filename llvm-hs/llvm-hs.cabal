@@ -99,22 +99,6 @@ library
     LLVM.Context
     LLVM.Diagnostic
     LLVM.ExecutionEngine
-    LLVM.Module
-    LLVM.OrcJIT
-    LLVM.OrcJIT.CompileOnDemandLayer
-    LLVM.OrcJIT.IRCompileLayer
-    LLVM.PassManager
-    LLVM.Relocation
-    LLVM.Target
-    LLVM.Target.LibraryFunction
-    LLVM.Target.Options
-    LLVM.Threading
-    LLVM.Transforms
-
-  other-modules:
-    Control.Monad.AnyCont
-    Control.Monad.AnyCont.Class
-    Control.Monad.Trans.AnyCont
     LLVM.Internal.Analysis
     LLVM.Internal.Atomicity
     LLVM.Internal.Attribute
@@ -194,6 +178,22 @@ library
     LLVM.Internal.FFI.Type
     LLVM.Internal.FFI.User
     LLVM.Internal.FFI.Value
+    LLVM.Module
+    LLVM.OrcJIT
+    LLVM.OrcJIT.CompileOnDemandLayer
+    LLVM.OrcJIT.IRCompileLayer
+    LLVM.PassManager
+    LLVM.Relocation
+    LLVM.Target
+    LLVM.Target.LibraryFunction
+    LLVM.Target.Options
+    LLVM.Threading
+    LLVM.Transforms
+
+  other-modules:
+    Control.Monad.AnyCont
+    Control.Monad.AnyCont.Class
+    Control.Monad.Trans.AnyCont
 
   include-dirs: src
   c-sources:
