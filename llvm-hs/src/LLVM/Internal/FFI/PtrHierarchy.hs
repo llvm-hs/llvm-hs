@@ -124,3 +124,11 @@ data Metadata
 data MetadataAsVal
 
 instance ChildOf Value MetadataAsVal
+
+-- | <http://llvm.org/docs/doxygen/html/classllvm_1_1raw__ostream.html>
+data RawOStream
+
+-- | <http://llvm.org/docs/doxygen/html/classllvm_1_1raw__pwrite__stream.html>
+data RawPWriteStream
+
+instance ChildOf RawOStream RawPWriteStream
