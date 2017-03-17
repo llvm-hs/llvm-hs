@@ -142,7 +142,7 @@ moduleLLVMAssembly m = do
         r <- decodeM (start, fromIntegral size)
         writeIORef resultRef (Just r)
   m' <- readModule m
-  FFI.withBufferRawOStream saveBuffer $ FFI.writeLLVMAssembly m'
+  FFI.withBufferRawPWriteStream saveBuffer $ FFI.writeLLVMAssembly m' . FFI.upCast
   Just s <- readIORef resultRef
   return s
 

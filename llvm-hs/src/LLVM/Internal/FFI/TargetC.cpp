@@ -282,7 +282,7 @@ void LLVM_Hs_InitializeAllTargets() {
 LLVMBool LLVM_Hs_TargetMachineEmit(
     LLVMTargetMachineRef T,
     LLVMModuleRef M,
-    raw_pwrite_stream &OS,
+    raw_pwrite_stream *OS,
     LLVMCodeGenFileType codegen,
     char **ErrorMessage
 ) {
@@ -304,7 +304,7 @@ LLVMBool LLVM_Hs_TargetMachineEmit(
       ft = TargetMachine::CGFT_ObjectFile;
       break;
   }
-  if (TM->addPassesToEmitFile(pass, OS, ft)) {
+  if (TM->addPassesToEmitFile(pass, *OS, ft)) {
     error = "TargetMachine can't emit a file of this type";
     *ErrorMessage = strdup(error.c_str());
     return true;
@@ -312,7 +312,7 @@ LLVMBool LLVM_Hs_TargetMachineEmit(
 
   pass.run(*Mod);
 
-  OS.flush();
+  OS->flush();
   return false;
 }
 
