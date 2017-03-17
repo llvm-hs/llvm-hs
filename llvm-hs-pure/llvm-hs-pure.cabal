@@ -100,7 +100,7 @@ test-suite test
     HUnit >= 1.2.4.2,
     test-framework-quickcheck2 >= 0.3.0.1,
     QuickCheck >= 2.5.1.1,
-    llvm-hs-pure == 4.0.0.0,
+    llvm-hs-pure,
     transformers >= 0.3,
     transformers-compat >= 0.4,
     containers >= 0.4.2.1,
