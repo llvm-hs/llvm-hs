@@ -1,6 +1,6 @@
 { mkDerivation, array, base, bytestring, Cabal, containers, HUnit
 , llvm-config, llvm-hs-pure, mtl, parsec, QuickCheck, stdenv
-, template-haskell, test-framework, test-framework-hunit
+, template-haskell, temporary, test-framework, test-framework-hunit
 , test-framework-quickcheck2, transformers, transformers-compat
 , utf8-string
 }:
@@ -16,9 +16,9 @@ mkDerivation {
   ];
   libraryToolDepends = [ llvm-config ];
   testHaskellDepends = [
-    base containers HUnit llvm-hs-pure mtl QuickCheck test-framework
-    test-framework-hunit test-framework-quickcheck2 transformers
-    transformers-compat
+    base bytestring containers HUnit llvm-hs-pure mtl QuickCheck
+    temporary test-framework test-framework-hunit
+    test-framework-quickcheck2 transformers transformers-compat
   ];
   homepage = "http://github.com/llvm-hs/llvm-hs/";
   description = "General purpose LLVM bindings";
