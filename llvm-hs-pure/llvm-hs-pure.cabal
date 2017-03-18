@@ -78,12 +78,8 @@ library
     LLVM.AST.DLL
     LLVM.AST.COMDAT
     LLVM.DataLayout
-    LLVM.PrettyPrint
     LLVM.Prelude
     LLVM.TH
-
-  other-modules:
-    LLVM.Internal.PrettyPrint
 
 test-suite test
   type: exitcode-stdio-1.0
@@ -113,5 +109,4 @@ test-suite test
   main-is: Test.hs
   other-modules:
     LLVM.Test.DataLayout
-    LLVM.Test.PrettyPrint
     LLVM.Test.Tests

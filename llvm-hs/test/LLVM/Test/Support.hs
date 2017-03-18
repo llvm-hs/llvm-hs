@@ -7,11 +7,11 @@ import Test.HUnit
 import Data.Functor
 import Control.Monad
 import Control.Monad.Trans.Except
+import Text.Show.Pretty
 
 import LLVM.Context
 import LLVM.Module
 import LLVM.Diagnostic
-import LLVM.PrettyPrint
 
 class FailInIO f where
   errorToString :: f -> String
@@ -29,11 +29,10 @@ withModuleFromLLVMAssembly' c s f  = failInIO $ withModuleFromLLVMAssembly c s f
 withModuleFromAST' c a f = failInIO $ withModuleFromAST c a f
 withModuleFromBitcode' c a f = failInIO $ withModuleFromBitcode c ("<string>", a) f
 
-assertEqPretty :: (Eq a, PrettyShow a) => a -> a -> Assertion
+assertEqPretty :: (Eq a, Show a) => a -> a -> Assertion
 assertEqPretty actual expected = do
-  let showPretty = showPrettyEx 80 "  " shortPrefixScheme
-  assertBool 
-   ("expected: " ++ showPretty expected ++ "\n" ++ "but got: " ++ showPretty actual ++ "\n")
+  assertBool
+   ("expected: " ++ ppShow expected ++ "\n" ++ "but got: " ++ ppShow actual ++ "\n")
    (expected == actual)
 
 strCheckC mAST mStr mStrCanon = withContext $ \context -> do
@@ -42,4 +41,3 @@ strCheckC mAST mStr mStrCanon = withContext $ \context -> do
   (a,s) `assertEqPretty` (mAST, mStrCanon)
 
 strCheck mAST mStr = strCheckC mAST mStr mStr
-
