@@ -40,7 +40,8 @@ define hsc_inject(l, typ, cons, hprefix, recmac) { \
     hsc_printf(#hprefix "%s :: " #typ "\n", p->s); \
     hsc_printf(#hprefix "%s = " #cons " %u\n", p->s, p->n); \
   } \
-  hsc_printf(#hprefix "P = QuasiQuoter {\n" \
+  hsc_printf(#hprefix "P :: QuasiQuoter\n" \
+             #hprefix "P = QuasiQuoter {\n" \
              "  quoteExp = undefined,\n" \
              "  quotePat = \\s -> dataToPatQ (const Nothing) $ case s of"); \
   for(p = list; p < list + sizeof(list)/sizeof(list[0]); ++p) { \
@@ -51,7 +52,7 @@ define hsc_inject(l, typ, cons, hprefix, recmac) { \
              "  quoteType = undefined,\n" \
              "  quoteDec = undefined\n" \
              " }\n"); \
-} 
+}
 }
 
 deriving instance Data CUInt
@@ -232,7 +233,7 @@ newtype TypeKind = TypeKind CUInt
 #define OR_TT T
 #define OR_TF T
 #define OR_FT T
-#define OR_FF F  
+#define OR_FF F
 #define OR(x,y) OR_ ## x ## y
 newtype ParameterAttributeKind = ParameterAttributeKind CUInt
   deriving (Eq, Read, Show, Typeable, Data)

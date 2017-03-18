@@ -55,7 +55,7 @@ foreign import ccall unsafe "LLVMBuildIndirectBr" buildIndirectBr ::
 foreign import ccall unsafe "LLVMBuildInvoke" buildInvoke ::
   Ptr Builder -> Ptr Value -> Ptr (Ptr Value) -> CUInt
               -> Ptr BasicBlock -> Ptr BasicBlock -> CString -> IO (Ptr Instruction)
-  
+
 foreign import ccall unsafe "LLVMBuildResume" buildResume ::
   Ptr Builder -> Ptr Value -> IO (Ptr Instruction)
 
@@ -78,7 +78,7 @@ $(do
     (TH.RecC _ (unzip3 -> (_, _, fieldTypes)), ID.InstructionDef { ID.cAPIName = a, ID.instructionKind = k }) <- case ii of
       (Just r, Just d) -> return (r,d)
       (Just _, Nothing) -> error $ "An AST instruction was not found in the LLVM instruction defs"
-      (Nothing, Just ID.InstructionDef { ID.instructionKind = k }) | k /= ID.Terminator -> 
+      (Nothing, Just ID.InstructionDef { ID.instructionKind = k }) | k /= ID.Terminator ->
         error $ "LLVM instruction def " ++ lrn ++ " not found in the AST"
       _ -> []
 
@@ -97,11 +97,26 @@ foreign import ccall unsafe "LLVMBuildArrayAlloca" buildAlloca ::
 foreign import ccall unsafe "LLVM_Hs_BuildLoad" buildLoad' ::
   Ptr Builder -> LLVMBool -> Ptr Value -> MemoryOrdering -> SynchronizationScope -> CUInt -> CString -> IO (Ptr Instruction)
 
+buildLoad :: Ptr Builder
+          -> LLVMBool
+          -> Ptr Value
+          -> (SynchronizationScope, MemoryOrdering)
+          -> CUInt
+          -> CString
+          -> IO (Ptr Instruction)
 buildLoad builder vol a' (ss, mo) al s = buildLoad' builder vol a' mo ss al s
 
 foreign import ccall unsafe "LLVM_Hs_BuildStore" buildStore' ::
   Ptr Builder -> LLVMBool -> Ptr Value -> Ptr Value -> MemoryOrdering -> SynchronizationScope -> CUInt -> CString -> IO (Ptr Instruction)
 
+buildStore :: Ptr Builder
+           -> LLVMBool
+           -> Ptr Value
+           -> Ptr Value
+           -> (SynchronizationScope, MemoryOrdering)
+           -> CUInt
+           -> CString
+           -> IO (Ptr Instruction)
 buildStore builder vol a' v' (ss, mo) al s = buildStore' builder vol a' v' mo ss al s
 
 foreign import ccall unsafe "LLVMBuildGEP" buildGetElementPtr' ::
@@ -117,17 +132,38 @@ buildGetElementPtr builder (LLVMBool 0) a (n, is) s = buildGetElementPtr' builde
 foreign import ccall unsafe "LLVM_Hs_BuildFence" buildFence' ::
   Ptr Builder -> MemoryOrdering -> SynchronizationScope -> CString -> IO (Ptr Instruction)
 
+buildFence :: Ptr Builder
+           -> (SynchronizationScope, MemoryOrdering)
+           -> CString
+           -> IO (Ptr Instruction)
 buildFence builder (ss, mo) s = buildFence' builder mo ss s
 
 foreign import ccall unsafe "LLVM_Hs_BuildAtomicCmpXchg" buildCmpXchg' ::
   Ptr Builder -> LLVMBool -> Ptr Value -> Ptr Value -> Ptr Value -> MemoryOrdering -> MemoryOrdering -> SynchronizationScope -> CString -> IO (Ptr Instruction)
 
+buildCmpXchg :: Ptr Builder
+             -> LLVMBool
+             -> Ptr Value
+             -> Ptr Value
+             -> Ptr Value
+             -> (SynchronizationScope, MemoryOrdering)
+             -> MemoryOrdering
+             -> CString
+             -> IO (Ptr Instruction)
 buildCmpXchg builder vol a e r (ss, smo) fmo s =  buildCmpXchg' builder vol a e r smo fmo ss s
 
 foreign import ccall unsafe "LLVM_Hs_BuildAtomicRMW" buildAtomicRMW' ::
   Ptr Builder -> LLVMBool -> RMWOperation -> Ptr Value -> Ptr Value -> MemoryOrdering -> SynchronizationScope -> CString -> IO (Ptr Instruction)
 
-buildAtomicRMW builder vol rmwOp a v (ss, mo) s = buildAtomicRMW' builder vol rmwOp a v mo ss s 
+buildAtomicRMW :: Ptr Builder
+               -> LLVMBool
+               -> RMWOperation
+               -> Ptr Value
+               -> Ptr Value
+               -> (SynchronizationScope, MemoryOrdering)
+               -> CString
+               -> IO (Ptr Instruction)
+buildAtomicRMW builder vol rmwOp a v (ss, mo) s = buildAtomicRMW' builder vol rmwOp a v mo ss s
 
 foreign import ccall unsafe "LLVMBuildICmp" buildICmp ::
   Ptr Builder -> ICmpPredicate -> Ptr Value -> Ptr Value -> CString -> IO (Ptr Instruction)

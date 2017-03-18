@@ -51,6 +51,7 @@ foreign import ccall unsafe "LLVMAddAnalysisPasses" addAnalysisPasses ::
 foreign import ccall unsafe "LLVMAddTargetLibraryInfo" addTargetLibraryInfoPass' ::
   Ptr TargetLibraryInfo -> Ptr PassManager -> IO ()
 
+addTargetLibraryInfoPass :: Ptr PassManager -> Ptr TargetLibraryInfo -> IO ()
 addTargetLibraryInfoPass = flip addTargetLibraryInfoPass'
 
 $(do
@@ -70,10 +71,10 @@ $(do
                             | h == ''FilePath -> [t| NothingAsEmptyString CString |]
                   _ -> typeMapping t
               _ -> typeMapping t
-        foreignDecl 
+        foreignDecl
           (cName n)
           ("add" ++ n ++ "Pass")
-          ([[t| Ptr PassManager |]] 
+          ([[t| Ptr PassManager |]]
            ++ [[t| Ptr TargetMachine |] | needsTargetMachine n]
            ++ map passTypeMapping extraParams)
           (TH.tupleT 0)
@@ -91,37 +92,37 @@ $(do
 data PassManagerBuilder
 
 foreign import ccall unsafe "LLVMPassManagerBuilderCreate" passManagerBuilderCreate ::
-    IO (Ptr PassManagerBuilder) 
+    IO (Ptr PassManagerBuilder)
 
 foreign import ccall unsafe "LLVMPassManagerBuilderDispose" passManagerBuilderDispose ::
     Ptr PassManagerBuilder -> IO ()
 
 foreign import ccall unsafe "LLVMPassManagerBuilderSetOptLevel" passManagerBuilderSetOptLevel ::
-    Ptr PassManagerBuilder -> CUInt -> IO () 
+    Ptr PassManagerBuilder -> CUInt -> IO ()
 
 foreign import ccall unsafe "LLVMPassManagerBuilderSetSizeLevel" passManagerBuilderSetSizeLevel ::
     Ptr PassManagerBuilder -> CUInt -> IO ()
 
 foreign import ccall unsafe "LLVMPassManagerBuilderSetDisableUnitAtATime" passManagerBuilderSetDisableUnitAtATime ::
-    Ptr PassManagerBuilder -> LLVMBool -> IO () 
+    Ptr PassManagerBuilder -> LLVMBool -> IO ()
 
 foreign import ccall unsafe "LLVMPassManagerBuilderSetDisableUnrollLoops" passManagerBuilderSetDisableUnrollLoops ::
     Ptr PassManagerBuilder -> CUInt -> IO ()
 
 foreign import ccall unsafe "LLVMPassManagerBuilderSetDisableSimplifyLibCalls" passManagerBuilderSetDisableSimplifyLibCalls ::
-    Ptr PassManagerBuilder -> LLVMBool -> IO () 
+    Ptr PassManagerBuilder -> LLVMBool -> IO ()
 
 foreign import ccall unsafe "LLVMPassManagerBuilderUseInlinerWithThreshold" passManagerBuilderUseInlinerWithThreshold ::
     Ptr PassManagerBuilder -> CUInt -> IO ()
 
 foreign import ccall unsafe "LLVMPassManagerBuilderPopulateFunctionPassManager" passManagerBuilderPopulateFunctionPassManager ::
-    Ptr PassManagerBuilder -> Ptr PassManager -> IO () 
+    Ptr PassManagerBuilder -> Ptr PassManager -> IO ()
 
 foreign import ccall unsafe "LLVMPassManagerBuilderPopulateModulePassManager" passManagerBuilderPopulateModulePassManager ::
     Ptr PassManagerBuilder -> Ptr PassManager -> IO ()
 
 foreign import ccall unsafe "LLVMPassManagerBuilderPopulateLTOPassManager" passManagerBuilderPopulateLTOPassManager ::
-    Ptr PassManagerBuilder -> Ptr PassManager -> CUChar -> CUChar -> IO () 
+    Ptr PassManagerBuilder -> Ptr PassManager -> CUChar -> CUChar -> IO ()
 
 foreign import ccall unsafe "LLVM_Hs_PassManagerBuilderSetLibraryInfo" passManagerBuilderSetLibraryInfo ::
     Ptr PassManagerBuilder -> Ptr TargetLibraryInfo -> IO ()

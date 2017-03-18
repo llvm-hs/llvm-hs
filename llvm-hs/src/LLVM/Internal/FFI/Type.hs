@@ -49,6 +49,7 @@ foreign import ccall unsafe "LLVMIntTypeInContext" intTypeInContext ::
 foreign import ccall unsafe "LLVMFunctionType" functionType' ::
   Ptr Type -> Ptr (Ptr Type) -> CUInt -> LLVMBool -> IO (Ptr Type)
 
+functionType :: Ptr Type -> (CUInt, Ptr (Ptr Type)) -> LLVMBool -> IO (Ptr Type)
 functionType rt (n, ats) va = functionType' rt ats n va
 
 newtype AddrSpace = AddrSpace CUInt
@@ -73,6 +74,7 @@ foreign import ccall unsafe "LLVM_Hs_ArrayType" arrayType ::
 foreign import ccall unsafe "LLVMStructTypeInContext" structTypeInContext' ::
   Ptr Context -> Ptr (Ptr Type) -> CUInt -> LLVMBool -> IO (Ptr Type)
 
+structTypeInContext :: Ptr Context -> (CUInt, Ptr (Ptr Type)) -> LLVMBool -> IO (Ptr Type)
 structTypeInContext ctx (n, ts) p = structTypeInContext' ctx ts n p
 
 foreign import ccall unsafe "LLVM_Hs_StructCreateNamed" structCreateNamed ::
@@ -101,6 +103,7 @@ foreign import ccall unsafe "LLVMGetStructElementTypes" getStructElementTypes ::
 foreign import ccall unsafe "LLVMStructSetBody" structSetBody' ::
   Ptr Type -> Ptr (Ptr Type) -> CUInt -> LLVMBool -> IO ()
 
+structSetBody :: Ptr Type -> (CUInt, Ptr (Ptr Type)) -> LLVMBool -> IO ()
 structSetBody s (n,ts) p = structSetBody' s ts n p
 
 -- | <http://llvm.org/doxygen/group__LLVMCCoreTypeSequential.html#gafb88a5ebd2a8062e105854910dc7ca17>

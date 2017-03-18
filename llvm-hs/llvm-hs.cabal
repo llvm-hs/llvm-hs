@@ -61,7 +61,7 @@ custom-setup
 
 library
   build-tools: llvm-config
-  ghc-options: -Wall
+  ghc-options: -Wall -fno-warn-name-shadowing
   if flag(semigroups)
     build-depends:
       base >= 4.7 && < 4.9,

@@ -50,12 +50,14 @@ foreign import ccall unsafe "LLVM_Hs_ConstFloatFloatValue" constFloatFloatValue 
 foreign import ccall unsafe "LLVMConstStructInContext" constStructInContext' ::
   Ptr Context -> Ptr (Ptr Constant) -> CUInt -> LLVMBool -> IO (Ptr Constant)
 
+constStructInContext :: Ptr Context -> (CUInt, Ptr (Ptr Constant)) -> LLVMBool -> IO (Ptr Constant)
 constStructInContext ctx (n, cs) p = constStructInContext' ctx cs n p
 
 foreign import ccall unsafe "LLVMConstNamedStruct" constNamedStruct' ::
   Ptr Type -> Ptr (Ptr Constant) -> CUInt -> IO (Ptr Constant)
 
-constNamedStruct ty (n, cs) = constNamedStruct' ty cs n 
+constNamedStruct :: Ptr Type -> (CUInt, Ptr (Ptr Constant)) -> IO (Ptr Constant)
+constNamedStruct ty (n, cs) = constNamedStruct' ty cs n
 
 foreign import ccall unsafe "LLVM_Hs_GetConstantDataSequentialElementAsConstant" getConstantDataSequentialElementAsConstant ::
   Ptr Constant -> CUInt -> IO (Ptr Constant)
@@ -63,6 +65,7 @@ foreign import ccall unsafe "LLVM_Hs_GetConstantDataSequentialElementAsConstant"
 foreign import ccall unsafe "LLVMConstIntOfArbitraryPrecision" constantIntOfArbitraryPrecision' ::
   Ptr Type -> CUInt -> Ptr Word64 -> IO (Ptr Constant)
 
+constantIntOfArbitraryPrecision :: Ptr Type -> (CUInt, Ptr Word64) -> IO (Ptr Constant)
 constantIntOfArbitraryPrecision t = uncurry (constantIntOfArbitraryPrecision' t)
 
 foreign import ccall unsafe "LLVM_Hs_ConstFloatOfArbitraryPrecision" constantFloatOfArbitraryPrecision ::
@@ -74,6 +77,7 @@ foreign import ccall unsafe "LLVM_Hs_GetConstantFloatWords" getConstantFloatWord
 foreign import ccall unsafe "LLVMConstVector" constantVector' ::
   Ptr (Ptr Constant) -> CUInt -> IO (Ptr Constant)
 
+constantVector :: (CUInt, Ptr (Ptr Constant)) -> IO (Ptr Constant)
 constantVector (n, cs) = constantVector' cs n
 
 foreign import ccall unsafe "LLVMConstNull" constantNull ::
@@ -82,6 +86,7 @@ foreign import ccall unsafe "LLVMConstNull" constantNull ::
 foreign import ccall unsafe "LLVMConstArray" constantArray' ::
   Ptr Type -> Ptr (Ptr Constant) -> CUInt -> IO (Ptr Constant)
 
+constantArray :: Ptr Type -> (CUInt, Ptr (Ptr Constant)) -> IO (Ptr Constant)
 constantArray t (n, cs) = constantArray' t cs n
 
 foreign import ccall unsafe "LLVM_Hs_ConstCast" constantCast ::
@@ -108,7 +113,8 @@ foreign import ccall unsafe "LLVMConstGEP" constantGetElementPtr' ::
 foreign import ccall unsafe "LLVMConstInBoundsGEP" constantInBoundsGetElementPtr' ::
   Ptr Constant -> Ptr (Ptr Constant) -> CUInt -> IO (Ptr Constant)
 
-constantGetElementPtr (LLVMBool ib) a (n, is) = 
+constantGetElementPtr :: LLVMBool -> Ptr Constant -> (CUInt, Ptr (Ptr Constant)) -> IO (Ptr Constant)
+constantGetElementPtr (LLVMBool ib) a (n, is) =
   (case ib of { 0 -> constantGetElementPtr'; 1 -> constantInBoundsGetElementPtr' }) a is n
 
 foreign import ccall unsafe "LLVM_Hs_GetConstCPPOpcode" getConstantCPPOpcode ::

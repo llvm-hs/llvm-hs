@@ -105,6 +105,7 @@ foreign import ccall unsafe "LLVM_Hs_GetFailureAtomicOrdering" getFailureAtomicO
 foreign import ccall unsafe "LLVM_Hs_GetSynchronizationScope" getSynchronizationScope ::
   Ptr Instruction -> IO SynchronizationScope
 
+getAtomicity :: Ptr Instruction -> IO (SynchronizationScope, MemoryOrdering)
 getAtomicity i = return (,) `ap` getSynchronizationScope i `ap` getAtomicOrdering i
 
 foreign import ccall unsafe "LLVM_Hs_GetVolatile" getVolatile ::

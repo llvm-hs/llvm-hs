@@ -61,6 +61,7 @@ data PassSetSpec
     }
 
 -- | Helper to make a curated 'PassSetSpec'
+defaultCuratedPassSetSpec :: PassSetSpec
 defaultCuratedPassSetSpec = CuratedPassSetSpec {
   optLevel = Nothing,
   sizeLevel = Nothing,
@@ -75,6 +76,7 @@ defaultCuratedPassSetSpec = CuratedPassSetSpec {
 }
 
 -- | an empty 'PassSetSpec'
+defaultPassSetSpec :: PassSetSpec
 defaultPassSetSpec = PassSetSpec {
   transforms = [],
   dataLayout = Nothing,
