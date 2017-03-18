@@ -24,16 +24,16 @@ matrix:
   include:
     - env: CABALVER=1.24 GHCVER=7.8.4
       compiler: ": #GHC 7.8.4"
-      addons: {apt: {packages: [cabal-install-1.24,ghc-7.8.4,gcc-5,g++-5], sources: [hvr-ghc,llvm-toolchain-precise,ubuntu-toolchain-r-test]}}
+      addons: {apt: {packages: [cabal-install-1.24,ghc-7.8.4,gcc-5,g++-5,happy-1.19.5], sources: [hvr-ghc,llvm-toolchain-precise,ubuntu-toolchain-r-test]}}
     - env: CABALVER=1.24 GHCVER=7.10.3
       compiler: ": #GHC 7.10.3"
-      addons: {apt: {packages: [cabal-install-1.24,ghc-7.10.3,gcc-5,g++-5], sources: [hvr-ghc,llvm-toolchain-precise,ubuntu-toolchain-r-test]}}
+      addons: {apt: {packages: [cabal-install-1.24,ghc-7.10.3,gcc-5,g++-5,happy-1.19.5], sources: [hvr-ghc,llvm-toolchain-precise,ubuntu-toolchain-r-test]}}
     - env: CABALVER=1.24 GHCVER=8.0.2
       compiler: ": #GHC 8.0.2"
-      addons: {apt: {packages: [cabal-install-1.24,ghc-8.0.2,gcc-5,g++-5], sources: [hvr-ghc,llvm-toolchain-precise,ubuntu-toolchain-r-test]}}
+      addons: {apt: {packages: [cabal-install-1.24,ghc-8.0.2,gcc-5,g++-5,happy-1.19.5], sources: [hvr-ghc,llvm-toolchain-precise,ubuntu-toolchain-r-test]}}
 
 before_install:
- - export PATH=/opt/ghc/$GHCVER/bin:/opt/cabal/$CABALVER/bin:$PATH
+ - export PATH=/opt/ghc/$GHCVER/bin:/opt/cabal/$CABALVER/bin:/opt/happy/1.19.5/bin:$PATH
  - mkdir -p $HOME/bin
  - export PATH=$HOME/bin:$PATH
  - export CC=/usr/bin/$GCC
