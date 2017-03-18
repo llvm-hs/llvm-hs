@@ -1,3 +1,4 @@
+{-# OPTIONS_GHC -fno-warn-orphans #-}
 {-# LANGUAGE
   TemplateHaskell,
   GeneralizedNewtypeDeriving
@@ -174,5 +175,3 @@ imports (PrefixScheme p) = unlines [
   "import " ++ maybe mod (\abbr -> "qualified " ++ mod ++ " as " ++ abbr) mAbbr
   | (mod, mAbbr) <- Map.toList p, mod /= "GHC.Base"
  ]
-
-

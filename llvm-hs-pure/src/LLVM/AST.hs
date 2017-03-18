@@ -4,7 +4,7 @@
 module LLVM.AST (
   Module(..), defaultModule,
   Definition(..),
-  Global(GlobalVariable, GlobalAlias, Function), 
+  Global(GlobalVariable, GlobalAlias, Function),
         globalVariableDefaults,
         globalAliasDefaults,
         functionDefaults,
@@ -29,7 +29,7 @@ import qualified LLVM.AST.Attribute as A
 import qualified LLVM.AST.COMDAT as COMDAT
 
 -- | Any thing which can be at the top level of a 'Module'
-data Definition 
+data Definition
   = GlobalDefinition Global
   | TypeDefinition Name (Maybe Type)
   | MetadataNodeDefinition MetadataNodeID [Maybe Metadata]
@@ -40,19 +40,20 @@ data Definition
     deriving (Eq, Read, Show, Typeable, Data)
 
 -- | <http://llvm.org/docs/LangRef.html#module-structure>
-data Module = 
+data Module =
   Module {
     moduleName :: String,
     moduleSourceFileName :: String,
     -- | a 'DataLayout', if specified, must match that of the eventual code generator
-    moduleDataLayout :: Maybe DataLayout, 
+    moduleDataLayout :: Maybe DataLayout,
     moduleTargetTriple :: Maybe String,
     moduleDefinitions :: [Definition]
-  } 
+  }
   deriving (Eq, Read, Show, Typeable, Data)
 
 -- | helper for making 'Module's
-defaultModule = 
+defaultModule :: Module
+defaultModule =
   Module {
     moduleName = "<string>",
     moduleSourceFileName = "<string>",

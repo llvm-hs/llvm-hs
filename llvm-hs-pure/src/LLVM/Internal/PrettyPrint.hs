@@ -9,7 +9,7 @@ module LLVM.Internal.PrettyPrint where
 
 import LLVM.Prelude
 
-import LLVM.TH 
+import LLVM.TH
 import Language.Haskell.TH.Quote
 
 import Data.List.NonEmpty (NonEmpty)
@@ -44,7 +44,7 @@ defaultPrettyShowEnv = PrettyShowEnv {
     precedence = 0
   }
 
-type Qual a = Reader PrettyShowEnv a 
+type Qual a = Reader PrettyShowEnv a
 
 prec :: Int -> Qual a -> Qual a
 prec p = local (\env -> env { precedence = p })
@@ -73,22 +73,33 @@ renderEx threshold indent env ts =
       where
         bit (Fixed s) = (length s, s, s)
         bit (Variable t f) = (length f, f, concat [ s:(if s == '\n' then ind i else "") | s <- t ])
-        bit (IndentGroup tree) = 
+        bit (IndentGroup tree) =
           let (l, t, f) = fit (i+1) tree
           in (l, t, if (l < threshold) then t else "\n" ++ ind (i+1) ++ f ++ "\n" ++ ind i)
         (ls, ts, fs) = unzip3 . map bit $ branches
-            
+
+render :: QTree -> String
 render = renderEx 80 "  " defaultPrettyShowEnv
 
+comma :: QTree
 comma = "," <> variable "\n" " "
+
+(<+>) :: QTree -> QTree -> QTree
 a <+> b = a <> " " <> b
 
 punctuate :: QTree -> [QTree] -> QTree
 punctuate a as = intercalate <$> a <*> sequence as
 
+gParens :: Qual Tree -> Qual Tree -> QTree -> Qual Tree
 gParens o c content = o <> prec 0 (indentGroup content) <> c
+
+parens :: QTree -> Qual Tree
 parens = gParens "(" ")"
+
+brackets :: QTree -> Qual Tree
 brackets = gParens "[" "]"
+
+braces :: QTree -> Qual Tree
 braces = gParens ("{" <> variable "" " ") (variable "" " " <> "}")
 
 record :: QTree -> [(QTree,QTree)] -> QTree
@@ -97,9 +108,7 @@ record name fields = do
 
 ctor :: QTree -> [QTree] -> QTree
 ctor name [] = name
-ctor name fields = do
-  p <- asks precedence
-  parensIfNeeded appPrec (foldl (<+>) name fields)
+ctor name fields = parensIfNeeded appPrec (foldl (<+>) name fields)
 
 -- | a class for simple pretty-printing with indentation a function only of syntactic depth.
 class Show a => PrettyShow a where
@@ -115,9 +124,11 @@ instance PrettyShow a => PrettyShow [a] where
 instance PrettyShow a => PrettyShow (NonEmpty a) where
   prettyShow = prettyShowList . toList
 
+appPrec, appPrec1 :: Int
 appPrec = 10
 appPrec1 = 11
 
+parensIfNeeded :: Int -> Qual Tree -> Qual Tree
 parensIfNeeded p' b = do
   p <- asks precedence
   let b' = prec (p'+1) b
@@ -165,7 +176,7 @@ simpleName n = do
 makePrettyShowInstance :: Name -> DecsQ
 makePrettyShowInstance n = do
   info <- reify n
-  let (tvb, cons) = 
+  let (tvb, cons) =
         case info of
 #if __GLASGOW_HASKELL__ < 800
           TyConI (DataD _ _ tvb cons _) -> (tvb, cons)
@@ -186,14 +197,14 @@ makePrettyShowInstance n = do
                RecC conName (unzip3 -> (ns, _, _)) -> do
                  pvs <- mapM (const $ newName "f") ns
                  let ss = [| record $(simpleName conName) $(listE [[|($(simpleName n), prettyShow $(varE pv))|] | (n, pv) <- zip ns pvs]) |]
-                 match 
+                 match
                    (conP conName (map varP pvs))
                    (normalB ss)
                    []
                NormalC conName fs -> do
                  pvs <- mapM (const $ newName "f") fs
                  let ss = [| ctor $(simpleName conName) $(listE [[| prettyShow $(varE pv)|] | pv <- pvs]) |]
-                 match 
+                 match
                    (conP conName (map varP pvs))
                    (normalB ss)
                    []
@@ -216,6 +227,3 @@ makePrettyShowInstance n = do
          []
      ]
    ]
-
-  
-

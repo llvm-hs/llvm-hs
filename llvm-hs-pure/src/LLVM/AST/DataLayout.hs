@@ -49,6 +49,7 @@ data DataLayout = DataLayout {
   deriving (Eq, Ord, Read, Show, Typeable, Data)
 
 -- | a default 'DataLayout'
+defaultDataLayout :: Endianness -> DataLayout
 defaultDataLayout endianness = DataLayout {
   endianness = endianness,
   mangling = Nothing,

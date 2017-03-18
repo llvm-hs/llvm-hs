@@ -21,7 +21,6 @@ import Prelude hiding (
     minimum, maximum, sum, product, all, any, and, or,
     concatMap,
     elem, notElem,
-    msum,
   )
 import Data.Data hiding (typeOf)
 import Data.Int
