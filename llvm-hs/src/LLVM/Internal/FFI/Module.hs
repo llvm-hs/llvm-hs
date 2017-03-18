@@ -93,6 +93,7 @@ foreign import ccall unsafe "LLVM_Hs_ModuleAppendInlineAsm" moduleAppendInlineAs
 
 newtype ModuleAsm a = ModuleAsm a
 
+moduleAppendInlineAsm :: Ptr Module -> ModuleAsm (Ptr CChar, CUInt) -> IO ()
 moduleAppendInlineAsm m (ModuleAsm (c, n)) = moduleAppendInlineAsm' m c n
 
 foreign import ccall unsafe "LLVM_Hs_ModuleGetInlineAsm" moduleGetInlineAsm ::

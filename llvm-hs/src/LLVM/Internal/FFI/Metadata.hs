@@ -35,6 +35,7 @@ foreign import ccall unsafe "LLVM_Hs_GetMetadataOperand" getMetadataOperand ::
 foreign import ccall unsafe "LLVMGetMDKindIDInContext" getMDKindIDInContext' ::
   Ptr Context -> Ptr CChar -> CUInt -> IO MDKindID
 
+getMDKindIDInContext :: Ptr Context -> (Ptr CChar, CUInt) -> IO MDKindID
 getMDKindIDInContext ctx (c, n) = getMDKindIDInContext' ctx c n
 
 foreign import ccall unsafe "LLVM_Hs_GetMDKindNames" getMDKindNames ::
@@ -49,6 +50,7 @@ foreign import ccall unsafe "LLVM_Hs_MDValue" mdValue ::
 foreign import ccall unsafe "LLVM_Hs_MetadataOperand" metadataOperand ::
   Ptr Context -> Ptr Metadata -> IO (Ptr Value)
 
+mdStringInContext :: Ptr Context -> (CString, CUInt) -> IO (Ptr MDString)
 mdStringInContext ctx (p, n) = mdStringInContext' ctx p n
 
 foreign import ccall unsafe "LLVM_Hs_GetMDString" getMDString ::
@@ -57,6 +59,7 @@ foreign import ccall unsafe "LLVM_Hs_GetMDString" getMDString ::
 foreign import ccall unsafe "LLVM_Hs_MDNodeInContext" createMDNodeInContext' ::
   Ptr Context -> Ptr (Ptr Metadata) -> CUInt -> IO (Ptr MDNode)
 
+createMDNodeInContext :: Ptr Context -> (CUInt, Ptr (Ptr Metadata)) -> IO (Ptr MDNode)
 createMDNodeInContext ctx (n, vs) = createMDNodeInContext' ctx vs n
 
 foreign import ccall unsafe "LLVM_Hs_CreateTemporaryMDNodeInContext" createTemporaryMDNodeInContext ::
@@ -86,4 +89,5 @@ foreign import ccall unsafe "LLVM_Hs_NamedMetadataAddOperands" namedMetadataAddO
 foreign import ccall unsafe "LLVM_Hs_MetadataReplaceAllUsesWith" metadataReplaceAllUsesWith ::
   Ptr MDNode -> Ptr Metadata -> IO ()
 
+namedMetadataAddOperands :: Ptr NamedMetadata -> (CUInt, Ptr (Ptr MDNode)) -> IO ()
 namedMetadataAddOperands nm (n, vs) = namedMetadataAddOperands' nm vs n

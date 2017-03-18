@@ -127,6 +127,7 @@ data Pass
   deriving (Eq, Ord, Read, Show, Typeable, Data)
 
 -- | Defaults for the 'LoopVectorize' pass
+defaultLoopVectorize :: Pass
 defaultLoopVectorize = LoopVectorize {
     noUnrolling = False,
     alwaysVectorize = True
@@ -135,6 +136,7 @@ defaultLoopVectorize = LoopVectorize {
 -- | Defaults for the 'BasicBlockVectorize' pass - copied from the C++ code to keep these defaults
 -- constant. (The C++ defaults are modifiable through global objects used for command-line processing,
 -- in a design apparently oblivious to uses of LLVM besides the standard command-line tools).
+defaultVectorizeBasicBlocks :: Pass
 defaultVectorizeBasicBlocks = BasicBlockVectorize {
     vectorBits = 128,
     vectorizeBools = True,
@@ -166,6 +168,7 @@ newtype GCOVVersion = GCOVVersion String
   deriving (Eq, Ord, Read, Show, Typeable, Data)
 
 -- | Defaults for 'GCOVProfiler'.
+defaultGCOVProfiler :: Pass
 defaultGCOVProfiler = GCOVProfiler {
     emitNotes = True,
     emitData = True,
@@ -176,15 +179,19 @@ defaultGCOVProfiler = GCOVProfiler {
   }
 
 -- | Defaults for 'AddressSanitizer'.
+defaultAddressSanitizer :: Pass
 defaultAddressSanitizer = AddressSanitizer
 
 -- | Defaults for 'AddressSanitizerModule'.
+defaultAddressSanitizerModule :: Pass
 defaultAddressSanitizerModule = AddressSanitizerModule
 
 -- | Defaults for 'MemorySanitizer'.
+defaultMemorySanitizer :: Pass
 defaultMemorySanitizer = MemorySanitizer {
   trackOrigins = False
 }
 
 -- | Defaults for 'ThreadSanitizer'.
+defaultThreadSanitizer :: Pass
 defaultThreadSanitizer = ThreadSanitizer

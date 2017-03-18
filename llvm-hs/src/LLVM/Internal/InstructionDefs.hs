@@ -36,11 +36,14 @@ $(do
          TH.dataToExpQ (const Nothing) $ [ (TH.nameBase n, rec) | rec@(TH.RecC n _) <- cons ]
 
    [d|
+      astInstructionRecs :: Map String TH.Con
       astInstructionRecs = Map.fromList $(ctorRecs ''A.Instruction)
+      astConstantRecs :: Map String TH.Con
       astConstantRecs = Map.fromList $(ctorRecs ''A.C.Constant)
     |]
  )
 
+instructionDefs :: Map String ID.InstructionDef
 instructionDefs = Map.fromList [ ((refName . ID.cAPIName $ i), i) | i <- ID.instructionDefs ]
   where
     refName "AtomicCmpXchg" = "CmpXchg"
@@ -58,7 +61,8 @@ outerJoin xs ys = Map.unionWith combine
       combine (Just a, Nothing) (Nothing, Just b) = (Just a, Just b)
       combine _ _ = error "outerJoin: the impossible happened"
 
-instrP = TH.QuasiQuoter { 
+instrP :: TH.QuasiQuoter
+instrP = TH.QuasiQuoter {
   TH.quoteExp = undefined,
   TH.quotePat = let m = Map.fromList [ (ID.cAPIName i, ID.cppOpcode i) | i <- ID.instructionDefs ]
              in TH.dataToPatQ (const Nothing) . (m Map.!),

@@ -4,6 +4,7 @@ module LLVM.Internal.FFI.Transforms where
 import LLVM.Prelude
 
 -- | does the constructor for this pass require a TargetMachine object
+needsTargetMachine :: String -> Bool
 needsTargetMachine "CodeGenPrepare" = True
 needsTargetMachine _ = False
 
@@ -12,7 +13,8 @@ needsTargetMachine _ = False
 -- | This translation includes, by choice of prefix, whether the C interface implementation is found in
 -- | the LLVM distribution ("LLVM" prefix) or either not available or broken there and so implemented
 -- | as part of this Haskell package ("LLVM_Hs_" prefix).
-cName n = 
+cName :: String -> String
+cName n =
     let core = case n of
             "AddressSanitizer" -> "AddressSanitizerFunction"
             "AggressiveDeadCodeElimination" -> "AggressiveDCE"
