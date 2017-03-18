@@ -20,7 +20,7 @@ Although constant expressions and instructions have many similarites, there are 
 differences - so they're represented using different types in this AST. At the cost of making it
 harder to move an code back and forth between being constant and not, this approach embeds more of
 the rules of what IR is legal into the Haskell types.
--} 
+-}
 data Constant
     = Int { integerBits :: Word32, integerValue :: Integer }
     | Float { floatValue :: F.SomeFloat }
@@ -32,7 +32,7 @@ data Constant
     | BlockAddress { blockAddressFunction :: Name, blockAddressBlock :: Name }
     | GlobalReference Type Name
     | TokenNone
-    | Add { 
+    | Add {
         nsw :: Bool,
         nuw :: Bool,
         operand0 :: Constant,
@@ -48,80 +48,80 @@ data Constant
         operand0 :: Constant,
         operand1 :: Constant
       }
-    | FSub { 
-        operand0 :: Constant, 
+    | FSub {
+        operand0 :: Constant,
         operand1 :: Constant
       }
-    | Mul { 
+    | Mul {
         nsw :: Bool,
         nuw :: Bool,
-        operand0 :: Constant, 
+        operand0 :: Constant,
         operand1 :: Constant
       }
-    | FMul { 
-        operand0 :: Constant, 
+    | FMul {
+        operand0 :: Constant,
         operand1 :: Constant
       }
-    | UDiv { 
+    | UDiv {
         exact :: Bool,
-        operand0 :: Constant, 
+        operand0 :: Constant,
         operand1 :: Constant
       }
-    | SDiv { 
+    | SDiv {
         exact :: Bool,
-        operand0 :: Constant, 
+        operand0 :: Constant,
         operand1 :: Constant
       }
-    | FDiv { 
-        operand0 :: Constant, 
+    | FDiv {
+        operand0 :: Constant,
         operand1 :: Constant
       }
-    | URem { 
-        operand0 :: Constant, 
+    | URem {
+        operand0 :: Constant,
         operand1 :: Constant
       }
-    | SRem { 
-        operand0 :: Constant, 
+    | SRem {
+        operand0 :: Constant,
         operand1 :: Constant
       }
-    | FRem { 
-        operand0 :: Constant, 
+    | FRem {
+        operand0 :: Constant,
         operand1 :: Constant
       }
-    | Shl { 
+    | Shl {
         nsw :: Bool,
         nuw :: Bool,
-        operand0 :: Constant, 
+        operand0 :: Constant,
         operand1 :: Constant
       }
-    | LShr { 
+    | LShr {
         exact :: Bool,
-        operand0 :: Constant, 
+        operand0 :: Constant,
         operand1 :: Constant
       }
-    | AShr { 
+    | AShr {
         exact :: Bool,
-        operand0 :: Constant, 
+        operand0 :: Constant,
         operand1 :: Constant
       }
-    | And { 
-        operand0 :: Constant, 
+    | And {
+        operand0 :: Constant,
         operand1 :: Constant
       }
-    | Or { 
-        operand0 :: Constant, 
+    | Or {
+        operand0 :: Constant,
         operand1 :: Constant
       }
-    | Xor { 
-        operand0 :: Constant, 
+    | Xor {
+        operand0 :: Constant,
         operand1 :: Constant
       }
-    | GetElementPtr { 
+    | GetElementPtr {
         inBounds :: Bool,
         address :: Constant,
         indices :: [Constant]
       }
-    | Trunc { 
+    | Trunc {
         operand0 :: Constant,
         type' :: Type
       }
@@ -183,30 +183,30 @@ data Constant
         operand0 :: Constant,
         operand1 :: Constant
       }
-    | Select { 
+    | Select {
         condition' :: Constant,
         trueValue :: Constant,
         falseValue :: Constant
       }
-    | ExtractElement { 
+    | ExtractElement {
         vector :: Constant,
         index :: Constant
       }
-    | InsertElement { 
+    | InsertElement {
         vector :: Constant,
         element :: Constant,
         index :: Constant
       }
-    | ShuffleVector { 
+    | ShuffleVector {
         operand0 :: Constant,
         operand1 :: Constant,
         mask :: Constant
       }
-    | ExtractValue { 
+    | ExtractValue {
         aggregate :: Constant,
         indices' :: [Word32]
       }
-    | InsertValue { 
+    | InsertValue {
         aggregate :: Constant,
         element :: Constant,
         indices' :: [Word32]
@@ -223,6 +223,7 @@ signedIntegerValue (Int nBits' bits) =
   let nBits = fromIntegral nBits'
   in
     if bits `testBit` (nBits - 1) then bits .|. (-1 `shiftL` nBits) else bits
+signedIntegerValue _ = error "signedIntegerValue is only defined for Int"
 
 -- | This library's conversion from LLVM C++ objects will always produce integer constants
 -- as unsigned, so this function in many cases is not necessary. However, nothing's to keep
@@ -233,4 +234,4 @@ signedIntegerValue (Int nBits' bits) =
 unsignedIntegerValue :: Constant -> Integer
 unsignedIntegerValue (Int nBits bits) =
   bits .&. (complement (-1 `shiftL` (fromIntegral nBits)))
-
+unsignedIntegerValue _ = error "unsignedIntegerValue is only defined for Int"
