@@ -20,9 +20,7 @@ inconveniences.
 Example using Homebrew on macOS:
 
 ```bash
-$ brew update
-$ brew install libffi
-$ brew install homebrew/versions/llvm39 --all-targets
+$ brew install llvm-hs/homebrew-llvm/llvm-4.0
 ```
 
 ### Debian/Ubuntu
