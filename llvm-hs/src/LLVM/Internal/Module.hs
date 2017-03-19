@@ -139,7 +139,7 @@ moduleLLVMAssembly m = do
   resultRef <- newIORef Nothing
   let saveBuffer :: Ptr CChar -> CSize -> IO ()
       saveBuffer start size = do
-        r <- decodeM (start, fromIntegral size)
+        r <- decodeM (start, size)
         writeIORef resultRef (Just r)
   m' <- readModule m
   FFI.withBufferRawPWriteStream saveBuffer $ FFI.writeLLVMAssembly m' . FFI.upCast
