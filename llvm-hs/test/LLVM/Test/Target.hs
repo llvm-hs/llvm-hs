@@ -3,10 +3,9 @@
   #-}
 module LLVM.Test.Target where
 
-import Test.Framework
-import Test.Framework.Providers.HUnit
-import Test.HUnit
-import Test.Framework.Providers.QuickCheck2
+import Test.Tasty
+import Test.Tasty.HUnit
+import Test.Tasty.QuickCheck
 import Test.QuickCheck
 import Test.QuickCheck.Property
 

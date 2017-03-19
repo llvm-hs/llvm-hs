@@ -1,9 +1,8 @@
 {-# LANGUAGE ForeignFunctionInterface #-}
 module LLVM.Test.OrcJIT where
 
-import Test.Framework
-import Test.Framework.Providers.HUnit
-import Test.HUnit hiding (Test)
+import Test.Tasty
+import Test.Tasty.HUnit
 
 import LLVM.Test.Support
 
@@ -63,7 +62,7 @@ codResolver testFunc compileLayer symbol
       return (JITSymbol addr (JITSymbolFlags False True))
   | otherwise = CODLayer.findSymbol compileLayer symbol True
 
-tests :: Test
+tests :: TestTree
 tests =
   testGroup "OrcJit" [
     testCase "eager compilation" $ do

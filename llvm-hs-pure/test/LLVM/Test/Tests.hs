@@ -1,6 +1,6 @@
 module LLVM.Test.Tests where
 
-import Test.Framework
+import Test.Tasty
 
 import qualified LLVM.Test.DataLayout as DataLayout
 

@@ -1,8 +1,7 @@
 module LLVM.Test.Support where
 
-import Test.Framework
-import Test.Framework.Providers.HUnit
-import Test.HUnit
+import Test.Tasty
+import Test.Tasty.HUnit
 
 import Data.Functor
 import Control.Monad
