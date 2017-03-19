@@ -11,7 +11,10 @@ module LLVM.Prelude (
     module Data.Foldable,
     module Data.Traversable,
     module Control.Applicative,
-    module Control.Monad
+    module Control.Monad,
+    ByteString,
+    ShortByteString,
+    fromMaybe
     ) where
 
 import Prelude hiding (
@@ -26,6 +29,7 @@ import Prelude hiding (
 import Data.Data (Data, Typeable)
 import GHC.Generics (Generic)
 import Data.Int
+import Data.Maybe (fromMaybe)
 import Data.Word
 import Data.Functor
 import Data.Foldable
@@ -37,3 +41,6 @@ import Control.Monad hiding (
     sequence, sequence_,
     msum
   )
+
+import Data.ByteString (ByteString)
+import Data.ByteString.Short (ShortByteString)

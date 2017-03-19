@@ -1,3 +1,4 @@
+{-# LANGUAGE OverloadedStrings #-}
 -- | This module and descendants define AST data types to represent LLVM code.
 -- Note that these types are designed for fidelity rather than convenience - if the truth
 -- of what LLVM supports is less than pretty, so be it.
@@ -33,20 +34,20 @@ data Definition
   = GlobalDefinition Global
   | TypeDefinition Name (Maybe Type)
   | MetadataNodeDefinition MetadataNodeID [Maybe Metadata]
-  | NamedMetadataDefinition String [MetadataNodeID]
-  | ModuleInlineAssembly String
+  | NamedMetadataDefinition ShortByteString [MetadataNodeID]
+  | ModuleInlineAssembly ByteString
   | FunctionAttributes A.GroupID [A.FunctionAttribute]
-  | COMDAT String COMDAT.SelectionKind
+  | COMDAT ShortByteString COMDAT.SelectionKind
     deriving (Eq, Read, Show, Typeable, Data, Generic)
 
 -- | <http://llvm.org/docs/LangRef.html#module-structure>
 data Module =
   Module {
-    moduleName :: String,
-    moduleSourceFileName :: String,
+    moduleName :: ShortByteString,
+    moduleSourceFileName :: ShortByteString,
     -- | a 'DataLayout', if specified, must match that of the eventual code generator
     moduleDataLayout :: Maybe DataLayout,
-    moduleTargetTriple :: Maybe String,
+    moduleTargetTriple :: Maybe ShortByteString,
     moduleDefinitions :: [Definition]
   }
   deriving (Eq, Read, Show, Typeable, Data, Generic)

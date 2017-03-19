@@ -1,7 +1,12 @@
+{-# LANGUAGE OverloadedStrings #-}
 module LLVM.Test.Global where
 
 import Test.Tasty
 import Test.Tasty.HUnit
+
+import Data.Monoid
+import qualified Data.ByteString.Char8 as ByteString
+import Data.ByteString.Short (fromShort)
 
 import LLVM.Test.Support
 
@@ -37,6 +42,6 @@ tests = testGroup "Global" [
       let
           gn (G.Function {}) = "function"
           gn (G.GlobalVariable {}) = "variable"
-          name = gn g ++ ", align " ++ show a ++ (maybe "" ("  section " ++ ) s)
+          name = gn g <> ", align " <> show a <> (maybe "" (("  section " <>) . ByteString.unpack . fromShort) s)
    ]
  ]

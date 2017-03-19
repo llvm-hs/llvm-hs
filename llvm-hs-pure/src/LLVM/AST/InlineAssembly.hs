@@ -18,8 +18,8 @@ data Dialect
 data InlineAssembly
   = InlineAssembly {
       type' :: Type,
-      assembly :: String,
-      constraints :: String,
+      assembly :: ByteString,
+      constraints :: ShortByteString,
       hasSideEffects :: Bool,
       alignStack :: Bool,
       dialect :: Dialect

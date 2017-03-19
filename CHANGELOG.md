@@ -1,3 +1,8 @@
+## unreleased
+
+* Switch AST to `ByteString`/`ShortByteString` reflecting LLVM’s use
+  of C-style strings
+
 ## 4.0.0 (initial release, changes in comparison to llvm-general)
 
 * Move modules from `LLVM.General*` to `LLVM.*`

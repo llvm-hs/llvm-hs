@@ -172,6 +172,7 @@ library
     LLVM.Internal.FFI.PassManager
     LLVM.Internal.FFI.PtrHierarchy
     LLVM.Internal.FFI.RawOStream
+    LLVM.Internal.FFI.ShortByteString
     LLVM.Internal.FFI.SMDiagnostic
     LLVM.Internal.FFI.Target
     LLVM.Internal.FFI.Threading

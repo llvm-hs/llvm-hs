@@ -20,6 +20,7 @@ import Foreign.Ptr
 import Foreign.C
 import Data.IORef
 import qualified Data.ByteString as BS
+import qualified Data.ByteString.Short as SBS
 import qualified Data.Map as Map
 
 import qualified LLVM.Internal.FFI.Assembly as FFI
@@ -116,7 +117,14 @@ instance LLVMAssemblyInput (String, String) where
     UTF8ByteString bs <- encodeM s
     encodeM (MB.Bytes id bs)
 
+instance LLVMAssemblyInput (String, ByteString) where
+  llvmAssemblyMemoryBuffer (id, s) = do
+    encodeM (MB.Bytes id s)
+
 instance LLVMAssemblyInput String where
+  llvmAssemblyMemoryBuffer s = llvmAssemblyMemoryBuffer ("<string>", s)
+
+instance LLVMAssemblyInput ByteString where
   llvmAssemblyMemoryBuffer s = llvmAssemblyMemoryBuffer ("<string>", s)
 
 instance LLVMAssemblyInput File where
@@ -134,7 +142,7 @@ withModuleFromLLVMAssembly (Context c) s f = flip runAnyContT return $ do
   liftIO $ f m
 
 -- | generate LLVM assembly from a 'Module'
-moduleLLVMAssembly :: Module -> IO String
+moduleLLVMAssembly :: Module -> IO ByteString
 moduleLLVMAssembly m = do
   resultRef <- newIORef Nothing
   let saveBuffer :: Ptr CChar -> CSize -> IO ()
@@ -216,15 +224,15 @@ moduleObject = emitToByteString FFI.codeGenFileTypeObject
 writeObjectToFile :: TargetMachine -> File -> Module -> ExceptT String IO ()
 writeObjectToFile = emitToFile FFI.codeGenFileTypeObject
 
-setTargetTriple :: Ptr FFI.Module -> String -> EncodeAST ()
+setTargetTriple :: Ptr FFI.Module -> ShortByteString -> EncodeAST ()
 setTargetTriple m t = do
   t <- encodeM t
   liftIO $ FFI.setTargetTriple m t
 
-getTargetTriple :: Ptr FFI.Module -> IO (Maybe String)
+getTargetTriple :: Ptr FFI.Module -> IO (Maybe ShortByteString)
 getTargetTriple m = do
   s <- decodeM =<< liftIO (FFI.getTargetTriple m)
-  return $ if s == "" then Nothing else Just s
+  return $ if SBS.null s then Nothing else Just s
 
 setDataLayout :: Ptr FFI.Module -> A.DataLayout -> EncodeAST ()
 setDataLayout m dl = do
@@ -492,7 +500,7 @@ moduleAST m = runDecodeAST $ do
     <*> (liftIO $ getDataLayout mod)
     <*> (liftIO $ do
            s <- decodeM =<< FFI.getTargetTriple mod
-           return $ if s == "" then Nothing else Just s)
+           return $ if SBS.null s then Nothing else Just s)
     <*> (do
       globalDefinitions <-
         map A.GlobalDefinition . concat <$>

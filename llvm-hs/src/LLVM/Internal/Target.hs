@@ -2,7 +2,8 @@
   TemplateHaskell,
   MultiParamTypeClasses,
   RecordWildCards,
-  UndecidableInstances
+  UndecidableInstances,
+  OverloadedStrings
   #-}
 module LLVM.Internal.Target where
 
@@ -98,9 +99,9 @@ instance (Monad d, DecodeM d String es) => DecodeM d (Map CPUFeature Bool) es wh
 -- | <http://llvm.org/doxygen/structllvm_1_1TargetRegistry.html#a3105b45e546c9cc3cf78d0f2ec18ad89>
 -- | Be sure to run either 'initializeAllTargets' or 'initializeNativeTarget' before expecting this to succeed, depending on what target(s) you want to use.
 lookupTarget ::
-  Maybe String -- ^ arch
-  -> String -- ^ \"triple\" - e.g. x86_64-unknown-linux-gnu
-  -> ExceptT String IO (Target, String)
+  Maybe ShortByteString -- ^ arch
+  -> ShortByteString -- ^ \"triple\" - e.g. x86_64-unknown-linux-gnu
+  -> ExceptT String IO (Target, ShortByteString)
 lookupTarget arch triple = flip runAnyContT return $ do
   cErrorP <- alloca
   cNewTripleP <- alloca
@@ -180,8 +181,8 @@ newtype TargetMachine = TargetMachine (Ptr FFI.TargetMachine)
 -- | bracket creation and destruction of a 'TargetMachine'
 withTargetMachine ::
     Target
-    -> String -- ^ triple
-    -> String -- ^ cpu
+    -> ShortByteString -- ^ triple
+    -> ByteString -- ^ cpu
     -> Map CPUFeature Bool -- ^ features
     -> TargetOptions
     -> Reloc.Model
@@ -238,15 +239,15 @@ getTargetMachineTriple :: TargetMachine -> IO String
 getTargetMachineTriple (TargetMachine m) = decodeM =<< FFI.getTargetMachineTriple m
 
 -- | the default target triple that LLVM has been configured to produce code for
-getDefaultTargetTriple :: IO String
+getDefaultTargetTriple :: IO ShortByteString
 getDefaultTargetTriple = decodeM =<< FFI.getDefaultTargetTriple
 
 -- | a target triple suitable for loading code into the current process
-getProcessTargetTriple :: IO String
+getProcessTargetTriple :: IO ShortByteString
 getProcessTargetTriple = decodeM =<< FFI.getProcessTargetTriple
 
 -- | the LLVM name for the host CPU
-getHostCPUName :: IO String
+getHostCPUName :: IO ByteString
 getHostCPUName = decodeM FFI.getHostCPUName
 
 -- | a space-separated list of LLVM feature names supported by the host CPU
@@ -306,7 +307,7 @@ setLibraryFunctionAvailableWithName (TargetLibraryInfo f) libraryFunction name =
 
 -- | look up information about the library functions available on a given platform
 withTargetLibraryInfo ::
-  String -- ^ triple
+  ShortByteString -- ^ triple
   -> (TargetLibraryInfo -> IO a)
   -> IO a
 withTargetLibraryInfo triple f = flip runAnyContT return $ do

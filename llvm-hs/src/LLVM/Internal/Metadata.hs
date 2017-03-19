@@ -23,7 +23,7 @@ import LLVM.Internal.EncodeAST
 import LLVM.Internal.DecodeAST
 import LLVM.Internal.Value ()
 
-instance EncodeM EncodeAST String FFI.MDKindID where
+instance EncodeM EncodeAST ShortByteString FFI.MDKindID where
   encodeM s = do
     Context c <- gets encodeStateContext
     s <- encodeM s
@@ -45,10 +45,10 @@ getMetadataKindNames (Context c) = scopeAnyCont $ do
   strs <- g 16
   modify $ \s -> s { metadataKinds = Array.listArray (0, fromIntegral (length strs) - 1) strs }
 
-instance DecodeM DecodeAST String FFI.MDKindID where
+instance DecodeM DecodeAST ShortByteString FFI.MDKindID where
   decodeM (FFI.MDKindID k) = gets $ (Array.! (fromIntegral k)) . metadataKinds
 
-instance DecodeM DecodeAST String (Ptr FFI.MDString) where
+instance DecodeM DecodeAST ShortByteString (Ptr FFI.MDString) where
   decodeM p = do
     np <- alloca
     s <- liftIO $ FFI.getMDString p np

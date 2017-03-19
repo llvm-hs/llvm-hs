@@ -1,3 +1,4 @@
+{-# LANGUAGE OverloadedStrings #-}
 module LLVM.Test.Optimization where
 
 import Test.Tasty
@@ -6,6 +7,7 @@ import Test.Tasty.HUnit
 import LLVM.Test.Support
 
 import Data.Functor
+import Data.Monoid
 import qualified Data.Set as Set
 import qualified Data.Map as Map
 
@@ -179,12 +181,12 @@ tests = testGroup "Optimization" [
            G.returnType = double,
             G.name = Name "foo",
             G.parameters = ([
-              Parameter double (Name (l ++ n)) []
+              Parameter double (Name (l <> n)) []
                 | l <- [ "a", "b" ], n <- ["1", "2"]
              ], False),
             G.basicBlocks = [
               BasicBlock (UnName 0) ([
-                Name (l ++ n) := op NoFastMathFlags (LocalReference double (Name (o1 ++ n))) (LocalReference double (Name (o2 ++ n))) []
+                Name (l <> n) := op NoFastMathFlags (LocalReference double (Name (o1 <> n))) (LocalReference double (Name (o2 <> n))) []
                 | (l, op, o1, o2) <- [
                    ("x", FSub, "a", "b"),
                    ("y", FMul, "x", "a"),

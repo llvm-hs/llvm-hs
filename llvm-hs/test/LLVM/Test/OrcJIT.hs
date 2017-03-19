@@ -1,4 +1,4 @@
-{-# LANGUAGE ForeignFunctionInterface #-}
+{-# LANGUAGE ForeignFunctionInterface, OverloadedStrings #-}
 module LLVM.Test.OrcJIT where
 
 import Test.Tasty
@@ -6,6 +6,7 @@ import Test.Tasty.HUnit
 
 import LLVM.Test.Support
 
+import Data.ByteString (ByteString)
 import Data.Foldable
 import Data.IORef
 import Data.Word
@@ -20,7 +21,7 @@ import LLVM.OrcJIT.CompileOnDemandLayer (CompileOnDemandLayer, withIndirectStubs
 import qualified LLVM.OrcJIT.CompileOnDemandLayer as CODLayer
 import LLVM.Target
 
-testModule :: String
+testModule :: ByteString
 testModule =
   "; ModuleID = '<string>'\n\
   \source_filename = \"<string>\"\n\

@@ -1,3 +1,4 @@
+{-# LANGUAGE OverloadedStrings #-}
 module LLVM.Test.CallingConvention where
 
 import Test.Tasty
@@ -6,6 +7,7 @@ import Test.Tasty.HUnit
 import LLVM.Test.Support
 
 import Data.Maybe
+import Data.Monoid
 import qualified Data.Set as Set
 import qualified Data.Map as Map
 
@@ -15,6 +17,8 @@ import LLVM.AST
 import LLVM.AST.Type as T
 import qualified LLVM.AST.CallingConvention as CC
 import qualified LLVM.AST.Global as G
+
+import qualified Data.ByteString.Char8 as ByteString
 
 tests = testGroup "CallingConvention" [
   testCase name $ strCheck (defaultModule {
@@ -28,7 +32,7 @@ tests = testGroup "CallingConvention" [
    }) ("; ModuleID = '<string>'\n\
        \source_filename = \"<string>\"\n\
        \\n\
-       \declare" ++ (if name == "" then "" else (" " ++ name)) ++ " i32 @foo()\n")
+       \declare" <> (if name == "" then "" else (" " <> ByteString.pack name)) <> " i32 @foo()\n")
    | (name, cc) <- [
    ("", CC.C),
    ("fastcc", CC.Fast),

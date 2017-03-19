@@ -1,3 +1,4 @@
+{-# LANGUAGE OverloadedStrings #-}
 module LLVM.Test.DataLayout where
 
 import Test.Tasty
@@ -6,6 +7,7 @@ import Test.Tasty.HUnit
 import LLVM.Test.Support
 
 import Data.Maybe
+import Data.Monoid
 import qualified Data.Set as Set
 import qualified Data.Map as Map
 
@@ -16,8 +18,8 @@ import LLVM.AST.DataLayout
 import LLVM.AST.AddrSpace
 import qualified LLVM.AST.Global as G
 
-m s = "; ModuleID = '<string>'\nsource_filename = \"<string>\"\n" ++ s
-t s = "target datalayout = \"" ++ s ++ "\"\n"
+m s = "; ModuleID = '<string>'\nsource_filename = \"<string>\"\n" <> s
+t s = "target datalayout = \"" <> s <> "\"\n"
 ddl = defaultDataLayout BigEndian
 
 tests = testGroup "DataLayout" [

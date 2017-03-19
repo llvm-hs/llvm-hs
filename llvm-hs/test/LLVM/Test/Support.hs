@@ -3,6 +3,7 @@ module LLVM.Test.Support where
 import Test.Tasty
 import Test.Tasty.HUnit
 
+import Data.ByteString (ByteString)
 import Data.Functor
 import Control.Monad
 import Control.Monad.Trans.Except
@@ -24,6 +25,7 @@ instance FailInIO String where
 instance FailInIO (Either String Diagnostic) where
   errorToString = either id diagnosticDisplay
 
+withModuleFromLLVMAssembly' :: Context -> ByteString -> (Module -> IO a) -> IO a
 withModuleFromLLVMAssembly' c s f  = failInIO $ withModuleFromLLVMAssembly c s f
 withModuleFromAST' c a f = failInIO $ withModuleFromAST c a f
 withModuleFromBitcode' c a f = failInIO $ withModuleFromBitcode c ("<string>", a) f

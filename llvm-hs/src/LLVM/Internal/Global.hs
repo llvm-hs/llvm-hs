@@ -1,6 +1,7 @@
 {-# LANGUAGE
   TemplateHaskell,
-  MultiParamTypeClasses
+  MultiParamTypeClasses,
+  OverloadedStrings
   #-}
 module LLVM.Internal.Global where
 
@@ -70,7 +71,7 @@ getDLLStorageClass g = liftIO $ decodeM =<< FFI.getDLLStorageClass (FFI.upCast g
 setDLLStorageClass :: FFI.DescendentOf FFI.GlobalValue v => Ptr v -> Maybe A.DLL.StorageClass -> EncodeAST ()
 setDLLStorageClass g sc = liftIO . FFI.setDLLStorageClass (FFI.upCast g) =<< encodeM sc
 
-getSection :: FFI.DescendentOf FFI.GlobalValue v => Ptr v -> DecodeAST (Maybe String)
+getSection :: FFI.DescendentOf FFI.GlobalValue v => Ptr v -> DecodeAST (Maybe ShortByteString)
 getSection g = do
   sectionLengthPtr <- alloca
   sectionNamePtr <- liftIO $ FFI.getSection (FFI.upCast g) sectionLengthPtr
@@ -81,9 +82,9 @@ getSection g = do
          sectionName <- decodeM (sectionNamePtr, sectionLength)
          return (Just sectionName)
 
-setSection :: FFI.DescendentOf FFI.GlobalValue v => Ptr v -> Maybe String -> EncodeAST ()
+setSection :: FFI.DescendentOf FFI.GlobalValue v => Ptr v -> Maybe ShortByteString -> EncodeAST ()
 setSection g s = scopeAnyCont $ do
-  s <- encodeM (maybe "" id s)
+  s <- encodeM (fromMaybe "" s)
   liftIO $ FFI.setSection (FFI.upCast g) s
 
 genCodingInstance [t| A.COMDAT.SelectionKind |] ''FFI.COMDATSelectionKind [
@@ -94,12 +95,13 @@ genCodingInstance [t| A.COMDAT.SelectionKind |] ''FFI.COMDATSelectionKind [
   (FFI.comdatSelectionKindSameSize, A.COMDAT.SameSize)
  ]
 
-instance DecodeM DecodeAST (String, A.COMDAT.SelectionKind) (Ptr FFI.COMDAT) where
-  decodeM c = return (,)
-              `ap` (decodeM $ FFI.getCOMDATName c)
-              `ap` (decodeM =<< liftIO (FFI.getCOMDATSelectionKind c))
+instance DecodeM DecodeAST (ShortByteString, A.COMDAT.SelectionKind) (Ptr FFI.COMDAT) where
+  decodeM c =
+    (,)
+      <$> decodeM (FFI.getCOMDATName c)
+      <*> (decodeM =<< liftIO (FFI.getCOMDATSelectionKind c))
 
-getCOMDATName :: FFI.DescendentOf FFI.GlobalValue v => Ptr v -> DecodeAST (Maybe String)
+getCOMDATName :: FFI.DescendentOf FFI.GlobalValue v => Ptr v -> DecodeAST (Maybe ShortByteString)
 getCOMDATName g = do
   c <- liftIO $ FFI.getCOMDAT (FFI.upCast g)
   if c == nullPtr
@@ -113,7 +115,7 @@ getCOMDATName g = do
           modify $ \s -> s { comdats = Map.insert c cd cds }
           return name
 
-setCOMDAT :: FFI.DescendentOf FFI.GlobalObject v => Ptr v -> Maybe String -> EncodeAST ()
+setCOMDAT :: FFI.DescendentOf FFI.GlobalObject v => Ptr v -> Maybe ShortByteString -> EncodeAST ()
 setCOMDAT _ Nothing = return ()
 setCOMDAT g (Just name) = do
   cd <- referCOMDAT name

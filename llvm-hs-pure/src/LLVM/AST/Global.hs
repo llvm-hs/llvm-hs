@@ -29,8 +29,8 @@ data Global
         isConstant :: Bool,
         type' :: Type,
         initializer :: Maybe Constant,
-        section :: Maybe String,
-        comdat :: Maybe String,
+        section :: Maybe ShortByteString,
+        comdat :: Maybe ShortByteString,
         alignment :: Word32
       }
     -- | <http://llvm.org/docs/LangRef.html#aliases>
@@ -55,10 +55,10 @@ data Global
         name :: Name,
         parameters :: ([Parameter],Bool), -- ^ snd indicates varargs
         functionAttributes :: [Either A.GroupID A.FunctionAttribute],
-        section :: Maybe String,
-        comdat :: Maybe String,
+        section :: Maybe ShortByteString,
+        comdat :: Maybe ShortByteString,
         alignment :: Word32,
-        garbageCollectorName :: Maybe String,
+        garbageCollectorName :: Maybe ShortByteString,
         prefix :: Maybe Constant,
         basicBlocks :: [BasicBlock],
         personalityFunction :: Maybe Constant

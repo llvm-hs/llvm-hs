@@ -26,10 +26,9 @@ unnamed node numbers should be thought of as having any scope limited to the 'LL
 which they are used.
 -}
 data Name
-    = Name String -- ^ a string name
+    = Name ShortByteString -- ^ a string name
     | UnName Word -- ^ a number for a nameless thing
    deriving (Eq, Ord, Read, Show, Typeable, Data, Generic)
 
 instance IsString Name where
-  fromString = Name
-
+  fromString = Name . fromString
