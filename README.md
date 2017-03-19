@@ -1,6 +1,6 @@
 # llvm-hs - Haskell bindings for LLVM
 
-[![Build Status](https://travis-ci.org/llvm-hs/llvm-hs.svg?branch=llvm-4)](https://travis-ci.org/llvm-hs/llvm-hs)
+[![Build Status](https://travis-ci.org/llvm-hs/llvm-hs.svg?branch=llvm-4)](https://travis-ci.org/llvm-hs/llvm-hs) [![Hackage](https://img.shields.io/hackage/v/llvm-hs.svg)](https://hackage.haskell.org/package/llvm-hs)
 
 This project aims to provide a relatively complete set of bindings for
 the LLVM API. If you find that anything is missing please open an
