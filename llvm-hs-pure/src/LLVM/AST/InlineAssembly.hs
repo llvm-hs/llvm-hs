@@ -10,7 +10,7 @@ import LLVM.AST.Type
 data Dialect
   = ATTDialect
   | IntelDialect
-  deriving (Eq, Read, Show, Typeable, Data)
+  deriving (Eq, Read, Show, Typeable, Data, Generic)
 
 -- | <http://llvm.org/docs/LangRef.html#inline-assembler-expressions>
 -- to be used through 'LLVM.AST.Operand.CallableOperand' with a
@@ -24,4 +24,4 @@ data InlineAssembly
       alignStack :: Bool,
       dialect :: Dialect
     }
-  deriving (Eq, Read, Show, Typeable, Data)
+  deriving (Eq, Read, Show, Typeable, Data, Generic)

@@ -63,20 +63,20 @@ data Global
         basicBlocks :: [BasicBlock],
         personalityFunction :: Maybe Constant
       }
-  deriving (Eq, Read, Show, Typeable, Data)
+  deriving (Eq, Read, Show, Typeable, Data, Generic)
 
 -- | 'Parameter's for 'Function's
 data Parameter = Parameter Type Name [A.ParameterAttribute]
-  deriving (Eq, Read, Show, Typeable, Data)
+  deriving (Eq, Read, Show, Typeable, Data, Generic)
 
 -- | <http://llvm.org/doxygen/classllvm_1_1BasicBlock.html>
 -- LLVM code in a function is a sequence of 'BasicBlock's each with a label,
 -- some instructions, and a terminator.
 data BasicBlock = BasicBlock Name [Named Instruction] (Named Terminator)
-  deriving (Eq, Read, Show, Typeable, Data)
+  deriving (Eq, Read, Show, Typeable, Data, Generic)
 
 data UnnamedAddr = LocalAddr | GlobalAddr
-  deriving (Eq, Read, Show, Typeable, Data)
+  deriving (Eq, Read, Show, Typeable, Data, Generic)
 
 -- | helper for making 'GlobalVariable's
 globalVariableDefaults :: Global

@@ -11,4 +11,4 @@ data Model
     | Kernel
     | Medium
     | Large
-    deriving (Eq, Read, Show, Typeable, Data)
+    deriving (Eq, Read, Show, Typeable, Data, Generic)

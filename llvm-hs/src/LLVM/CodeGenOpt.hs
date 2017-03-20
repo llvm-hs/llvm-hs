@@ -9,4 +9,4 @@ data Level
     | Less
     | Default
     | Aggressive
-    deriving (Eq, Ord, Read, Show, Typeable, Data)
+    deriving (Eq, Ord, Read, Show, Typeable, Data, Generic)

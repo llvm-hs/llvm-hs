@@ -10,4 +10,4 @@ data SelectionKind
   | Largest
   | NoDuplicates
   | SameSize
-  deriving (Eq, Read, Show, Typeable, Data)
+  deriving (Eq, Read, Show, Typeable, Data, Generic)

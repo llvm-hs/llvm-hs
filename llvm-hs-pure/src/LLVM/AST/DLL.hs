@@ -7,4 +7,4 @@ import LLVM.Prelude
 data StorageClass
     = Import
     | Export
-  deriving (Eq, Read, Show, Typeable, Data)
+  deriving (Eq, Read, Show, Typeable, Data, Generic)

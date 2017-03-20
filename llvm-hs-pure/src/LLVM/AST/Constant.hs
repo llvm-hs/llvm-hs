@@ -211,7 +211,7 @@ data Constant
         element :: Constant,
         indices' :: [Word32]
       }
-    deriving (Eq, Ord, Read, Show, Typeable, Data)
+    deriving (Eq, Ord, Read, Show, Typeable, Data, Generic)
 
 
 -- | Since LLVM types don't include signedness, there's ambiguity in interpreting

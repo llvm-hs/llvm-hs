@@ -15,7 +15,7 @@ data IntegerPredicate
   | SGE
   | SLT
   | SLE
-  deriving (Eq, Ord, Read, Show, Data, Typeable)
+  deriving (Eq, Ord, Read, Show, Data, Typeable, Generic)
 
 
 

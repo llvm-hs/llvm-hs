@@ -28,7 +28,7 @@ which they are used.
 data Name
     = Name String -- ^ a string name
     | UnName Word -- ^ a number for a nameless thing
-   deriving (Eq, Ord, Read, Show, Typeable, Data)
+   deriving (Eq, Ord, Read, Show, Typeable, Data, Generic)
 
 instance IsString Name where
   fromString = Name

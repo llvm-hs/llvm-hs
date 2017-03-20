@@ -16,7 +16,7 @@ data RMWOperation
   | Min
   | UMax
   | UMin
-  deriving (Eq, Ord, Read, Show, Data, Typeable)
+  deriving (Eq, Ord, Read, Show, Data, Typeable, Generic)
 
 
 

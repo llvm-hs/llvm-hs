@@ -29,5 +29,5 @@ data CallingConvention
   | X86_64_SysV
   | X86_64_Win64
   | Numbered Word32
-  deriving (Eq, Read, Show, Typeable, Data)
+  deriving (Eq, Read, Show, Typeable, Data, Generic)
 

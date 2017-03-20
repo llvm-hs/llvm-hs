@@ -48,6 +48,7 @@ library
     NoImplicitPrelude
     TupleSections
     DeriveDataTypeable
+    DeriveGeneric
     EmptyDataDecls
     FlexibleContexts
     FlexibleInstances

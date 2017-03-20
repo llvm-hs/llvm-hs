@@ -37,7 +37,7 @@ data Definition
   | ModuleInlineAssembly String
   | FunctionAttributes A.GroupID [A.FunctionAttribute]
   | COMDAT String COMDAT.SelectionKind
-    deriving (Eq, Read, Show, Typeable, Data)
+    deriving (Eq, Read, Show, Typeable, Data, Generic)
 
 -- | <http://llvm.org/docs/LangRef.html#module-structure>
 data Module =
@@ -49,7 +49,7 @@ data Module =
     moduleTargetTriple :: Maybe String,
     moduleDefinitions :: [Definition]
   }
-  deriving (Eq, Read, Show, Typeable, Data)
+  deriving (Eq, Read, Show, Typeable, Data, Generic)
 
 -- | helper for making 'Module's
 defaultModule :: Module

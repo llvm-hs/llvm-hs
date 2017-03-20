@@ -69,10 +69,10 @@ newtype NothingAsEmptyString c = NothingAsEmptyString c
   deriving (Storable)
 
 newtype CPPOpcode = CPPOpcode CUInt
-  deriving (Eq, Ord, Show, Typeable, Data)
+  deriving (Eq, Ord, Show, Typeable, Data, Generic)
 
 newtype ICmpPredicate = ICmpPredicate CUInt
-  deriving (Eq, Ord, Show, Typeable, Data)
+  deriving (Eq, Ord, Show, Typeable, Data, Generic)
 #{enum ICmpPredicate, ICmpPredicate,
  iCmpPredEQ = LLVMIntEQ,
  iCmpPredNE = LLVMIntNE,
@@ -87,7 +87,7 @@ newtype ICmpPredicate = ICmpPredicate CUInt
 }
 
 newtype FCmpPredicate = FCmpPredicate CUInt
-  deriving (Eq, Ord, Show, Typeable, Data)
+  deriving (Eq, Ord, Show, Typeable, Data, Generic)
 #{enum FCmpPredicate, FCmpPredicate,
  fCmpPredFalse = LLVMRealPredicateFalse,
  fCmpPredOEQ = LLVMRealOEQ,
@@ -111,117 +111,117 @@ newtype MDKindID = MDKindID CUInt
   deriving (Storable)
 
 newtype FastMathFlags = FastMathFlags CUInt
-  deriving (Eq, Ord, Show, Typeable, Data, Num, Bits)
+  deriving (Eq, Ord, Show, Typeable, Data, Num, Bits, Generic)
 #define FMF_Rec(n,l) { #n, LLVM ## n, },
 #{inject FAST_MATH_FLAG, FastMathFlags, FastMathFlags, fastMathFlags, FMF_Rec}
 
 newtype MemoryOrdering = MemoryOrdering CUInt
-  deriving (Eq, Typeable, Data)
+  deriving (Eq, Typeable, Data, Generic)
 #define MO_Rec(n) { #n, LLVMAtomicOrdering ## n },
 #{inject ATOMIC_ORDERING, MemoryOrdering, MemoryOrdering, memoryOrdering, MO_Rec}
 
 newtype UnnamedAddr = UnnamedAddr CUInt
-  deriving (Eq, Typeable, Data)
+  deriving (Eq, Typeable, Data, Generic)
 #define UA_Rec(n) { #n, LLVMUnnamedAddr ## n },
 #{inject UNNAMED_ADDR, UnnamedAddr, UnnamedAddr, unnamedAddr, UA_Rec}
 
 newtype SynchronizationScope = SynchronizationScope CUInt
-  deriving (Eq, Typeable, Data)
+  deriving (Eq, Typeable, Data, Generic)
 #define SS_Rec(n) { #n, LLVM ## n ## SynchronizationScope },
 #{inject SYNCRONIZATION_SCOPE, SynchronizationScope, SynchronizationScope, synchronizationScope, SS_Rec}
 
 newtype TailCallKind = TailCallKind CUInt
-  deriving (Eq, Typeable, Data)
+  deriving (Eq, Typeable, Data, Generic)
 #define TCK_Rec(n) { #n, LLVM_Hs_TailCallKind_ ## n },
 #{inject TAIL_CALL_KIND, TailCallKind, TailCallKind, tailCallKind, TCK_Rec}
 
 newtype Linkage = Linkage CUInt
-  deriving (Eq, Read, Show, Typeable, Data)
+  deriving (Eq, Read, Show, Typeable, Data, Generic)
 #define LK_Rec(n) { #n, LLVM ## n ## Linkage },
 #{inject LINKAGE, Linkage, Linkage, linkage, LK_Rec}
 
 newtype Visibility = Visibility CUInt
-  deriving (Eq, Read, Show, Typeable, Data)
+  deriving (Eq, Read, Show, Typeable, Data, Generic)
 #define VIS_Rec(n) { #n, LLVM ## n ## Visibility },
 #{inject VISIBILITY, Visibility, Visibility, visibility, VIS_Rec}
 
 newtype COMDATSelectionKind = COMDATSelectionKind CUInt
-  deriving (Eq, Read, Show, Typeable, Data)
+  deriving (Eq, Read, Show, Typeable, Data, Generic)
 #define CSK(n) { #n, LLVM_Hs_COMDAT_Selection_Kind_ ## n },
 #{inject COMDAT_SELECTION_KIND, COMDATSelectionKind, COMDATSelectionKind, comdatSelectionKind, CSK}
 
 newtype DLLStorageClass = DLLStorageClass CUInt
-  deriving (Eq, Read, Show, Typeable, Data)
+  deriving (Eq, Read, Show, Typeable, Data, Generic)
 #define DLLSC_Rec(n) { #n, LLVM ## n ## StorageClass },
 #{inject DLL_STORAGE_CLASS, DLLStorageClass, DLLStorageClass, dllStorageClass, DLLSC_Rec}
 
 newtype CallingConvention = CallingConvention CUInt
-  deriving (Eq, Read, Show, Typeable, Data)
+  deriving (Eq, Read, Show, Typeable, Data, Generic)
 #define CC_Rec(l, n) { #l, LLVM_Hs_CallingConvention_ ## l },
 #{inject CALLING_CONVENTION, CallingConvention, CallingConvention, callingConvention, CC_Rec}
 
 newtype ThreadLocalMode = ThreadLocalMode CUInt
-  deriving (Eq, Read, Show, Typeable, Data)
+  deriving (Eq, Read, Show, Typeable, Data, Generic)
 #define TLS_Rec(n) { #n, LLVM ## n },
 #{inject THREAD_LOCAL_MODE, ThreadLocalMode, ThreadLocalMode, threadLocalMode, TLS_Rec}
 
 newtype ValueSubclassId = ValueSubclassId CUInt
-  deriving (Eq, Read, Show, Typeable, Data)
+  deriving (Eq, Read, Show, Typeable, Data, Generic)
 #define VSID_Rec(n) { #n, LLVM ## n ## SubclassId },
 #{inject VALUE_SUBCLASS, ValueSubclassId, ValueSubclassId, valueSubclassId, VSID_Rec}
 
 newtype DiagnosticKind = DiagnosticKind CUInt
-  deriving (Eq, Read, Show, Typeable, Data)
+  deriving (Eq, Read, Show, Typeable, Data, Generic)
 #define DK_Rec(n) { #n, LLVMDiagnosticKind ## n },
 #{inject DIAGNOSTIC_KIND, DiagnosticKind, DiagnosticKind, diagnosticKind, DK_Rec}
 
 newtype AsmDialect = AsmDialect CUInt
-  deriving (Eq, Read, Show, Typeable, Data)
+  deriving (Eq, Read, Show, Typeable, Data, Generic)
 #define ASM_Rec(n) { #n, LLVMAsmDialect_ ## n },
 #{inject ASM_DIALECT, AsmDialect, AsmDialect, asmDialect, ASM_Rec}
 
 newtype RMWOperation = RMWOperation CUInt
-  deriving (Eq, Read, Show, Typeable, Data)
+  deriving (Eq, Read, Show, Typeable, Data, Generic)
 #define RMWOp_Rec(n) { #n, LLVMAtomicRMWBinOp ## n },
 #{inject RMW_OPERATION, RMWOperation, RMWOperation, rmwOperation, RMWOp_Rec}
 
 newtype RelocModel = RelocModel CUInt
-  deriving (Eq, Read, Show, Typeable, Data)
+  deriving (Eq, Read, Show, Typeable, Data, Generic)
 #define RM_Rec(n,m) { #n, LLVMReloc ## n },
 #{inject RELOC_MODEL, RelocModel, RelocModel, relocModel, RM_Rec}
 
 newtype CodeModel = CodeModel CUInt
-  deriving (Eq, Read, Show, Typeable, Data)
+  deriving (Eq, Read, Show, Typeable, Data, Generic)
 #define CM_Rec(n) { #n, LLVMCodeModel ## n },
 #{inject CODE_MODEL, CodeModel, CodeModel, codeModel, CM_Rec}
 
 newtype CodeGenOptLevel = CodeGenOptLevel CUInt
-  deriving (Eq, Read, Show, Typeable, Data)
+  deriving (Eq, Read, Show, Typeable, Data, Generic)
 #define CGOL_Rec(n) { #n, LLVMCodeGenLevel ## n },
 #{inject CODE_GEN_OPT_LEVEL, CodeGenOptLevel, CodeGenOptLevel, codeGenOptLevel, CGOL_Rec}
 
 newtype CodeGenFileType = CodeGenFileType CUInt
-  deriving (Eq, Read, Show, Typeable, Data)
+  deriving (Eq, Read, Show, Typeable, Data, Generic)
 #define CGFT_Rec(n) { #n, LLVM ## n ## File },
 #{inject CODE_GEN_FILE_TYPE, CodeGenFileType, CodeGenFileType, codeGenFileType, CGFT_Rec}
 
 newtype FloatABIType = FloatABIType CUInt
-  deriving (Eq, Read, Show, Typeable, Data)
+  deriving (Eq, Read, Show, Typeable, Data, Generic)
 #define FAT_Rec(n) { #n, LLVM_Hs_FloatABI_ ## n },
 #{inject FLOAT_ABI, FloatABIType, FloatABIType, floatABI, FAT_Rec}
 
 newtype FPOpFusionMode = FPOpFusionMode CUInt
-  deriving (Eq, Read, Show, Typeable, Data)
+  deriving (Eq, Read, Show, Typeable, Data, Generic)
 #define FPOFM_Rec(n) { #n, LLVM_Hs_FPOpFusionMode_ ## n },
 #{inject FP_OP_FUSION_MODE, FPOpFusionMode, FPOpFusionMode, fpOpFusionMode, FPOFM_Rec}
 
 newtype TargetOptionFlag = TargetOptionFlag CUInt
-  deriving (Eq, Read, Show, Typeable, Data)
+  deriving (Eq, Read, Show, Typeable, Data, Generic)
 #define TOF_Rec(n) { #n, LLVM_Hs_TargetOptionFlag_ ## n },
 #{inject TARGET_OPTION_FLAG, TargetOptionFlag, TargetOptionFlag, targetOptionFlag, TOF_Rec}
 
 newtype TypeKind = TypeKind CUInt
-  deriving (Eq, Read, Show, Typeable, Data)
+  deriving (Eq, Read, Show, Typeable, Data, Generic)
 #define TK_Rec(n) { #n, LLVM ## n ## TypeKind },
 #{inject TYPE_KIND, TypeKind, TypeKind, typeKind, TK_Rec}
 
@@ -236,31 +236,31 @@ newtype TypeKind = TypeKind CUInt
 #define OR_FF F
 #define OR(x,y) OR_ ## x ## y
 newtype ParameterAttributeKind = ParameterAttributeKind CUInt
-  deriving (Eq, Read, Show, Typeable, Data)
+  deriving (Eq, Read, Show, Typeable, Data, Generic)
 #define PAK_Rec(n,p,r,f) IF(OR(p,r))({ #n COMMA LLVM_Hs_AttributeKind_ ## n} COMMA)
 #{inject ATTRIBUTE_KIND, ParameterAttributeKind, ParameterAttributeKind, parameterAttributeKind, PAK_Rec}
 
 newtype FunctionAttributeKind = FunctionAttributeKind CUInt
-  deriving (Eq, Read, Show, Typeable, Data)
+  deriving (Eq, Read, Show, Typeable, Data, Generic)
 #define FAK_Rec(n,p,r,f) IF(f)({ #n COMMA LLVM_Hs_AttributeKind_ ## n} COMMA)
 #{inject ATTRIBUTE_KIND, FunctionAttributeKind, FunctionAttributeKind, functionAttributeKind, FAK_Rec}
 
 newtype FloatSemantics = FloatSemantics CUInt
-  deriving (Eq, Read, Show, Typeable, Data)
+  deriving (Eq, Read, Show, Typeable, Data, Generic)
 #define FS_Rec(n) { #n, LLVMFloatSemantics ## n },
 #{inject FLOAT_SEMANTICS, FloatSemantics, FloatSemantics, floatSemantics, FS_Rec}
 
 newtype VerifierFailureAction = VerifierFailureAction CUInt
-  deriving (Eq, Read, Show, Bits, Typeable, Data, Num)
+  deriving (Eq, Read, Show, Bits, Typeable, Data, Num, Generic)
 #define VFA_Rec(n) { #n, LLVM ## n ## Action },
 #{inject VERIFIER_FAILURE_ACTION, VerifierFailureAction, VerifierFailureAction, verifierFailureAction, VFA_Rec}
 
 newtype LibFunc = LibFunc CUInt
-  deriving (Eq, Read, Show, Bits, Typeable, Data, Num, Storable)
+  deriving (Eq, Read, Show, Bits, Typeable, Data, Num, Storable, Generic)
 #define LF_Rec(n) { #n, LLVMLibFunc__ ## n },
 #{inject LIB_FUNC, LibFunc, LibFunc, libFunc__, LF_Rec}
 
 newtype JITSymbolFlags = JITSymbolFlags CUInt
-  deriving (Eq, Read, Show, Bits, Typeable, Data, Num, Storable)
+  deriving (Eq, Read, Show, Bits, Typeable, Data, Num, Storable, Generic)
 #define SF_Rec(n) { #n, LLVMJITSymbolFlag ## n },
 #{inject JIT_SYMBOL_FLAG, JITSymbolFlags, JITSymbolFlags, jitSymbolFlags, SF_Rec}

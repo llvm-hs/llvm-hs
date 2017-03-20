@@ -21,7 +21,7 @@ data FloatingPointPredicate
   | ULE
   | UNE
   | True
-  deriving (Eq, Ord, Read, Show, Data, Typeable)
+  deriving (Eq, Ord, Read, Show, Data, Typeable, Generic)
 
 
 
