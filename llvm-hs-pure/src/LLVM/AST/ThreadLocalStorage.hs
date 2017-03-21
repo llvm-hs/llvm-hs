@@ -9,4 +9,4 @@ data Model
     | LocalDynamic
     | InitialExec
     | LocalExec
-  deriving (Eq, Ord, Read, Show, Typeable, Data)
+  deriving (Eq, Ord, Read, Show, Typeable, Data, Generic)

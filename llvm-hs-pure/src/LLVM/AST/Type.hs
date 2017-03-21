@@ -13,7 +13,7 @@ data FloatingPointFormat
   = IEEE
   | DoubleExtended
   | PairOfFloats
-  deriving (Eq, Ord, Read, Show, Typeable, Data)
+  deriving (Eq, Ord, Read, Show, Typeable, Data, Generic)
 
 -- | <http://llvm.org/docs/LangRef.html#type-system>
 data Type
@@ -39,7 +39,7 @@ data Type
   | MetadataType -- only to be used as a parameter type for a few intrinsics
   -- | <http://llvm.org/docs/LangRef.html#token-type>
   | TokenType
-  deriving (Eq, Ord, Read, Show, Typeable, Data)
+  deriving (Eq, Ord, Read, Show, Typeable, Data, Generic)
 
 -- | An abbreviation for 'VoidType'
 void :: Type

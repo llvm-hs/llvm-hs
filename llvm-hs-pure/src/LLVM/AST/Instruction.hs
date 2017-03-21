@@ -81,7 +81,7 @@ data Terminator
       defaultUnwindDest :: Maybe Name,
       metadata' :: InstructionMetadata
     }
-  deriving (Eq, Read, Show, Typeable, Data)
+  deriving (Eq, Read, Show, Typeable, Data, Generic)
 
 -- | <http://llvm.org/docs/LangRef.html#fast-math-flags>
 data FastMathFlags 
@@ -93,7 +93,7 @@ data FastMathFlags
       noSignedZeros :: Bool,
       allowReciprocal :: Bool
     }
-  deriving (Eq, Ord, Read, Show, Data, Typeable)
+  deriving (Eq, Ord, Read, Show, Data, Typeable, Generic)
 
 -- | <http://llvm.org/docs/LangRef.html#atomic-memory-ordering-constraints>
 -- <http://llvm.org/docs/Atomics.html>
@@ -104,13 +104,13 @@ data MemoryOrdering
   | Release
   | AcquireRelease
   | SequentiallyConsistent
-  deriving (Eq, Ord, Read, Show, Data, Typeable)
+  deriving (Eq, Ord, Read, Show, Data, Typeable, Generic)
 
 -- | <http://llvm.org/docs/LangRef.html#singlethread>
 data SynchronizationScope
   = SingleThread
   | CrossThread
-  deriving (Eq, Ord, Read, Show, Data, Typeable)
+  deriving (Eq, Ord, Read, Show, Data, Typeable, Generic)
 
 -- | An 'Atomicity' describes constraints on the visibility of effects of an atomic instruction
 type Atomicity = (SynchronizationScope, MemoryOrdering)
@@ -119,12 +119,12 @@ type Atomicity = (SynchronizationScope, MemoryOrdering)
 data LandingPadClause
     = Catch Constant
     | Filter Constant
-    deriving (Eq, Ord, Read, Show, Typeable, Data)
+    deriving (Eq, Ord, Read, Show, Typeable, Data, Generic)
 
 -- | For the call instruction
 -- <http://llvm.org/docs/LangRef.html#call-instruction>
 data TailCallKind = Tail | MustTail
-    deriving (Eq, Ord, Read, Show, Typeable, Data)
+    deriving (Eq, Ord, Read, Show, Typeable, Data, Generic)
 
 -- | non-terminator instructions:
 -- <http://llvm.org/docs/LangRef.html#binaryops>
@@ -434,11 +434,11 @@ data Instruction
       metadata :: InstructionMetadata
     }
 
-  deriving (Eq, Read, Show, Typeable, Data)
+  deriving (Eq, Read, Show, Typeable, Data, Generic)
 
 -- | Instances of instructions may be given a name, allowing their results to be referenced as 'Operand's.
 -- Sometimes instructions - e.g. a call to a function returning void - don't need names.
 data Named a 
   = Name := a
   | Do a
-  deriving (Eq, Read, Show, Typeable, Data)
+  deriving (Eq, Read, Show, Typeable, Data, Generic)

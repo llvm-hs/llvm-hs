@@ -124,7 +124,7 @@ data Pass
     }
   | ThreadSanitizer
   | BoundsChecking
-  deriving (Eq, Ord, Read, Show, Typeable, Data)
+  deriving (Eq, Ord, Read, Show, Typeable, Data, Generic)
 
 -- | Defaults for the 'LoopVectorize' pass
 defaultLoopVectorize :: Pass
@@ -165,7 +165,7 @@ defaultVectorizeBasicBlocks = BasicBlockVectorize {
 
 -- | See <http://gcc.gnu.org/viewcvs/gcc/trunk/gcc/gcov-io.h?view=markup>.
 newtype GCOVVersion = GCOVVersion String
-  deriving (Eq, Ord, Read, Show, Typeable, Data)
+  deriving (Eq, Ord, Read, Show, Typeable, Data, Generic)
 
 -- | Defaults for 'GCOVProfiler'.
 defaultGCOVProfiler :: Pass

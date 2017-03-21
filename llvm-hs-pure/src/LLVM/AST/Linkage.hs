@@ -16,4 +16,4 @@ data Linkage
     | LinkOnceODR
     | WeakODR
     | External
-  deriving (Eq, Read, Show, Typeable, Data)
+  deriving (Eq, Read, Show, Typeable, Data, Generic)

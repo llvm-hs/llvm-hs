@@ -45,8 +45,8 @@ data FunctionAttribute
     | InaccessibleMemOnly
     | InaccessibleMemOrArgMemOnly
     | SafeStack
-  deriving (Eq, Ord, Read, Show, Typeable, Data)
+  deriving (Eq, Ord, Read, Show, Typeable, Data, Generic)
 
 -- | <http://llvm.org/docs/LangRef.html#attribute-groups>
 newtype GroupID = GroupID Word
-  deriving (Eq, Ord, Read, Show, Typeable, Data)
+  deriving (Eq, Ord, Read, Show, Typeable, Data, Generic)

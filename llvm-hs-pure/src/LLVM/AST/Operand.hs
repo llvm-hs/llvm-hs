@@ -12,20 +12,20 @@ import LLVM.AST.Type
 -- Note this is different from "named metadata", which are represented with
 -- 'LLVM.AST.NamedMetadataDefinition'.
 newtype MetadataNodeID = MetadataNodeID Word
-  deriving (Eq, Ord, Read, Show, Typeable, Data)
+  deriving (Eq, Ord, Read, Show, Typeable, Data, Generic)
 
 -- | <http://llvm.org/docs/LangRef.html#metadata>
 data MetadataNode 
   = MetadataNode [Maybe Metadata]
   | MetadataNodeReference MetadataNodeID
-  deriving (Eq, Ord, Read, Show, Typeable, Data)
+  deriving (Eq, Ord, Read, Show, Typeable, Data, Generic)
 
 -- | <http://llvm.org/docs/LangRef.html#metadata>
 data Metadata
   = MDString String -- ^ <http://llvm.org/docs/doxygen/html/classllvm_1_1MDNode.html>
   | MDNode MetadataNode -- ^ <http://llvm.org/docs/doxygen/html/classllvm_1_1MDNode.html>
   | MDValue Operand -- ^ <http://llvm.org/docs/doxygen/html/classllvm_1_1ValueAsMetadata.html>
-  deriving (Eq, Ord, Read, Show, Typeable, Data)
+  deriving (Eq, Ord, Read, Show, Typeable, Data, Generic)
 
 -- | An 'Operand' is roughly that which is an argument to an 'LLVM.AST.Instruction.Instruction'
 data Operand 
@@ -34,7 +34,7 @@ data Operand
   -- | 'Constant's include 'LLVM.AST.Constant.GlobalReference', for \@foo
   | ConstantOperand Constant
   | MetadataOperand Metadata
-  deriving (Eq, Ord, Read, Show, Typeable, Data)
+  deriving (Eq, Ord, Read, Show, Typeable, Data, Generic)
 
 -- | The 'LLVM.AST.Instruction.Call' instruction is special: the callee can be inline assembly
 type CallableOperand  = Either InlineAssembly Operand

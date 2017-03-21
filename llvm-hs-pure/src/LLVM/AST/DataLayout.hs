@@ -11,21 +11,21 @@ import LLVM.AST.AddrSpace
 
 -- | Little Endian is the one true way :-). Sadly, we must support the infidels.
 data Endianness = LittleEndian | BigEndian
-  deriving (Eq, Ord, Read, Show, Typeable, Data)
+  deriving (Eq, Ord, Read, Show, Typeable, Data, Generic)
 
 -- | An AlignmentInfo describes how a given type must and would best be aligned
 data AlignmentInfo = AlignmentInfo {
     abiAlignment :: Word32,
     preferredAlignment :: Maybe Word32
   }
-  deriving (Eq, Ord, Read, Show, Typeable, Data)
+  deriving (Eq, Ord, Read, Show, Typeable, Data, Generic)
 
 -- | A type of type for which 'AlignmentInfo' may be specified
 data AlignType
   = IntegerAlign
   | VectorAlign
   | FloatAlign
-  deriving (Eq, Ord, Read, Show, Typeable, Data)
+  deriving (Eq, Ord, Read, Show, Typeable, Data, Generic)
 
 -- | A style of name mangling
 data Mangling
@@ -33,7 +33,7 @@ data Mangling
   | MIPSMangling
   | MachOMangling
   | WindowsCOFFMangling
-  deriving (Eq, Ord, Read, Show, Typeable, Data)
+  deriving (Eq, Ord, Read, Show, Typeable, Data, Generic)
 
 -- | a description of the various data layout properties which may be used during
 -- optimization
@@ -46,7 +46,7 @@ data DataLayout = DataLayout {
     aggregateLayout :: AlignmentInfo,
     nativeSizes :: Maybe (Set Word32)
   }
-  deriving (Eq, Ord, Read, Show, Typeable, Data)
+  deriving (Eq, Ord, Read, Show, Typeable, Data, Generic)
 
 -- | a default 'DataLayout'
 defaultDataLayout :: Endianness -> DataLayout

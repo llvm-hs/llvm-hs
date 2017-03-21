@@ -9,4 +9,4 @@ data Model
     | Static
     | PIC
     | DynamicNoPIC
-    deriving (Eq, Read, Show, Typeable, Data)
+    deriving (Eq, Read, Show, Typeable, Data, Generic)

@@ -2,19 +2,17 @@
 -- numbers LLVM supports. It is most definitely intended to be imported qualified.
 module LLVM.AST.Float where
 
-import Prelude as P
-import Data.Data
-import Data.Word (Word16, Word64)
+import LLVM.Prelude
 
 -- | A type summing up the various float types.
 -- N.B. Note that in the constructors with multiple fields, the lower significance bits are on the right
 -- - e.g. Quadruple highbits lowbits
 data SomeFloat
-  = Half Word16 
+  = Half Word16
   | Single Float
-  | Double P.Double
+  | Double Double
   | Quadruple Word64 Word64
   | X86_FP80 Word16 Word64
   | PPC_FP128 Word64 Word64
-  deriving (Eq, Ord, Read, Show, Typeable, Data)
+  deriving (Eq, Ord, Read, Show, Typeable, Data, Generic)
 
