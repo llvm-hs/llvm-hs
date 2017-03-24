@@ -59,6 +59,9 @@ deriving instance Data CUInt
 
 newtype LLVMBool = LLVMBool CUInt
 
+-- | If an FFI function returns a value wrapped in 'OwnerTransfered',
+-- this value needs to be freed after it has been processed. Usually
+-- this is done automatically in the 'DecodeM' instance.
 newtype OwnerTransfered a = OwnerTransfered a
   deriving (Storable)
 
