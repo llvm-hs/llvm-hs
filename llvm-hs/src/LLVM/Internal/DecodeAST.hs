@@ -1,7 +1,8 @@
 {-# LANGUAGE
   GeneralizedNewtypeDeriving,
   MultiParamTypeClasses,
-  UndecidableInstances
+  UndecidableInstances,
+  OverloadedStrings
   #-}
 module LLVM.Internal.DecodeAST where
 
@@ -44,10 +45,10 @@ data DecodeState = DecodeState {
     typesToDefine :: Seq (Ptr FFI.Type),
     metadataNodesToDefine :: Seq (A.MetadataNodeID, Ptr FFI.MDNode),
     metadataNodes :: Map (Ptr FFI.MDNode) A.MetadataNodeID,
-    metadataKinds :: Array Word String,
+    metadataKinds :: Array Word ShortByteString,
     parameterAttributeSets :: Map FFI.ParameterAttributeSet [A.A.ParameterAttribute],
     functionAttributeSetIDs :: Map FFI.FunctionAttributeSet A.A.GroupID,
-    comdats :: Map (Ptr FFI.COMDAT) (String, A.COMDAT.SelectionKind)
+    comdats :: Map (Ptr FFI.COMDAT) (ShortByteString, A.COMDAT.SelectionKind)
   }
 initialDecode = DecodeState {
     globalVarNum = Map.empty,

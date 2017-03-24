@@ -1,3 +1,4 @@
+{-# LANGUAGE OverloadedStrings #-}
 module LLVM.Test.Constants where
 
 import Test.Tasty
@@ -8,6 +9,7 @@ import LLVM.Test.Support
 import Control.Monad
 import Data.Functor
 import Data.Maybe
+import Data.Monoid
 import Foreign.Ptr
 import Data.Word
 
@@ -178,7 +180,7 @@ tests = testGroup "Constants" [
                G.name = UnName 2, G.type' = i32, G.initializer = Nothing 
              }
            ]
-       mStr = "; ModuleID = '<string>'\nsource_filename = \"<string>\"\n\n@0 = " ++ str ++ "\n\
+       mStr = "; ModuleID = '<string>'\nsource_filename = \"<string>\"\n\n@0 = " <> str <> "\n\
               \@1 = external global i32\n\
               \@2 = external global i32\n"
  ]

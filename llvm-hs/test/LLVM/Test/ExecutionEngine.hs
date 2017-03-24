@@ -1,5 +1,6 @@
 {-# LANGUAGE
-  ForeignFunctionInterface
+  ForeignFunctionInterface,
+  OverloadedStrings
   #-}
 module LLVM.Test.ExecutionEngine where
 

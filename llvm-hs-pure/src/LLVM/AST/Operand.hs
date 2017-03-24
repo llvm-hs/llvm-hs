@@ -22,7 +22,7 @@ data MetadataNode
 
 -- | <http://llvm.org/docs/LangRef.html#metadata>
 data Metadata
-  = MDString String -- ^ <http://llvm.org/docs/doxygen/html/classllvm_1_1MDNode.html>
+  = MDString ShortByteString -- ^ <http://llvm.org/docs/doxygen/html/classllvm_1_1MDNode.html>
   | MDNode MetadataNode -- ^ <http://llvm.org/docs/doxygen/html/classllvm_1_1MDNode.html>
   | MDValue Operand -- ^ <http://llvm.org/docs/doxygen/html/classllvm_1_1ValueAsMetadata.html>
   deriving (Eq, Ord, Read, Show, Typeable, Data, Generic)

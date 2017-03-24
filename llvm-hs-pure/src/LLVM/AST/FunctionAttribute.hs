@@ -35,8 +35,8 @@ data FunctionAttribute
     | SanitizeThread
     | SanitizeMemory
     | StringAttribute {
-        stringAttributeKind :: String,
-        stringAttributeValue :: String -- ^ Use "" for no value -- the two are conflated
+        stringAttributeKind :: ShortByteString,
+        stringAttributeValue :: ShortByteString -- ^ Use "" for no value -- the two are conflated
       }
     | AllocSize Word (Maybe Word)
     | WriteOnly

@@ -1,3 +1,5 @@
+{-# LANGUAGE OverloadedStrings #-}
+{-# LANGUAGE ScopedTypeVariables #-}
 module LLVM.Test.Instructions where
 
 import Test.Tasty
@@ -6,9 +8,12 @@ import Test.Tasty.HUnit
 import LLVM.Test.Support
 
 import Control.Monad
+import Data.ByteString (ByteString)
+import qualified Data.ByteString.Char8 as ByteString
 import Data.Functor
 import Data.List.NonEmpty (NonEmpty((:|)))
 import Data.Maybe
+import Data.Monoid
 import Foreign.Ptr
 import Data.Word
 
@@ -50,7 +55,7 @@ tests = testGroup "Instructions" [
                  \source_filename = \"<string>\"\n\
                  \\n\
                  \define void @0(i32, float, i32*, i64, i1, <2 x i32>, { i32, i32 }) {\n\
-                 \  " ++ namedInstrS ++ "\n\
+                 \  " <> namedInstrS <> "\n\
                  \  ret void\n\
                  \}\n"
       strCheck mAST mStr
@@ -64,9 +69,9 @@ tests = testGroup "Instructions" [
            StructureType False [i32, i32]
            ],
       let a i = LocalReference (ts !! fromIntegral i) (UnName i),
-      (name, namedInstr, namedInstrS) <- (
+      (name, namedInstr, namedInstrS :: ByteString) <- (
         [
-         (name, UnName 8 := instr, "%8 = " ++ instrS)
+         (name, UnName 8 := instr, "%8 = " <> instrS)
          | (name, instr, instrS) <- [
           ("add",
            Add {
@@ -482,7 +487,7 @@ tests = testGroup "Instructions" [
          ] ++ [
           ("landingpad-" ++ n,
            LandingPad {
-             type' = StructureType False [ 
+             type' = StructureType False [
                 ptr i8,
                 i32
                ],
@@ -490,7 +495,7 @@ tests = testGroup "Instructions" [
              clauses = cls,
              metadata = []
            },
-           "landingpad { i8*, i32 }" ++ s)
+           "landingpad { i8*, i32 }" <> s)
           | (clsn,cls,clss) <- [
            ("catch",
             [Catch (C.Null (ptr i8))],
@@ -500,12 +505,12 @@ tests = testGroup "Instructions" [
             "\n          filter [1 x i8*] zeroinitializer")
           ],
           (cpn, cp, cps) <- [ ("-cleanup", True, "\n          cleanup"), ("", False, "") ],
-          let s = cps ++ clss
-              n = clsn ++ cpn
+          let s = cps <> clss
+              n = clsn <> cpn
          ] ++ [
-          ("icmp-" ++ ps,
+          ("icmp-" ++ ByteString.unpack ps,
            ICmp { iPredicate = p, operand0 = a 0, operand1 = a 0, metadata = [] },
-           "icmp " ++ ps ++ " i32 %0, %0")
+           "icmp " <> ps <> " i32 %0, %0")
            | (ps, p) <- [
            ("eq", IPred.EQ),
            ("ne", IPred.NE),
@@ -519,9 +524,9 @@ tests = testGroup "Instructions" [
            ("sle", IPred.SLE)
           ]
          ] ++ [
-          ("fcmp-" ++ ps,
+          ("fcmp-" ++ ByteString.unpack ps,
            FCmp { fpPredicate = p, operand0 = a 1, operand1 = a 1, metadata = [] },
-           "fcmp " ++ ps ++ " float %1, %1")
+           "fcmp " <> ps <> " float %1, %1")
            | (ps, p) <- [
            ("false", FPPred.False),
            ("oeq", FPPred.OEQ),
@@ -549,13 +554,13 @@ tests = testGroup "Instructions" [
             value = a 0,
             maybeAtomicity = Nothing,
             alignment = 0,
-            metadata = [] 
+            metadata = []
           },
           "store i32 %0, i32* %2"),
          ("fence",
           Do $ Fence {
             atomicity = (CrossThread, Acquire),
-            metadata = [] 
+            metadata = []
           },
           "fence acquire"),
           ("call",

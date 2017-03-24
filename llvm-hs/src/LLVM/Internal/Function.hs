@@ -43,10 +43,10 @@ getParameters f attrs = scopeAnyCont $ do
        `ap` getLocalName param
        `ap` (return $ Map.findWithDefault [] i attrs)
   
-getGC :: Ptr FFI.Function -> DecodeAST (Maybe String)
+getGC :: Ptr FFI.Function -> DecodeAST (Maybe ShortByteString)
 getGC f = scopeAnyCont $ decodeM =<< liftIO (FFI.getGC f)
 
-setGC :: Ptr FFI.Function -> Maybe String -> EncodeAST ()
+setGC :: Ptr FFI.Function -> Maybe ShortByteString -> EncodeAST ()
 setGC f gc = scopeAnyCont $ liftIO . FFI.setGC f =<< encodeM gc 
 
 getPrefixData :: Ptr FFI.Function -> DecodeAST (Maybe A.Constant)

@@ -1,12 +1,15 @@
 {-# LANGUAGE
   TemplateHaskell,
-  MultiParamTypeClasses
+  MultiParamTypeClasses,
+  OverloadedStrings
   #-}
 module LLVM.Internal.InlineAssembly where
  
 import LLVM.Prelude
 
 import Control.Monad.IO.Class
+
+import qualified Data.ByteString.Char8 as ByteString
 
 import Foreign.C
 import Foreign.Ptr
@@ -59,10 +62,5 @@ instance DecodeM DecodeAST A.InlineAssembly (Ptr FFI.InlineAsm) where
 
 instance DecodeM DecodeAST [A.Definition] (FFI.ModuleAsm CString) where
   decodeM (FFI.ModuleAsm s) = do
-    s <- decodeM s
-    let takeModIA "" = []
-        takeModIA s =
-          let (a,r) = break (== '\n') s
-          in A.ModuleInlineAssembly a : takeModIA (dropWhile (== '\n') r)
-    return $ takeModIA s
-    
+    s' <- decodeM s
+    return . map A.ModuleInlineAssembly $ ByteString.lines s'

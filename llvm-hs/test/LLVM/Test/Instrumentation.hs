@@ -1,3 +1,4 @@
+{-# LANGUAGE OverloadedStrings #-}
 module LLVM.Test.Instrumentation where
 
 import Test.Tasty

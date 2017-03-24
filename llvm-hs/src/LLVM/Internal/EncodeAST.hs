@@ -1,7 +1,8 @@
 {-# LANGUAGE
   GeneralizedNewtypeDeriving,
   MultiParamTypeClasses,
-  UndecidableInstances
+  UndecidableInstances,
+  OverloadedStrings
   #-}
 module LLVM.Internal.EncodeAST where
 
@@ -15,6 +16,9 @@ import Control.Monad.Trans.Except
 
 import Foreign.Ptr
 import Foreign.C
+
+import qualified LLVM.Internal.FFI.ShortByteString as ShortByteString
+import qualified Data.ByteString.Short as ShortByteString
 
 import Data.Map (Map)
 import qualified Data.Map as Map
@@ -46,7 +50,7 @@ data EncodeState = EncodeState {
       encodeStateMDNodes :: Map A.MetadataNodeID (Ptr FFI.MDNode),
       encodeStateNamedTypes :: Map A.Name (Ptr FFI.Type),
       encodeStateAttributeGroups :: Map A.A.GroupID FFI.FunctionAttributeSet,
-      encodeStateCOMDATs :: Map String (Ptr FFI.COMDAT)
+      encodeStateCOMDATs :: Map ShortByteString (Ptr FFI.COMDAT)
     }
 
 newtype EncodeAST a = EncodeAST { unEncodeAST :: AnyContT (ExceptT String (StateT EncodeState IO)) a }
@@ -87,12 +91,12 @@ runEncodeAST context@(Context ctx) (EncodeAST a) = ExceptT $
       flip evalStateT initEncodeState . runExceptT . flip runAnyContT return $ a
 
 withName :: A.Name -> (CString -> IO a) -> IO a
-withName (A.Name n) = withCString n
+withName (A.Name n) = ShortByteString.useAsCString n
 withName (A.UnName _) = withCString ""
 
 instance MonadAnyCont IO m => EncodeM m A.Name CString where
   encodeM (A.Name n) = encodeM n
-  encodeM _ = encodeM ""
+  encodeM _ = encodeM ShortByteString.empty
 
 phase :: EncodeAST a -> EncodeAST (EncodeAST a)
 phase p = do
@@ -126,7 +130,7 @@ defineMDNode n v = modify $ \b -> b { encodeStateMDNodes = Map.insert n (FFI.upC
 defineAttributeGroup :: A.A.GroupID -> FFI.FunctionAttributeSet -> EncodeAST ()
 defineAttributeGroup gid attrs = modify $ \b -> b { encodeStateAttributeGroups = Map.insert gid attrs (encodeStateAttributeGroups b) }
 
-defineCOMDAT :: String -> Ptr FFI.COMDAT -> EncodeAST ()
+defineCOMDAT :: ShortByteString -> Ptr FFI.COMDAT -> EncodeAST ()
 defineCOMDAT name cd = modify $ \b -> b { encodeStateCOMDATs = Map.insert name cd (encodeStateCOMDATs b) }
 
 refer :: (Show n, Ord n) => (EncodeState -> Map n v) -> n -> EncodeAST v -> EncodeAST v
