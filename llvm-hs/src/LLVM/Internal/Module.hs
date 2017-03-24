@@ -256,8 +256,8 @@ withModuleFromAST context@(Context c) (A.Module moduleId sourceFileName dataLayo
   sourceFileName' <- encodeM sourceFileName
   liftIO $ FFI.setSourceFileName ffiMod sourceFileName'
   Context context <- gets encodeStateContext
-  maybe (return ()) (setDataLayout ffiMod) dataLayout
-  maybe (return ()) (setTargetTriple ffiMod) triple
+  traverse_ (setDataLayout ffiMod) dataLayout
+  traverse_ (setTargetTriple ffiMod) triple
   let sequencePhases :: EncodeAST [EncodeAST (EncodeAST (EncodeAST (EncodeAST ())))] -> EncodeAST ()
       sequencePhases l = (l >>= (sequence >=> sequence >=> sequence >=> sequence)) >> (return ())
   sequencePhases $ forM definitions $ \d -> case d of
@@ -265,7 +265,7 @@ withModuleFromAST context@(Context c) (A.Module moduleId sourceFileName dataLayo
      t' <- createNamedType n
      defineType n t'
      return $ do
-       maybe (return ()) (setNamedType t') t
+       traverse_ (setNamedType t') t
        return . return . return . return $ ()
 
    A.COMDAT n csk -> do
@@ -317,7 +317,7 @@ withModuleFromAST context@(Context c) (A.Module moduleId sourceFileName dataLayo
            ic <- encodeM (A.G.isConstant g)
            FFI.setGlobalConstant g' ic
          return $ do
-           maybe (return ()) ((liftIO . FFI.setInitializer g') <=< encodeM) (A.G.initializer g)
+           traverse_ ((liftIO . FFI.setInitializer g') <=< encodeM) (A.G.initializer g)
            setSection g' (A.G.section g)
            setCOMDAT g' (A.G.comdat g)
            setAlignment g' (A.G.alignment g)
