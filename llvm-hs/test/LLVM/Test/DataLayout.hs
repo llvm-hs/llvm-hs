@@ -40,10 +40,7 @@ tests = testGroup "DataLayout" [
          (AddrSpace 0) 
          (
           8,
-          AlignmentInfo {
-            abiAlignment = 64,
-            preferredAlignment = Nothing
-          }
+          AlignmentInfo 64 64
          )
      },
      "E-p:8:64",
@@ -52,7 +49,7 @@ tests = testGroup "DataLayout" [
      "no pref",
      ddl {
        pointerLayouts = 
-         Map.insert (AddrSpace 1) (8, AlignmentInfo 32 (Just 64)) (pointerLayouts ddl)
+         Map.insert (AddrSpace 1) (8, AlignmentInfo 32 64) (pointerLayouts ddl)
      },
      "E-p1:8:32:64",
      Nothing
@@ -63,21 +60,21 @@ tests = testGroup "DataLayout" [
        mangling = Just ELFMangling,
        stackAlignment = Just 128,
        pointerLayouts = Map.fromList [
-         (AddrSpace 0, (8, AlignmentInfo {abiAlignment = 8, preferredAlignment = Just 16}))
+         (AddrSpace 0, (8, AlignmentInfo 8 16))
         ],
        typeLayouts = Map.fromList [
-         ((IntegerAlign, 1), AlignmentInfo {abiAlignment = 8, preferredAlignment = Just 256}),
-         ((IntegerAlign, 8), AlignmentInfo {abiAlignment = 8, preferredAlignment = Just 256}),
-         ((IntegerAlign, 16), AlignmentInfo {abiAlignment = 16, preferredAlignment = Just 256}),
-         ((IntegerAlign, 32), AlignmentInfo {abiAlignment = 32, preferredAlignment = Just 256}),
-         ((IntegerAlign, 64), AlignmentInfo {abiAlignment = 64, preferredAlignment = Just 256}),
-         ((VectorAlign, 64), AlignmentInfo {abiAlignment = 64, preferredAlignment = Just 256}),
-         ((VectorAlign, 128), AlignmentInfo {abiAlignment = 128, preferredAlignment = Just 256}),
-         ((FloatAlign, 32), AlignmentInfo {abiAlignment = 32, preferredAlignment = Just 256}),
-         ((FloatAlign, 64), AlignmentInfo {abiAlignment = 64, preferredAlignment = Just 256}),
-         ((FloatAlign, 80), AlignmentInfo {abiAlignment = 128, preferredAlignment = Just 256})
+         ((IntegerAlign, 1), AlignmentInfo 8 256),
+         ((IntegerAlign, 8), AlignmentInfo 8 256),
+         ((IntegerAlign, 16), AlignmentInfo 16 256),
+         ((IntegerAlign, 32), AlignmentInfo 32 256),
+         ((IntegerAlign, 64), AlignmentInfo 64 256),
+         ((VectorAlign, 64), AlignmentInfo 64 256),
+         ((VectorAlign, 128), AlignmentInfo 128 256),
+         ((FloatAlign, 32), AlignmentInfo 32 256),
+         ((FloatAlign, 64), AlignmentInfo 64 256),
+         ((FloatAlign, 80), AlignmentInfo 128 256)
         ] `Map.union` typeLayouts ddl, 
-       aggregateLayout = AlignmentInfo {abiAlignment = 0, preferredAlignment = Just 256},
+       aggregateLayout = AlignmentInfo 0 256,
        nativeSizes = Just (Set.fromList [8,16,32,64])
      },
      "e-m:e-p:8:8:16-i1:8:256-i8:8:256-i16:16:256-i32:32:256-i64:64:256-v64:64:256-v128:128:256-f32:32:256-f64:64:256-f80:128:256-a:0:256-n8:16:32:64-S128",
