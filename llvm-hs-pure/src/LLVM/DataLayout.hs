@@ -20,9 +20,9 @@ dataLayoutToString :: DataLayout -> String
 dataLayoutToString dl =
   let sAlignmentInfo :: AlignmentInfo -> String
       sAlignmentInfo (AlignmentInfo abi pref) =
-        show abi ++ case pref of
-                      Just pref | pref /= abi -> ":" ++ show pref
-                      _ -> ""
+        show abi ++ if pref /= abi
+                      then ":" ++ show pref
+                      else ""
       sTriple :: (Word32, AlignmentInfo) -> String
       sTriple (s, ai) = show s ++ ":" ++ sAlignmentInfo ai
       atChar at = case at of
@@ -71,7 +71,8 @@ parseDataLayout defaultEndianness s =
     alignmentInfo = do
       abi <- num
       pref <- optionMaybe $ char ':' *> num
-      pure $ AlignmentInfo abi pref
+      let pref' = fromMaybe abi pref
+      pure $ AlignmentInfo abi pref'
     triple :: Parser (Word32, AlignmentInfo)
     triple = do
       s <- num

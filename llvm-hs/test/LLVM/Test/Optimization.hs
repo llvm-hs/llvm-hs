@@ -213,7 +213,7 @@ tests = testGroup "Optimization" [
             moduleName = "<string>",
             moduleSourceFileName = "<string>",
             moduleDataLayout = Just $ (defaultDataLayout BigEndian) { 
-              typeLayouts = Map.singleton (VectorAlign, 128) (AlignmentInfo 128 Nothing)
+              typeLayouts = Map.singleton (VectorAlign, 128) (AlignmentInfo 128 128)
              },
             moduleTargetTriple = Just "x86_64",
             moduleDefinitions = [
