@@ -107,10 +107,10 @@ withMCJIT c opt cm fpe fisel f = do
         size <- FFI.getMCJITCompilerOptionsSize
         allocaBytes (fromIntegral size) $ \p -> do
           FFI.initializeMCJITCompilerOptions p size
-          maybe (return ()) (FFI.setMCJITCompilerOptionsOptLevel p <=< encodeM) opt
-          maybe (return ()) (FFI.setMCJITCompilerOptionsCodeModel p <=< encodeM) cm
-          maybe (return ()) (FFI.setMCJITCompilerOptionsNoFramePointerElim p <=< encodeM) fpe
-          maybe (return ()) (FFI.setMCJITCompilerOptionsEnableFastISel p <=< encodeM) fisel
+          traverse_ (FFI.setMCJITCompilerOptionsOptLevel p <=< encodeM) opt
+          traverse_ (FFI.setMCJITCompilerOptionsCodeModel p <=< encodeM) cm
+          traverse_ (FFI.setMCJITCompilerOptionsNoFramePointerElim p <=< encodeM) fpe
+          traverse_ (FFI.setMCJITCompilerOptionsEnableFastISel p <=< encodeM) fisel
           FFI.createMCJITCompilerForModule e m p size s
   t <- newIORef (Deferred $ \mod f -> do m' <- readModule mod
                                          withExecutionEngine c (Just m') createMCJITCompilerForModule f)

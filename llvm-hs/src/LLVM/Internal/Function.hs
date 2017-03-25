@@ -57,7 +57,7 @@ getPrefixData f = do
    else return Nothing
 
 setPrefixData :: Ptr FFI.Function -> Maybe A.Constant -> EncodeAST ()
-setPrefixData f = maybe (return ()) (liftIO . FFI.setPrefixData f <=< encodeM)
+setPrefixData f = traverse_ (liftIO . FFI.setPrefixData f <=< encodeM)
 
 getPersonalityFn :: Ptr FFI.Function -> DecodeAST (Maybe A.Constant)
 getPersonalityFn f = do
