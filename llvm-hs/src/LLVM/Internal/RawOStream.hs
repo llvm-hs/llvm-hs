@@ -3,77 +3,65 @@ module LLVM.Internal.RawOStream where
 import LLVM.Prelude
 
 import Control.Monad.AnyCont
-import Control.Monad.Error.Class
+import Control.Monad.Catch
 import Control.Monad.IO.Class
-import Control.Monad.Trans.Except
 
 import Data.IORef
 import Foreign.C
 import Foreign.Ptr
 
+import LLVM.Exception
+
 import qualified LLVM.Internal.FFI.RawOStream as FFI
 import qualified LLVM.Internal.FFI.PtrHierarchy as FFI
 
 import LLVM.Internal.Coding
-import LLVM.Internal.Inject
 import LLVM.Internal.String ()
 
+-- May throw 'FdStreamException'.
 withFileRawOStream ::
-  (Inject String e, MonadError e m, MonadAnyCont IO m, MonadIO m)
+  (MonadThrow m, MonadIO m, MonadAnyCont IO m)
   => String
   -> Bool
   -> Bool
-  -> (Ptr FFI.RawOStream -> ExceptT String IO ())
+  -> (Ptr FFI.RawOStream -> IO ())
   -> m ()
 withFileRawOStream path excl text c =
   withFileRawPWriteStream path excl text (c . FFI.upCast)
 
+-- May throw 'FdStreamException'.
 withFileRawPWriteStream ::
-  (Inject String e, MonadError e m, MonadAnyCont IO m, MonadIO m)
+  (MonadThrow m, MonadIO m, MonadAnyCont IO m)
   => String
   -> Bool
   -> Bool
-  -> (Ptr FFI.RawPWriteStream -> ExceptT String IO ())
+  -> (Ptr FFI.RawPWriteStream -> IO ())
   -> m ()
 withFileRawPWriteStream path excl text c = do
   path <- encodeM path
   excl <- encodeM excl
   text <- encodeM text
   msgPtr <- alloca
-  errorRef <- liftIO $ newIORef undefined
-  succeeded <- decodeM =<< (liftIO $ FFI.withFileRawPWriteStream path excl text msgPtr $ \os -> do
-                              r <- runExceptT (c os)
-                              writeIORef errorRef r)
+  succeeded <- decodeM =<< (liftIO $ FFI.withFileRawPWriteStream path excl text msgPtr c)
   unless succeeded $ do
     s <- decodeM msgPtr
-    throwError $ inject (s :: String)
-  e <- liftIO $ readIORef errorRef
-  either (throwError . inject) return e
+    throwM $ FdStreamException s
 
 withBufferRawOStream ::
-  (Inject String e, MonadError e m, MonadIO m, DecodeM IO a (Ptr CChar, CSize))
-  => (Ptr FFI.RawOStream -> ExceptT String IO ())
+  (MonadIO m, DecodeM IO a (Ptr CChar, CSize))
+  => (Ptr FFI.RawOStream -> IO ())
   -> m a
 withBufferRawOStream c = withBufferRawPWriteStream (c . FFI.upCast)
 
 withBufferRawPWriteStream ::
-  (Inject String e, MonadError e m, MonadIO m, DecodeM IO a (Ptr CChar, CSize))
-  => (Ptr FFI.RawPWriteStream -> ExceptT String IO ())
+  (MonadIO m, DecodeM IO a (Ptr CChar, CSize))
+  => (Ptr FFI.RawPWriteStream -> IO ())
   -> m a
-withBufferRawPWriteStream c = do
-  resultRef <- liftIO $ newIORef Nothing
-  errorRef <- liftIO $ newIORef undefined
+withBufferRawPWriteStream c = liftIO $ do
+  resultRef <- newIORef undefined
   let saveBuffer :: Ptr CChar -> CSize -> IO ()
       saveBuffer start size = do
         r <- decodeM (start, size)
-        writeIORef resultRef (Just r)
-      saveError os = do
-        r <- runExceptT (c os)
-        writeIORef errorRef r
-  liftIO $ FFI.withBufferRawPWriteStream saveBuffer saveError
-  e <- liftIO $ readIORef errorRef
-  case e of
-    Left e -> throwError $ inject e
-    _ -> do
-      Just r <- liftIO $ readIORef resultRef
-      return r
+        writeIORef resultRef r
+  FFI.withBufferRawPWriteStream saveBuffer c
+  readIORef resultRef

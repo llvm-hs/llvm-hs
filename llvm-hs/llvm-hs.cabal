@@ -70,6 +70,7 @@ library
     build-depends:
       base >= 4.9 && < 5
   build-depends:
+    exceptions >= 0.8,
     utf8-string >= 0.3.7,
     bytestring >= 0.9.1.10,
     transformers >= 0.3 && < 0.6,
@@ -99,6 +100,7 @@ library
     LLVM.CommandLine
     LLVM.Context
     LLVM.Diagnostic
+    LLVM.Exception
     LLVM.ExecutionEngine
     LLVM.Internal.Analysis
     LLVM.Internal.Atomicity
@@ -118,7 +120,6 @@ library
     LLVM.Internal.FloatingPointPredicate
     LLVM.Internal.Function
     LLVM.Internal.Global
-    LLVM.Internal.Inject
     LLVM.Internal.InlineAssembly
     LLVM.Internal.Instruction
     LLVM.Internal.InstructionDefs

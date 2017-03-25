@@ -58,7 +58,7 @@ tests = testGroup "Analysis" [
               )
              ]
             ]
-      Left s <- withContext $ \context -> withModuleFromAST' context ast $ runExceptT . verify
+      Left s <- withContext $ \context -> withModuleFromAST context ast $ runExceptT . verify
       s @?= "Call parameter type does not match function signature!\n\
             \i8 1\n\
             \ i32  call void @foo(i8 1)\n\
@@ -107,8 +107,7 @@ tests = testGroup "Analysis" [
                 }
               ]
        strCheck ast str
-       s <- withContext $ \context -> withModuleFromAST' context ast $ runExceptT . verify
-       s @?= Right ()
+       withContext $ \context -> withModuleFromAST context ast verify
      ]
    ]
  ]

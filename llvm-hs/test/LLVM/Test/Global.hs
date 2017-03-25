@@ -20,7 +20,7 @@ tests = testGroup "Global" [
   testGroup "Alignment" [
     testCase name $ withContext $ \context -> do
       let ast = Module "<string>" "<string>" Nothing Nothing [ GlobalDefinition g ]
-      ast' <- withModuleFromAST' context ast moduleAST
+      ast' <- withModuleFromAST context ast moduleAST
       ast' @?= ast
     | a <- [0,1],
       s <- [Nothing, Just "foo"],

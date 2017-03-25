@@ -68,7 +68,7 @@ tests =
   testGroup "OrcJit" [
     testCase "eager compilation" $ do
       withTestModule $ \mod ->
-        failInIO $ withHostTargetMachine $ \tm ->
+        withHostTargetMachine $ \tm ->
           withObjectLinkingLayer $ \objectLayer ->
             withIRCompileLayer objectLayer tm $ \compileLayer -> do
               testFunc <- IRCompileLayer.mangleSymbol compileLayer "testFunc"
@@ -84,7 +84,7 @@ tests =
 
     testCase "lazy compilation" $ do
       withTestModule $ \mod ->
-        failInIO $ withHostTargetMachine $ \tm -> do
+        withHostTargetMachine $ \tm -> do
           triple <- getTargetMachineTriple tm
           withObjectLinkingLayer $ \objectLayer ->
             withIRCompileLayer objectLayer tm $ \baseLayer ->

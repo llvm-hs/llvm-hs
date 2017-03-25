@@ -24,12 +24,10 @@ tests =
         withContext $ \ctx ->
           withSystemTempFile "foo" $ \objFile handle -> do
             hClose handle
-            failInIO $
-              withHostTargetMachine $ \machine ->
-                failInIO $
-                withModuleFromLLVMAssembly ctx ll $ \mdl -> do
-                  obj <- failInIO $ moduleObject machine mdl
-                  _ <- failInIO $ writeObjectToFile machine (File objFile) mdl
-                  obj' <- ByteString.readFile objFile
-                  obj @=? obj'
+            withHostTargetMachine $ \machine ->
+              withModuleFromLLVMAssembly ctx ll $ \mdl -> do
+                obj <- moduleObject machine mdl
+                _ <- writeObjectToFile machine (File objFile) mdl
+                obj' <- ByteString.readFile objFile
+                obj @=? obj'
     ]

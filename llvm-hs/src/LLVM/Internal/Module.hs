@@ -9,9 +9,8 @@ module LLVM.Internal.Module where
 
 import LLVM.Prelude
 
-import Control.Exception
 import Control.Monad.AnyCont
-import Control.Monad.Error.Class
+import Control.Monad.Catch
 import Control.Monad.Trans.Except
 import Control.Monad.State (gets)
 import Control.Monad.Trans
@@ -48,7 +47,6 @@ import LLVM.Internal.DecodeAST
 import LLVM.Internal.EncodeAST
 import LLVM.Internal.Function
 import LLVM.Internal.Global
-import LLVM.Internal.Inject
 import LLVM.Internal.Instruction ()
 import qualified LLVM.Internal.MemoryBuffer as MB
 import LLVM.Internal.Metadata
@@ -60,7 +58,7 @@ import LLVM.Internal.Type
 import LLVM.Internal.Value
 
 import LLVM.DataLayout
-import LLVM.Diagnostic
+import LLVM.Exception
 
 import qualified LLVM.AST as A
 import qualified LLVM.AST.DataLayout as A
@@ -87,29 +85,27 @@ deleteModule (Module r) = writeIORef r nullPtr
 newtype File = File FilePath
   deriving (Eq, Ord, Read, Show)
 
-instance Inject String (Either String Diagnostic) where
-    inject = Left
-
 -- | link LLVM modules - move or copy parts of a source module into a
 -- destination module.  Note that this operation is not commutative -
 -- not only concretely (e.g. the destination module is modified,
 -- becoming the result) but abstractly (e.g. unused private globals in
 -- the source module do not appear in the result, but similar globals
--- in the destination remain). The source module is destroyed.
+-- in the destination remain). The source module is destroyed. May
+-- throw a 'LinkException'.
 linkModules ::
      Module -- ^ The module into which to link
   -> Module -- ^ The module to link into the other (this module is destroyed)
-  -> ExceptT String IO ()
+  -> IO ()
 linkModules dest src  = flip runAnyContT return $ do
   dest' <- readModule dest
   src' <- readModule src
   result <- decodeM =<< liftIO (FFI.linkModules dest' src')
   -- linkModules takes care of deleting the sourcemodule
   liftIO $ deleteModule src
-  when result (throwError "Couldn’t link modules")
+  when result (throwM $ LinkException "Couldn’t link modules")
 
 class LLVMAssemblyInput s where
-  llvmAssemblyMemoryBuffer :: (Inject String e, MonadError e m, MonadIO m, MonadAnyCont IO m)
+  llvmAssemblyMemoryBuffer :: (MonadThrow m, MonadIO m, MonadAnyCont IO m)
                               => s -> m (FFI.OwnerTransfered (Ptr FFI.MemoryBuffer))
 
 instance LLVMAssemblyInput (String, String) where
@@ -130,15 +126,15 @@ instance LLVMAssemblyInput ByteString where
 instance LLVMAssemblyInput File where
   llvmAssemblyMemoryBuffer (File p) = encodeM (MB.File p)
 
--- | parse 'Module' from LLVM assembly
+-- | parse 'Module' from LLVM assembly. May throw 'ParseFailureException'.
 withModuleFromLLVMAssembly :: LLVMAssemblyInput s
-                              => Context -> s -> (Module -> IO a) -> ExceptT String IO a
+                              => Context -> s -> (Module -> IO a) -> IO a
 withModuleFromLLVMAssembly (Context c) s f = flip runAnyContT return $ do
   mb <- llvmAssemblyMemoryBuffer s
   msgPtr <- alloca
   m <- anyContToM $ bracket (newModule =<< FFI.parseLLVMAssembly c mb msgPtr) (FFI.disposeModule <=< readModule)
   m' <- readModule m
-  when (m' == nullPtr) $ throwError =<< decodeM msgPtr
+  when (m' == nullPtr) $ throwM . ParseFailureException =<< decodeM msgPtr
   liftIO $ f m
 
 -- | generate LLVM assembly from a 'Module'
@@ -155,13 +151,13 @@ moduleLLVMAssembly m = do
   return s
 
 -- | write LLVM assembly for a 'Module' to a file
-writeLLVMAssemblyToFile :: File -> Module -> ExceptT String IO ()
+writeLLVMAssemblyToFile :: File -> Module -> IO ()
 writeLLVMAssemblyToFile (File path) m = flip runAnyContT return $ do
   m' <- readModule m
-  withFileRawOStream path False True $ liftIO . (FFI.writeLLVMAssembly m')
+  withFileRawOStream path False True $ FFI.writeLLVMAssembly m'
 
 class BitcodeInput b where
-  bitcodeMemoryBuffer :: (Inject String e, MonadError e m, MonadIO m, MonadAnyCont IO m)
+  bitcodeMemoryBuffer :: (MonadThrow m, MonadIO m, MonadAnyCont IO m)
                          => b -> m (Ptr FFI.MemoryBuffer)
 
 instance BitcodeInput (String, BS.ByteString) where
@@ -170,58 +166,60 @@ instance BitcodeInput (String, BS.ByteString) where
 instance BitcodeInput File where
   bitcodeMemoryBuffer (File p) = encodeM (MB.File p)
 
--- | parse 'Module' from LLVM bitcode
-withModuleFromBitcode :: BitcodeInput b => Context -> b -> (Module -> IO a) -> ExceptT String IO a
+-- | parse 'Module' from LLVM bitcode. May throw 'ParseFailureException'.
+withModuleFromBitcode :: BitcodeInput b => Context -> b -> (Module -> IO a) -> IO a
 withModuleFromBitcode (Context c) b f = flip runAnyContT return $ do
   mb <- bitcodeMemoryBuffer b
   msgPtr <- alloca
   m <- anyContToM $ bracket (newModule =<< FFI.parseBitcode c mb msgPtr) (FFI.disposeModule <=< readModule)
   m' <- readModule m
-  when (m' == nullPtr) $ throwError =<< decodeM msgPtr
+  when (m' == nullPtr) $ throwM . ParseFailureException =<< decodeM msgPtr
   liftIO $ f m
 
 -- | generate LLVM bitcode from a 'Module'
 moduleBitcode :: Module -> IO BS.ByteString
 moduleBitcode m = do
   m' <- readModule m
-  r <- runExceptT $ withBufferRawOStream (liftIO . FFI.writeBitcode m')
-  either fail return r
+  withBufferRawOStream (FFI.writeBitcode m')
 
 -- | write LLVM bitcode from a 'Module' into a file
-writeBitcodeToFile :: File -> Module -> ExceptT String IO ()
+writeBitcodeToFile :: File -> Module -> IO ()
 writeBitcodeToFile (File path) m = flip runAnyContT return $ do
   m' <- readModule m
-  withFileRawOStream path False False $ liftIO . FFI.writeBitcode m'
+  withFileRawOStream path False False $ FFI.writeBitcode m'
 
-targetMachineEmit :: FFI.CodeGenFileType -> TargetMachine -> Module -> Ptr FFI.RawPWriteStream -> ExceptT String IO ()
+-- | May throw 'TargetMachineEmitException'.
+targetMachineEmit :: FFI.CodeGenFileType -> TargetMachine -> Module -> Ptr FFI.RawPWriteStream -> IO ()
 targetMachineEmit fileType (TargetMachine tm) m os = flip runAnyContT return $ do
   msgPtr <- alloca
   m' <- readModule m
   r <- decodeM =<< (liftIO $ FFI.targetMachineEmit tm m' os fileType msgPtr)
-  when r $ throwError =<< decodeM msgPtr
+  when r $ throwM . TargetMachineEmitException =<< decodeM msgPtr
 
-emitToFile :: FFI.CodeGenFileType -> TargetMachine -> File -> Module -> ExceptT String IO ()
+-- | May throw 'FdStreamException' and 'TargetMachineEmitException'.
+emitToFile :: FFI.CodeGenFileType -> TargetMachine -> File -> Module -> IO ()
 emitToFile fileType tm (File path) m = flip runAnyContT return $ do
   withFileRawPWriteStream path False False $ targetMachineEmit fileType tm m
 
-emitToByteString :: FFI.CodeGenFileType -> TargetMachine -> Module -> ExceptT String IO BS.ByteString
+-- | May throw 'TargetMachineEmitException'.
+emitToByteString :: FFI.CodeGenFileType -> TargetMachine -> Module -> IO BS.ByteString
 emitToByteString fileType tm m = flip runAnyContT return $ do
   withBufferRawPWriteStream $ targetMachineEmit fileType tm m
 
 -- | write target-specific assembly directly into a file
-writeTargetAssemblyToFile :: TargetMachine -> File -> Module -> ExceptT String IO ()
+writeTargetAssemblyToFile :: TargetMachine -> File -> Module -> IO ()
 writeTargetAssemblyToFile = emitToFile FFI.codeGenFileTypeAssembly
 
 -- | produce target-specific assembly as a 'String'
-moduleTargetAssembly :: TargetMachine -> Module -> ExceptT String IO String
+moduleTargetAssembly :: TargetMachine -> Module -> IO String
 moduleTargetAssembly tm m = decodeM . UTF8ByteString =<< emitToByteString FFI.codeGenFileTypeAssembly tm m
 
 -- | produce target-specific object code as a 'ByteString'
-moduleObject :: TargetMachine -> Module -> ExceptT String IO BS.ByteString
+moduleObject :: TargetMachine -> Module -> IO BS.ByteString
 moduleObject = emitToByteString FFI.codeGenFileTypeObject
 
 -- | write target-specific object code directly into a file
-writeObjectToFile :: TargetMachine -> File -> Module -> ExceptT String IO ()
+writeObjectToFile :: TargetMachine -> File -> Module -> IO ()
 writeObjectToFile = emitToFile FFI.codeGenFileTypeObject
 
 setTargetTriple :: Ptr FFI.Module -> ShortByteString -> EncodeAST ()
@@ -244,11 +242,9 @@ getDataLayout m = do
   dlString <- decodeM =<< FFI.getDataLayout m
   either fail return . runExcept . parseDataLayout A.BigEndian $ dlString
 
--- | This function will call disposeModule after the callback
--- exits. Calling 'deleteModule' prevents double free errors. As long
--- as you only call functions provided by llvm-hs this should not
--- be necessary since llvm-hs takes care of this.
-withModuleFromAST :: Context -> A.Module -> (Module -> IO a) -> ExceptT String IO a
+-- | Execute a function after encoding the module in LLVM’s internal representation.
+-- May throw 'EncodeException'.
+withModuleFromAST :: Context -> A.Module -> (Module -> IO a) -> IO a
 withModuleFromAST context@(Context c) (A.Module moduleId sourceFileName dataLayout triple definitions) f = runEncodeAST context $ do
   moduleId <- encodeM moduleId
   m <- anyContToM $ bracket (newModule =<< FFI.moduleCreateWithNameInContext moduleId c) (FFI.disposeModule <=< readModule)
