@@ -70,6 +70,7 @@ library
     build-depends:
       base >= 4.9 && < 5
   build-depends:
+    attoparsec >= 0.13,
     exceptions >= 0.8,
     utf8-string >= 0.3.7,
     bytestring >= 0.9.1.10,
@@ -78,7 +79,6 @@ library
     mtl >= 2.1.3,
     template-haskell >= 2.5.0.0,
     containers >= 0.4.2.1,
-    parsec >= 3.1.3,
     array >= 0.4.0.0,
     llvm-hs-pure == 4.0.0.0
   hs-source-dirs: src

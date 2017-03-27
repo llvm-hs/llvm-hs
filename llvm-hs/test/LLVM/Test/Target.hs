@@ -1,5 +1,6 @@
 {-# LANGUAGE
-  RecordWildCards
+  RecordWildCards,
+  ScopedTypeVariables
   #-}
 module LLVM.Test.Target where
 
@@ -9,8 +10,18 @@ import Test.Tasty.QuickCheck
 import Test.QuickCheck
 import Test.QuickCheck.Property
 
+import Control.Applicative
 import Control.Monad
+import Control.Monad.IO.Class
+import qualified Data.ByteString.Char8 as ByteString
+import Data.Char
+import Data.Map (Map)
+import Foreign.C.String
 
+import LLVM.Context
+import LLVM.Internal.Coding
+import LLVM.Internal.EncodeAST
+import LLVM.Internal.DecodeAST
 import LLVM.Target
 import LLVM.Target.Options
 import LLVM.Target.LibraryFunction
@@ -41,6 +52,12 @@ instance Arbitrary Options where
     allowFloatingPointOperationFusion <- arbitrary
     return Options { .. }
 
+instance Arbitrary CPUFeature where
+  arbitrary = CPUFeature . ByteString.pack <$>
+    liftA2 (:)
+      (suchThat arbitrary isAlphaNum)
+      (suchThat arbitrary (all isAlphaNum))
+
 tests = testGroup "Target" [
   testGroup "Options" [
      testProperty "basic" $ \options -> ioProperty $ do
@@ -67,5 +84,13 @@ tests = testGroup "Target" [
    ],
   testCase "Host" $ do
     features <- getHostCPUFeatures
-    return ()
+    return (),
+  testGroup "CPUFeature" [
+    testProperty "roundtrip" $ \cpuFeatures -> ioProperty $
+        withContext $ \context -> runEncodeAST context $ do
+          encodedFeatures :: CString <- (encodeM cpuFeatures)
+          decodedFeatures :: Map CPUFeature Bool <- liftIO $ runDecodeAST (decodeM encodedFeatures)
+          return (cpuFeatures == decodedFeatures)
+
+   ]
  ]
