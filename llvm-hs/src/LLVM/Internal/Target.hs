@@ -9,9 +9,8 @@ module LLVM.Internal.Target where
 
 import LLVM.Prelude
 
-import Control.Exception
 import Control.Monad.AnyCont
-import Control.Monad.Error.Class
+import Control.Monad.Catch
 import Control.Monad.IO.Class
 import Control.Monad.Trans.Except
 
@@ -27,6 +26,7 @@ import LLVM.Internal.Coding
 import LLVM.Internal.String ()
 import LLVM.Internal.LibraryFunction
 import LLVM.DataLayout
+import LLVM.Exception
 
 import LLVM.AST.DataLayout
 
@@ -97,18 +97,21 @@ instance (Monad d, DecodeM d String es) => DecodeM d (Map CPUFeature Bool) es wh
                        
 -- | Find a 'Target' given an architecture and/or a \"triple\".
 -- | <http://llvm.org/doxygen/structllvm_1_1TargetRegistry.html#a3105b45e546c9cc3cf78d0f2ec18ad89>
--- | Be sure to run either 'initializeAllTargets' or 'initializeNativeTarget' before expecting this to succeed, depending on what target(s) you want to use.
+-- | Be sure to run either 'initializeAllTargets' or
+-- 'initializeNativeTarget' before expecting this to succeed,
+-- depending on what target(s) you want to use. May throw
+-- 'LookupTargetException' if no target is found.
 lookupTarget ::
   Maybe ShortByteString -- ^ arch
   -> ShortByteString -- ^ \"triple\" - e.g. x86_64-unknown-linux-gnu
-  -> ExceptT String IO (Target, ShortByteString)
+  -> IO (Target, ShortByteString)
 lookupTarget arch triple = flip runAnyContT return $ do
   cErrorP <- alloca
   cNewTripleP <- alloca
   arch <- encodeM (maybe "" id arch)
   triple <- encodeM triple
   target <- liftIO $ FFI.lookupTarget arch triple cNewTripleP cErrorP
-  when (target == nullPtr) $ throwError =<< decodeM cErrorP
+  when (target == nullPtr) $ throwM . LookupTargetException =<< decodeM cErrorP
   liftM (Target target, ) $ decodeM cNewTripleP
 
 -- | <http://llvm.org/doxygen/classllvm_1_1TargetOptions.html>
@@ -267,15 +270,15 @@ initializeAllTargets :: IO ()
 initializeAllTargets = FFI.initializeAllTargets
 
 -- | Bracket creation and destruction of a 'TargetMachine' configured for the host
-withHostTargetMachine :: (TargetMachine -> IO a) -> ExceptT String IO a
+withHostTargetMachine :: (TargetMachine -> IO a) -> IO a
 withHostTargetMachine f = do
-  liftIO $ initializeAllTargets
-  triple <- liftIO $ getProcessTargetTriple
-  cpu <- liftIO $ getHostCPUName
-  features <- liftIO $ getHostCPUFeatures
+  initializeAllTargets
+  triple <- getProcessTargetTriple
+  cpu <- getHostCPUName
+  features <- getHostCPUFeatures
   (target, _) <- lookupTarget Nothing triple
-  liftIO $ withTargetOptions $ \options ->
-      withTargetMachine target triple cpu features options Reloc.Default CodeModel.Default CodeGenOpt.Default f
+  withTargetOptions $ \options ->
+    withTargetMachine target triple cpu features options Reloc.Default CodeModel.Default CodeGenOpt.Default f
 
 -- | <http://llvm.org/docs/doxygen/html/classllvm_1_1TargetLibraryInfo.html>
 newtype TargetLibraryInfo = TargetLibraryInfo (Ptr FFI.TargetLibraryInfo)

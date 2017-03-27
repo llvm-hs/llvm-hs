@@ -105,7 +105,7 @@ isVectory Module { moduleDefinitions = ds } =
    ]
 
 optimize :: PassSetSpec -> A.Module -> IO A.Module
-optimize pss m = withContext $ \context -> withModuleFromAST' context m $ \mIn' -> do
+optimize pss m = withContext $ \context -> withModuleFromAST context m $ \mIn' -> do
   withPassManager pss $ \pm -> runPassManager pm mIn'
   moduleAST mIn'
 
@@ -258,7 +258,7 @@ tests = testGroup "Optimization" [
            }
       mOut <- do
         let triple = "x86_64"
-        (target, _) <- failInIO $ lookupTarget Nothing triple
+        (target, _) <- lookupTarget Nothing triple
         withTargetOptions $ \targetOptions -> do
           withTargetMachine target triple "" Map.empty targetOptions R.Default CM.Default CGO.Default $ \tm -> do
             optimize (defaultPassSetSpec { 
@@ -288,7 +288,7 @@ tests = testGroup "Optimization" [
                      ]
                    }
                  ] 
-          astOut <- withModuleFromAST' context astIn $ \mIn -> do
+          astOut <- withModuleFromAST context astIn $ \mIn -> do
             runPassManager passManager mIn
             moduleAST mIn
           astOut @?= Module "<string>" "<string>" Nothing Nothing [

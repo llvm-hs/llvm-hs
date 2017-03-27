@@ -6,6 +6,7 @@ import Test.Tasty.HUnit
 
 import LLVM.Test.Support
 
+import Control.Exception
 import Control.Monad.Trans.Except
 import Data.Bits
 import Data.Word
@@ -13,6 +14,7 @@ import Data.Word
 import qualified Data.Map as Map
 
 import LLVM.Context
+import LLVM.Exception
 import LLVM.Module
 import LLVM.Analysis
 import LLVM.Diagnostic
@@ -258,10 +260,10 @@ tests = testGroup "Module" [
               \  ret i32 0\n\
               \}\n"
       a <- withModuleFromLLVMAssembly' context s $ \m -> do
-        (t, _) <- failInIO $ lookupTarget Nothing "x86_64-unknown-linux"
+        (t, _) <- lookupTarget Nothing "x86_64-unknown-linux"
         withTargetOptions $ \to -> do
           withTargetMachine t "x86_64-unknown-linux" "" Map.empty to R.Default CM.Default CGO.Default $ \tm -> do
-            failInIO $ moduleTargetAssembly tm m
+            moduleTargetAssembly tm m
       a @?= "\t.text\n\
             \\t.file\t\"<string>\"\n\
             \\t.globl\tmain\n\
@@ -288,11 +290,11 @@ tests = testGroup "Module" [
     ast @?= handAST,
     
   testCase "withModuleFromAST" $ withContext $ \context -> do
-    s <- withModuleFromAST' context handAST moduleLLVMAssembly
+    s <- withModuleFromAST context handAST moduleLLVMAssembly
     s @?= handString,
 
   testCase "bitcode" $ withContext $ \context -> do
-    bs <- withModuleFromAST' context handAST moduleBitcode
+    bs <- withModuleFromAST context handAST moduleBitcode
     s <- withModuleFromBitcode' context bs moduleLLVMAssembly
     s @?= handString,
 
@@ -354,8 +356,7 @@ tests = testGroup "Module" [
               }
             ]
       strCheck ast s
-      s' <- withContext $ \context -> withModuleFromAST' context ast $ runExceptT . verify
-      s' @?= Right (),
+      withContext $ \context -> withModuleFromAST context ast verify,
 
     testCase "metadata type" $ withContext $ \context -> do
       let s = "; ModuleID = '<string>'\n\
@@ -401,7 +402,7 @@ tests = testGroup "Module" [
                 ]
              }
            ]
-      t <- withModuleFromAST' context ast $ \_ -> return True
+      t <- withModuleFromAST context ast $ \_ -> return True
       t @?= True,
 
     testCase "Phi node finishes" $ withContext $ \context -> do
@@ -483,7 +484,7 @@ tests = testGroup "Module" [
                   ]
                 }
                ]
-          s <- withModuleFromAST' context ast moduleLLVMAssembly
+          s <- withModuleFromAST context ast moduleLLVMAssembly
           m <- withModuleFromLLVMAssembly' context s moduleAST
           m @?= ast,
 
@@ -533,8 +534,8 @@ tests = testGroup "Module" [
                ]
              }
            ]
-      t <- runExceptT $ withModuleFromAST context badAST $ \_ -> return True
-      t @?= Left "reference to undefined block: Name \"not here\"",
+      t <- try $ withModuleFromAST context badAST $ \_ -> return True
+      t @?= Left (EncodeException "reference to undefined block: Name \"not here\""),
 
     testCase "multiple" $ withContext $ \context -> do
       let badAST = Module "<string>" "<string>" Nothing Nothing [
@@ -563,8 +564,8 @@ tests = testGroup "Module" [
                ]
              }
            ]
-      t <- runExceptT $ withModuleFromAST context badAST $ \_ -> return True
-      t @?= Left "reference to undefined local: Name \"unknown\"",
+      t <- try $ withModuleFromAST context badAST $ \_ -> return True
+      t @?= Left (EncodeException "reference to undefined local: Name \"unknown\""),
 
     testCase "sourceFileName" $ withContext $ \context -> do
       let s = "; ModuleID = '<string>'\n\

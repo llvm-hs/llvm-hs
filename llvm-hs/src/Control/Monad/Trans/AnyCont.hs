@@ -5,6 +5,7 @@ module Control.Monad.Trans.AnyCont where
 
 import LLVM.Prelude
 
+import Control.Monad.Catch
 import Control.Monad.Cont
 
 newtype AnyContT m a = AnyContT { unAnyContT :: forall r . ContT r m a }
@@ -26,6 +27,9 @@ instance MonadIO m => MonadIO (AnyContT m) where
 
 instance MonadTrans AnyContT where
   lift ma = AnyContT (lift ma)
+
+instance MonadThrow m => MonadThrow (AnyContT m) where
+  throwM = lift . throwM
 
 runAnyContT :: AnyContT m a -> (forall r . (a -> m r) -> m r)
 runAnyContT = runContT . unAnyContT

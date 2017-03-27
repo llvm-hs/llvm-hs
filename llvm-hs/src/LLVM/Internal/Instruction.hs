@@ -15,13 +15,13 @@ import qualified LLVM.Internal.InstructionDefs as ID
 import LLVM.Internal.InstructionDefs (instrP)
 
 import Control.Monad.AnyCont
-import Control.Monad.Error.Class
 import Control.Monad.IO.Class
 import Control.Monad.State (gets)
 
 import Foreign.Ptr
 
 import Control.Exception (assert)
+import Control.Monad.Catch
 import qualified Data.Map as Map
 import qualified Data.List as List
 import Data.List.NonEmpty (NonEmpty((:|)))
@@ -52,6 +52,7 @@ import LLVM.Internal.Value
 
 import qualified LLVM.AST as A
 import qualified LLVM.AST.Constant as A.C
+import LLVM.Exception
 
 callInstAttributeSet :: Ptr FFI.Instruction -> DecodeAST MixedAttributeSet
 callInstAttributeSet = decodeM <=< liftIO . FFI.getCallSiteAttributeSet
@@ -516,12 +517,12 @@ $(do
                 A.Catch a -> do
                   cn <- encodeM a
                   isArray <- liftIO $ isArrayType =<< FFI.typeOf (FFI.upCast cn)
-                  when isArray $ throwError $ "Catch clause cannot take an array: " ++ show c
+                  when isArray $ throwM . EncodeException $ "Catch clause cannot take an array: " ++ show c
                   liftIO $ FFI.addClause i cn
                 A.Filter a -> do
                   cn <- encodeM a
                   isArray <- liftIO $ isArrayType =<< FFI.typeOf (FFI.upCast cn)
-                  unless isArray $ throwError $ "filter clause must take an array: " ++ show c
+                  unless isArray $ throwM . EncodeException $ "filter clause must take an array: " ++ show c
                   liftIO $ FFI.addClause i cn
             when cl $ do
               cl <- encodeM cl

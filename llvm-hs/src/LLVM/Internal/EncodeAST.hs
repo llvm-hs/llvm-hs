@@ -8,11 +8,9 @@ module LLVM.Internal.EncodeAST where
 
 import LLVM.Prelude
 
-import Control.Exception
 import Control.Monad.AnyCont
-import Control.Monad.Error.Class
+import Control.Monad.Catch
 import Control.Monad.State
-import Control.Monad.Trans.Except
 
 import Foreign.Ptr
 import Foreign.C
@@ -23,7 +21,7 @@ import qualified Data.ByteString.Short as ShortByteString
 import Data.Map (Map)
 import qualified Data.Map as Map
 
-import qualified LLVM.Internal.FFI.Attribute as FFI  
+import qualified LLVM.Internal.FFI.Attribute as FFI
 import qualified LLVM.Internal.FFI.Builder as FFI
 import qualified LLVM.Internal.FFI.GlobalValue as FFI
 import qualified LLVM.Internal.FFI.PtrHierarchy as FFI
@@ -31,6 +29,7 @@ import qualified LLVM.Internal.FFI.Value as FFI
 
 import qualified LLVM.AST as A
 import qualified LLVM.AST.Attribute as A.A
+import LLVM.Exception
 
 import LLVM.Internal.Context
 import LLVM.Internal.Coding
@@ -53,14 +52,14 @@ data EncodeState = EncodeState {
       encodeStateCOMDATs :: Map ShortByteString (Ptr FFI.COMDAT)
     }
 
-newtype EncodeAST a = EncodeAST { unEncodeAST :: AnyContT (ExceptT String (StateT EncodeState IO)) a }
+newtype EncodeAST a = EncodeAST { unEncodeAST :: AnyContT (StateT EncodeState IO) a }
     deriving (
        Functor,
        Applicative,
        Monad,
        MonadIO,
        MonadState EncodeState,
-       MonadError String,
+       MonadThrow,
        MonadAnyCont IO,
        ScopeAnyCont
      )
@@ -68,13 +67,13 @@ newtype EncodeAST a = EncodeAST { unEncodeAST :: AnyContT (ExceptT String (State
 lookupNamedType :: A.Name -> EncodeAST (Ptr FFI.Type)
 lookupNamedType n = do
   t <- gets $ Map.lookup n . encodeStateNamedTypes
-  maybe (throwError $ "reference to undefined type: " ++ show n) return t
+  maybe (throwM . EncodeException $ "reference to undefined type: " ++ show n) return t
 
 defineType :: A.Name -> Ptr FFI.Type -> EncodeAST ()
 defineType n t = modify $ \s -> s { encodeStateNamedTypes = Map.insert n t (encodeStateNamedTypes s) }
 
-runEncodeAST :: Context -> EncodeAST a -> ExceptT String IO a
-runEncodeAST context@(Context ctx) (EncodeAST a) = ExceptT $
+runEncodeAST :: Context -> EncodeAST a -> IO a
+runEncodeAST context@(Context ctx) (EncodeAST a) =
     bracket (FFI.createBuilderInContext ctx) FFI.disposeBuilder $ \builder -> do
       let initEncodeState = EncodeState {
               encodeStateBuilder = builder,
@@ -88,7 +87,7 @@ runEncodeAST context@(Context ctx) (EncodeAST a) = ExceptT $
               encodeStateAttributeGroups = Map.empty,
               encodeStateCOMDATs = Map.empty
             }
-      flip evalStateT initEncodeState . runExceptT . flip runAnyContT return $ a
+      flip evalStateT initEncodeState . flip runAnyContT return $ a
 
 withName :: A.Name -> (CString -> IO a) -> IO a
 withName (A.Name n) = ShortByteString.useAsCString n
@@ -139,7 +138,7 @@ refer r n f = do
   maybe f return mop
 
 undefinedReference :: Show n => String -> n -> EncodeAST a
-undefinedReference m n = throwError $ "reference to undefined " ++ m ++ ": " ++ show n
+undefinedReference m n = throwM . EncodeException $ "reference to undefined " ++ m ++ ": " ++ show n
 
 referOrThrow :: (Show n, Ord n) => (EncodeState -> Map n v) -> String -> n -> EncodeAST v
 referOrThrow r m n = refer r n $ undefinedReference m n
