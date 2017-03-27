@@ -160,6 +160,7 @@ setNamedType t (A.StructureType packed ets) = do
   ets <- encodeM ets
   packed <- encodeM packed
   liftIO $ FFI.structSetBody t ets packed
-
-
-
+setNamedType _ ty =
+  throwM
+    (EncodeException
+       ("A type definition requires a structure type but got: " ++ show ty))

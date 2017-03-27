@@ -571,6 +571,13 @@ tests = testGroup "Module" [
       let s = "; ModuleID = '<string>'\n\
               \source_filename = \"filename\"\n"
           ast = Module "<string>" "filename" Nothing Nothing []
-      strCheck ast s
+      strCheck ast s,
+
+    testCase "badTypeDef" $ withContext $ \context -> do
+      let badAST =
+            Module "<string>" "<string>" Nothing Nothing
+              [TypeDefinition (UnName 0) (Just VoidType)]
+      t <- try $ withModuleFromAST context badAST $ \_ -> return ()
+      t @?= Left (EncodeException "A type definition requires a structure type but got: VoidType")
    ]
  ]
