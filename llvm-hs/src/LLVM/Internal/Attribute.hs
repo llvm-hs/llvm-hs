@@ -86,7 +86,7 @@ instance Monad m => EncodeM m A.FA.FunctionAttribute (Ptr FFI.FunctionAttrBuilde
       A.FA.AlwaysInline -> FFI.functionAttributeKindAlwaysInline
       A.FA.MinimizeSize -> FFI.functionAttributeKindMinSize
       A.FA.OptimizeForSize -> FFI.functionAttributeKindOptimizeForSize
-      A.FA.OptimizeNone -> FFI.functionAttributeKindOptimizeForSize
+      A.FA.OptimizeNone -> FFI.functionAttributeKindOptimizeNone
       A.FA.WriteOnly -> FFI.functionAttributeKindWriteOnly
       A.FA.ArgMemOnly -> FFI.functionAttributeKindArgMemOnly
       A.FA.StackProtect -> FFI.functionAttributeKindStackProtect
@@ -165,7 +165,7 @@ instance DecodeM DecodeAST A.FA.FunctionAttribute FFI.FunctionAttribute where
            [functionAttributeKindP|AlwaysInline|] -> return A.FA.AlwaysInline
            [functionAttributeKindP|MinSize|] -> return A.FA.MinimizeSize
            [functionAttributeKindP|OptimizeForSize|] -> return A.FA.OptimizeForSize
-           [functionAttributeKindP|OptimizeNone|] -> return A.FA.OptimizeForSize
+           [functionAttributeKindP|OptimizeNone|] -> return A.FA.OptimizeNone
            [functionAttributeKindP|StackProtect|] -> return A.FA.StackProtect
            [functionAttributeKindP|StackProtectReq|] -> return A.FA.StackProtectReq
            [functionAttributeKindP|StackProtectStrong|] -> return A.FA.StackProtectStrong
