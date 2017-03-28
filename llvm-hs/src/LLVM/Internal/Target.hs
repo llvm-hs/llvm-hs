@@ -14,13 +14,15 @@ import Control.Monad.Catch
 import Control.Monad.IO.Class
 import Control.Monad.Trans.Except
 
-import Foreign.Ptr
-import Foreign.C.String
-import Data.List (intercalate)
+import Data.Attoparsec.ByteString
+import Data.Attoparsec.ByteString.Char8
+import qualified Data.ByteString as ByteString
+import Data.Char
 import Data.Map (Map)
 import qualified Data.Map as Map
-
-import Text.ParserCombinators.Parsec hiding (many)
+import Data.Monoid
+import Foreign.C.String
+import Foreign.Ptr
 
 import LLVM.Internal.Coding
 import LLVM.Internal.String ()
@@ -77,21 +79,21 @@ genCodingInstance [t| TO.FloatingPointOperationFusionMode |] ''FFI.FPOpFusionMod
 newtype Target = Target (Ptr FFI.Target)
 
 -- | e.g. an instruction set extension
-newtype CPUFeature = CPUFeature String
+newtype CPUFeature = CPUFeature ByteString
   deriving (Eq, Ord, Read, Show)
 
-instance EncodeM e String es => EncodeM e (Map CPUFeature Bool) es where
-  encodeM = encodeM . intercalate "," . map (\(CPUFeature f, enabled) -> (if enabled then "+" else "-") ++ f) . Map.toList
+instance EncodeM e ByteString es => EncodeM e (Map CPUFeature Bool) es where
+  encodeM = encodeM . ByteString.intercalate "," . map (\(CPUFeature f, enabled) -> (if enabled then "+" else "-") <> f) . Map.toList
 
-instance (Monad d, DecodeM d String es) => DecodeM d (Map CPUFeature Bool) es where
+instance (Monad d, DecodeM d ByteString es) => DecodeM d (Map CPUFeature Bool) es where
   decodeM es = do
     s <- decodeM es
     let flag = do
-          en <- choice [char '-' >> return False, char '+' >> return True]
-          s <- many1 (noneOf ",")
+          en <- choice [char8 '-' >> return False, char8 '+' >> return True]
+          s <- ByteString.pack <$> many1 (notWord8 (fromIntegral (ord ',')))
           return (CPUFeature s, en)
-        features = liftM Map.fromList (flag `sepBy` (char ','))
-    case parse (do f <- features; eof; return f) "CPU Feature string" (s :: String) of
+        features = liftM Map.fromList (flag `sepBy` (char8 ','))
+    case parseOnly (do f <- features; endOfInput; return f) s of
       Right features -> return features
       Left _ -> fail "failure to parse CPUFeature string"
                        

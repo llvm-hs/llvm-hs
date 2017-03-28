@@ -1,3 +1,4 @@
+{-# LANGUAGE OverloadedStrings #-}
 module LLVM.DataLayout (
  dataLayoutToString,
  parseDataLayout
@@ -7,24 +8,27 @@ import LLVM.Prelude
 
 import Control.Monad.Trans.Except
 
+import Data.Attoparsec.ByteString
+import Data.Attoparsec.ByteString.Char8
+import Data.ByteString.Char8 as ByteString hiding (map, foldr)
 import qualified Data.List as List
 import qualified Data.Map as Map
+import Data.Monoid
 import qualified Data.Set as Set
-
-import Text.ParserCombinators.Parsec hiding (many)
 
 import LLVM.AST.DataLayout
 import LLVM.AST.AddrSpace
 
-dataLayoutToString :: DataLayout -> String
+dataLayoutToString :: DataLayout -> ByteString
 dataLayoutToString dl =
-  let sAlignmentInfo :: AlignmentInfo -> String
+  let sAlignmentInfo :: AlignmentInfo -> ByteString
       sAlignmentInfo (AlignmentInfo abi pref) =
-        show abi ++ if pref /= abi
-                      then ":" ++ show pref
-                      else ""
-      sTriple :: (Word32, AlignmentInfo) -> String
-      sTriple (s, ai) = show s ++ ":" ++ sAlignmentInfo ai
+        pack (show abi) <>
+        if pref /= abi
+          then ":" <> pack (show pref)
+          else ""
+      sTriple :: (Word32, AlignmentInfo) -> ByteString
+      sTriple (s, ai) = pack (show s) <> ":" <> sAlignmentInfo ai
       atChar at = case at of
         IntegerAlign -> "i"
         VectorAlign -> "v"
@@ -39,29 +43,29 @@ dataLayoutToString dl =
       nonDef :: Eq a => (DataLayout -> [a]) -> [a]
       nonDef f = (f dl) List.\\ (f defDl)
   in
-  List.intercalate "-" (
+  ByteString.intercalate "-" (
     [case endianness dl of BigEndian -> "E"; LittleEndian -> "e"]
     ++
-    (oneOpt (("m:" ++) . manglingChar) mangling)
+    (oneOpt (("m:" <>) . manglingChar) mangling)
     ++
     [
-      "p" ++ (if a == 0 then "" else show a) ++ ":" ++ sTriple t
+      "p" <> (if a == 0 then "" else pack (show a)) <> ":" <> sTriple t
       | (AddrSpace a, t) <- nonDef (Map.toList . pointerLayouts)
     ] ++ [
-      atChar at ++ sTriple (s, ai)
+      atChar at <> sTriple (s, ai)
       | ((at, s), ai) <- nonDef (Map.toList . typeLayouts)
     ] ++ [
-      "a:" ++ sAlignmentInfo ai | ai <- nonDef (pure . aggregateLayout)
+      "a:" <> sAlignmentInfo ai | ai <- nonDef (pure . aggregateLayout)
     ] ++
-    (oneOpt (("n"++) . (List.intercalate ":") . (map show) . Set.toList) nativeSizes)
+    (oneOpt (("n"<>) . (ByteString.intercalate ":") . map (pack . show) . Set.toList) nativeSizes)
     ++
-    (oneOpt (("S"++) . show) stackAlignment)
+    (oneOpt (("S"<>) . pack . show) stackAlignment)
   )
 
 -- | Parse a 'DataLayout', given a default Endianness should one not be specified in the
 -- string to be parsed. LLVM itself uses BigEndian as the default: thus pass BigEndian to
 -- be conformant or LittleEndian to be righteously defiant.
-parseDataLayout :: Endianness -> String -> Except String (Maybe DataLayout)
+parseDataLayout :: Endianness -> ByteString -> Except String (Maybe DataLayout)
 parseDataLayout _ "" = pure Nothing
 parseDataLayout defaultEndianness s =
   let
@@ -70,7 +74,7 @@ parseDataLayout defaultEndianness s =
     alignmentInfo :: Parser AlignmentInfo
     alignmentInfo = do
       abi <- num
-      pref <- optionMaybe $ char ':' *> num
+      pref <- optional $ char ':' *> num
       let pref' = fromMaybe abi pref
       pure $ AlignmentInfo abi pref'
     triple :: Parser (Word32, AlignmentInfo)
@@ -119,6 +123,6 @@ parseDataLayout defaultEndianness s =
         pure $ \dl -> dl { nativeSizes = Just (Set.fromList ns) }
      ]
   in
-    case parse (parseSpec `sepBy` (char '-')) "" s of
+    case parseOnly (parseSpec `sepBy` (char '-')) s of
       Left _ -> throwE $ "ill formed data layout: " ++ show s
       Right fs -> pure . Just $ foldr ($) (defaultDataLayout defaultEndianness) fs
