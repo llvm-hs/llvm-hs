@@ -142,7 +142,7 @@ main = do
                        Nothing     -> "--link-static"
                        Just shared -> if shared then "--link-shared" else "--link-static"
       libs       <- getLibs ["--libs", linkFlag]
-      systemLibs <- getLibs ["--system-libs"]
+      systemLibs <- getLibs ["--system-libs", linkFlag]
 
       let genericPackageDescription' = genericPackageDescription {
             condLibrary = do
