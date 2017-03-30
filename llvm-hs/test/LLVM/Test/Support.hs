@@ -1,3 +1,7 @@
+{-# LANGUAGE FlexibleContexts     #-}
+{-# LANGUAGE FlexibleInstances    #-}
+{-# LANGUAGE TypeSynonymInstances #-}
+
 module LLVM.Test.Support where
 
 import Test.Tasty

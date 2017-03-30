@@ -1,4 +1,5 @@
 {-# LANGUAGE
+  FlexibleContexts,
   ForeignFunctionInterface,
   OverloadedStrings
   #-}
