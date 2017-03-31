@@ -38,7 +38,7 @@ data FunctionAttribute
         stringAttributeKind :: ShortByteString,
         stringAttributeValue :: ShortByteString -- ^ Use "" for no value -- the two are conflated
       }
-    | AllocSize Word (Maybe Word)
+    | AllocSize Word32 (Maybe Word32) -- ^ AllocSize 0 (Just 0) is invalid
     | WriteOnly
     | ArgMemOnly
     | Convergent

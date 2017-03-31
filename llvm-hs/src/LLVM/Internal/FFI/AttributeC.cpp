@@ -115,9 +115,9 @@ void LLVM_Hs_AttrBuilderAddStackAlignment(AttrBuilder &ab, uint64_t v) {
 	ab.addStackAlignmentAttr(v);
 }
 
-void LLVM_Hs_AttrBuilderAddAllocSize(AttrBuilder &ab, unsigned x, LLVMBool optionalIsThere, unsigned y) {
+void LLVM_Hs_AttrBuilderAddAllocSize(AttrBuilder &ab, unsigned x, unsigned y, LLVMBool optionalIsThere) {
     if (optionalIsThere) {
-        ab.addAllocSizeAttr(x, y);
+        ab.addAllocSizeAttr(x, Optional<unsigned>(y));
     } else {
         ab.addAllocSizeAttr(x, Optional<unsigned>());
     }

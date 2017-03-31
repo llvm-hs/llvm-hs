@@ -55,7 +55,7 @@ instance Arbitrary FunctionAttribute where
     , return SanitizeThread
     , return SanitizeMemory
     , StringAttribute <$> (B.pack <$> arbitrary) <*> (B.pack <$> arbitrary)
-    , AllocSize <$> arbitrary <*> arbitrary
+    , suchThat (AllocSize <$> arbitrary <*> arbitrary) (/= AllocSize 0 (Just 0))
     , return WriteOnly
     , return ArgMemOnly
     , return Convergent
@@ -68,8 +68,8 @@ instance Arbitrary FunctionAttribute where
     StackAlignment x    -> map StackAlignment (nub [ v | u <- shrink x, let v = ceilPow2 u, v /= x ])
     StringAttribute x y -> [ StringAttribute (B.pack x') y | x' <- shrink (B.unpack x) ]
                         ++ [ StringAttribute x (B.pack y') | y' <- shrink (B.unpack y) ]
-    AllocSize x y       -> [ AllocSize x' y | x' <- shrink x ]
-                        ++ [ AllocSize x y' | y' <- shrink y ]
+    AllocSize x y       -> [ AllocSize x' y | x' <- shrink x, not (x' == 0 && y == Just 0) ]
+                        ++ [ AllocSize x y' | y' <- shrink y, not (x == 0 && y' == Just 0) ]
     _                   -> []
 
 
