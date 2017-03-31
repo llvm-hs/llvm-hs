@@ -95,11 +95,11 @@ instance Monad m => EncodeM m (Maybe Bool) (FFI.NothingAsMinusOne Bool) where
 instance Monad m => EncodeM m (Maybe Word) (FFI.NothingAsMinusOne Word) where
   encodeM = return . FFI.NothingAsMinusOne . maybe (-1) fromIntegral
 
-instance Monad m => EncodeM m (Maybe Word) (CUInt, FFI.LLVMBool) where
+instance Monad m => EncodeM m (Maybe Word32) (CUInt, FFI.LLVMBool) where
   encodeM (Just a) = liftM2 (,) (encodeM a) (encodeM True)
   encodeM Nothing = return (0,) `ap` (encodeM False)
 
-instance Monad m => DecodeM m (Maybe Word) (CUInt, FFI.LLVMBool) where
+instance Monad m => DecodeM m (Maybe Word32) (CUInt, FFI.LLVMBool) where
   decodeM (a, isJust) = do
     isJust' <- decodeM isJust
     if isJust'

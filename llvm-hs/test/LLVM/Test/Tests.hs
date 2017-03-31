@@ -7,6 +7,7 @@ import qualified LLVM.Test.CallingConvention as CallingConvention
 import qualified LLVM.Test.Constants as Constants
 import qualified LLVM.Test.DataLayout as DataLayout
 import qualified LLVM.Test.ExecutionEngine as ExecutionEngine
+import qualified LLVM.Test.FunctionAttribute as FunctionAttribute
 import qualified LLVM.Test.Global as Global
 import qualified LLVM.Test.InlineAssembly as InlineAssembly
 import qualified LLVM.Test.Instructions as Instructions
@@ -23,6 +24,7 @@ tests = testGroup "llvm-hs" [
     CallingConvention.tests,
     Constants.tests,
     DataLayout.tests,
+    FunctionAttribute.tests,
     ExecutionEngine.tests,
     Global.tests,
     InlineAssembly.tests,

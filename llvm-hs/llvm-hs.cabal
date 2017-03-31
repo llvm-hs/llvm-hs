@@ -261,6 +261,7 @@ test-suite test
     LLVM.Test.Constants
     LLVM.Test.DataLayout
     LLVM.Test.ExecutionEngine
+    LLVM.Test.FunctionAttribute
     LLVM.Test.Global
     LLVM.Test.InlineAssembly
     LLVM.Test.Instructions
