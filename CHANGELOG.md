@@ -6,6 +6,10 @@
   recover the old behavior set it to the same value as abiAlignment.
 * Switch from ExceptT to using exceptions.
   See `LLVM.Exception` for an overview of the exceptions potentially thrown.
+* 'GlobalAlias' now expects the element type of a pointer type instead
+  of the pointer type itself. The address space is passed separately
+  via the 'addrSpace' field. This makes 'GlobalAlias' consistent with
+  'GlobalVariable'.
 
 ## 4.0.1
 

@@ -135,18 +135,20 @@ handAST = Module "<string>" "<string>" Nothing Nothing [
       GlobalDefinition $ globalAliasDefaults {
          G.name = Name "three",
          G.linkage = L.Private,
-         G.type' = PointerType i32 (AddrSpace 3),
+         G.type' = i32,
+         G.addrSpace = AddrSpace 3,
          G.aliasee = C.GlobalReference (PointerType i32 (AddrSpace 3)) (UnName 1)
       },
       GlobalDefinition $ globalAliasDefaults {
         G.name = Name "two",
         G.unnamedAddr = Just GlobalAddr,
-        G.type' = PointerType i32 (AddrSpace 3),
+        G.type' = i32,
+        G.addrSpace = AddrSpace 3,
         G.aliasee = C.GlobalReference (PointerType i32 (AddrSpace 3)) (Name "three")
       },
       GlobalDefinition $ globalAliasDefaults {
         G.name = Name "one",
-        G.type' = ptr i32,
+        G.type' = i32,
         G.aliasee = C.GlobalReference (ptr i32) (UnName 5),
         G.threadLocalMode = Just TLS.InitialExec
       },

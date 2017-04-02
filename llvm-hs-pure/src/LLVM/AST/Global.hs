@@ -24,10 +24,10 @@ data Global
         visibility :: V.Visibility,
         dllStorageClass :: Maybe DLL.StorageClass,
         threadLocalMode :: Maybe TLS.Model,
-        addrSpace :: AddrSpace,
         unnamedAddr :: Maybe UnnamedAddr,
         isConstant :: Bool,
         type' :: Type,
+        addrSpace :: AddrSpace,
         initializer :: Maybe Constant,
         section :: Maybe ShortByteString,
         comdat :: Maybe ShortByteString,
@@ -42,6 +42,7 @@ data Global
         threadLocalMode :: Maybe TLS.Model,
         unnamedAddr :: Maybe UnnamedAddr,
         type' :: Type,
+        addrSpace :: AddrSpace,
         aliasee :: Constant
       }
     -- | <http://llvm.org/docs/LangRef.html#functions>
@@ -108,6 +109,7 @@ globalAliasDefaults =
     threadLocalMode = Nothing,
     unnamedAddr = Nothing,
     type' = error "global alias type not defined",
+    addrSpace = AddrSpace 0,
     aliasee = error "global alias aliasee not defined"
   }
 
