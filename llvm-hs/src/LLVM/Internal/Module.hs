@@ -319,9 +319,8 @@ withModuleFromAST context@(Context c) (A.Module moduleId sourceFileName dataLayo
            setAlignment g' (A.G.alignment g)
            return (FFI.upCast g')
        (a@A.G.GlobalAlias { A.G.name = n }) -> do
-         let A.PointerType typ as = A.G.type' a
-         typ <- encodeM typ
-         as <- encodeM as
+         typ <- encodeM (A.G.type' a)
+         as <- encodeM (A.G.addrSpace a)
          a' <- liftIO $ withName n $ \name -> FFI.justAddAlias ffiMod typ as name
          defineGlobal n a'
          liftIO $ do
@@ -393,10 +392,10 @@ decodeGlobalVariables mod = do
         <*> getVisibility g
         <*> getDLLStorageClass g
         <*> getThreadLocalMode g
-        <*> return as
         <*> (liftIO $ decodeM =<< FFI.getUnnamedAddr (FFI.upCast g))
         <*> (liftIO $ decodeM =<< FFI.isGlobalConstant g)
         <*> return t
+        <*> return as
         <*> (do i <- liftIO $ FFI.getInitializer g
                 if i == nullPtr
                   then return Nothing
@@ -413,6 +412,7 @@ decodeGlobalAliases mod = do
   ffiAliases <- liftIO $ FFI.getXs (FFI.getFirstAlias mod) FFI.getNextAlias
   fmap sequence . forM ffiAliases $ \a -> do
     n <- getGlobalName a
+    A.PointerType t as <- typeOf a
     return $
       A.G.GlobalAlias
         <$> return n
@@ -421,7 +421,8 @@ decodeGlobalAliases mod = do
         <*> getDLLStorageClass a
         <*> getThreadLocalMode a
         <*> (liftIO $ decodeM =<< FFI.getUnnamedAddr (FFI.upCast a))
-        <*> typeOf a
+        <*> return t
+        <*> return as
         <*> (decodeM =<< (liftIO $ FFI.getAliasee a))
 
 -- This returns a nested DecodeAST to allow interleaving of different
