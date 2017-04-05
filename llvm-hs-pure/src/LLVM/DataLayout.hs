@@ -67,7 +67,7 @@ dataLayoutToString dl =
 -- be conformant or LittleEndian to be righteously defiant.
 parseDataLayout :: Endianness -> ByteString -> Except String (Maybe DataLayout)
 parseDataLayout _ "" = pure Nothing
-parseDataLayout defaultEndianness s =
+parseDataLayout defaultEndianness str =
   let
     num :: Parser Word32
     num = read <$> many1 digit
@@ -123,6 +123,6 @@ parseDataLayout defaultEndianness s =
         pure $ \dl -> dl { nativeSizes = Just (Set.fromList ns) }
      ]
   in
-    case parseOnly (parseSpec `sepBy` (char '-')) s of
-      Left _ -> throwE $ "ill formed data layout: " ++ show s
+    case parseOnly (parseSpec `sepBy` (char '-')) str of
+      Left _ -> throwE $ "ill formed data layout: " ++ show str
       Right fs -> pure . Just $ foldr ($) (defaultDataLayout defaultEndianness) fs
