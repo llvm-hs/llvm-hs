@@ -139,7 +139,7 @@ main = do
       let getLibs = liftM (map (fromJust . stripPrefix "-l") . words) . llvmConfig
           flags    = configConfigurationsFlags configFlags
           linkFlag = case lookup (FlagName "shared-llvm") flags of
-                       Nothing     -> "--link-static"
+                       Nothing     -> "--link-shared"
                        Just shared -> if shared then "--link-shared" else "--link-static"
       libs       <- getLibs ["--libs", linkFlag]
       systemLibs <- getLibs ["--system-libs", linkFlag]
