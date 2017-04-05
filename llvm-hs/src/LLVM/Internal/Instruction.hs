@@ -63,7 +63,7 @@ meta i = do
          ks <- allocaArray n
          ps <- allocaArray n
          n' <- liftIO $ FFI.getMetadata i ks ps n
-         if (n' > n) 
+         if (n' > n)
           then getMetadata n'
           else return zip `ap` decodeM (n', ks) `ap` decodeM (n', ps)
   getMetadata 4
@@ -97,7 +97,7 @@ instance DecodeM DecodeAST A.Terminator (Ptr FFI.Instruction) where
              trueDest <- successor 2
              return $ A.CondBr {
                A.condition = condition,
-               A.falseDest = falseDest, 
+               A.falseDest = falseDest,
                A.trueDest = trueDest,
                A.metadata' = md
              }
@@ -134,7 +134,7 @@ instance DecodeM DecodeAST A.Terminator (Ptr FFI.Instruction) where
         f <- decodeM fv
         args <- forM [1..nOps-3] $ \j -> do
                   let pAttrs = Map.findWithDefault [] (j-1) (parameterAttributes attrs)
-                  return (, pAttrs) `ap` op (j-1) 
+                  return (, pAttrs) `ap` op (j-1)
         rd <- successor (nOps - 2)
         ed <- successor (nOps - 1)
         return A.Invoke {
@@ -210,18 +210,18 @@ instance EncodeM EncodeAST A.Terminator (Ptr FFI.Instruction) where
         op0' <- encodeM op0
         dd' <- encodeM dd
         i <- liftIO $ FFI.buildSwitch builder op0' dd' (fromIntegral $ length ds)
-        forM ds $ \(v,d) -> do
+        forM_ ds $ \(v,d) -> do
           v' <- encodeM v
           d' <- encodeM d
           liftIO $ FFI.addCase i v' d'
         return $ FFI.upCast i
-      A.IndirectBr { 
+      A.IndirectBr {
         A.operand0' = op0,
         A.possibleDests = dests
       } -> do
         op0' <- encodeM op0
         i <- liftIO $ FFI.buildIndirectBr builder op0' (fromIntegral $ length dests)
-        forM dests $ \dest -> do
+        forM_ dests $ \dest -> do
           d <- encodeM dest
           liftIO $ FFI.addDestination i d
         return $ FFI.upCast i
@@ -245,7 +245,7 @@ instance EncodeM EncodeAST A.Terminator (Ptr FFI.Instruction) where
         cc <- encodeM cc
         liftIO $ FFI.setCallSiteCallingConvention i cc
         return $ FFI.upCast i
-      A.Resume { 
+      A.Resume {
         A.operand0' = op0
       } -> do
         op0' <- encodeM op0
@@ -281,7 +281,7 @@ instance EncodeM EncodeAST A.Terminator (Ptr FFI.Instruction) where
         mapM_ (liftIO . FFI.catchSwitchAddHandler i <=< encodeM) catchHandlers
         return i
     setMD t' (A.metadata' t)
-    return t'      
+    return t'
 
 $(do
   let findInstrFields s = Map.findWithDefault (error $ "instruction missing from AST: " ++ show s) s
@@ -336,7 +336,7 @@ $(do
                                          let pAttrs = Map.findWithDefault [] (j-1) (parameterAttributes $(TH.dyn "attrs"))
                                          p <- op (j-1)
                                          return (p, pAttrs) |])
-                "clauses" -> 
+                "clauses" ->
                   ([], [|do
                           nClauses <- liftIO $ FFI.getNumClauses i
                           -- We need to convert nClauses to a signed
@@ -356,13 +356,13 @@ $(do
                               ib <- decodeM =<< (liftIO $ FFI.getIncomingBlock i m)
                               return (iv,ib) |])
                 "allocatedType" -> ([], [| decodeM =<< liftIO (FFI.getAllocatedType i) |])
-                "numElements" -> 
+                "numElements" ->
                     ([], [| do
                             n <- decodeM =<< (liftIO $ FFI.getAllocaNumElements i)
                             return $ case n of
                               A.ConstantOperand (A.C.Int { A.C.integerValue = 1 }) -> Nothing
                               _ -> Just n
-                              |])                
+                              |])
                 "alignment" -> ([], [| decodeM =<< liftIO (FFI.getInstrAlignment i) |])
                 "maybeAtomicity" -> ([], [| decodeM =<< liftIO (FFI.getAtomicity i) |])
                 "atomicity" -> ([], [| decodeM =<< liftIO (FFI.getAtomicity i) |])
@@ -392,17 +392,17 @@ $(do
             | (lrn, iDef) <- Map.toList ID.instructionDefs,
               ID.instructionKind iDef /= ID.Terminator,
               let opcodeP = TH.dataToPatQ (const Nothing) (ID.cppOpcode iDef)
-                  handlerBody = 
+                  handlerBody =
                     let TH.RecC fullName fields = findInstrFields lrn
                         (fieldNames,_,_) = unzip3 fields
                         allNames ns = List.nub $ [ d | n <- ns, d <- allNames . fst . fieldDecoders lrn $ n ] ++ ns
                     in
-                      [ 
+                      [
                        TH.bindS (TH.varP (TH.mkName n)) (snd . fieldDecoders lrn $ n)
-                       | n <- allNames . map TH.nameBase $ fieldNames 
-                      ] ++ [ 
-                       TH.noBindS [| 
-                        return $(TH.recConE 
+                       | n <- allNames . map TH.nameBase $ fieldNames
+                      ] ++ [
+                       TH.noBindS [|
+                        return $(TH.recConE
                                  fullName
                                  [ (f,) <$> (TH.varE . TH.mkName . TH.nameBase $ f) | f <- fieldNames ])
                         |]
@@ -416,7 +416,7 @@ $(do
         let return' i = return (FFI.upCast i, return ())
         s <- encodeM ""
         (inst, act) <- case o of
-          A.ICmp { 
+          A.ICmp {
             A.iPredicate = pred,
             A.operand0 = op0,
             A.operand1 = op1
@@ -460,7 +460,7 @@ $(do
             (n, argvs) <- encodeM argvs
             i <- liftIO $ FFI.buildCall builder fv argvs n s
             attrs <- encodeM $ MixedAttributeSet fAttrs rAttrs (Map.fromList (zip [0..] argAttrs))
-            liftIO $ FFI.setCallSiteAttributeSet i attrs     
+            liftIO $ FFI.setCallSiteAttributeSet i attrs
             tck <- encodeM tck
             liftIO $ FFI.setTailCallKind i tck
             cc <- encodeM cc
@@ -505,14 +505,14 @@ $(do
             (n, is') <- encodeM is
             i <- liftIO $ FFI.buildInsertValue builder a' e' is' n s
             return' i
-          A.LandingPad { 
+          A.LandingPad {
             A.type' = t,
-            A.cleanup = cl, 
+            A.cleanup = cl,
             A.clauses = cs
           } -> do
             t' <- encodeM t
             i <- liftIO $ FFI.buildLandingPad builder t' (fromIntegral $ length cs) s
-            forM cs $ \c -> 
+            forM_ cs $ \c ->
               case c of
                 A.Catch a -> do
                   cn <- encodeM a
@@ -528,7 +528,7 @@ $(do
               cl <- encodeM cl
               liftIO $ FFI.setCleanup i cl
             return' i
-          A.Alloca { A.allocatedType = alt, A.numElements = n, A.alignment = alignment } -> do 
+          A.Alloca { A.allocatedType = alt, A.numElements = n, A.alignment = alignment } -> do
              alt' <- encodeM alt
              n' <- encodeM n
              i <- liftIO $ FFI.buildAlloca builder alt' n' s
@@ -545,7 +545,7 @@ $(do
             i <- liftIO $ FFI.buildCatchPad builder catchSwitch' args' numArgs s
             return' i
           o -> $(TH.caseE [| o |] [
-                   TH.match 
+                   TH.match
                    (TH.recP fullName [ (f,) <$> (TH.varP . TH.mkName . TH.nameBase $ f) | f <- fieldNames ])
                    (TH.normalB (TH.doE handlerBody))
                    []
@@ -562,11 +562,11 @@ $(do
                      encodeMFields = map TH.nameBase fieldNames List.\\ [ "metadata" ]
                      handlerBody = ([
                        TH.bindS (if s == "fastMathFlags" then TH.tupP [] else TH.varP (TH.mkName s))
-                           [| encodeM $(TH.dyn s) |] | s <- encodeMFields 
+                           [| encodeM $(TH.dyn s) |] | s <- encodeMFields
                       ] ++ [
                        TH.bindS (TH.varP (TH.mkName "i")) [| liftIO $ $(
-                          foldl1 TH.appE . map TH.dyn $ 
-                           [ "FFI.build" ++ name, "builder" ] ++ (encodeMFields List.\\ [ "fastMathFlags" ]) ++ [ "s" ] 
+                          foldl1 TH.appE . map TH.dyn $
+                           [ "FFI.build" ++ name, "builder" ] ++ (encodeMFields List.\\ [ "fastMathFlags" ]) ++ [ "s" ]
                         ) |],
                        TH.noBindS [| return' $(TH.dyn "i") |]
                       ])
@@ -604,5 +604,3 @@ instance EncodeM EncodeAST a (Ptr FFI.Instruction, EncodeAST ()) => EncodeM Enco
     liftIO $ FFI.setValueName v n'
     defineLocal n v
     return later
-
-

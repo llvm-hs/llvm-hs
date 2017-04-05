@@ -50,8 +50,8 @@ data DataLayout = DataLayout {
 
 -- | a default 'DataLayout'
 defaultDataLayout :: Endianness -> DataLayout
-defaultDataLayout endianness = DataLayout {
-  endianness = endianness,
+defaultDataLayout defaultEndianness = DataLayout {
+  endianness = defaultEndianness,
   mangling = Nothing,
   stackAlignment = Nothing,
   pointerLayouts = Map.fromList [

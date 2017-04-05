@@ -206,7 +206,7 @@ instance EncodeM EncodeAST a (Ptr (FFI.AttrBuilder b) -> EncodeAST ()) => Encode
   encodeM (index, as) = scopeAnyCont $ do
     ab <- allocaAttrBuilder
     builds <- mapM encodeM as
-    forM builds ($ ab) :: EncodeAST [()]
+    void (forM builds ($ ab) :: EncodeAST [()])
     Context context <- gets encodeStateContext
     liftIO $ FFI.getAttributeSet context index ab
 

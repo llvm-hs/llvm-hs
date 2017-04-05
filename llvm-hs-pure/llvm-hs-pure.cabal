@@ -28,7 +28,7 @@ flag semigroups
   default: False
 
 library
-  ghc-options: -Wall -fno-warn-name-shadowing
+  ghc-options: -Wall
   if flag(semigroups)
     build-depends:
       base >= 4.7 && < 4.9,
