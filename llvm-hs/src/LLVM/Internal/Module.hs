@@ -343,7 +343,7 @@ withModuleFromAST context@(Context c) (A.Module moduleId sourceFileName dataLayo
          setAlignment f (A.G.alignment g)
          setGC f gc
          setPersonalityFn f personality
-         forM blocks $ \(A.BasicBlock bName _ _) -> do
+         forM_ blocks $ \(A.BasicBlock bName _ _) -> do
            b <- liftIO $ withName bName $ \bName -> FFI.appendBasicBlockInContext context f bName
            defineBasicBlock fName bName b
          phase $ do
@@ -351,7 +351,7 @@ withModuleFromAST context@(Context c) (A.Module moduleId sourceFileName dataLayo
            ps <- allocaArray nParams
            liftIO $ FFI.getParams f ps
            params <- peekArray nParams ps
-           forM (zip args params) $ \(A.Parameter _ n _, p) -> do
+           forM_ (zip args params) $ \(A.Parameter _ n _, p) -> do
              defineLocal n p
              n <- encodeM n
              liftIO $ FFI.setValueName (FFI.upCast p) n
@@ -361,11 +361,11 @@ withModuleFromAST context@(Context c) (A.Module moduleId sourceFileName dataLayo
                builder <- gets encodeStateBuilder
                liftIO $ FFI.positionBuilderAtEnd builder b)
              finishes <- mapM encodeM namedInstrs :: EncodeAST [EncodeAST ()]
-             (encodeM term :: EncodeAST (Ptr FFI.Instruction))
+             void (encodeM term :: EncodeAST (Ptr FFI.Instruction))
              return (sequence_ finishes)
            sequence_ finishInstrs
            locals <- gets $ Map.toList . encodeStateLocals
-           forM [ n | (n, ForwardValue _) <- locals ] $ \n -> undefinedReference "local" n
+           forM_ [ n | (n, ForwardValue _) <- locals ] $ \n -> undefinedReference "local" n
            return (FFI.upCast f)
      return $ do
        g' <- eg'
