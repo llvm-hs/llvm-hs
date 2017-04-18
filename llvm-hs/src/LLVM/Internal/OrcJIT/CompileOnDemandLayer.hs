@@ -1,4 +1,4 @@
-{-# LANGUAGE MultiParamTypeClasses #-}
+{-# LANGUAGE MultiParamTypeClasses, OverloadedStrings #-}
 module LLVM.Internal.OrcJIT.CompileOnDemandLayer where
 
 import LLVM.Prelude
@@ -56,7 +56,7 @@ instance (MonadIO m, MonadAnyCont IO m) =>
     return . FFI.TargetAddress . fromIntegral . ptrToWordPtr . castFunPtrToPtr $ f'
 
 withIndirectStubsManagerBuilder ::
-  String {- ^ triple -} ->
+  ShortByteString {- ^ triple -} ->
   (IndirectStubsManagerBuilder -> IO a) ->
   IO a
 withIndirectStubsManagerBuilder triple f = flip runAnyContT return $ do
@@ -67,7 +67,7 @@ withIndirectStubsManagerBuilder triple f = flip runAnyContT return $ do
   liftIO $ f (StubsMgr stubsMgr)
 
 withJITCompileCallbackManager ::
-  String {- ^ triple -} ->
+  ShortByteString {- ^ triple -} ->
   Maybe (IO ()) ->
   (JITCompileCallbackManager -> IO a) ->
   IO a
@@ -109,7 +109,7 @@ withCompileOnDemandLayer
          FFI.disposeCompileOnDemandLayer
  liftIO $ f (CompileOnDemandLayer cl baseLayer cleanup)
 
-mangleSymbol :: CompileOnDemandLayer -> String -> IO MangledSymbol
+mangleSymbol :: CompileOnDemandLayer -> ShortByteString -> IO MangledSymbol
 mangleSymbol (CompileOnDemandLayer _ bl _) symbol =
   IRCompileLayer.mangleSymbol bl symbol
 

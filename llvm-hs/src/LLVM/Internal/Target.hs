@@ -240,7 +240,7 @@ initializeNativeTarget = do
   when failure $ fail "native target initialization failed"
 
 -- | the target triple corresponding to the target machine
-getTargetMachineTriple :: TargetMachine -> IO String
+getTargetMachineTriple :: TargetMachine -> IO ShortByteString
 getTargetMachineTriple (TargetMachine m) = decodeM =<< FFI.getTargetMachineTriple m
 
 -- | the default target triple that LLVM has been configured to produce code for
@@ -286,7 +286,7 @@ withHostTargetMachine f = do
 newtype TargetLibraryInfo = TargetLibraryInfo (Ptr FFI.TargetLibraryInfo)
 
 -- | Look up a 'LibraryFunction' by its standard name
-getLibraryFunction :: TargetLibraryInfo -> String -> IO (Maybe LibraryFunction)
+getLibraryFunction :: TargetLibraryInfo -> ShortByteString -> IO (Maybe LibraryFunction)
 getLibraryFunction (TargetLibraryInfo f) name = flip runAnyContT return $ do
   libFuncP <- alloca :: AnyContT IO (Ptr FFI.LibFunc)
   name <- (encodeM name :: AnyContT IO CString)
@@ -294,7 +294,7 @@ getLibraryFunction (TargetLibraryInfo f) name = flip runAnyContT return $ do
   forM (if r then Just libFuncP else Nothing) $ decodeM <=< peek
 
 -- | Get a the current name to be emitted for a 'LibraryFunction'
-getLibraryFunctionName :: TargetLibraryInfo -> LibraryFunction -> IO String
+getLibraryFunctionName :: TargetLibraryInfo -> LibraryFunction -> IO ShortByteString
 getLibraryFunctionName (TargetLibraryInfo f) l = flip runAnyContT return $ do
   l <- encodeM l
   decodeM $ FFI.libFuncGetName f l
@@ -303,7 +303,7 @@ getLibraryFunctionName (TargetLibraryInfo f) l = flip runAnyContT return $ do
 setLibraryFunctionAvailableWithName ::
   TargetLibraryInfo
   -> LibraryFunction
-  -> String -- ^ The function name to be emitted
+  -> ShortByteString -- ^ The function name to be emitted
   -> IO ()
 setLibraryFunctionAvailableWithName (TargetLibraryInfo f) libraryFunction name = flip runAnyContT return $ do
   name <- encodeM name

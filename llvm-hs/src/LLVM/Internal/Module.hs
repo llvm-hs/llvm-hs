@@ -210,9 +210,9 @@ emitToByteString fileType tm m = flip runAnyContT return $ do
 writeTargetAssemblyToFile :: TargetMachine -> File -> Module -> IO ()
 writeTargetAssemblyToFile = emitToFile FFI.codeGenFileTypeAssembly
 
--- | produce target-specific assembly as a 'String'
-moduleTargetAssembly :: TargetMachine -> Module -> IO String
-moduleTargetAssembly tm m = decodeM . UTF8ByteString =<< emitToByteString FFI.codeGenFileTypeAssembly tm m
+-- | produce target-specific assembly as a 'ByteString'
+moduleTargetAssembly :: TargetMachine -> Module -> IO ByteString
+moduleTargetAssembly tm m = emitToByteString FFI.codeGenFileTypeAssembly tm m
 
 -- | produce target-specific object code as a 'ByteString'
 moduleObject :: TargetMachine -> Module -> IO BS.ByteString
