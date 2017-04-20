@@ -1,3 +1,4 @@
+{-# LANGUAGE OverloadedStrings #-}
 import Test.Tasty
 import qualified LLVM.Test.Tests as LLVM
 import LLVM.CommandLine

@@ -1,3 +1,4 @@
+{-# LANGUAGE OverloadedStrings #-}
 -- | This module provides an enumeration of the various transformation (e.g. optimization) passes
 -- provided by LLVM. They can be used to create a 'LLVM.PassManager.PassManager' to, in turn,
 -- run the passes on 'LLVM.Module.Module's. If you don't know what passes you want, consider
@@ -164,7 +165,7 @@ defaultVectorizeBasicBlocks = BasicBlockVectorize {
   }
 
 -- | See <http://gcc.gnu.org/viewcvs/gcc/trunk/gcc/gcov-io.h?view=markup>.
-newtype GCOVVersion = GCOVVersion String
+newtype GCOVVersion = GCOVVersion ShortByteString
   deriving (Eq, Ord, Read, Show, Typeable, Data, Generic)
 
 -- | Defaults for 'GCOVProfiler'.

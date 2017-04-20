@@ -36,7 +36,7 @@ withIRCompileLayer (ObjectLinkingLayer oll) (TargetMachine tm) f = flip runAnyCo
   cleanup <- anyContToM $ bracket (newIORef []) (sequence <=< readIORef)
   liftIO $ f (IRCompileLayer cl dl cleanup)
 
-mangleSymbol :: IRCompileLayer -> String -> IO MangledSymbol
+mangleSymbol :: IRCompileLayer -> ShortByteString -> IO MangledSymbol
 mangleSymbol (IRCompileLayer _ dl _) symbol = flip runAnyContT return $ do
   mangledSymbol <- alloca
   symbol' <- encodeM symbol

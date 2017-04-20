@@ -9,10 +9,11 @@ import LLVM.Prelude
 
 import qualified Language.Haskell.TH as TH
 
-import Control.Exception
+import Control.Monad.AnyCont
+import Control.Monad.Catch
 import Control.Monad.IO.Class
 
-import Control.Monad.AnyCont
+import qualified Data.ByteString.Short as ByteString
 
 import Foreign.C (CString)
 import Foreign.Ptr
@@ -20,6 +21,7 @@ import Foreign.Ptr
 import qualified LLVM.Internal.FFI.PassManager as FFI
 import qualified LLVM.Internal.FFI.Transforms as FFI
 
+import LLVM.Exception
 import LLVM.Internal.Module
 import LLVM.Internal.Target
 import LLVM.Internal.Coding
@@ -84,8 +86,10 @@ defaultPassSetSpec = PassSetSpec {
   targetMachine = Nothing
 }
 
-instance (Monad m, MonadAnyCont IO m) => EncodeM m GCOVVersion CString where
-  encodeM (GCOVVersion cs@[_,_,_,_]) = encodeM cs
+instance (Monad m, MonadThrow m, MonadAnyCont IO m) => EncodeM m GCOVVersion CString where
+  encodeM (GCOVVersion cs)
+    | ByteString.length cs == 4 = encodeM cs
+    | otherwise = throwM (EncodeException "GCOVVersion should consist of exactly 4 characters")
 
 createPassManager :: PassSetSpec -> IO (Ptr FFI.PassManager)
 createPassManager pss = flip runAnyContT return $ do
