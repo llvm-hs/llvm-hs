@@ -10,6 +10,7 @@ import Foreign.C.String
 import Foreign.Ptr
 
 import LLVM.Internal.FFI.LLVMCTypes
+import LLVM.Internal.FFI.PtrHierarchy
 
 data DataLayout
 
@@ -24,3 +25,6 @@ foreign import ccall unsafe "LLVMDisposeTargetData" disposeDataLayout ::
 
 foreign import ccall unsafe "LLVMCopyStringRepOfTargetData" dataLayoutToString ::
   Ptr DataLayout -> IO (OwnerTransfered CString)
+
+foreign import ccall unsafe "LLVMABISizeOfType" getTypeAllocSize ::
+  Ptr DataLayout -> Ptr Type -> IO Word64
