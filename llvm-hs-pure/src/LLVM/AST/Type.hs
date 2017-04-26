@@ -6,13 +6,14 @@ import LLVM.Prelude
 import LLVM.AST.AddrSpace
 import LLVM.AST.Name
 
--- | LLVM supports some special formats floating point format. This type is to distinguish those format.
--- I believe it's treated as a format for "a" float, as opposed to a vector of two floats, because
--- its intended usage is to represent a single number with a combined significand.
-data FloatingPointFormat
-  = IEEE
-  | DoubleExtended
-  | PairOfFloats
+-- | LLVM supports some special formats floating point format. This type is to distinguish those format. Also see  <http://llvm.org/docs/LangRef.html#floating-point-types>
+data FloatingPointType
+  = HalfFP      -- ^ 16-bit floating point value
+  | FloatFP     -- ^ 32-bit floating point value
+  | DoubleFP    -- ^ 64-bit floating point value
+  | FP128FP     -- ^ 128-bit floating point value (112-bit mantissa)
+  | X86_FP80FP  -- ^ 80-bit floating point value (X87)
+  | PPC_FP128FP -- ^ 128-bit floating point value (two 64-bits)
   deriving (Eq, Ord, Read, Show, Typeable, Data, Generic)
 
 -- | <http://llvm.org/docs/LangRef.html#type-system>
@@ -24,7 +25,7 @@ data Type
   -- | <http://llvm.org/docs/LangRef.html#pointer-type>
   | PointerType { pointerReferent :: Type, pointerAddrSpace :: AddrSpace }
   -- | <http://llvm.org/docs/LangRef.html#floating-point-types>
-  | FloatingPointType { typeBits :: Word32, floatingPointFormat :: FloatingPointFormat }
+  | FloatingPointType { floatingPointType :: FloatingPointType }
   -- | <http://llvm.org/docs/LangRef.html#function-type>
   | FunctionType { resultType :: Type, argumentTypes :: [Type], isVarArg :: Bool }
   -- | <http://llvm.org/docs/LangRef.html#vector-type>
@@ -73,27 +74,27 @@ i128 = IntegerType 128
 ptr :: Type -> Type
 ptr t = PointerType t (AddrSpace 0)
 
--- | An abbreviation for 'FloatingPointType' 16 'IEEE'
+-- | An abbreviation for 'FloatingPointType' 'HalfFP'
 half :: Type
-half = FloatingPointType 16 IEEE
+half = FloatingPointType HalfFP
 
--- | An abbreviation for 'FloatingPointType' 32 'IEEE'
+-- | An abbreviation for 'FloatingPointType' 'FloatFP'
 float :: Type
-float = FloatingPointType 32 IEEE
+float = FloatingPointType FloatFP
 
--- | An abbreviation for 'FloatingPointType' 64 'IEEE'
+-- | An abbreviation for 'FloatingPointType' 'DoubleFP'
 double :: Type
-double = FloatingPointType 64 IEEE
+double = FloatingPointType DoubleFP
 
--- | An abbreviation for 'FloatingPointType' 128 'IEEE'
+-- | An abbreviation for 'FloatingPointType' 'FP128FP'
 fp128 :: Type
-fp128 = FloatingPointType 128 IEEE
+fp128 = FloatingPointType FP128FP
 
--- | An abbreviation for 'FloatingPointType' 80 'DoubleExtended'
+-- | An abbreviation for 'FloatingPointType' 'X86_FP80FP'
 x86_fp80 :: Type
-x86_fp80 = FloatingPointType 80 DoubleExtended
+x86_fp80 = FloatingPointType X86_FP80FP
 
--- | An abbreviation for 'FloatingPointType' 128 'PairOfFloats'
+-- | An abbreviation for 'FloatingPointType' 'PPC_FP128FP'
 ppc_fp128 :: Type
-ppc_fp128 = FloatingPointType 128 PairOfFloats
+ppc_fp128 = FloatingPointType PPC_FP128FP
 

@@ -21,7 +21,7 @@ module LLVM.AST (
 import LLVM.Prelude
 
 import LLVM.AST.Name
-import LLVM.AST.Type (Type(..), FloatingPointFormat(..))
+import LLVM.AST.Type (Type(..), FloatingPointType(..))
 import LLVM.AST.Global
 import LLVM.AST.Operand
 import LLVM.AST.Instruction
