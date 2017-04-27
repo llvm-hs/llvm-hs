@@ -164,18 +164,24 @@ instance DecodeM DecodeAST A.Constant (Ptr FFI.Constant) where
         words <- decodeM (n, wsp)
         return $ A.C.Int (A.typeBits t) (foldr (\b a -> (a `shiftL` 64) .|. fromIntegral b) 0 (words :: [Word64]))
       [valueSubclassIdP|ConstantFP|] -> do
-        let A.FloatingPointType nBits fmt = t
+        let A.FloatingPointType fpt = t
+        let nBits = case fpt of
+                A.HalfFP      -> 16
+                A.FloatFP     -> 32
+                A.DoubleFP    -> 64
+                A.FP128FP     -> 128
+                A.X86_FP80FP  -> 80
+                A.PPC_FP128FP -> 128
         ws <- allocaWords nBits
         liftIO $ FFI.getConstantFloatWords c ws
         A.C.Float <$> (
-          case (nBits, fmt) of
-            (16, A.IEEE) -> A.F.Half <$> peek (castPtr ws)
-            (32, A.IEEE) -> A.F.Single <$> peek (castPtr ws)
-            (64, A.IEEE) -> A.F.Double <$> peek (castPtr ws)
-            (128, A.IEEE) -> A.F.Quadruple <$> peekByteOff (castPtr ws) 8 <*> peekByteOff (castPtr ws) 0
-            (80, A.DoubleExtended) -> A.F.X86_FP80 <$> peekByteOff (castPtr ws) 8 <*> peekByteOff (castPtr ws) 0
-            (128, A.PairOfFloats) -> A.F.PPC_FP128 <$> peekByteOff (castPtr ws) 8 <*> peekByteOff (castPtr ws) 0
-            _ -> error $ "don't know how to decode floating point constant of type: " ++ show t
+          case fpt of
+            A.HalfFP      -> A.F.Half <$> peek (castPtr ws)
+            A.FloatFP     -> A.F.Single <$> peek (castPtr ws)
+            A.DoubleFP    -> A.F.Double <$> peek (castPtr ws)
+            A.FP128FP     -> A.F.Quadruple <$> peekByteOff (castPtr ws) 8 <*> peekByteOff (castPtr ws) 0
+            A.X86_FP80FP  -> A.F.X86_FP80 <$> peekByteOff (castPtr ws) 8 <*> peekByteOff (castPtr ws) 0
+            A.PPC_FP128FP -> A.F.PPC_FP128 <$> peekByteOff (castPtr ws) 8 <*> peekByteOff (castPtr ws) 0
           )
       [valueSubclassIdP|ConstantPointerNull|] -> return $ A.C.Null t
       [valueSubclassIdP|ConstantAggregateZero|] -> return $ A.C.Null t

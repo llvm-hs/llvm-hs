@@ -10,6 +10,9 @@
   of the pointer type itself. The address space is passed separately
   via the 'addrSpace' field. This makes 'GlobalAlias' consistent with
   'GlobalVariable'.
+* The `FloatingPointType` constructor now takes a `FloatingPointType` argument
+  instead of a width and a `FloatingPointFormat`, to more closely match the
+  LLVM IR language reference.
 
 ## 4.0.1
 
