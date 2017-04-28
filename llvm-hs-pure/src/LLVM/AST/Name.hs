@@ -2,6 +2,8 @@
 module LLVM.AST.Name where
 
 import LLVM.Prelude
+import Data.Char
+import Data.Monoid
 import Data.String
 
 {- |
@@ -30,5 +32,15 @@ data Name
     | UnName Word -- ^ a number for a nameless thing
    deriving (Eq, Ord, Read, Show, Typeable, Data, Generic)
 
+-- | Using 'fromString` on non-ASCII strings will throw an error.
 instance IsString Name where
-  fromString = Name . fromString
+  fromString s
+    | all isAscii s = Name (fromString s)
+    | otherwise =
+      error ("Only ASCII strings are automatically converted to LLVM names. "
+          <> "Other strings need to be encoded to a `ShortByteString` using an arbitrary encoding.")
+
+-- | Create a 'Name' based on an ASCII 'String'.
+-- Non-ASCII strings will throw an error.
+mkName :: String -> Name
+mkName = fromString

@@ -13,6 +13,11 @@
 * The `FloatingPointType` constructor now takes a `FloatingPointType` argument
   instead of a width and a `FloatingPointFormat`, to more closely match the
   LLVM IR language reference.
+* The `IsString` instance of `Name` now throws an error on non-ASCII
+  strings instead of silently discarding the upper bytes. There is
+  also a new `mkName` function with the same behavior for easier
+  discoverability. Non-ASCII names need to be encoded using an arbitrary encoding to
+  to a `ShortByteString` which can then be used as a `Name`.
 
 ## 4.0.1
 
