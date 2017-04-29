@@ -1,27 +1,21 @@
 ## unreleased
 
 * Switch AST to `ByteString`/`ShortByteString` reflecting LLVM’s use
-  of C-style strings
-* 'preferredAlignment' is now a 'Word32' instead of 'Maybe Word32'. To
+  of C-style strings.
+* `preferredAlignment` is now a `Word32` instead of `Maybe Word32`. To
   recover the old behavior set it to the same value as abiAlignment.
-* Switch from ExceptT to using exceptions.
-  See `LLVM.Exception` for an overview of the exceptions potentially thrown.
-* 'GlobalAlias' now expects the element type of a pointer type instead
+* `GlobalAlias` now expects the element type of a pointer type instead
   of the pointer type itself. The address space is passed separately
-  via the 'addrSpace' field. This makes 'GlobalAlias' consistent with
-  'GlobalVariable'.
+  via the `addrSpace` field. This makes `GlobalAlias` consistent with
+  `GlobalVariable`.
 * The `FloatingPointType` constructor now takes a `FloatingPointType` argument
-  instead of a width and a `FloatingPointFormat`, to more closely match the
+  instead of a width and a `FloatingPointFormat` to more closely match the
   LLVM IR language reference.
 * The `IsString` instance of `Name` now throws an error on non-ASCII
   strings instead of silently discarding the upper bytes. There is
   also a new `mkName` function with the same behavior for easier
   discoverability. Non-ASCII names need to be encoded using an arbitrary encoding to
   to a `ShortByteString` which can then be used as a `Name`.
-
-## 4.0.1
-
-* Fix linking of system libraries
 
 ## 4.0.0 (initial release, changes in comparison to llvm-general)
 
