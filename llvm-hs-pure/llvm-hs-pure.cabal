@@ -17,6 +17,7 @@ description:
   It includes an ADT to represent LLVM IR (<http://llvm.org/docs/LangRef.html>). The llvm-hs package
   builds on this one with FFI bindings to LLVM, but llvm-hs-pure does not require LLVM to be available.
 tested-with: GHC == 7.8.4, GHC == 7.10.3, GHC == 8.0.2
+extra-source-files: CHANGELOG.md
 
 source-repository head
   type: git
