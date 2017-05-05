@@ -26,7 +26,7 @@ $ brew install llvm-hs/homebrew-llvm/llvm-4.0
 ### Debian/Ubuntu
 
 For Debian/Ubuntu based Linux distributions, the LLVM.org website provides
-binary distribution packages. Check [http://apt.llvm.org/](apt.llvm.org) for
+binary distribution packages. Check [apt.llvm.org](http://apt.llvm.org/) for
 instructions for adding the correct package database for your OS version, and
 then:
 
