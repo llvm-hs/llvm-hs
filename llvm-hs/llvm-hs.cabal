@@ -1,5 +1,5 @@
 name: llvm-hs
-version: 4.0.0.0
+version: 4.1.0.0
 license: BSD3
 license-file: LICENSE
 author: Anthony Cowley, Stephen Diehl, Moritz Kiefer <moritz.kiefer@purelyfunctional.org>, Benjamin S. Scarlet
@@ -81,7 +81,7 @@ library
     template-haskell >= 2.5.0.0,
     containers >= 0.4.2.1,
     array >= 0.4.0.0,
-    llvm-hs-pure == 4.0.0.0
+    llvm-hs-pure == 4.1.0.0
   hs-source-dirs: src
   extensions:
     NoImplicitPrelude
@@ -243,7 +243,7 @@ test-suite test
     tasty-quickcheck >= 0.8,
     QuickCheck >= 2.5.1.1,
     llvm-hs,
-    llvm-hs-pure == 4.0.0.0,
+    llvm-hs-pure == 4.1.0.0,
     containers >= 0.4.2.1,
     mtl >= 2.1,
     transformers >= 0.3.0.0,

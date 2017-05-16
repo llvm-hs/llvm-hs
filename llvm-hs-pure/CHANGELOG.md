@@ -1,4 +1,4 @@
-## unreleased
+## 4.1.0
 
 * Switch AST to `ByteString`/`ShortByteString` reflecting LLVM’s use
   of C-style strings.
