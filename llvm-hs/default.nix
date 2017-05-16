@@ -6,7 +6,7 @@
 }:
 mkDerivation {
   pname = "llvm-hs";
-  version = "4.0.0.0";
+  version = "4.1.0.0";
   src = ./.;
   configureFlags = [ "-fshared-llvm" ];
   setupHaskellDepends = [ base Cabal containers ];

@@ -1,5 +1,5 @@
 name: llvm-hs-pure
-version: 4.0.0.0
+version: 4.1.0.0
 license: BSD3
 license-file: LICENSE
 author: Anthony Cowley, Stephen Diehl, Moritz Kiefer <moritz.kiefer@purelyfunctional.org>, Benjamin S. Scarlet

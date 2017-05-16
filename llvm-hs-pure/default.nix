@@ -4,7 +4,7 @@
 }:
 mkDerivation {
   pname = "llvm-hs-pure";
-  version = "4.0.0.0";
+  version = "4.1.0.0";
   src = ./.;
   libraryHaskellDepends = [
     base containers mtl parsec template-haskell transformers
