@@ -6,6 +6,7 @@ import Test.Tasty.HUnit
 
 import LLVM.Test.Support
 
+import Control.Monad.IO.Class
 import Data.Maybe
 import Data.Monoid
 import qualified Data.Set as Set
@@ -17,12 +18,31 @@ import LLVM.AST
 import LLVM.AST.DataLayout
 import LLVM.AST.AddrSpace
 import qualified LLVM.AST.Global as G
+import LLVM.Internal.Coding
+import LLVM.Internal.DataLayout
+import LLVM.Internal.EncodeAST
+import LLVM.Internal.FFI.DataLayout (getTypeAllocSize)
 
 m s = "; ModuleID = '<string>'\nsource_filename = \"<string>\"\n" <> s
 t s = "target datalayout = \"" <> s <> "\"\n"
 ddl = defaultDataLayout BigEndian
 
-tests = testGroup "DataLayout" [
+tests = testGroup "DataLayout" $
+  testCase "getTypeAllocSize" (withContext $ \ctx -> runEncodeAST ctx $ do
+    ty <- encodeM (IntegerType 8)
+    liftIO $ do
+      size <-
+        withFFIDataLayout
+          (ddl { typeLayouts = Map.singleton (IntegerAlign, 8) (AlignmentInfo 8 8) })
+          (\dl -> getTypeAllocSize dl ty)
+      size @?= 1
+      size <-
+        withFFIDataLayout
+          (ddl { typeLayouts = Map.singleton (IntegerAlign, 8) (AlignmentInfo 32 32) })
+          (\dl -> getTypeAllocSize dl ty)
+      size @?= 4)
+  :
+  [
   testCase name $ strCheckC (Module "<string>" "<string>" mdl Nothing []) (m sdl) (m sdlc)
   | (name, mdl, sdl, sdlc) <- [
    ("none", Nothing, "", "")
