@@ -1,4 +1,4 @@
-## 4.1.0
+## 4.1.0 (2017-05-17)
 
 * Switch most of the API from `String` to `ByteString`.
 * Switch from ExceptT to using exceptions.
