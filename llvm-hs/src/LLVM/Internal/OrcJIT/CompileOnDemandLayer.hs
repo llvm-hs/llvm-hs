@@ -7,15 +7,16 @@ import Control.Exception
 import Control.Monad.AnyCont
 import Control.Monad.IO.Class
 import Data.IORef
-import Foreign.Marshal.Array
 import Foreign.Ptr
 
 import LLVM.Internal.Coding
-import LLVM.Internal.Module
 import LLVM.Internal.OrcJIT
-import LLVM.Internal.OrcJIT.IRCompileLayer (IRCompileLayer(..))
-import qualified LLVM.Internal.OrcJIT.IRCompileLayer as IRCompileLayer
+import LLVM.Internal.OrcJIT.CompileLayer
+import LLVM.Internal.Target
+import qualified LLVM.Internal.FFI.DataLayout as FFI
+import qualified LLVM.Internal.FFI.Target as FFI
 import qualified LLVM.Internal.FFI.OrcJIT as FFI
+import qualified LLVM.Internal.FFI.OrcJIT.CompileLayer as FFI
 import qualified LLVM.Internal.FFI.OrcJIT.CompileOnDemandLayer as FFI
 import qualified LLVM.Internal.FFI.PtrHierarchy as FFI
 
@@ -27,15 +28,18 @@ newtype JITCompileCallbackManager =
 newtype IndirectStubsManagerBuilder =
   StubsMgr (Ptr FFI.IndirectStubsManagerBuilder)
 
-data CompileOnDemandLayer =
+data CompileOnDemandLayer baseLayer =
   CompileOnDemandLayer {
     compileLayer :: !(Ptr FFI.CompileOnDemandLayer),
-    baseLayer :: !IRCompileLayer,
+    dataLayout :: !(Ptr FFI.DataLayout),
     cleanupActions :: !(IORef [IO ()])
   }
   deriving Eq
 
-newtype ModuleSet = ModuleSet (Ptr FFI.ModuleSetHandle)
+instance CompileLayer (CompileOnDemandLayer l) where
+  getCompileLayer = FFI.upCast . compileLayer
+  getDataLayout = dataLayout
+  getCleanups = cleanupActions
 
 instance MonadIO m =>
   EncodeM m PartitioningFn (IORef [IO ()] -> IO (FunPtr FFI.PartitioningFn)) where
@@ -79,68 +83,35 @@ withJITCompileCallbackManager triple errorHandler f = flip runAnyContT return $ 
     FFI.disposeCallbackManager
   liftIO $ f (CallbackMgr callbackMgr)
 
-withCompileOnDemandLayer ::
-  IRCompileLayer ->
+withCompileOnDemandLayer :: CompileLayer l =>
+  l ->
+  TargetMachine ->
   PartitioningFn ->
   JITCompileCallbackManager ->
   IndirectStubsManagerBuilder ->
   Bool ->
-  (CompileOnDemandLayer -> IO a) ->
+  (CompileOnDemandLayer l -> IO a) ->
   IO a
 withCompileOnDemandLayer
- baseLayer@(IRCompileLayer base _ _)
+ baseLayer
+ (TargetMachine tm)
  partition
  (CallbackMgr callbackMgr)
  (StubsMgr stubsMgr)
  cloneStubsIntoPartitions
  f
  = flip runAnyContT return $ do
+ dl <- anyContToM $ bracket (FFI.createTargetDataLayout tm) FFI.disposeDataLayout
  cleanup <- anyContToM $ bracket (newIORef []) (sequence <=< readIORef)
  partitionAct <- encodeM partition
  partition' <- liftIO $ partitionAct cleanup
  cloneStubsIntoPartitions' <- encodeM cloneStubsIntoPartitions
  cl <- anyContToM $ bracket
          (FFI.createCompileOnDemandLayer
-            base
+            (getCompileLayer baseLayer)
             partition'
             callbackMgr
             stubsMgr
             cloneStubsIntoPartitions')
-         FFI.disposeCompileOnDemandLayer
- liftIO $ f (CompileOnDemandLayer cl baseLayer cleanup)
-
-mangleSymbol :: CompileOnDemandLayer -> ShortByteString -> IO MangledSymbol
-mangleSymbol (CompileOnDemandLayer _ bl _) symbol =
-  IRCompileLayer.mangleSymbol bl symbol
-
-findSymbol :: CompileOnDemandLayer -> MangledSymbol -> Bool -> IO JITSymbol
-findSymbol (CompileOnDemandLayer cl _ _) symbol exportedSymbolsOnly = flip runAnyContT return $ do
-  symbol' <- encodeM symbol
-  exportedSymbolsOnly' <- encodeM exportedSymbolsOnly
-  symbol <- anyContToM $ bracket
-    (FFI.findSymbol cl symbol' exportedSymbolsOnly') FFI.disposeSymbol
-  decodeM symbol
-
-addModuleSet :: CompileOnDemandLayer -> [Module] -> SymbolResolver -> IO ModuleSet
-addModuleSet
-  (CompileOnDemandLayer cl (IRCompileLayer _ dl _) cleanups)
-  modules
-  resolver
-  = flip runAnyContT return $ do
-  resolverAct <- encodeM resolver
-  resolver' <- liftIO $ resolverAct cleanups
-  modules' <- liftIO $ mapM readModule modules
-  (moduleCount, modules'') <-
-    anyContToM $ \f -> withArrayLen modules' $ \n hs -> f (fromIntegral n, hs)
-  moduleSet <- liftIO $ FFI.addModuleSet cl dl modules'' moduleCount resolver'
-  pure (ModuleSet moduleSet)
-
-removeModuleSet :: CompileOnDemandLayer -> ModuleSet -> IO ()
-removeModuleSet (CompileOnDemandLayer cl _ _) (ModuleSet handle) =
-  FFI.removeModuleSet cl handle
-
-withModuleSet :: CompileOnDemandLayer -> [Module] -> SymbolResolver -> (ModuleSet -> IO a) -> IO a
-withModuleSet compileLayer modules resolver =
-  bracket
-    (addModuleSet compileLayer modules resolver)
-    (removeModuleSet compileLayer)
+         (FFI.disposeCompileLayer . FFI.upCast)
+ liftIO $ f (CompileOnDemandLayer cl dl cleanup)

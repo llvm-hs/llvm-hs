@@ -1,3 +1,8 @@
+## Unreleased
+
+* Enable users to choose how they want to compose OrcJIT layers
+  instead of having to use the builtin variants.
+
 ## 4.1.0 (2017-05-17)
 
 * Switch most of the API from `String` to `ByteString`.

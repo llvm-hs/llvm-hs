@@ -16,6 +16,7 @@ import LLVM.Context
 import LLVM.Module
 import LLVM.OrcJIT
 import LLVM.OrcJIT.IRCompileLayer (IRCompileLayer, withIRCompileLayer)
+import LLVM.Internal.OrcJIT.CompileLayer
 import qualified LLVM.OrcJIT.IRCompileLayer as IRCompileLayer
 import LLVM.OrcJIT.CompileOnDemandLayer (CompileOnDemandLayer, withIndirectStubsManagerBuilder, withJITCompileCallbackManager, withCompileOnDemandLayer)
 import qualified LLVM.OrcJIT.CompileOnDemandLayer as CODLayer
@@ -47,21 +48,13 @@ foreign import ccall "dynamic"
 nullResolver :: MangledSymbol -> IO JITSymbol
 nullResolver s = putStrLn "nullresolver" >> return (JITSymbol 0 (JITSymbolFlags False False))
 
-resolver :: MangledSymbol -> IRCompileLayer -> MangledSymbol -> IO JITSymbol
+resolver :: CompileLayer l => MangledSymbol -> l -> MangledSymbol -> IO JITSymbol
 resolver testFunc compileLayer symbol
   | symbol == testFunc = do
       funPtr <- wrapTestFunc myTestFuncImpl
       let addr = ptrToWordPtr (castFunPtrToPtr funPtr)
       return (JITSymbol addr (JITSymbolFlags False True))
   | otherwise = IRCompileLayer.findSymbol compileLayer symbol True
-
-codResolver :: MangledSymbol -> CompileOnDemandLayer -> MangledSymbol -> IO JITSymbol
-codResolver testFunc compileLayer symbol
-  | symbol == testFunc = do
-      funPtr <- wrapTestFunc myTestFuncImpl
-      let addr = ptrToWordPtr (castFunPtrToPtr funPtr)
-      return (JITSymbol addr (JITSymbolFlags False True))
-  | otherwise = CODLayer.findSymbol compileLayer symbol True
 
 tests :: TestTree
 tests =
@@ -90,12 +83,12 @@ tests =
             withIRCompileLayer objectLayer tm $ \baseLayer ->
               withIndirectStubsManagerBuilder triple $ \stubsMgr ->
                 withJITCompileCallbackManager triple Nothing $ \callbackMgr ->
-                  withCompileOnDemandLayer baseLayer (\x -> return [x]) callbackMgr stubsMgr False $ \compileLayer -> do
+                  withCompileOnDemandLayer baseLayer tm (\x -> return [x]) callbackMgr stubsMgr False $ \compileLayer -> do
                     testFunc <- CODLayer.mangleSymbol compileLayer "testFunc"
                     CODLayer.withModuleSet
                       compileLayer
                       [mod]
-                      (SymbolResolver (codResolver testFunc compileLayer) nullResolver) $
+                      (SymbolResolver (resolver testFunc compileLayer) nullResolver) $
                       \moduleSet -> do
                         mainSymbol <- CODLayer.mangleSymbol compileLayer "main"
                         JITSymbol mainFn _ <- CODLayer.findSymbol compileLayer mainSymbol True

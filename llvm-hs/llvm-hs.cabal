@@ -130,6 +130,7 @@ library
     LLVM.Internal.Metadata
     LLVM.Internal.Module
     LLVM.Internal.OrcJIT
+    LLVM.Internal.OrcJIT.CompileLayer
     LLVM.Internal.OrcJIT.CompileOnDemandLayer
     LLVM.Internal.OrcJIT.IRCompileLayer
     LLVM.Internal.Operand
@@ -169,6 +170,7 @@ library
     LLVM.Internal.FFI.Metadata
     LLVM.Internal.FFI.Module
     LLVM.Internal.FFI.OrcJIT
+    LLVM.Internal.FFI.OrcJIT.CompileLayer
     LLVM.Internal.FFI.OrcJIT.CompileOnDemandLayer
     LLVM.Internal.FFI.OrcJIT.IRCompileLayer
     LLVM.Internal.FFI.PassManager
