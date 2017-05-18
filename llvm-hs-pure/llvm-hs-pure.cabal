@@ -41,7 +41,6 @@ library
     attoparsec >= 0.13,
     bytestring >= 0.10 && < 0.11,
     transformers >= 0.3 && < 0.6,
-    transformers-compat >= 0.4,
     mtl >= 2.1,
     template-haskell >= 2.5.0.0,
     containers >= 0.4.2.1
@@ -99,7 +98,6 @@ test-suite test
     tasty-quickcheck >= 0.8,
     llvm-hs-pure,
     transformers >= 0.3,
-    transformers-compat >= 0.4,
     containers >= 0.4.2.1,
     mtl >= 2.1
   hs-source-dirs: test
