@@ -1,4 +1,4 @@
-{-# LANGUAGE ForeignFunctionInterface #-}
+{-# LANGUAGE ForeignFunctionInterface, MultiParamTypeClasses #-}
 module LLVM.Internal.FFI.OrcJIT.CompileOnDemandLayer where
 
 import LLVM.Prelude
@@ -10,14 +10,14 @@ import LLVM.Internal.FFI.DataLayout
 import LLVM.Internal.FFI.LLVMCTypes
 import LLVM.Internal.FFI.Module
 import LLVM.Internal.FFI.OrcJIT
-import LLVM.Internal.FFI.OrcJIT.IRCompileLayer (IRCompileLayer)
+import LLVM.Internal.FFI.OrcJIT.CompileLayer
 import LLVM.Internal.FFI.PtrHierarchy
 
 data IndirectStubsManagerBuilder
 data JITCompileCallbackManager
-data CompileOnDemandLayer
 data Set a
-data ModuleSetHandle
+data CompileOnDemandLayer
+instance ChildOf CompileLayer CompileOnDemandLayer
 
 type PartitioningFn = Ptr Function -> Ptr (Set (Ptr Function)) -> IO ()
 
@@ -43,32 +43,9 @@ foreign import ccall safe "LLVM_Hs_insertFun" insertFun ::
   Ptr (Set (Ptr Function)) -> Ptr Function -> IO ()
 
 foreign import ccall safe "LLVM_Hs_createCompileOnDemandLayer" createCompileOnDemandLayer ::
-  Ptr IRCompileLayer ->
+  Ptr CompileLayer ->
   FunPtr PartitioningFn ->
   Ptr JITCompileCallbackManager ->
   Ptr IndirectStubsManagerBuilder ->
   LLVMBool ->
   IO (Ptr CompileOnDemandLayer)
-
-foreign import ccall safe "LLVM_Hs_disposeCompileOnDemandLayer" disposeCompileOnDemandLayer ::
-  Ptr CompileOnDemandLayer ->
-  IO ()
-
-foreign import ccall safe "LLVM_Hs_CompileOnDemandLayer_addModuleSet" addModuleSet ::
-  Ptr CompileOnDemandLayer ->
-  Ptr DataLayout ->
-  Ptr (Ptr Module) ->
-  CUInt ->
-  Ptr LambdaResolver ->
-  IO (Ptr ModuleSetHandle)
-
-foreign import ccall safe "LLVM_Hs_CompileOnDemandLayer_removeModuleSet" removeModuleSet ::
-  Ptr CompileOnDemandLayer ->
-  Ptr ModuleSetHandle ->
-  IO ()
-
-foreign import ccall safe "LLVM_Hs_CompileOnDemandLayer_findSymbol" findSymbol ::
-  Ptr CompileOnDemandLayer ->
-  CString ->
-  LLVMBool ->
-  IO (Ptr JITSymbol)

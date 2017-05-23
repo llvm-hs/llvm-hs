@@ -1,4 +1,4 @@
-{-# LANGUAGE ForeignFunctionInterface #-}
+{-# LANGUAGE MultiParamTypeClasses, ForeignFunctionInterface #-}
 
 module LLVM.Internal.FFI.OrcJIT where
 
@@ -9,10 +9,14 @@ import Foreign.Ptr
 
 import LLVM.Internal.FFI.DataLayout
 import LLVM.Internal.FFI.LLVMCTypes
+import LLVM.Internal.FFI.PtrHierarchy
 
 data JITSymbol
 data LambdaResolver
+
+data ObjectLayer
 data ObjectLinkingLayer
+instance ChildOf ObjectLayer ObjectLinkingLayer
 
 newtype TargetAddress = TargetAddress Word64
 
@@ -32,8 +36,8 @@ foreign import ccall safe "LLVM_Hs_createLambdaResolver" createLambdaResolver ::
 foreign import ccall safe "LLVM_Hs_createObjectLinkingLayer" createObjectLinkingLayer ::
   IO (Ptr ObjectLinkingLayer)
 
-foreign import ccall safe "LLVM_Hs_disposeObjectLinkingLayer" disposeObjectLinkingLayer ::
-  Ptr ObjectLinkingLayer -> IO ()
+foreign import ccall safe "LLVM_Hs_ObjectLayer_dispose" disposeObjectLayer ::
+  Ptr ObjectLayer -> IO ()
 
 foreign import ccall safe "LLVM_Hs_JITSymbol_getAddress" getAddress ::
   Ptr JITSymbol -> IO TargetAddress

@@ -12,3 +12,4 @@ module LLVM.OrcJIT.CompileOnDemandLayer (
   ) where
 
 import LLVM.Internal.OrcJIT.CompileOnDemandLayer
+import LLVM.Internal.OrcJIT.CompileLayer

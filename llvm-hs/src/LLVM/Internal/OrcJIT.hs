@@ -13,6 +13,7 @@ import Foreign.C.String
 import Foreign.Ptr
 
 import LLVM.Internal.Coding
+import qualified LLVM.Internal.FFI.PtrHierarchy as FFI
 import qualified LLVM.Internal.FFI.LLVMCTypes as FFI
 import qualified LLVM.Internal.FFI.OrcJIT as FFI
 
@@ -47,7 +48,13 @@ data SymbolResolver =
     externalResolver :: !SymbolResolverFn
   }
 
+class ObjectLayer a where
+  getObjectLayer :: a -> Ptr FFI.ObjectLayer
+
 newtype ObjectLinkingLayer = ObjectLinkingLayer (Ptr FFI.ObjectLinkingLayer)
+
+instance ObjectLayer ObjectLinkingLayer where
+  getObjectLayer (ObjectLinkingLayer ptr) = FFI.upCast ptr
 
 instance Monad m => EncodeM m JITSymbolFlags FFI.JITSymbolFlags where
   encodeM f = return $ foldr1 (.|.) [
@@ -103,5 +110,5 @@ withObjectLinkingLayer :: (ObjectLinkingLayer -> IO a) -> IO a
 withObjectLinkingLayer f =
   bracket
     FFI.createObjectLinkingLayer
-    FFI.disposeObjectLinkingLayer $ \objectLayer ->
+    (FFI.disposeObjectLayer . FFI.upCast) $ \objectLayer ->
       f (ObjectLinkingLayer objectLayer)
