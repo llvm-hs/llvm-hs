@@ -4,6 +4,7 @@
 #include "llvm/ExecutionEngine/Orc/CompileOnDemandLayer.h"
 #include "llvm/ExecutionEngine/Orc/CompileUtils.h"
 #include "llvm/ExecutionEngine/Orc/IRCompileLayer.h"
+#include "llvm/ExecutionEngine/Orc/IRTransformLayer.h"
 #include "llvm/ExecutionEngine/Orc/IndirectionUtils.h"
 #include "llvm/ExecutionEngine/Orc/LambdaResolver.h"
 #include "llvm/ExecutionEngine/Orc/ObjectLinkingLayer.h"
@@ -52,21 +53,21 @@ class ObjectLayer {
     virtual ObjSetHandleT
     addObjectSet(std::vector<std::unique_ptr<object::ObjectFile>> objects,
                  SectionMemoryManager *memMgr,
-                 LLVMLambdaResolverRef resolver) = 0;
+                 JITSymbolResolver* resolver) = 0;
     virtual ObjSetHandleT addObjectSet(
         std::vector<std::unique_ptr<object::OwningBinary<object::ObjectFile>>>
             objects,
-        SectionMemoryManager *memMgr, LLVMLambdaResolverRef resolver) = 0;
-    virtual ObjSetHandleT addObjectSet(
-        std::vector<std::unique_ptr<object::OwningBinary<object::ObjectFile>>>
-            objects,
-        std::unique_ptr<SectionMemoryManager> memMgr,
-        LLVMLambdaResolverRef resolver) = 0;
+        SectionMemoryManager *memMgr, JITSymbolResolver* resolver) = 0;
     virtual ObjSetHandleT addObjectSet(
         std::vector<std::unique_ptr<object::OwningBinary<object::ObjectFile>>>
             objects,
         std::unique_ptr<SectionMemoryManager> memMgr,
-        std::unique_ptr<LLVMLambdaResolver> resolver) = 0;
+        JITSymbolResolver* resolver) = 0;
+    virtual ObjSetHandleT addObjectSet(
+        std::vector<std::unique_ptr<object::OwningBinary<object::ObjectFile>>>
+            objects,
+        std::unique_ptr<SectionMemoryManager> memMgr,
+        std::unique_ptr<JITSymbolResolver> resolver) = 0;
     virtual ObjSetHandleT addObjectSet(
         std::vector<std::unique_ptr<object::OwningBinary<object::ObjectFile>>>
             objects,
@@ -85,7 +86,7 @@ template <typename T> class ObjectLayerT : public ObjectLayer {
     ObjSetHandleT
     addObjectSet(std::vector<std::unique_ptr<object::ObjectFile>> objects,
                  SectionMemoryManager *memMgr,
-                 LLVMLambdaResolverRef resolver) override {
+                 JITSymbolResolver* resolver) override {
         auto handle = data.addObjectSet(std::move(objects), std::move(memMgr),
                                         std::move(resolver));
         return handles.insert(handle);
@@ -93,16 +94,7 @@ template <typename T> class ObjectLayerT : public ObjectLayer {
     ObjSetHandleT addObjectSet(
         std::vector<std::unique_ptr<object::OwningBinary<object::ObjectFile>>>
             objects,
-        SectionMemoryManager *memMgr, LLVMLambdaResolverRef resolver) override {
-        auto handle = data.addObjectSet(std::move(objects), std::move(memMgr),
-                                        std::move(resolver));
-        return handles.insert(handle);
-    }
-    ObjSetHandleT addObjectSet(
-        std::vector<std::unique_ptr<object::OwningBinary<object::ObjectFile>>>
-            objects,
-        std::unique_ptr<SectionMemoryManager> memMgr,
-        LLVMLambdaResolverRef resolver) override {
+        SectionMemoryManager *memMgr, JITSymbolResolver* resolver) override {
         auto handle = data.addObjectSet(std::move(objects), std::move(memMgr),
                                         std::move(resolver));
         return handles.insert(handle);
@@ -111,7 +103,16 @@ template <typename T> class ObjectLayerT : public ObjectLayer {
         std::vector<std::unique_ptr<object::OwningBinary<object::ObjectFile>>>
             objects,
         std::unique_ptr<SectionMemoryManager> memMgr,
-        std::unique_ptr<LLVMLambdaResolver> resolver) override {
+        JITSymbolResolver* resolver) override {
+        auto handle = data.addObjectSet(std::move(objects), std::move(memMgr),
+                                        std::move(resolver));
+        return handles.insert(handle);
+    }
+    ObjSetHandleT addObjectSet(
+        std::vector<std::unique_ptr<object::OwningBinary<object::ObjectFile>>>
+            objects,
+        std::unique_ptr<SectionMemoryManager> memMgr,
+        std::unique_ptr<JITSymbolResolver> resolver) override {
         auto handle = data.addObjectSet(std::move(objects), std::move(memMgr),
                                         std::move(resolver));
         return handles.insert(handle);
@@ -153,9 +154,9 @@ class CompileLayer {
     virtual JITSymbol findSymbolIn(ModuleSetHandleT H, StringRef Name,
                                    bool ExportedSymbolsOnly) = 0;
     virtual ModuleSetHandleT
-    addModuleSet(std::vector<Module *> Modules,
+    addModuleSet(std::vector<std::unique_ptr<Module>> Modules,
                  std::unique_ptr<SectionMemoryManager> MemMgr,
-                 std::unique_ptr<LLVMLambdaResolver> Resolver) = 0;
+                 std::unique_ptr<JITSymbolResolver> Resolver) = 0;
     virtual ModuleSetHandleT
     addModuleSet(std::vector<std::unique_ptr<Module>> Modules,
                  SectionMemoryManager *MemMgr,
@@ -174,9 +175,9 @@ template <typename T> class CompileLayerT : public CompileLayer {
         return data.findSymbolIn(handles.lookup(H), Name, ExportedSymbolsOnly);
     }
     ModuleSetHandleT
-    addModuleSet(std::vector<Module *> Modules,
+    addModuleSet(std::vector<std::unique_ptr<Module>> Modules,
                  std::unique_ptr<SectionMemoryManager> MemMgr,
-                 std::unique_ptr<LLVMLambdaResolver> Resolver) override {
+                 std::unique_ptr<JITSymbolResolver> Resolver) override {
         auto handle = data.addModuleSet(std::move(Modules), std::move(MemMgr),
                                         std::move(Resolver));
         return handles.insert(handle);
@@ -202,6 +203,11 @@ template <typename T> class CompileLayerT : public CompileLayer {
 typedef llvm::orc::CompileOnDemandLayer<CompileLayer> LLVMCompileOnDemandLayer;
 typedef LLVMCompileOnDemandLayer *LLVMCompileOnDemandLayerRef;
 
+typedef llvm::orc::IRTransformLayer<
+    CompileLayer,
+    std::function<std::unique_ptr<Module>(std::unique_ptr<Module>)>>
+    LLVMIRTransformLayer;
+
 typedef llvm::orc::JITCompileCallbackManager *LLVMJITCompileCallbackManagerRef;
 
 typedef llvm::JITSymbol *LLVMJITSymbolRef;
@@ -220,12 +226,12 @@ static std::string mangle(StringRef name, LLVMTargetDataRef dataLayout) {
     return mangledName;
 }
 
-static std::vector<Module *> getModules(LLVMModuleRef *modules,
-                                        unsigned moduleCount,
-                                        LLVMTargetDataRef dataLayout) {
-    std::vector<Module *> moduleVec(moduleCount);
+static std::vector<std::unique_ptr<Module>>
+getModules(LLVMModuleRef *modules, unsigned moduleCount,
+           LLVMTargetDataRef dataLayout) {
+    std::vector<std::unique_ptr<Module>> moduleVec(moduleCount);
     for (unsigned i = 0; i < moduleCount; ++i) {
-        moduleVec.at(i) = unwrap(modules[i]);
+        moduleVec.at(i) = std::unique_ptr<Module>(unwrap(modules[i]));
         if (moduleVec.at(i)->getDataLayout().isDefault()) {
             moduleVec.at(i)->setDataLayout(*unwrap(dataLayout));
         }
@@ -260,6 +266,16 @@ CompileLayer *LLVM_Hs_createCompileOnDemandLayer(
         *callbackManager, *stubsManager, cloneStubsIntoPartitions));
 }
 
+CompileLayer *LLVM_Hs_createIRTransformLayer(CompileLayer *compileLayer,
+                                             Module *(*transform)(Module *)) {
+    std::function<std::unique_ptr<Module>(std::unique_ptr<Module>)> transform_ =
+        [transform](std::unique_ptr<Module> module) {
+            return std::unique_ptr<Module>(transform(module.release()));
+        };
+    return new CompileLayerT<LLVMIRTransformLayer>(
+        LLVMIRTransformLayer(*compileLayer, transform_));
+}
+
 /* Functions that work on all compile layers */
 
 void LLVM_Hs_CompileLayer_dispose(CompileLayer *compileLayer) {
@@ -278,11 +294,10 @@ LLVM_Hs_CompileLayer_addModuleSet(CompileLayer *compileLayer,
                                   LLVMTargetDataRef dataLayout,
                                   LLVMModuleRef *modules, unsigned moduleCount,
                                   LLVMLambdaResolverRef resolver) {
-    std::vector<Module *> moduleVec =
-        getModules(modules, moduleCount, dataLayout);
+    auto moduleVec = getModules(modules, moduleCount, dataLayout);
     std::unique_ptr<LLVMLambdaResolver> uniqueResolver(
         new LLVMLambdaResolver(*resolver));
-    return compileLayer->addModuleSet(moduleVec,
+    return compileLayer->addModuleSet(std::move(moduleVec),
                                       make_unique<SectionMemoryManager>(),
                                       std::move(uniqueResolver));
 }

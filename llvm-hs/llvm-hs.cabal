@@ -133,6 +133,7 @@ library
     LLVM.Internal.OrcJIT.CompileLayer
     LLVM.Internal.OrcJIT.CompileOnDemandLayer
     LLVM.Internal.OrcJIT.IRCompileLayer
+    LLVM.Internal.OrcJIT.IRTransformLayer
     LLVM.Internal.Operand
     LLVM.Internal.PassManager
     LLVM.Internal.RawOStream
@@ -173,6 +174,7 @@ library
     LLVM.Internal.FFI.OrcJIT.CompileLayer
     LLVM.Internal.FFI.OrcJIT.CompileOnDemandLayer
     LLVM.Internal.FFI.OrcJIT.IRCompileLayer
+    LLVM.Internal.FFI.OrcJIT.IRTransformLayer
     LLVM.Internal.FFI.PassManager
     LLVM.Internal.FFI.PtrHierarchy
     LLVM.Internal.FFI.RawOStream
@@ -188,6 +190,7 @@ library
     LLVM.OrcJIT
     LLVM.OrcJIT.CompileOnDemandLayer
     LLVM.OrcJIT.IRCompileLayer
+    LLVM.OrcJIT.IRTransformLayer
     LLVM.PassManager
     LLVM.Relocation
     LLVM.Target

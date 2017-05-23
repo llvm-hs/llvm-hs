@@ -44,6 +44,7 @@ addModuleSet compileLayer modules resolver = flip runAnyContT return $ do
   resolverAct <- encodeM resolver
   resolver' <- liftIO $ resolverAct (getCleanups compileLayer)
   modules' <- liftIO $ mapM readModule modules
+  liftIO $ mapM_ deleteModule modules
   (moduleCount, modules'') <-
     anyContToM $ \f -> withArrayLen modules' $ \n hs -> f (fromIntegral n, hs)
   liftIO $
@@ -58,6 +59,8 @@ removeModuleSet :: CompileLayer l => l -> FFI.ModuleSetHandle -> IO ()
 removeModuleSet compileLayer handle =
   FFI.removeModuleSet (getCompileLayer compileLayer) handle
 
+-- | 'withModuleSet' consumes the modules passed to it and they should
+-- not be used after calling this method.
 withModuleSet :: CompileLayer l => l -> [Module] -> SymbolResolver -> (FFI.ModuleSetHandle -> IO a) -> IO a
 withModuleSet compileLayer modules resolver =
   bracket
