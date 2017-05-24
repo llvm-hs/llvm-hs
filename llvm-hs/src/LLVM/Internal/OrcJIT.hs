@@ -48,13 +48,13 @@ data SymbolResolver =
     externalResolver :: !SymbolResolverFn
   }
 
-class ObjectLayer a where
-  getObjectLayer :: a -> Ptr FFI.ObjectLayer
+class LinkingLayer a where
+  getLinkingLayer :: a -> Ptr FFI.LinkingLayer
 
 newtype ObjectLinkingLayer = ObjectLinkingLayer (Ptr FFI.ObjectLinkingLayer)
 
-instance ObjectLayer ObjectLinkingLayer where
-  getObjectLayer (ObjectLinkingLayer ptr) = FFI.upCast ptr
+instance LinkingLayer ObjectLinkingLayer where
+  getLinkingLayer (ObjectLinkingLayer ptr) = FFI.upCast ptr
 
 instance Monad m => EncodeM m JITSymbolFlags FFI.JITSymbolFlags where
   encodeM f = return $ foldr1 (.|.) [
@@ -110,5 +110,5 @@ withObjectLinkingLayer :: (ObjectLinkingLayer -> IO a) -> IO a
 withObjectLinkingLayer f =
   bracket
     FFI.createObjectLinkingLayer
-    (FFI.disposeObjectLayer . FFI.upCast) $ \objectLayer ->
-      f (ObjectLinkingLayer objectLayer)
+    (FFI.disposeLinkingLayer . FFI.upCast) $ \layer ->
+      f (ObjectLinkingLayer layer)

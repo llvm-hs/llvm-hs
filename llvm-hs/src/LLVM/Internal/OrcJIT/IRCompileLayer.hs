@@ -17,7 +17,7 @@ import LLVM.Internal.OrcJIT
 import LLVM.Internal.OrcJIT.CompileLayer
 import LLVM.Internal.Target
 
-data IRCompileLayer objectLayer =
+data IRCompileLayer linkingLayer =
   IRCompileLayer {
     compileLayer :: !(Ptr FFI.IRCompileLayer),
     dataLayout :: !(Ptr FFI.DataLayout),
@@ -30,9 +30,9 @@ instance CompileLayer (IRCompileLayer l) where
   getDataLayout = dataLayout
   getCleanups = cleanupActions
 
-withIRCompileLayer :: ObjectLayer l => l -> TargetMachine -> (IRCompileLayer l -> IO a) -> IO a
-withIRCompileLayer objectLayer (TargetMachine tm) f = flip runAnyContT return $ do
+withIRCompileLayer :: LinkingLayer l => l -> TargetMachine -> (IRCompileLayer l -> IO a) -> IO a
+withIRCompileLayer linkingLayer (TargetMachine tm) f = flip runAnyContT return $ do
   dl <- anyContToM $ bracket (FFI.createTargetDataLayout tm) FFI.disposeDataLayout
-  cl <- anyContToM $ bracket (FFI.createIRCompileLayer (getObjectLayer objectLayer) tm) (FFI.disposeCompileLayer . FFI.upCast)
+  cl <- anyContToM $ bracket (FFI.createIRCompileLayer (getLinkingLayer linkingLayer) tm) (FFI.disposeCompileLayer . FFI.upCast)
   cleanup <- anyContToM $ bracket (newIORef []) (sequence <=< readIORef)
   liftIO $ f (IRCompileLayer cl dl cleanup)

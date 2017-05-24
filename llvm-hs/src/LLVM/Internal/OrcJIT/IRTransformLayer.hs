@@ -18,7 +18,7 @@ import LLVM.Internal.OrcJIT
 import LLVM.Internal.OrcJIT.CompileLayer
 import LLVM.Internal.Target
 
-data IRTransformLayer objectLayer =
+data IRTransformLayer compileLayer =
   IRTransformLayer {
     compileLayer :: !(Ptr FFI.IRTransformLayer),
     dataLayout :: !(Ptr FFI.DataLayout),

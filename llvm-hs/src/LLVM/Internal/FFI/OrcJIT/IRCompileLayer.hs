@@ -14,4 +14,4 @@ data IRCompileLayer
 instance ChildOf CompileLayer IRCompileLayer
 
 foreign import ccall safe "LLVM_Hs_createIRCompileLayer" createIRCompileLayer ::
-  Ptr ObjectLayer -> Ptr TargetMachine -> IO (Ptr IRCompileLayer)
+  Ptr LinkingLayer -> Ptr TargetMachine -> IO (Ptr IRCompileLayer)

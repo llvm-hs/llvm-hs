@@ -74,8 +74,8 @@ tests =
     testCase "eager compilation" $ do
       withTestModule $ \mod ->
         withHostTargetMachine $ \tm ->
-          withObjectLinkingLayer $ \objectLayer ->
-            withIRCompileLayer objectLayer tm $ \compileLayer -> do
+          withObjectLinkingLayer $ \linkingLayer ->
+            withIRCompileLayer linkingLayer tm $ \compileLayer -> do
               testFunc <- IRCompileLayer.mangleSymbol compileLayer "testFunc"
               IRCompileLayer.withModuleSet
                 compileLayer
@@ -91,8 +91,8 @@ tests =
       passmanagerSuccessful <- newIORef False
       withTestModule $ \mod ->
         withHostTargetMachine $ \tm ->
-          withObjectLinkingLayer $ \objectLayer ->
-            withIRCompileLayer objectLayer tm $ \compileLayer -> do
+          withObjectLinkingLayer $ \linkingLayer ->
+            withIRCompileLayer linkingLayer tm $ \compileLayer -> do
               withIRTransformLayer compileLayer tm (moduleTransform passmanagerSuccessful) $ \compileLayer -> do
                 testFunc <- IRCompileLayer.mangleSymbol compileLayer "testFunc"
                 IRCompileLayer.withModuleSet
@@ -110,8 +110,8 @@ tests =
       withTestModule $ \mod ->
         withHostTargetMachine $ \tm -> do
           triple <- getTargetMachineTriple tm
-          withObjectLinkingLayer $ \objectLayer ->
-            withIRCompileLayer objectLayer tm $ \baseLayer ->
+          withObjectLinkingLayer $ \linkingLayer ->
+            withIRCompileLayer linkingLayer tm $ \baseLayer ->
               withIndirectStubsManagerBuilder triple $ \stubsMgr ->
                 withJITCompileCallbackManager triple Nothing $ \callbackMgr ->
                   withCompileOnDemandLayer baseLayer tm (\x -> return [x]) callbackMgr stubsMgr False $ \compileLayer -> do
