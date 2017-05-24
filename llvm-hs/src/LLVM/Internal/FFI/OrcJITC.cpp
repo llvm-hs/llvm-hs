@@ -288,6 +288,15 @@ LLVMJITSymbolRef LLVM_Hs_CompileLayer_findSymbol(CompileLayer *compileLayer,
     return new JITSymbol(symbol);
 }
 
+LLVMJITSymbolRef
+LLVM_Hs_CompileLayer_findSymbolIn(CompileLayer *compileLayer,
+                                  LLVMModuleSetHandle handle, const char *name,
+                                  LLVMBool exportedSymbolsOnly) {
+    JITSymbol symbol =
+        compileLayer->findSymbolIn(handle, name, exportedSymbolsOnly);
+    return new JITSymbol(symbol);
+}
+
 LLVMModuleSetHandle
 LLVM_Hs_CompileLayer_addModuleSet(CompileLayer *compileLayer,
                                   LLVMTargetDataRef dataLayout,

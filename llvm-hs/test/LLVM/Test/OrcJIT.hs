@@ -85,6 +85,9 @@ tests =
                   mainSymbol <- IRCompileLayer.mangleSymbol compileLayer "main"
                   JITSymbol mainFn _ <- IRCompileLayer.findSymbol compileLayer mainSymbol True
                   result <- mkMain (castPtrToFunPtr (wordPtrToPtr mainFn))
+                  result @?= 42
+                  JITSymbol mainFn _ <- IRCompileLayer.findSymbolIn compileLayer moduleSet mainSymbol True
+                  result <- mkMain (castPtrToFunPtr (wordPtrToPtr mainFn))
                   result @?= 42,
 
     testCase "IRTransformLayer" $ do

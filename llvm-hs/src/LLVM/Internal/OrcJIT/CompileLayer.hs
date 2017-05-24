@@ -39,6 +39,14 @@ findSymbol compileLayer symbol exportedSymbolsOnly = flip runAnyContT return $ d
     (FFI.findSymbol (getCompileLayer compileLayer) symbol' exportedSymbolsOnly') FFI.disposeSymbol
   decodeM symbol
 
+findSymbolIn :: CompileLayer l => l -> FFI.ModuleSetHandle -> MangledSymbol -> Bool -> IO JITSymbol
+findSymbolIn compileLayer handle symbol exportedSymbolsOnly = flip runAnyContT return $ do
+  symbol' <- encodeM symbol
+  exportedSymbolsOnly' <- encodeM exportedSymbolsOnly
+  symbol <- anyContToM $ bracket
+    (FFI.findSymbolIn (getCompileLayer compileLayer) handle symbol' exportedSymbolsOnly') FFI.disposeSymbol
+  decodeM symbol
+
 addModuleSet :: CompileLayer l => l -> [Module] -> SymbolResolver -> IO FFI.ModuleSetHandle
 addModuleSet compileLayer modules resolver = flip runAnyContT return $ do
   resolverAct <- encodeM resolver

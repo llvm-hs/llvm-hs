@@ -31,3 +31,6 @@ foreign import ccall safe "LLVM_Hs_CompileLayer_removeModuleSet" removeModuleSet
 
 foreign import ccall safe "LLVM_Hs_CompileLayer_findSymbol" findSymbol ::
   Ptr CompileLayer -> CString -> LLVMBool -> IO (Ptr JITSymbol)
+
+foreign import ccall safe "LLVM_Hs_CompileLayer_findSymbolIn" findSymbolIn ::
+  Ptr CompileLayer -> ModuleSetHandle -> CString -> LLVMBool -> IO (Ptr JITSymbol)
