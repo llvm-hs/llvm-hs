@@ -1,4 +1,7 @@
-module LLVM.Internal.OrcJIT.CompileLayer where
+module LLVM.Internal.OrcJIT.CompileLayer
+  ( module LLVM.Internal.OrcJIT.CompileLayer
+  , FFI.ModuleSetHandle
+  ) where
 
 import LLVM.Prelude
 

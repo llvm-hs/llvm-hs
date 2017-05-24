@@ -19,12 +19,7 @@ import LLVM.Context
 import LLVM.Module
 import qualified LLVM.Internal.FFI.Module as FFI
 import LLVM.OrcJIT
-import LLVM.OrcJIT.IRCompileLayer (IRCompileLayer, withIRCompileLayer)
 import LLVM.Internal.OrcJIT.CompileLayer
-import qualified LLVM.OrcJIT.IRCompileLayer as IRCompileLayer
-import LLVM.OrcJIT.CompileOnDemandLayer (CompileOnDemandLayer, withIndirectStubsManagerBuilder, withJITCompileCallbackManager, withCompileOnDemandLayer)
-import LLVM.OrcJIT.IRTransformLayer
-import qualified LLVM.OrcJIT.CompileOnDemandLayer as CODLayer
 import LLVM.Target
 
 testModule :: ByteString
@@ -59,7 +54,7 @@ resolver testFunc compileLayer symbol
       funPtr <- wrapTestFunc myTestFuncImpl
       let addr = ptrToWordPtr (castFunPtrToPtr funPtr)
       return (JITSymbol addr (JITSymbolFlags False True))
-  | otherwise = IRCompileLayer.findSymbol compileLayer symbol True
+  | otherwise = findSymbol compileLayer symbol True
 
 moduleTransform :: IORef Bool -> Ptr FFI.Module -> IO (Ptr FFI.Module)
 moduleTransform passmanagerSuccessful modulePtr = do
@@ -76,17 +71,17 @@ tests =
         withHostTargetMachine $ \tm ->
           withObjectLinkingLayer $ \linkingLayer ->
             withIRCompileLayer linkingLayer tm $ \compileLayer -> do
-              testFunc <- IRCompileLayer.mangleSymbol compileLayer "testFunc"
-              IRCompileLayer.withModuleSet
+              testFunc <- mangleSymbol compileLayer "testFunc"
+              withModuleSet
                 compileLayer
                 [mod]
                 (SymbolResolver (resolver testFunc compileLayer) nullResolver) $
                 \moduleSet -> do
-                  mainSymbol <- IRCompileLayer.mangleSymbol compileLayer "main"
-                  JITSymbol mainFn _ <- IRCompileLayer.findSymbol compileLayer mainSymbol True
+                  mainSymbol <- mangleSymbol compileLayer "main"
+                  JITSymbol mainFn _ <- findSymbol compileLayer mainSymbol True
                   result <- mkMain (castPtrToFunPtr (wordPtrToPtr mainFn))
                   result @?= 42
-                  JITSymbol mainFn _ <- IRCompileLayer.findSymbolIn compileLayer moduleSet mainSymbol True
+                  JITSymbol mainFn _ <- findSymbolIn compileLayer moduleSet mainSymbol True
                   result <- mkMain (castPtrToFunPtr (wordPtrToPtr mainFn))
                   result @?= 42,
 
@@ -97,14 +92,14 @@ tests =
           withObjectLinkingLayer $ \linkingLayer ->
             withIRCompileLayer linkingLayer tm $ \compileLayer -> do
               withIRTransformLayer compileLayer tm (moduleTransform passmanagerSuccessful) $ \compileLayer -> do
-                testFunc <- IRCompileLayer.mangleSymbol compileLayer "testFunc"
-                IRCompileLayer.withModuleSet
+                testFunc <- mangleSymbol compileLayer "testFunc"
+                withModuleSet
                   compileLayer
                   [mod]
                   (SymbolResolver (resolver testFunc compileLayer) nullResolver) $
                   \moduleSet -> do
-                    mainSymbol <- IRCompileLayer.mangleSymbol compileLayer "main"
-                    JITSymbol mainFn _ <- IRCompileLayer.findSymbol compileLayer mainSymbol True
+                    mainSymbol <- mangleSymbol compileLayer "main"
+                    JITSymbol mainFn _ <- findSymbol compileLayer mainSymbol True
                     result <- mkMain (castPtrToFunPtr (wordPtrToPtr mainFn))
                     result @?= 42
                     assert (readIORef passmanagerSuccessful),
@@ -118,14 +113,14 @@ tests =
               withIndirectStubsManagerBuilder triple $ \stubsMgr ->
                 withJITCompileCallbackManager triple Nothing $ \callbackMgr ->
                   withCompileOnDemandLayer baseLayer tm (\x -> return [x]) callbackMgr stubsMgr False $ \compileLayer -> do
-                    testFunc <- CODLayer.mangleSymbol compileLayer "testFunc"
-                    CODLayer.withModuleSet
+                    testFunc <- mangleSymbol compileLayer "testFunc"
+                    withModuleSet
                       compileLayer
                       [mod]
                       (SymbolResolver (resolver testFunc compileLayer) nullResolver) $
                       \moduleSet -> do
-                        mainSymbol <- CODLayer.mangleSymbol compileLayer "main"
-                        JITSymbol mainFn _ <- CODLayer.findSymbol compileLayer mainSymbol True
+                        mainSymbol <- mangleSymbol compileLayer "main"
+                        JITSymbol mainFn _ <- findSymbol compileLayer mainSymbol True
                         result <- mkMain (castPtrToFunPtr (wordPtrToPtr mainFn))
                         result @?= 42
   ]
