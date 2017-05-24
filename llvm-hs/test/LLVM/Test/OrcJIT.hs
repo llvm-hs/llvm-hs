@@ -6,19 +6,24 @@ import Test.Tasty.HUnit
 
 import LLVM.Test.Support
 
+import Control.Applicative
 import Data.ByteString (ByteString)
 import Data.Foldable
 import Data.IORef
 import Data.Word
 import Foreign.Ptr
 
+import LLVM.Internal.PassManager
+import qualified LLVM.Internal.FFI.PassManager as FFI
 import LLVM.Context
 import LLVM.Module
+import qualified LLVM.Internal.FFI.Module as FFI
 import LLVM.OrcJIT
 import LLVM.OrcJIT.IRCompileLayer (IRCompileLayer, withIRCompileLayer)
 import LLVM.Internal.OrcJIT.CompileLayer
 import qualified LLVM.OrcJIT.IRCompileLayer as IRCompileLayer
 import LLVM.OrcJIT.CompileOnDemandLayer (CompileOnDemandLayer, withIndirectStubsManagerBuilder, withJITCompileCallbackManager, withCompileOnDemandLayer)
+import LLVM.OrcJIT.IRTransformLayer
 import qualified LLVM.OrcJIT.CompileOnDemandLayer as CODLayer
 import LLVM.Target
 
@@ -56,6 +61,13 @@ resolver testFunc compileLayer symbol
       return (JITSymbol addr (JITSymbolFlags False True))
   | otherwise = IRCompileLayer.findSymbol compileLayer symbol True
 
+moduleTransform :: IORef Bool -> Ptr FFI.Module -> IO (Ptr FFI.Module)
+moduleTransform passmanagerSuccessful modulePtr = do
+  withPassManager defaultCuratedPassSetSpec { optLevel = Just 2 } $ \(PassManager pm) -> do
+    success <- toEnum . fromIntegral <$> FFI.runPassManager pm modulePtr
+    writeIORef passmanagerSuccessful success
+    pure modulePtr
+
 tests :: TestTree
 tests =
   testGroup "OrcJit" [
@@ -74,6 +86,25 @@ tests =
                   JITSymbol mainFn _ <- IRCompileLayer.findSymbol compileLayer mainSymbol True
                   result <- mkMain (castPtrToFunPtr (wordPtrToPtr mainFn))
                   result @?= 42,
+
+    testCase "IRTransformLayer" $ do
+      passmanagerSuccessful <- newIORef False
+      withTestModule $ \mod ->
+        withHostTargetMachine $ \tm ->
+          withObjectLinkingLayer $ \objectLayer ->
+            withIRCompileLayer objectLayer tm $ \compileLayer -> do
+              withIRTransformLayer compileLayer tm (moduleTransform passmanagerSuccessful) $ \compileLayer -> do
+                testFunc <- IRCompileLayer.mangleSymbol compileLayer "testFunc"
+                IRCompileLayer.withModuleSet
+                  compileLayer
+                  [mod]
+                  (SymbolResolver (resolver testFunc compileLayer) nullResolver) $
+                  \moduleSet -> do
+                    mainSymbol <- IRCompileLayer.mangleSymbol compileLayer "main"
+                    JITSymbol mainFn _ <- IRCompileLayer.findSymbol compileLayer mainSymbol True
+                    result <- mkMain (castPtrToFunPtr (wordPtrToPtr mainFn))
+                    result @?= 42
+                    assert (readIORef passmanagerSuccessful),
 
     testCase "lazy compilation" $ do
       withTestModule $ \mod ->

@@ -6,9 +6,7 @@ import LLVM.Prelude
 import Foreign.C
 import Foreign.Ptr
 
-import LLVM.Internal.FFI.DataLayout
 import LLVM.Internal.FFI.LLVMCTypes
-import LLVM.Internal.FFI.Module
 import LLVM.Internal.FFI.OrcJIT
 import LLVM.Internal.FFI.OrcJIT.CompileLayer
 import LLVM.Internal.FFI.PtrHierarchy
