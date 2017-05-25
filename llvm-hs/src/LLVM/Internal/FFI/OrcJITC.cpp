@@ -396,8 +396,10 @@ void LLVM_Hs_disposeMangledSymbol(char *mangledSymbol) {
 LLVMJITCompileCallbackManagerRef
 LLVM_Hs_createLocalCompileCallbackManager(const char *triple,
                                           JITTargetAddress errorHandler) {
-    return llvm::orc::createLocalCompileCallbackManager(Triple(triple),
-                                                        errorHandler)
+    // We copy the string so that it can be freed on the Haskell side.
+    std::string tripleStr(triple);
+    return llvm::orc::createLocalCompileCallbackManager(
+               Triple(std::move(tripleStr)), errorHandler)
         .release();
 }
 
@@ -408,8 +410,11 @@ void LLVM_Hs_disposeCallbackManager(
 
 LLVMIndirectStubsManagerBuilderRef
 LLVM_Hs_createLocalIndirectStubsManagerBuilder(const char *triple) {
+    // We copy the string so that it can be freed on the Haskell side.
+    std::string tripleStr(triple);
     return new std::function<std::unique_ptr<IndirectStubsManager>()>(
-        llvm::orc::createLocalIndirectStubsManagerBuilder(Triple(triple)));
+        llvm::orc::createLocalIndirectStubsManagerBuilder(
+            Triple(std::move(tripleStr))));
 }
 
 void LLVM_Hs_disposeIndirectStubsManagerBuilder(

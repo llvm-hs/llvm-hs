@@ -12,7 +12,6 @@ import qualified LLVM.Internal.FFI.DataLayout as FFI
 import qualified LLVM.Internal.FFI.OrcJIT.CompileLayer as FFI
 import qualified LLVM.Internal.FFI.OrcJIT.IRCompileLayer as FFI
 import qualified LLVM.Internal.FFI.PtrHierarchy as FFI
-import qualified LLVM.Internal.FFI.Target as FFI
 import LLVM.Internal.OrcJIT
 import LLVM.Internal.OrcJIT.CompileLayer
 import LLVM.Internal.Target
@@ -33,11 +32,20 @@ instance CompileLayer (IRCompileLayer l) where
   getDataLayout = dataLayout
   getCleanups = cleanupActions
 
--- | Create a new 'IRCompileLayer' and dispose it after the callback
--- exits.
+-- | Create a new 'IRCompileLayer'.
+--
+-- When the layer is no longer needed, it should be disposed using 'disposeCompileLayer.
+newIRCompileLayer :: LinkingLayer l => l -> TargetMachine -> IO (IRCompileLayer l)
+newIRCompileLayer linkingLayer (TargetMachine tm) = flip runAnyContT return $ do
+  cleanups <- liftIO (newIORef [])
+  dl <- createRegisteredDataLayout (TargetMachine tm) cleanups
+  cl <- anyContToM $
+    bracketOnError
+      (FFI.createIRCompileLayer (getLinkingLayer linkingLayer) tm)
+      (FFI.disposeCompileLayer . FFI.upCast)
+  return (IRCompileLayer cl dl cleanups)
+
+-- | 'bracket'-style wrapper around 'newIRCompileLayer' and 'disposeCompileLayer'.
 withIRCompileLayer :: LinkingLayer l => l -> TargetMachine -> (IRCompileLayer l -> IO a) -> IO a
-withIRCompileLayer linkingLayer (TargetMachine tm) f = flip runAnyContT return $ do
-  dl <- anyContToM $ bracket (FFI.createTargetDataLayout tm) FFI.disposeDataLayout
-  cl <- anyContToM $ bracket (FFI.createIRCompileLayer (getLinkingLayer linkingLayer) tm) (FFI.disposeCompileLayer . FFI.upCast)
-  cleanup <- anyContToM $ bracket (newIORef []) (sequence <=< readIORef)
-  liftIO $ f (IRCompileLayer cl dl cleanup)
+withIRCompileLayer linkingLayer tm =
+  bracket (newIRCompileLayer linkingLayer tm) disposeCompileLayer

@@ -13,9 +13,12 @@ import Foreign.C.String
 import Foreign.Ptr
 
 import LLVM.Internal.Coding
-import qualified LLVM.Internal.FFI.PtrHierarchy as FFI
+import LLVM.Internal.Target
+import qualified LLVM.Internal.FFI.DataLayout as FFI
 import qualified LLVM.Internal.FFI.LLVMCTypes as FFI
 import qualified LLVM.Internal.FFI.OrcJIT as FFI
+import qualified LLVM.Internal.FFI.PtrHierarchy as FFI
+import qualified LLVM.Internal.FFI.Target as FFI
 
 -- | A mangled symbol which can be used in 'findSymbol'. This can be
 -- created using 'mangleSymbol'.
@@ -119,10 +122,23 @@ allocFunPtr cleanups alloc = mask $ \restore -> do
   modifyIORef cleanups (freeHaskellFunPtr funPtr :)
   pure funPtr
 
--- | Execute an action using a new 'ObjectLinkingLayer'.
+-- | Dispose of a 'LinkingLayer'.
+disposeLinkingLayer :: LinkingLayer l => l -> IO ()
+disposeLinkingLayer = FFI.disposeLinkingLayer . getLinkingLayer
+
+-- | Create a new 'ObjectLinkingLayer'. This should be disposed using
+-- 'disposeLinkingLayer' when it is no longer needed.
+newObjectLinkingLayer :: IO ObjectLinkingLayer
+newObjectLinkingLayer = ObjectLinkingLayer <$> FFI.createObjectLinkingLayer
+
+-- | 'bracket'-style wrapper around 'newObjectLinkingLayer' and 'disposeLinkingLayer'.
 withObjectLinkingLayer :: (ObjectLinkingLayer -> IO a) -> IO a
-withObjectLinkingLayer f =
-  bracket
-    FFI.createObjectLinkingLayer
-    (FFI.disposeLinkingLayer . FFI.upCast) $ \layer ->
-      f (ObjectLinkingLayer layer)
+withObjectLinkingLayer = bracket newObjectLinkingLayer disposeLinkingLayer
+
+createRegisteredDataLayout :: (MonadAnyCont IO m) => TargetMachine -> IORef [IO ()] -> m (Ptr FFI.DataLayout)
+createRegisteredDataLayout (TargetMachine tm) cleanups =
+  let createDataLayout = do
+        dl <- FFI.createTargetDataLayout tm
+        modifyIORef' cleanups (FFI.disposeDataLayout dl :)
+        pure dl
+  in anyContToM $ bracketOnError createDataLayout FFI.disposeDataLayout

@@ -99,7 +99,9 @@ withModuleSet compileLayer modules resolver =
     (addModuleSet compileLayer modules resolver)
     (removeModuleSet compileLayer)
 
--- | Dispose a 'CompileLayer'. This should called when the
+-- | Dispose of a 'CompileLayer'. This should called when the
 -- 'CompileLayer' is not needed anymore.
 disposeCompileLayer :: CompileLayer l => l -> IO ()
-disposeCompileLayer l = FFI.disposeCompileLayer (getCompileLayer l)
+disposeCompileLayer l = do
+  FFI.disposeCompileLayer (getCompileLayer l)
+  sequence_ =<< readIORef (getCleanups l)

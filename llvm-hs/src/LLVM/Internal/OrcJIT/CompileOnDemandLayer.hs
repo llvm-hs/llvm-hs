@@ -7,7 +7,6 @@ import Control.Exception
 import Control.Monad.AnyCont
 import Control.Monad.IO.Class
 import Data.IORef
-import Data.Set (Set)
 import Foreign.Ptr
 
 import LLVM.Internal.Coding
@@ -15,9 +14,7 @@ import LLVM.Internal.OrcJIT
 import LLVM.Internal.OrcJIT.CompileLayer
 import LLVM.Internal.Target
 import qualified LLVM.Internal.FFI.DataLayout as FFI
-import qualified LLVM.Internal.FFI.Target as FFI
 import qualified LLVM.Internal.FFI.OrcJIT as FFI
-import qualified LLVM.Internal.FFI.OrcJIT.CompileLayer as FFI
 import qualified LLVM.Internal.FFI.OrcJIT.CompileOnDemandLayer as FFI
 import qualified LLVM.Internal.FFI.PtrHierarchy as FFI
 
@@ -25,8 +22,9 @@ type PartitioningFn = Ptr FFI.Function -> IO [Ptr FFI.Function]
 
 -- | This is used by 'CompileOnDemandLayer' to create callback that
 -- compile functions when they are called.
-newtype JITCompileCallbackManager =
-  CallbackMgr (Ptr FFI.JITCompileCallbackManager)
+data JITCompileCallbackManager =
+  CallbackMgr !(Ptr FFI.JITCompileCallbackManager)
+              !(IO ())
 
 -- | This is used by 'CompileOnDemandLayer' to manage the stubs
 -- created for function definitions that have not yet been compiled.
@@ -61,24 +59,61 @@ instance MonadIO m =>
            return ()))
 
 instance (MonadIO m, MonadAnyCont IO m) =>
-  EncodeM m (Maybe (IO ())) FFI.TargetAddress where
-  encodeM Nothing = return $ FFI.TargetAddress 0
+         EncodeM m (Maybe (IO ())) (FFI.TargetAddress, IO ()) where
+  encodeM Nothing = return (FFI.TargetAddress 0, return ())
   encodeM (Just f) = do
-    f' <- anyContToM $ bracket (FFI.wrapErrorHandler f) freeHaskellFunPtr
-    return . FFI.TargetAddress . fromIntegral . ptrToWordPtr . castFunPtrToPtr $ f'
+    f' <- anyContToM $ bracketOnError (FFI.wrapErrorHandler f) freeHaskellFunPtr
+    return
+      ( (FFI.TargetAddress . fromIntegral . ptrToWordPtr . castFunPtrToPtr) f'
+      , freeHaskellFunPtr f')
 
--- | Execute a computation using a new
--- 'IndirectStubsManagerBuilder'.
+-- | Create a new 'IndirectStubsManagerBuilder'.
+--
+-- When the stubs manager is no longer needed, it should be freed
+-- using 'disposeIndirectStubsManagerBuilder'.
+newIndirectStubsManagerBuilder ::
+  ShortByteString {- ^ target triple -} ->
+  IO IndirectStubsManagerBuilder
+newIndirectStubsManagerBuilder triple =
+  flip runAnyContT return $ do
+    triple' <- encodeM triple
+    stubsMgr <- liftIO (FFI.createLocalIndirectStubsManagerBuilder triple')
+    return (StubsMgr stubsMgr)
+
+-- | Dispose of an 'IndirectStubsManagerBuilder'.
+disposeIndirectStubsManagerBuilder :: IndirectStubsManagerBuilder -> IO ()
+disposeIndirectStubsManagerBuilder (StubsMgr stubsMgr) =
+  FFI.disposeIndirectStubsManagerBuilder stubsMgr
+
+-- | 'bracket'-style wrapper around 'newIndirectStubsManagerBuilder'
+-- and 'disposeIndirectStubsManagerBuilder'.
 withIndirectStubsManagerBuilder ::
   ShortByteString {- ^ target triple -} ->
   (IndirectStubsManagerBuilder -> IO a) ->
   IO a
-withIndirectStubsManagerBuilder triple f = flip runAnyContT return $ do
+withIndirectStubsManagerBuilder triple =
+  bracket
+    (newIndirectStubsManagerBuilder triple)
+    disposeIndirectStubsManagerBuilder
+
+-- | Create a new 'JITCompileCallbackManager'.
+--
+-- When the callback manager is no longer needed, it should be freed
+-- using 'disposeJITCompileCallbackManager'.
+newJITCompileCallbackManager ::
+  ShortByteString {- ^ target triple -} ->
+  Maybe (IO ()) {- ^ called on compilation errors -} ->
+  IO JITCompileCallbackManager
+newJITCompileCallbackManager triple errorHandler = flip runAnyContT return $ do
   triple' <- encodeM triple
-  stubsMgr <- anyContToM $ bracket
-    (FFI.createLocalIndirectStubsManagerBuilder triple')
-    FFI.disposeIndirectStubsManagerBuilder
-  liftIO $ f (StubsMgr stubsMgr)
+  (errorHandler', cleanup) <- encodeM errorHandler
+  callbackMgr <- liftIO (FFI.createLocalCompileCallbackManager triple' errorHandler')
+  return (CallbackMgr callbackMgr cleanup)
+
+-- | Dispose of a 'JITCompileCallbackManager'.
+disposeJITCompileCallbackManager :: JITCompileCallbackManager -> IO ()
+disposeJITCompileCallbackManager (CallbackMgr mgr cleanup) =
+  FFI.disposeCallbackManager mgr >> cleanup
 
 -- | Execute a computation using a new 'JITCompileCallbackManager'.
 withJITCompileCallbackManager ::
@@ -86,46 +121,53 @@ withJITCompileCallbackManager ::
   Maybe (IO ()) {- ^ called on compilation errors -} ->
   (JITCompileCallbackManager -> IO a) ->
   IO a
-withJITCompileCallbackManager triple errorHandler f = flip runAnyContT return $ do
-  triple' <- encodeM triple
-  errorHandler' <- encodeM errorHandler
-  callbackMgr <- anyContToM $ bracket
-    (FFI.createLocalCompileCallbackManager triple' errorHandler')
-    FFI.disposeCallbackManager
-  liftIO $ f (CallbackMgr callbackMgr)
+withJITCompileCallbackManager triple errorHandler =
+  bracket
+    (newJITCompileCallbackManager triple errorHandler)
+    disposeJITCompileCallbackManager
 
--- | Execute a computation using a new 'CompileOnDemandLayer'. The
--- partitioning function specifies which functions should be compiled
--- when a function is called.
-withCompileOnDemandLayer :: CompileLayer l =>
+-- | Create a new 'CompileOnDemandLayer'. The partitioning function
+-- specifies which functions should be compiled when a function is
+-- called.
+--
+-- When the layer is no longer needed, it should be disposed using 'disposeCompileLayer'.
+newCompileOnDemandLayer :: CompileLayer l =>
   l ->
   TargetMachine ->
   (Ptr FFI.Function -> IO [Ptr FFI.Function]) {- ^ partitioning function -} ->
   JITCompileCallbackManager ->
   IndirectStubsManagerBuilder ->
-  Bool ->
+  Bool {- ^ clone stubs into partitions -} ->
+  IO (CompileOnDemandLayer l)
+newCompileOnDemandLayer baseLayer tm partition (CallbackMgr callbackMgr _) (StubsMgr stubsMgr) cloneStubs =
+  flip runAnyContT return $ do
+    cleanups <- liftIO (newIORef [])
+    dl <- createRegisteredDataLayout tm cleanups
+    partitionAct <- encodeM partition
+    partition' <- liftIO $ partitionAct cleanups
+    cloneStubs' <- encodeM cloneStubs
+    cl <-
+      liftIO
+        (FFI.createCompileOnDemandLayer
+           (getCompileLayer baseLayer)
+           partition'
+           callbackMgr
+           stubsMgr
+           cloneStubs')
+    return (CompileOnDemandLayer cl dl cleanups)
+
+-- | 'bracket'-style wrapper around 'newCompileOnDemandLayer' and 'disposeCompileLayer'.
+withCompileOnDemandLayer ::
+  CompileLayer l =>
+  l ->
+  TargetMachine ->
+  (Ptr FFI.Function -> IO [Ptr FFI.Function]) {- ^ partitioning function -} ->
+  JITCompileCallbackManager ->
+  IndirectStubsManagerBuilder ->
+  Bool {- ^ clone stubs into partitions -} ->
   (CompileOnDemandLayer l -> IO a) ->
   IO a
-withCompileOnDemandLayer
- baseLayer
- (TargetMachine tm)
- partition
- (CallbackMgr callbackMgr)
- (StubsMgr stubsMgr)
- cloneStubsIntoPartitions
- f
- = flip runAnyContT return $ do
- dl <- anyContToM $ bracket (FFI.createTargetDataLayout tm) FFI.disposeDataLayout
- cleanup <- anyContToM $ bracket (newIORef []) (sequence <=< readIORef)
- partitionAct <- encodeM partition
- partition' <- liftIO $ partitionAct cleanup
- cloneStubsIntoPartitions' <- encodeM cloneStubsIntoPartitions
- cl <- anyContToM $ bracket
-         (FFI.createCompileOnDemandLayer
-            (getCompileLayer baseLayer)
-            partition'
-            callbackMgr
-            stubsMgr
-            cloneStubsIntoPartitions')
-         (FFI.disposeCompileLayer . FFI.upCast)
- liftIO $ f (CompileOnDemandLayer cl dl cleanup)
+withCompileOnDemandLayer l tm partition callbackMgr stubsMgr cloneStubs =
+  bracket
+    (newCompileOnDemandLayer l tm partition callbackMgr stubsMgr cloneStubs)
+    disposeCompileLayer

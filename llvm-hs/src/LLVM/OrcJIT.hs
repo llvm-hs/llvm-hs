@@ -11,27 +11,41 @@ module LLVM.OrcJIT (
     findSymbolIn,
     JITSymbol(..),
     JITSymbolFlags(..),
+    SymbolResolver(..),
     -- ** Symbol mangling
     MangledSymbol,
     mangleSymbol,
-    -- ** Create compile layers
+    -- ** IRCompileLayer
     IRCompileLayer,
+    newIRCompileLayer,
     withIRCompileLayer,
+    -- ** CompileOnDemandLayer
     CompileOnDemandLayer,
+    newCompileOnDemandLayer,
     withCompileOnDemandLayer,
+    -- ** IRTRansformLayer
     IRTransformLayer,
+    newIRTransformLayer,
     withIRTransformLayer,
-    -- ** Dispose compile layers
+    -- ** Dispose of compile layers
     disposeCompileLayer,
     -- * LinkingLayer
     LinkingLayer,
+    -- ** Create linking layers
     ObjectLinkingLayer,
+    newObjectLinkingLayer,
     withObjectLinkingLayer,
-    -- * Misc
-    SymbolResolver(..),
+    -- ** Dispose of linking layers
+    disposeLinkingLayer,
+    -- * JITCompileCallbackManager
     JITCompileCallbackManager,
+    newJITCompileCallbackManager,
+    disposeJITCompileCallbackManager,
     withJITCompileCallbackManager,
+    -- * IndirectStubsManagerBuilder
     IndirectStubsManagerBuilder,
+    newIndirectStubsManagerBuilder,
+    disposeIndirectStubsManagerBuilder,
     withIndirectStubsManagerBuilder,
   ) where
 
