@@ -7,6 +7,7 @@ import Control.Exception
 import Control.Monad.AnyCont
 import Control.Monad.IO.Class
 import Data.IORef
+import Data.Set (Set)
 import Foreign.Ptr
 
 import LLVM.Internal.Coding
@@ -22,12 +23,19 @@ import qualified LLVM.Internal.FFI.PtrHierarchy as FFI
 
 type PartitioningFn = Ptr FFI.Function -> IO [Ptr FFI.Function]
 
+-- | This is used by 'CompileOnDemandLayer' to create callback that
+-- compile functions when they are called.
 newtype JITCompileCallbackManager =
   CallbackMgr (Ptr FFI.JITCompileCallbackManager)
 
+-- | This is used by 'CompileOnDemandLayer' to manage the stubs
+-- created for function definitions that have not yet been compiled.
 newtype IndirectStubsManagerBuilder =
   StubsMgr (Ptr FFI.IndirectStubsManagerBuilder)
 
+-- | Adding a module to a 'CompileOnDemandLayer' creates stubs for its
+-- functions definitions. When one of those stubs is called, the
+-- corresponding function body is extracted and compiled.
 data CompileOnDemandLayer baseLayer =
   CompileOnDemandLayer {
     compileLayer :: !(Ptr FFI.CompileOnDemandLayer),
@@ -59,8 +67,10 @@ instance (MonadIO m, MonadAnyCont IO m) =>
     f' <- anyContToM $ bracket (FFI.wrapErrorHandler f) freeHaskellFunPtr
     return . FFI.TargetAddress . fromIntegral . ptrToWordPtr . castFunPtrToPtr $ f'
 
+-- | Execute a computation using a new
+-- 'IndirectStubsManagerBuilder'.
 withIndirectStubsManagerBuilder ::
-  ShortByteString {- ^ triple -} ->
+  ShortByteString {- ^ target triple -} ->
   (IndirectStubsManagerBuilder -> IO a) ->
   IO a
 withIndirectStubsManagerBuilder triple f = flip runAnyContT return $ do
@@ -70,9 +80,10 @@ withIndirectStubsManagerBuilder triple f = flip runAnyContT return $ do
     FFI.disposeIndirectStubsManagerBuilder
   liftIO $ f (StubsMgr stubsMgr)
 
+-- | Execute a computation using a new 'JITCompileCallbackManager'.
 withJITCompileCallbackManager ::
-  ShortByteString {- ^ triple -} ->
-  Maybe (IO ()) ->
+  ShortByteString {- ^ target triple -} ->
+  Maybe (IO ()) {- ^ called on compilation errors -} ->
   (JITCompileCallbackManager -> IO a) ->
   IO a
 withJITCompileCallbackManager triple errorHandler f = flip runAnyContT return $ do
@@ -83,10 +94,13 @@ withJITCompileCallbackManager triple errorHandler f = flip runAnyContT return $ 
     FFI.disposeCallbackManager
   liftIO $ f (CallbackMgr callbackMgr)
 
+-- | Execute a computation using a new 'CompileOnDemandLayer'. The
+-- partitioning function specifies which functions should be compiled
+-- when a function is called.
 withCompileOnDemandLayer :: CompileLayer l =>
   l ->
   TargetMachine ->
-  PartitioningFn ->
+  (Ptr FFI.Function -> IO [Ptr FFI.Function]) {- ^ partitioning function -} ->
   JITCompileCallbackManager ->
   IndirectStubsManagerBuilder ->
   Bool ->

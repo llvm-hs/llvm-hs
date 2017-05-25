@@ -17,6 +17,9 @@ import LLVM.Internal.OrcJIT
 import LLVM.Internal.OrcJIT.CompileLayer
 import LLVM.Internal.Target
 
+-- | 'IRCompileLayer' compiles modules immediately when they are
+-- added. It parametrized by a 'LinkingLayer' which handles linking of
+-- the generated object files.
 data IRCompileLayer linkingLayer =
   IRCompileLayer {
     compileLayer :: !(Ptr FFI.IRCompileLayer),
@@ -30,6 +33,8 @@ instance CompileLayer (IRCompileLayer l) where
   getDataLayout = dataLayout
   getCleanups = cleanupActions
 
+-- | Create a new 'IRCompileLayer' and dispose it after the callback
+-- exits.
 withIRCompileLayer :: LinkingLayer l => l -> TargetMachine -> (IRCompileLayer l -> IO a) -> IO a
 withIRCompileLayer linkingLayer (TargetMachine tm) f = flip runAnyContT return $ do
   dl <- anyContToM $ bracket (FFI.createTargetDataLayout tm) FFI.disposeDataLayout

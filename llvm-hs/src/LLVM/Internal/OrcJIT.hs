@@ -17,6 +17,8 @@ import qualified LLVM.Internal.FFI.PtrHierarchy as FFI
 import qualified LLVM.Internal.FFI.LLVMCTypes as FFI
 import qualified LLVM.Internal.FFI.OrcJIT as FFI
 
+-- | A mangled symbol which can be used in 'findSymbol'. This can be
+-- created using 'mangleSymbol'.
 newtype MangledSymbol = MangledSymbol ByteString
   deriving (Show, Eq, Ord)
 
@@ -28,29 +30,40 @@ instance MonadIO m => DecodeM m MangledSymbol CString where
 
 data JITSymbolFlags =
   JITSymbolFlags {
-    jitSymbolWeak :: !Bool,
-    jitSymbolExported :: !Bool
+    jitSymbolWeak :: !Bool, -- ^ Is this a weak symbol?
+    jitSymbolExported :: !Bool -- ^ Is this symbol exported?
   }
   deriving (Show, Eq, Ord)
 
 data JITSymbol =
   JITSymbol {
-    jitSymbolAddress :: !WordPtr,
-    jitSymbolFlags :: !JITSymbolFlags
+    jitSymbolAddress :: !WordPtr, -- ^ The address of the symbol. If
+                                  -- you’ve looked up a function, you
+                                  -- need to cast this to a 'FunPtr'.
+    jitSymbolFlags :: !JITSymbolFlags -- ^ The flags of this symbol.
   }
   deriving (Show, Eq, Ord)
 
 type SymbolResolverFn = MangledSymbol -> IO JITSymbol
 
+-- | Specifies how external symbols in a module added to a
+-- 'CompielLayer' should be resolved.
 data SymbolResolver =
   SymbolResolver {
+    -- | This is used to find symbols in the same logical dynamic
+    -- library as the module referencing them.
     dylibResolver :: !SymbolResolverFn,
+    -- | When 'dylibResolver' fails to resolve a symbol,
+    -- 'externalResolver' is used as a fallback to find external symbols.
     externalResolver :: !SymbolResolverFn
   }
 
-class LinkingLayer a where
-  getLinkingLayer :: a -> Ptr FFI.LinkingLayer
+-- | After a 'CompileLayer' has compiled the modules to object code,
+-- it passes the resulting object files to a 'LinkingLayer'.
+class LinkingLayer l where
+  getLinkingLayer :: l -> Ptr FFI.LinkingLayer
 
+-- | Bare bones implementation of a 'LinkingLayer'.
 newtype ObjectLinkingLayer = ObjectLinkingLayer (Ptr FFI.ObjectLinkingLayer)
 
 instance LinkingLayer ObjectLinkingLayer where
@@ -106,6 +119,7 @@ allocFunPtr cleanups alloc = mask $ \restore -> do
   modifyIORef cleanups (freeHaskellFunPtr funPtr :)
   pure funPtr
 
+-- | Execute an action using a new 'ObjectLinkingLayer'.
 withObjectLinkingLayer :: (ObjectLinkingLayer -> IO a) -> IO a
 withObjectLinkingLayer f =
   bracket

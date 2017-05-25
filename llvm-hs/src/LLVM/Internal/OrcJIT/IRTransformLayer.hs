@@ -18,7 +18,9 @@ import LLVM.Internal.OrcJIT
 import LLVM.Internal.OrcJIT.CompileLayer
 import LLVM.Internal.Target
 
-data IRTransformLayer compileLayer =
+-- | 'IRTransformLayer' allows transforming modules before handing off
+-- compilation to the underlying 'CompileLayer'.
+data IRTransformLayer baseLayer =
   IRTransformLayer {
     compileLayer :: !(Ptr FFI.IRTransformLayer),
     dataLayout :: !(Ptr FFI.DataLayout),
@@ -31,11 +33,12 @@ instance CompileLayer (IRTransformLayer l) where
   getDataLayout = dataLayout
   getCleanups = cleanupActions
 
+-- | Execute an action using a new 'IRTransformLayer'.
 withIRTransformLayer
   :: CompileLayer l
   => l
   -> TargetMachine
-  -> (Ptr FFI.Module -> IO (Ptr FFI.Module))
+  -> (Ptr FFI.Module -> IO (Ptr FFI.Module)) {- ^ module transformation -}
   -> (IRTransformLayer l -> IO a)
   -> IO a
 withIRTransformLayer compileLayer (TargetMachine tm) moduleTransform f =

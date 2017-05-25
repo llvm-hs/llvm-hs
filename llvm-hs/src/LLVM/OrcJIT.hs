@@ -1,25 +1,34 @@
 module LLVM.OrcJIT (
+    -- * CompileLayer
+    CompileLayer,
+    -- ** Add/remove modules
+    ModuleSetHandle,
+    addModuleSet,
+    removeModuleSet,
+    withModuleSet,
+    -- ** Search for symbols
     findSymbol,
     findSymbolIn,
-    withModuleSet,
-    ModuleSetHandle,
     JITSymbol(..),
     JITSymbolFlags(..),
-    mangleSymbol,
+    -- ** Symbol mangling
     MangledSymbol,
-    CompileLayer,
+    mangleSymbol,
+    -- ** Create compile layers
     IRCompileLayer,
     withIRCompileLayer,
     CompileOnDemandLayer,
     withCompileOnDemandLayer,
-    withIRTransformLayer,
     IRTransformLayer,
+    withIRTransformLayer,
+    -- ** Dispose compile layers
+    disposeCompileLayer,
+    -- * LinkingLayer
     LinkingLayer,
     ObjectLinkingLayer,
     withObjectLinkingLayer,
+    -- * Misc
     SymbolResolver(..),
-    SymbolResolverFn,
-    PartitioningFn,
     JITCompileCallbackManager,
     withJITCompileCallbackManager,
     IndirectStubsManagerBuilder,

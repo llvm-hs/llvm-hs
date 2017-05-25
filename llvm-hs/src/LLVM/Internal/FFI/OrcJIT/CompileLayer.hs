@@ -13,6 +13,7 @@ import Foreign.Ptr
 
 data CompileLayer
 
+-- | Abstract type representing a set of modules in a 'LLVM.OrcJIT.CompileLayer'.
 newtype ModuleSetHandle = ModuleSetHandle Word
 
 foreign import ccall safe "LLVM_Hs_CompileLayer_dispose" disposeCompileLayer ::
