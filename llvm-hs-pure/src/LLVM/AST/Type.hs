@@ -39,6 +39,8 @@ data Type
   -- | <http://llvm.org/docs/LangRef.html#metadata-type>
   | MetadataType -- only to be used as a parameter type for a few intrinsics
   -- | <http://llvm.org/docs/LangRef.html#token-type>
+  | LabelType -- only to be used as the type of block names
+  -- | <http://llvm.org/docs/LangRef.html#label-type>
   | TokenType
   deriving (Eq, Ord, Read, Show, Typeable, Data, Generic)
 
