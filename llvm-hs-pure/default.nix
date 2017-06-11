@@ -1,18 +1,17 @@
-{ mkDerivation, base, containers, HUnit, mtl, parsec, QuickCheck
-, stdenv, template-haskell, test-framework, test-framework-hunit
-, test-framework-quickcheck2, transformers, transformers-compat
+{ mkDerivation, attoparsec, base, bytestring, containers, mtl
+, stdenv, tasty, tasty-hunit, tasty-quickcheck, template-haskell
+, transformers, transformers-compat
 }:
 mkDerivation {
   pname = "llvm-hs-pure";
   version = "4.1.0.0";
   src = ./.;
   libraryHaskellDepends = [
-    base containers mtl parsec template-haskell transformers
-    transformers-compat
+    attoparsec base bytestring containers mtl template-haskell
+    transformers transformers-compat
   ];
   testHaskellDepends = [
-    base containers HUnit mtl QuickCheck test-framework
-    test-framework-hunit test-framework-quickcheck2 transformers
+    base containers mtl tasty tasty-hunit tasty-quickcheck transformers
     transformers-compat
   ];
   homepage = "http://github.com/llvm-hs/llvm-hs/";
