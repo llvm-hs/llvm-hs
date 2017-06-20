@@ -27,7 +27,7 @@ typedef LLVMLambdaResolver *LLVMLambdaResolverRef;
 // We want to allow users to choose themselves which layers they want to use.
 // However, the LLVM API requires that this is selected statically via template
 // arguments. We convert this static polymorphism to runtime polymorphism by
-// creating an ObjectLayer and a CompileLayer class which use virtual dispatch
+// creating an LinkingLayer and a CompileLayer class which use virtual dispatch
 // to select the concrete layer.
 
 template <typename T> class HandleSet {
@@ -46,23 +46,22 @@ template <typename T> class HandleSet {
     unsigned nextFree = 0;
 };
 
-class ObjectLayer {
+class LinkingLayer {
   public:
-    virtual ~ObjectLayer(){};
+    virtual ~LinkingLayer(){};
     typedef unsigned ObjSetHandleT;
     virtual ObjSetHandleT
     addObjectSet(std::vector<std::unique_ptr<object::ObjectFile>> objects,
-                 SectionMemoryManager *memMgr,
-                 JITSymbolResolver* resolver) = 0;
+                 SectionMemoryManager *memMgr, JITSymbolResolver *resolver) = 0;
     virtual ObjSetHandleT addObjectSet(
         std::vector<std::unique_ptr<object::OwningBinary<object::ObjectFile>>>
             objects,
-        SectionMemoryManager *memMgr, JITSymbolResolver* resolver) = 0;
+        SectionMemoryManager *memMgr, JITSymbolResolver *resolver) = 0;
     virtual ObjSetHandleT addObjectSet(
         std::vector<std::unique_ptr<object::OwningBinary<object::ObjectFile>>>
             objects,
         std::unique_ptr<SectionMemoryManager> memMgr,
-        JITSymbolResolver* resolver) = 0;
+        JITSymbolResolver *resolver) = 0;
     virtual ObjSetHandleT addObjectSet(
         std::vector<std::unique_ptr<object::OwningBinary<object::ObjectFile>>>
             objects,
@@ -80,13 +79,13 @@ class ObjectLayer {
     virtual void emitAndFinalize(ObjSetHandleT h) = 0;
 };
 
-template <typename T> class ObjectLayerT : public ObjectLayer {
+template <typename T> class LinkingLayerT : public LinkingLayer {
   public:
-    ObjectLayerT(T data_) : data(std::move(data_)) {}
+    LinkingLayerT(T data_) : data(std::move(data_)) {}
     ObjSetHandleT
     addObjectSet(std::vector<std::unique_ptr<object::ObjectFile>> objects,
                  SectionMemoryManager *memMgr,
-                 JITSymbolResolver* resolver) override {
+                 JITSymbolResolver *resolver) override {
         auto handle = data.addObjectSet(std::move(objects), std::move(memMgr),
                                         std::move(resolver));
         return handles.insert(handle);
@@ -94,7 +93,7 @@ template <typename T> class ObjectLayerT : public ObjectLayer {
     ObjSetHandleT addObjectSet(
         std::vector<std::unique_ptr<object::OwningBinary<object::ObjectFile>>>
             objects,
-        SectionMemoryManager *memMgr, JITSymbolResolver* resolver) override {
+        SectionMemoryManager *memMgr, JITSymbolResolver *resolver) override {
         auto handle = data.addObjectSet(std::move(objects), std::move(memMgr),
                                         std::move(resolver));
         return handles.insert(handle);
@@ -103,7 +102,7 @@ template <typename T> class ObjectLayerT : public ObjectLayer {
         std::vector<std::unique_ptr<object::OwningBinary<object::ObjectFile>>>
             objects,
         std::unique_ptr<SectionMemoryManager> memMgr,
-        JITSymbolResolver* resolver) override {
+        JITSymbolResolver *resolver) override {
         auto handle = data.addObjectSet(std::move(objects), std::move(memMgr),
                                         std::move(resolver));
         return handles.insert(handle);
@@ -243,11 +242,11 @@ extern "C" {
 
 /* Constructor functions for the different compile layers */
 
-CompileLayer *LLVM_Hs_createIRCompileLayer(ObjectLayer *objectLayer,
+CompileLayer *LLVM_Hs_createIRCompileLayer(LinkingLayer *linkingLayer,
                                            LLVMTargetMachineRef tm) {
     TargetMachine *tmm = unwrap(tm);
-    return new CompileLayerT<IRCompileLayer<ObjectLayer>>(
-        IRCompileLayer<ObjectLayer>(*objectLayer, SimpleCompiler(*tmm)));
+    return new CompileLayerT<IRCompileLayer<LinkingLayer>>(
+        IRCompileLayer<LinkingLayer>(*linkingLayer, SimpleCompiler(*tmm)));
 }
 
 CompileLayer *LLVM_Hs_createCompileOnDemandLayer(
@@ -289,6 +288,15 @@ LLVMJITSymbolRef LLVM_Hs_CompileLayer_findSymbol(CompileLayer *compileLayer,
     return new JITSymbol(symbol);
 }
 
+LLVMJITSymbolRef
+LLVM_Hs_CompileLayer_findSymbolIn(CompileLayer *compileLayer,
+                                  LLVMModuleSetHandle handle, const char *name,
+                                  LLVMBool exportedSymbolsOnly) {
+    JITSymbol symbol =
+        compileLayer->findSymbolIn(handle, name, exportedSymbolsOnly);
+    return new JITSymbol(symbol);
+}
+
 LLVMModuleSetHandle
 LLVM_Hs_CompileLayer_addModuleSet(CompileLayer *compileLayer,
                                   LLVMTargetDataRef dataLayout,
@@ -309,14 +317,14 @@ void LLVM_Hs_CompileLayer_removeModuleSet(CompileLayer *compileLayer,
 
 /* Constructor functions for the different object layers */
 
-ObjectLayer *LLVM_Hs_createObjectLinkingLayer() {
-    return new ObjectLayerT<ObjectLinkingLayer<>>(ObjectLinkingLayer<>());
+LinkingLayer *LLVM_Hs_createObjectLinkingLayer() {
+    return new LinkingLayerT<ObjectLinkingLayer<>>(ObjectLinkingLayer<>());
 }
 
 /* Fuctions that work on all object layers */
 
-void LLVM_Hs_ObjectLayer_dispose(ObjectLayer *objectLayer) {
-    delete objectLayer;
+void LLVM_Hs_LinkingLayer_dispose(LinkingLayer *linkingLayer) {
+    delete linkingLayer;
 }
 
 void LLVM_Hs_disposeJITSymbol(LLVMJITSymbolRef symbol) { delete symbol; }
@@ -388,8 +396,10 @@ void LLVM_Hs_disposeMangledSymbol(char *mangledSymbol) {
 LLVMJITCompileCallbackManagerRef
 LLVM_Hs_createLocalCompileCallbackManager(const char *triple,
                                           JITTargetAddress errorHandler) {
-    return llvm::orc::createLocalCompileCallbackManager(Triple(triple),
-                                                        errorHandler)
+    // We copy the string so that it can be freed on the Haskell side.
+    std::string tripleStr(triple);
+    return llvm::orc::createLocalCompileCallbackManager(
+               Triple(std::move(tripleStr)), errorHandler)
         .release();
 }
 
@@ -400,8 +410,11 @@ void LLVM_Hs_disposeCallbackManager(
 
 LLVMIndirectStubsManagerBuilderRef
 LLVM_Hs_createLocalIndirectStubsManagerBuilder(const char *triple) {
+    // We copy the string so that it can be freed on the Haskell side.
+    std::string tripleStr(triple);
     return new std::function<std::unique_ptr<IndirectStubsManager>()>(
-        llvm::orc::createLocalIndirectStubsManagerBuilder(Triple(triple)));
+        llvm::orc::createLocalIndirectStubsManagerBuilder(
+            Triple(std::move(tripleStr))));
 }
 
 void LLVM_Hs_disposeIndirectStubsManagerBuilder(

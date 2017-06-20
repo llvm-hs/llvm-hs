@@ -12,12 +12,14 @@ import qualified LLVM.Internal.FFI.DataLayout as FFI
 import qualified LLVM.Internal.FFI.OrcJIT.CompileLayer as FFI
 import qualified LLVM.Internal.FFI.OrcJIT.IRCompileLayer as FFI
 import qualified LLVM.Internal.FFI.PtrHierarchy as FFI
-import qualified LLVM.Internal.FFI.Target as FFI
 import LLVM.Internal.OrcJIT
 import LLVM.Internal.OrcJIT.CompileLayer
 import LLVM.Internal.Target
 
-data IRCompileLayer objectLayer =
+-- | 'IRCompileLayer' compiles modules immediately when they are
+-- added. It parametrized by a 'LinkingLayer' which handles linking of
+-- the generated object files.
+data IRCompileLayer linkingLayer =
   IRCompileLayer {
     compileLayer :: !(Ptr FFI.IRCompileLayer),
     dataLayout :: !(Ptr FFI.DataLayout),
@@ -30,9 +32,20 @@ instance CompileLayer (IRCompileLayer l) where
   getDataLayout = dataLayout
   getCleanups = cleanupActions
 
-withIRCompileLayer :: ObjectLayer l => l -> TargetMachine -> (IRCompileLayer l -> IO a) -> IO a
-withIRCompileLayer objectLayer (TargetMachine tm) f = flip runAnyContT return $ do
-  dl <- anyContToM $ bracket (FFI.createTargetDataLayout tm) FFI.disposeDataLayout
-  cl <- anyContToM $ bracket (FFI.createIRCompileLayer (getObjectLayer objectLayer) tm) (FFI.disposeCompileLayer . FFI.upCast)
-  cleanup <- anyContToM $ bracket (newIORef []) (sequence <=< readIORef)
-  liftIO $ f (IRCompileLayer cl dl cleanup)
+-- | Create a new 'IRCompileLayer'.
+--
+-- When the layer is no longer needed, it should be disposed using 'disposeCompileLayer.
+newIRCompileLayer :: LinkingLayer l => l -> TargetMachine -> IO (IRCompileLayer l)
+newIRCompileLayer linkingLayer (TargetMachine tm) = flip runAnyContT return $ do
+  cleanups <- liftIO (newIORef [])
+  dl <- createRegisteredDataLayout (TargetMachine tm) cleanups
+  cl <- anyContToM $
+    bracketOnError
+      (FFI.createIRCompileLayer (getLinkingLayer linkingLayer) tm)
+      (FFI.disposeCompileLayer . FFI.upCast)
+  return (IRCompileLayer cl dl cleanups)
+
+-- | 'bracket'-style wrapper around 'newIRCompileLayer' and 'disposeCompileLayer'.
+withIRCompileLayer :: LinkingLayer l => l -> TargetMachine -> (IRCompileLayer l -> IO a) -> IO a
+withIRCompileLayer linkingLayer tm =
+  bracket (newIRCompileLayer linkingLayer tm) disposeCompileLayer

@@ -188,9 +188,6 @@ library
     LLVM.Internal.FFI.Value
     LLVM.Module
     LLVM.OrcJIT
-    LLVM.OrcJIT.CompileOnDemandLayer
-    LLVM.OrcJIT.IRCompileLayer
-    LLVM.OrcJIT.IRTransformLayer
     LLVM.PassManager
     LLVM.Relocation
     LLVM.Target

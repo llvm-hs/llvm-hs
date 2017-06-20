@@ -13,10 +13,15 @@ import Foreign.C.String
 import Foreign.Ptr
 
 import LLVM.Internal.Coding
-import qualified LLVM.Internal.FFI.PtrHierarchy as FFI
+import LLVM.Internal.Target
+import qualified LLVM.Internal.FFI.DataLayout as FFI
 import qualified LLVM.Internal.FFI.LLVMCTypes as FFI
 import qualified LLVM.Internal.FFI.OrcJIT as FFI
+import qualified LLVM.Internal.FFI.PtrHierarchy as FFI
+import qualified LLVM.Internal.FFI.Target as FFI
 
+-- | A mangled symbol which can be used in 'findSymbol'. This can be
+-- created using 'mangleSymbol'.
 newtype MangledSymbol = MangledSymbol ByteString
   deriving (Show, Eq, Ord)
 
@@ -28,33 +33,44 @@ instance MonadIO m => DecodeM m MangledSymbol CString where
 
 data JITSymbolFlags =
   JITSymbolFlags {
-    jitSymbolWeak :: !Bool,
-    jitSymbolExported :: !Bool
+    jitSymbolWeak :: !Bool, -- ^ Is this a weak symbol?
+    jitSymbolExported :: !Bool -- ^ Is this symbol exported?
   }
   deriving (Show, Eq, Ord)
 
 data JITSymbol =
   JITSymbol {
-    jitSymbolAddress :: !WordPtr,
-    jitSymbolFlags :: !JITSymbolFlags
+    jitSymbolAddress :: !WordPtr, -- ^ The address of the symbol. If
+                                  -- you’ve looked up a function, you
+                                  -- need to cast this to a 'FunPtr'.
+    jitSymbolFlags :: !JITSymbolFlags -- ^ The flags of this symbol.
   }
   deriving (Show, Eq, Ord)
 
 type SymbolResolverFn = MangledSymbol -> IO JITSymbol
 
+-- | Specifies how external symbols in a module added to a
+-- 'CompielLayer' should be resolved.
 data SymbolResolver =
   SymbolResolver {
+    -- | This is used to find symbols in the same logical dynamic
+    -- library as the module referencing them.
     dylibResolver :: !SymbolResolverFn,
+    -- | When 'dylibResolver' fails to resolve a symbol,
+    -- 'externalResolver' is used as a fallback to find external symbols.
     externalResolver :: !SymbolResolverFn
   }
 
-class ObjectLayer a where
-  getObjectLayer :: a -> Ptr FFI.ObjectLayer
+-- | After a 'CompileLayer' has compiled the modules to object code,
+-- it passes the resulting object files to a 'LinkingLayer'.
+class LinkingLayer l where
+  getLinkingLayer :: l -> Ptr FFI.LinkingLayer
 
+-- | Bare bones implementation of a 'LinkingLayer'.
 newtype ObjectLinkingLayer = ObjectLinkingLayer (Ptr FFI.ObjectLinkingLayer)
 
-instance ObjectLayer ObjectLinkingLayer where
-  getObjectLayer (ObjectLinkingLayer ptr) = FFI.upCast ptr
+instance LinkingLayer ObjectLinkingLayer where
+  getLinkingLayer (ObjectLinkingLayer ptr) = FFI.upCast ptr
 
 instance Monad m => EncodeM m JITSymbolFlags FFI.JITSymbolFlags where
   encodeM f = return $ foldr1 (.|.) [
@@ -106,9 +122,23 @@ allocFunPtr cleanups alloc = mask $ \restore -> do
   modifyIORef cleanups (freeHaskellFunPtr funPtr :)
   pure funPtr
 
+-- | Dispose of a 'LinkingLayer'.
+disposeLinkingLayer :: LinkingLayer l => l -> IO ()
+disposeLinkingLayer = FFI.disposeLinkingLayer . getLinkingLayer
+
+-- | Create a new 'ObjectLinkingLayer'. This should be disposed using
+-- 'disposeLinkingLayer' when it is no longer needed.
+newObjectLinkingLayer :: IO ObjectLinkingLayer
+newObjectLinkingLayer = ObjectLinkingLayer <$> FFI.createObjectLinkingLayer
+
+-- | 'bracket'-style wrapper around 'newObjectLinkingLayer' and 'disposeLinkingLayer'.
 withObjectLinkingLayer :: (ObjectLinkingLayer -> IO a) -> IO a
-withObjectLinkingLayer f =
-  bracket
-    FFI.createObjectLinkingLayer
-    (FFI.disposeObjectLayer . FFI.upCast) $ \objectLayer ->
-      f (ObjectLinkingLayer objectLayer)
+withObjectLinkingLayer = bracket newObjectLinkingLayer disposeLinkingLayer
+
+createRegisteredDataLayout :: (MonadAnyCont IO m) => TargetMachine -> IORef [IO ()] -> m (Ptr FFI.DataLayout)
+createRegisteredDataLayout (TargetMachine tm) cleanups =
+  let createDataLayout = do
+        dl <- FFI.createTargetDataLayout tm
+        modifyIORef' cleanups (FFI.disposeDataLayout dl :)
+        pure dl
+  in anyContToM $ bracketOnError createDataLayout FFI.disposeDataLayout

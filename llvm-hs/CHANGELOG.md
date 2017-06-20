@@ -1,7 +1,13 @@
 ## Unreleased
 
-* Enable users to choose how they want to compose OrcJIT layers
-  instead of having to use the builtin variants.
+* Revamp OrcJIT API
+  * The user facing API is now exposed using `LLVM.OrcJIT`.
+  * All user facing functions have been documented.
+  * In addition the bracket-style API, there are now `new*` and
+    `dispose*` functions making it easier to ingegrate OrcJIT in
+    custom monad transformer stacks.
+  * There is a new `CompileLayer` typeclass which abstracts over the
+    various compile layers in `OrcJIT`.
 
 ## 4.1.0 (2017-05-17)
 

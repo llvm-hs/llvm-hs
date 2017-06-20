@@ -14,9 +14,11 @@ import LLVM.Internal.FFI.PtrHierarchy
 data JITSymbol
 data LambdaResolver
 
-data ObjectLayer
+data LinkingLayer
+
 data ObjectLinkingLayer
-instance ChildOf ObjectLayer ObjectLinkingLayer
+
+instance ChildOf LinkingLayer ObjectLinkingLayer
 
 newtype TargetAddress = TargetAddress Word64
 
@@ -36,8 +38,8 @@ foreign import ccall safe "LLVM_Hs_createLambdaResolver" createLambdaResolver ::
 foreign import ccall safe "LLVM_Hs_createObjectLinkingLayer" createObjectLinkingLayer ::
   IO (Ptr ObjectLinkingLayer)
 
-foreign import ccall safe "LLVM_Hs_ObjectLayer_dispose" disposeObjectLayer ::
-  Ptr ObjectLayer -> IO ()
+foreign import ccall safe "LLVM_Hs_LinkingLayer_dispose" disposeLinkingLayer ::
+  Ptr LinkingLayer -> IO ()
 
 foreign import ccall safe "LLVM_Hs_JITSymbol_getAddress" getAddress ::
   Ptr JITSymbol -> IO TargetAddress
