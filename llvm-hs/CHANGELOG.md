@@ -8,6 +8,7 @@
     custom monad transformer stacks.
   * There is a new `CompileLayer` typeclass which abstracts over the
     various compile layers in `OrcJIT`.
+* Support QuickCheck 2.10
 
 ## 4.1.0 (2017-05-17)
 

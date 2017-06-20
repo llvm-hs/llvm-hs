@@ -93,9 +93,9 @@ instance (Monad d, DecodeM d ByteString es) => DecodeM d (Map CPUFeature Bool) e
           s <- ByteString.pack <$> many1 (notWord8 (fromIntegral (ord ',')))
           return (CPUFeature s, en)
         features = liftM Map.fromList (flag `sepBy` (char8 ','))
-    case parseOnly (do f <- features; endOfInput; return f) s of
+    case parseOnly (features <* endOfInput) s of
       Right features -> return features
-      Left _ -> fail "failure to parse CPUFeature string"
+      Left err -> fail ("failure to parse CPUFeature string: " <> err)
                        
 -- | Find a 'Target' given an architecture and/or a \"triple\".
 -- | <http://llvm.org/doxygen/structllvm_1_1TargetRegistry.html#a3105b45e546c9cc3cf78d0f2ec18ad89>
