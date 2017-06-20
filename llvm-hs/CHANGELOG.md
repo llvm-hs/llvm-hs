@@ -1,4 +1,4 @@
-## Unreleased
+## 4.2.0 (2017-06-20)
 
 * Revamp OrcJIT API
   * The user facing API is now exposed using `LLVM.OrcJIT`.
