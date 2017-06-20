@@ -1,4 +1,5 @@
 {-# LANGUAGE
+  CPP,
   OverloadedStrings,
   RecordWildCards,
   ScopedTypeVariables
@@ -9,7 +10,6 @@ import Test.Tasty
 import Test.Tasty.HUnit
 import Test.Tasty.QuickCheck
 import Test.QuickCheck
-import Test.QuickCheck.Property
 
 import Control.Applicative
 import Control.Monad
@@ -53,11 +53,16 @@ instance Arbitrary Options where
     allowFloatingPointOperationFusion <- arbitrary
     return Options { .. }
 
+arbitraryASCIIString :: Gen String
+#if MIN_VERSION_QuickCheck(2,10,0)
+arbitraryASCIIString = getASCIIString <$> arbitrary
+#else
+arbitraryASCIIString = arbitrary
+#endif
+
 instance Arbitrary CPUFeature where
   arbitrary = CPUFeature . ByteString.pack <$>
-    liftA2 (:)
-      (suchThat arbitrary isAlphaNum)
-      (suchThat arbitrary (all isAlphaNum))
+    suchThat arbitraryASCIIString (\s -> not (null s) && all isAlphaNum s)
 
 tests = testGroup "Target" [
   testGroup "Options" [

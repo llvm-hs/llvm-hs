@@ -1,4 +1,4 @@
-## Unreleased
+## 4.2.0 (2017-06-20)
 
 * Revamp OrcJIT API
   * The user facing API is now exposed using `LLVM.OrcJIT`.
@@ -8,6 +8,7 @@
     custom monad transformer stacks.
   * There is a new `CompileLayer` typeclass which abstracts over the
     various compile layers in `OrcJIT`.
+* Support QuickCheck 2.10
 
 ## 4.1.0 (2017-05-17)
 
