@@ -1,3 +1,10 @@
+## unreleased
+
+* Throw 'EncodeException' when the type supplied in a
+  'GlobalReference' does not match the type of the expression.
+* Throw 'EncodeException' when the result of instructions returning
+  void is named using ':='.
+
 ## 4.2.0 (2017-06-20)
 
 * Revamp OrcJIT API

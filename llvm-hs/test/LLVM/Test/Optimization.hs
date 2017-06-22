@@ -237,7 +237,7 @@ tests = testGroup "Optimization" [
                       (ConstantOperand (C.Int 64 0), UnName 0),
                       (LocalReference i64 (Name "indvars.iv.next"), Name ".lr.ph")
                      ] [],
-                    UnName 2 := GetElementPtr True (ConstantOperand (C.GlobalReference (A.T.ArrayType 2048 i32) (Name "a"))) [ 
+                    UnName 2 := GetElementPtr True (ConstantOperand (C.GlobalReference (PointerType (A.T.ArrayType 2048 i32) (AddrSpace 0)) (Name "a"))) [
                       ConstantOperand (C.Int 64 0),
                       (LocalReference i64 (Name "indvars.iv"))
                      ] [],
