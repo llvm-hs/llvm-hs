@@ -19,6 +19,7 @@ import qualified LLVM.Test.ObjectCode as ObjectCode
 import qualified LLVM.Test.Optimization as Optimization
 import qualified LLVM.Test.OrcJIT as OrcJIT
 import qualified LLVM.Test.Target as Target
+import qualified LLVM.Test.Regression as Regression
 
 tests = testGroup "llvm-hs" [
     CallingConvention.tests,
@@ -37,5 +38,6 @@ tests = testGroup "llvm-hs" [
     Analysis.tests,
     Linking.tests,
     Instrumentation.tests,
-    ObjectCode.tests
+    ObjectCode.tests,
+    Regression.tests
   ]

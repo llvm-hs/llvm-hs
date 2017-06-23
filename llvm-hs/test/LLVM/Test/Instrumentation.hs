@@ -124,7 +124,13 @@ ast = do
           tailCallKind = Nothing,
           callingConvention = CC.C,
           returnAttributes = [],
-          function = Right (ConstantOperand (C.GlobalReference (FunctionType i32 [i32, ptr (ptr i8)] False) (Name "foo"))),
+          function = Right
+            (ConstantOperand
+              (C.GlobalReference
+                 (PointerType
+                    { pointerReferent = FunctionType i32 [i128] False
+                    , pointerAddrSpace = AddrSpace 0})
+                 (Name "foo"))),
           arguments = [
            (ConstantOperand (C.Int 128 9491828328), [])
           ],

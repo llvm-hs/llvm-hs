@@ -15,7 +15,6 @@ import qualified LLVM.Internal.FFI.Value as FFI
 import LLVM.Internal.Coding
 import LLVM.Internal.DecodeAST
 import LLVM.Internal.Type () 
-import LLVM.Internal.Constant () 
 
 import qualified LLVM.AST.Type as A
 

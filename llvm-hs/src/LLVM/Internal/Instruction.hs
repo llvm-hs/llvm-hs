@@ -585,22 +585,31 @@ instance DecodeM DecodeAST a (Ptr FFI.Instruction) => DecodeM DecodeAST (DecodeA
     w <- if t == A.VoidType then (return A.Do) else (return (A.:=) `ap` getLocalName i)
     return $ return w `ap` decodeM i
 
-instance EncodeM EncodeAST a (Ptr FFI.Instruction) => EncodeM EncodeAST (A.Named a) (Ptr FFI.Instruction) where
+guardNonVoidType :: (MonadIO m, MonadThrow m) => Ptr FFI.Instruction -> String -> m ()
+guardNonVoidType instr expr = do
+  ty <- (liftIO . runDecodeAST . typeOf) instr
+  case ty of
+    A.VoidType -> throwM (EncodeException ("Instruction of type void must not have a name: " ++ expr))
+    _ -> return ()
+
+instance (EncodeM EncodeAST a (Ptr FFI.Instruction), Show a) => EncodeM EncodeAST (A.Named a) (Ptr FFI.Instruction) where
   encodeM (A.Do o) = encodeM o
-  encodeM (n A.:= o) = do
+  encodeM assgn@(n A.:= o) = do
     i <- encodeM o
     let v = FFI.upCast i
     n' <- encodeM n
     liftIO $ FFI.setValueName v n'
     defineLocal n v
+    guardNonVoidType i (show assgn)
     return i
 
-instance EncodeM EncodeAST a (Ptr FFI.Instruction, EncodeAST ()) => EncodeM EncodeAST (A.Named a) (EncodeAST ()) where
+instance (EncodeM EncodeAST a (Ptr FFI.Instruction, EncodeAST ()), Show a) => EncodeM EncodeAST (A.Named a) (EncodeAST ()) where
   encodeM (A.Do o) = liftM snd $ (encodeM o :: EncodeAST (Ptr FFI.Instruction, EncodeAST ()))
-  encodeM (n A.:= o) = do
+  encodeM assgn@(n A.:= o) = do
     (i, later) <- encodeM o
     let v = FFI.upCast (i :: Ptr FFI.Instruction)
     n' <- encodeM n
     liftIO $ FFI.setValueName v n'
     defineLocal n v
+    guardNonVoidType i (show assgn)
     return later

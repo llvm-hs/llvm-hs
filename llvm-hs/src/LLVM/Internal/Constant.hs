@@ -13,9 +13,10 @@ import qualified Language.Haskell.TH.Quote as TH
 import qualified LLVM.Internal.InstructionDefs as ID
 
 import Data.Bits
-import Control.Monad.State (get, gets, modify, evalState)
 import Control.Monad.AnyCont
+import Control.Monad.Catch
 import Control.Monad.IO.Class
+import Control.Monad.State (get, gets, modify, evalState)
 
 import qualified Data.Map as Map
 import Foreign.Ptr
@@ -39,13 +40,15 @@ import qualified LLVM.AST.IntegerPredicate as A (IntegerPredicate)
 import qualified LLVM.AST.FloatingPointPredicate as A (FloatingPointPredicate)
 import qualified LLVM.AST.Float as A.F
 
+import LLVM.Exception
 import LLVM.Internal.Coding
+import LLVM.Internal.Context
 import LLVM.Internal.DecodeAST
 import LLVM.Internal.EncodeAST
-import LLVM.Internal.Context
-import LLVM.Internal.Type ()
-import LLVM.Internal.IntegerPredicate ()
 import LLVM.Internal.FloatingPointPredicate ()
+import LLVM.Internal.IntegerPredicate ()
+import LLVM.Internal.Type ()
+import LLVM.Internal.Value
 
 allocaWords :: forall a m . (Storable a, MonadAnyCont IO m, Monad m, MonadIO m) => Word32 -> m (Ptr a)
 allocaWords nBits = do
@@ -89,7 +92,14 @@ instance EncodeM EncodeAST A.Constant (Ptr FFI.Constant) where
                     A.F.PPC_FP128 _ _ -> FFI.floatSemanticsPPCDoubleDouble
       nBits <- encodeM nBits
       liftIO $ FFI.constantFloatOfArbitraryPrecision context nBits words fpSem
-    A.C.GlobalReference _ n -> FFI.upCast <$> referGlobal n
+    A.C.GlobalReference ty n -> do
+      ref <- FFI.upCast <$> referGlobal n
+      ty' <- (liftIO . runDecodeAST . typeOf) ref
+      if ty /= ty'
+        then throwM
+               (EncodeException
+                  ("The serialized GlobalReference has type " ++ show ty' ++ " but should have type " ++ show ty))
+        else return ref
     A.C.BlockAddress f b -> do
       f' <- referGlobal f
       b' <- getBlockForAddress f b
