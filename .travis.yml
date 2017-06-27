@@ -7,8 +7,8 @@ cache:
   directories:
     - $HOME/.cabal/packages
     - $HOME/.cabal/store
-    - $HOME/llvm-build-4.0.0
-    - $HOME/llvm-src-4.0.0
+    - $HOME/llvm-build-4.0.1
+    - $HOME/llvm-src-4.0.1
 
 before_cache:
   - rm -fv $HOME/.cabal/packages/hackage.haskell.org/build-reports.log
@@ -18,7 +18,7 @@ env:
   global:
     - GCC=gcc-5
     - GXX=g++-5
-    - LLVM_VER=4.0.0
+    - LLVM_VER=4.0.1
 
 matrix:
   include:
