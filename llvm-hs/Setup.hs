@@ -164,7 +164,7 @@ main = do
                     libBuildInfo =
                       mempty {
                         ccOptions = llvmCxxFlags,
-                        extraLibs = stdLib : libs ++ systemLibs
+                        extraLibs = libs ++ stdLib : systemLibs
                       }
                   }
               }
