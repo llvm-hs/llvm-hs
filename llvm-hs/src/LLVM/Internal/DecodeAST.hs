@@ -46,8 +46,8 @@ data DecodeState = DecodeState {
     metadataNodesToDefine :: Seq (A.MetadataNodeID, Ptr FFI.MDNode),
     metadataNodes :: Map (Ptr FFI.MDNode) A.MetadataNodeID,
     metadataKinds :: Array Word ShortByteString,
-    parameterAttributeSets :: Map FFI.ParameterAttributeSet [A.A.ParameterAttribute],
-    functionAttributeSetIDs :: Map FFI.FunctionAttributeSet A.A.GroupID,
+    parameterAttributeLists :: Map FFI.ParameterAttributeSet [A.A.ParameterAttribute],
+    functionAttributeListIDs :: [(FFI.FunctionAttributeSet, A.A.GroupID)],
     comdats :: Map (Ptr FFI.COMDAT) (ShortByteString, A.COMDAT.SelectionKind)
   }
 initialDecode = DecodeState {
@@ -59,8 +59,8 @@ initialDecode = DecodeState {
     metadataNodesToDefine = Seq.empty,
     metadataNodes = Map.empty,
     metadataKinds = Array.listArray (1,0) [],
-    parameterAttributeSets = Map.empty,
-    functionAttributeSetIDs = Map.empty,
+    parameterAttributeLists = Map.empty,
+    functionAttributeListIDs = [],
     comdats = Map.empty
   }
 newtype DecodeAST a = DecodeAST { unDecodeAST :: AnyContT (StateT DecodeState IO) a }
@@ -164,10 +164,15 @@ instance DecodeM DecodeAST A.Name (Ptr FFI.BasicBlock) where
 
 getAttributeGroupID :: FFI.FunctionAttributeSet -> DecodeAST A.A.GroupID
 getAttributeGroupID p = do
-  ids <- gets functionAttributeSetIDs
-  case Map.lookup p ids of
-    Just r -> return r
+  ids <- gets functionAttributeListIDs
+  -- What we are interested in is the AttributeSetNode inside the
+  -- AttributeSet but LLVM does not expose this. We thus have to
+  -- resort to doing a linear scan and using the operator== which is
+  -- implemented as a comparison on those AttributeSetNodes.
+  id <- liftIO (findM (\(as, _) -> decodeM =<< FFI.attributeSetsEqual as p) ids)
+  case id of
     Nothing -> do
-      let r = A.A.GroupID (fromIntegral (Map.size ids))
-      modify $ \s -> s { functionAttributeSetIDs = Map.insert p r (functionAttributeSetIDs s) }
+      let r = A.A.GroupID (fromIntegral (length ids))
+      modify $ \s -> s { functionAttributeListIDs = (p,r) : functionAttributeListIDs s }
       return r
+    Just (_, id') -> return id'

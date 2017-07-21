@@ -336,7 +336,7 @@ withModuleFromAST context@(Context c) (A.Module moduleId sourceFileName dataLayo
          defineGlobal fName f
          cc <- encodeM cc
          liftIO $ FFI.setFunctionCallingConvention f cc
-         setFunctionAttributes f (MixedAttributeSet attrs rAttrs (Map.fromList $ zip [0..] [pa | A.Parameter _ _ pa <- args]))
+         setFunctionAttributes f (AttributeList attrs rAttrs [pa | A.Parameter _ _ pa <- args])
          setPrefixData f prefix
          setSection f (A.G.section g)
          setCOMDAT f (A.G.comdat g)
@@ -436,7 +436,7 @@ decodeFunctions mod = do
     localScope $ do
       A.PointerType (A.FunctionType returnType _ isVarArg) _ <- typeOf f
       n <- getGlobalName f
-      MixedAttributeSet fAttrs rAttrs pAttrs <- getMixedAttributeSet f
+      AttributeList fAttrs rAttrs pAttrs <- getAttributeList f
       parameters <- getParameters f pAttrs
       decodeBlocks <- do
         ffiBasicBlocks <-
@@ -517,7 +517,7 @@ moduleAST m = runDecodeAST $ do
       namedMetadata <- decodeNamedMetadataDefinitions mod
       metadata <- getMetadataDefinitions
       functionAttributes <- do
-        functionAttributes <- gets $ Map.toList . functionAttributeSetIDs
+        functionAttributes <- gets $ functionAttributeListIDs
         forM functionAttributes $ \(as, gid) ->
           A.FunctionAttributes <$> return gid <*> decodeM as
       comdats <- gets $ map (uncurry A.COMDAT) . Map.elems . comdats

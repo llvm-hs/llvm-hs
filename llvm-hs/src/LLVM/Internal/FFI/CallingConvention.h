@@ -24,7 +24,7 @@
   macro(SPIR_KERNEL, 76)                                \
   macro(Intel_OCL_BI, 77)                               \
   macro(X86_64_SysV, 78)                                \
-  macro(X86_64_Win64, 79)
+  macro(Win64, 79)
 
 typedef enum {
 #define ENUM_CASE(l,n) LLVM_Hs_CallingConvention_ ## l = n,

@@ -109,7 +109,7 @@ data MemoryOrdering
 -- | <http://llvm.org/docs/LangRef.html#singlethread>
 data SynchronizationScope
   = SingleThread
-  | CrossThread
+  | System
   deriving (Eq, Ord, Read, Show, Data, Typeable, Generic)
 
 -- | An 'Atomicity' describes constraints on the visibility of effects of an atomic instruction

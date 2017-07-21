@@ -27,7 +27,7 @@ data CallingConvention
   | SPIR_KERNEL
   | Intel_OCL_BI
   | X86_64_SysV
-  | X86_64_Win64
+  | Win64
   | Numbered Word32
   deriving (Eq, Read, Show, Typeable, Data, Generic)
 

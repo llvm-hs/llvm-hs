@@ -2,6 +2,7 @@
   MultiParamTypeClasses,
   ConstraintKinds,
   QuasiQuotes,
+  ScopedTypeVariables,
   UndecidableInstances,
   RankNTypes
   #-}
@@ -13,6 +14,7 @@ import Control.Monad.AnyCont
 import Control.Monad.IO.Class
 import Control.Monad.State (gets)
 
+import Control.Exception
 import Foreign.C (CUInt)
 import Foreign.Ptr
 import Data.Either
@@ -202,28 +204,27 @@ allocaAttrBuilder = do
     FFI.destroyAttrBuilder ab
     return r
 
-instance EncodeM EncodeAST a (Ptr (FFI.AttrBuilder b) -> EncodeAST ()) => EncodeM EncodeAST (FFI.Index, [a]) (FFI.AttributeSet b) where
-  encodeM (index, as) = scopeAnyCont $ do
+instance forall a b. EncodeM EncodeAST a (Ptr (FFI.AttrBuilder b) -> EncodeAST ()) =>
+         EncodeM EncodeAST [a] (FFI.AttributeSet b) where
+  encodeM as = do
     ab <- allocaAttrBuilder
     builds <- mapM encodeM as
     void (forM builds ($ ab) :: EncodeAST [()])
     Context context <- gets encodeStateContext
-    liftIO $ FFI.getAttributeSet context index ab
+    anyContToM
+      (bracket (FFI.getAttributeSet context ab) FFI.disposeAttributeSet)
 
-instance EncodeM EncodeAST [A.FA.FunctionAttribute] FFI.FunctionAttributeSet where
-  encodeM fas = encodeM (FFI.functionIndex, fas)
-
-instance DecodeM DecodeAST a (FFI.Attribute b) => DecodeM DecodeAST [a] (FFI.AttributeSet b) where
+instance forall a b. DecodeM DecodeAST a (FFI.Attribute b) => DecodeM DecodeAST [a] (FFI.AttributeSet b) where
   decodeM as = do
-    np <- alloca
-    as <- liftIO $ FFI.attributeSetGetAttributes as 0 np
-    n <- peek np
-    decodeM (n, as)
+    numAttributes <- liftIO (FFI.getNumAttributes as)
+    attrs <- allocaArray numAttributes
+    liftIO (FFI.getAttributes as attrs)
+    decodeM (numAttributes, attrs :: Ptr (FFI.Attribute b))
             
-data MixedAttributeSet = MixedAttributeSet {
+data AttributeList = AttributeList {
     functionAttributes :: [Either A.FA.GroupID A.FA.FunctionAttribute],
     returnAttributes :: [A.PA.ParameterAttribute],
-    parameterAttributes :: Map CUInt [A.PA.ParameterAttribute]
+    parameterAttributes :: [[A.PA.ParameterAttribute]]
   }
   deriving (Eq, Show)
 
@@ -233,47 +234,53 @@ data PreSlot
   | ReturnAttributes [A.PA.ParameterAttribute]
   | ParameterAttributes CUInt [A.PA.ParameterAttribute]    
 
-instance EncodeM EncodeAST PreSlot FFI.MixedAttributeSet where
-  encodeM preSlot = do
-    let forget = liftM FFI.forgetAttributeType
-    case preSlot of
-      IndirectFunctionAttributes gid -> forget (referAttributeGroup gid)
-      DirectFunctionAttributes fas -> forget (encodeM fas :: EncodeAST FFI.FunctionAttributeSet)
-      ReturnAttributes as -> forget (encodeM (FFI.returnIndex, as) :: EncodeAST FFI.ParameterAttributeSet)
-      ParameterAttributes i as -> forget (encodeM (fromIntegral (i + 1) :: FFI.Index, as) :: EncodeAST FFI.ParameterAttributeSet)
-
-instance EncodeM EncodeAST MixedAttributeSet FFI.MixedAttributeSet where
-  encodeM (MixedAttributeSet fAttrs rAttrs pAttrs) = do
-    let directP = DirectFunctionAttributes (rights fAttrs)
-        indirectPs = map IndirectFunctionAttributes (lefts fAttrs)
-        returnP = ReturnAttributes rAttrs
-        paramPs = [ ParameterAttributes x as | (x, as) <- Map.toList pAttrs ]
-    (nAttrs, attrs) <- encodeM ([directP, returnP] ++ indirectPs ++ paramPs)
+instance {-# OVERLAPPING #-} EncodeM EncodeAST [Either A.FA.GroupID A.FA.FunctionAttribute] FFI.FunctionAttributeSet where
+  encodeM attrs = do
+    ab <- allocaAttrBuilder
+    forM_ attrs $ \attr ->
+      case attr of
+        Left groupId -> do
+          attrSet <- referAttributeGroup groupId
+          ab' <- liftIO (FFI.attrBuilderFromSet attrSet)
+          liftIO (FFI.mergeAttrBuilder ab ab')
+        Right attr -> do
+          addAttr <- encodeM attr
+          addAttr ab :: EncodeAST ()
     Context context <- gets encodeStateContext
-    liftIO $ FFI.mixAttributeSets context attrs nAttrs
+    anyContToM
+      (bracket (FFI.getAttributeSet context ab) FFI.disposeAttributeSet)
 
-instance DecodeM DecodeAST MixedAttributeSet FFI.MixedAttributeSet where
-  decodeM mas = do
-    numSlots <- if mas == nullPtr then return 0 else liftIO $ FFI.attributeSetNumSlots mas
-    slotIndexes <- forM (take (fromIntegral numSlots) [0..]) $ \s -> do
-      i <- liftIO $ FFI.attributeSetSlotIndex mas s
-      return (i, s)
-    let separate :: Ord k => k -> Map k a -> (Maybe a, Map k a)
-        separate = Map.updateLookupWithKey (\_ _ -> Nothing)
-        indexedSlots = Map.fromList slotIndexes
-    unless (Map.size indexedSlots == length slotIndexes) $
-           fail "unexpected slot index collision decoding mixed AttributeSet"
-    let (functionSlot, otherSlots) = separate FFI.functionIndex (Map.fromList slotIndexes)
-    functionAnnotation <- for (maybeToList functionSlot) $ \slot -> do
-      a <- liftIO $ FFI.attributeSetSlotAttributes mas slot
-      getAttributeGroupID a
-    otherAttributeSets <- for otherSlots $ \slot -> do
-      a <- liftIO $ FFI.attributeSetSlotAttributes mas slot
-      decodeM (a :: FFI.ParameterAttributeSet)
-    let (returnAttributeSet, shiftedParameterAttributeSets) = separate FFI.returnIndex otherAttributeSets
-    return $ MixedAttributeSet {
-                  functionAttributes = fmap Left functionAnnotation,
-                  returnAttributes = join . maybeToList $ returnAttributeSet,
-                  parameterAttributes = Map.mapKeysMonotonic (\x -> fromIntegral x - 1) shiftedParameterAttributeSets
-                }
+instance EncodeM EncodeAST AttributeList FFI.AttributeList where
+  encodeM (AttributeList fAttrs rAttrs pAttrs) = do
+    fAttrSet <- encodeM fAttrs
+    rAttrSet <- encodeM rAttrs :: EncodeAST FFI.ParameterAttributeSet
+    (numPAttrs, pAttrSets) <- encodeM pAttrs
+    Context context <- gets encodeStateContext
+    liftIO $
+      FFI.buildAttributeList context fAttrSet rAttrSet pAttrSets numPAttrs
 
+instance DecodeM DecodeAST AttributeList (FFI.AttrSetDecoder a, a) where
+  decodeM (FFI.AttrSetDecoder attrsAtIndex countParams, a) = do
+    functionAttrSet <-
+      do attrSet <-
+           liftIO (attrsAtIndex a FFI.functionIndex) :: DecodeAST FFI.FunctionAttributeSet
+         hasAttributes <-
+           decodeM =<< liftIO (FFI.attributeSetHasAttributes attrSet)
+         if hasAttributes
+           then Just . Left <$> getAttributeGroupID attrSet
+           else return Nothing
+    returnAttrs <-
+      do attrSet <-
+           liftIO (attrsAtIndex a FFI.returnIndex) :: DecodeAST FFI.ParameterAttributeSet
+         decodeM attrSet
+    numParams <- liftIO (countParams a)
+    paramAttrs <-
+      forM [1 .. numParams] $ \i ->
+        decodeM =<<
+        (liftIO (attrsAtIndex a (FFI.AttributeIndex i)) :: DecodeAST FFI.ParameterAttributeSet)
+    return
+      (AttributeList
+       { functionAttributes = maybeToList functionAttrSet
+       , returnAttributes = returnAttrs
+       , parameterAttributes = paramAttrs
+       })

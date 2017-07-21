@@ -1,7 +1,6 @@
 #define __STDC_LIMIT_MACROS
 
 #include <iostream>
-#include "LLVM/Internal/FFI/Metadata.hpp"
 #include "llvm/Support/FormattedStream.h"
 
 #include "llvm/Config/llvm-config.h"

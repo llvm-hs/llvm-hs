@@ -1,5 +1,6 @@
-## unreleased
+## 5.0.0 (unreleased)
 
+* Support for LLVM 5.0
 * Throw 'EncodeException' when the type supplied in a
   'GlobalReference' does not match the type of the expression.
 * Throw 'EncodeException' when the result of instructions returning

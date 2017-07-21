@@ -34,6 +34,7 @@ data FunctionAttribute
     | SanitizeAddress
     | SanitizeThread
     | SanitizeMemory
+    | Speculatable
     | StringAttribute {
         stringAttributeKind :: ShortByteString,
         stringAttributeValue :: ShortByteString -- ^ Use "" for no value -- the two are conflated

@@ -95,9 +95,11 @@ instance MonadIO m => EncodeM m JITSymbol (Ptr FFI.JITSymbol -> IO ()) where
     flags' <- encodeM flags
     FFI.setJITSymbol jitSymbol (FFI.TargetAddress (fromIntegral addr)) flags'
 
-instance MonadIO m => DecodeM m JITSymbol (Ptr FFI.JITSymbol) where
+instance (MonadIO m, MonadAnyCont IO m) => DecodeM m JITSymbol (Ptr FFI.JITSymbol) where
   decodeM jitSymbol = do
-    FFI.TargetAddress addr <- liftIO $ FFI.getAddress jitSymbol
+    errMsg <- alloca
+    FFI.TargetAddress addr <- liftIO $ FFI.getAddress jitSymbol errMsg
+    -- TODO read error message and throw exception
     flags <- liftIO $ decodeM =<< FFI.getFlags jitSymbol
     return (JITSymbol (fromIntegral addr) flags)
 

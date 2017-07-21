@@ -56,6 +56,6 @@ tests = testGroup "CallingConvention" [
    ("spir_kernel", CC.SPIR_KERNEL),
    ("intel_ocl_bicc", CC.Intel_OCL_BI),
    ("x86_64_sysvcc", CC.X86_64_SysV),
-   ("x86_64_win64cc", CC.X86_64_Win64)
+   ("win64cc", CC.Win64)
   ]
  ]

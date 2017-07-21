@@ -34,6 +34,12 @@ foreign import ccall unsafe "LLVM_Hs_SetTargetOptionFlag" setTargetOptionFlag ::
 foreign import ccall unsafe "LLVM_Hs_GetTargetOptionFlag" getTargetOptionsFlag ::
   Ptr TargetOptions -> TargetOptionFlag -> IO LLVMBool
 
+foreign import ccall unsafe "LLVM_Hs_GetCompressDebugSections" getCompressDebugSections ::
+  Ptr TargetOptions -> IO DebugCompressionType
+
+foreign import ccall unsafe "LLVM_Hs_SetCompressDebugSections" setCompressDebugSections ::
+  Ptr TargetOptions -> DebugCompressionType -> IO ()
+
 foreign import ccall unsafe "LLVM_Hs_SetStackAlignmentOverride" setStackAlignmentOverride ::
   Ptr TargetOptions -> CUInt -> IO ()
 

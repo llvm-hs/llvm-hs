@@ -2,10 +2,10 @@ module LLVM.OrcJIT (
     -- * CompileLayer
     CompileLayer,
     -- ** Add/remove modules
-    ModuleSetHandle,
-    addModuleSet,
-    removeModuleSet,
-    withModuleSet,
+    ModuleHandle,
+    addModule,
+    removeModule,
+    withModule,
     -- ** Search for symbols
     findSymbol,
     findSymbolIn,

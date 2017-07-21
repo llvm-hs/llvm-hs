@@ -48,22 +48,22 @@ static FloatABI::ABIType unwrap(LLVM_Hs_FloatABI x) {
   }
 }
 
-static LibFunc::Func unwrap(LLVMLibFunc x) {
+static LibFunc unwrap(LLVMLibFunc x) {
   switch (x) {
 #define ENUM_CASE(x)                                                           \
   case LLVMLibFunc__##x:                                                       \
-    return LibFunc::x;
+    return LibFunc_ ## x;
     LLVM_HS_FOR_EACH_LIB_FUNC(ENUM_CASE)
 #undef ENUM_CASE
   default:
-    return LibFunc::Func(0);
+    return LibFunc(0);
   }
 }
 
-static LLVMLibFunc wrap(LibFunc::Func x) {
+static LLVMLibFunc wrap(LibFunc x) {
   switch (x) {
 #define ENUM_CASE(x)                                                           \
-  case LibFunc::x:                                                             \
+  case LibFunc_ ## x:                                                             \
     return LLVMLibFunc__##x;
     LLVM_HS_FOR_EACH_LIB_FUNC(ENUM_CASE)
 #undef ENUM_CASE
@@ -146,6 +146,42 @@ void LLVM_Hs_SetTargetOptionFlag(TargetOptions *to,
     LLVM_HS_FOR_EACH_TARGET_OPTION_FLAG(ENUM_CASE)
 #undef ENUM_CASE
   }
+}
+
+static llvm::DebugCompressionType unwrap(LLVM_Hs_DebugCompressionType compressionType) {
+    switch(compressionType) {
+#define ENUM_CASE(op)                                \
+        case LLVM_Hs_DebugCompressionType_ ## op:    \
+            return llvm::DebugCompressionType::op;
+        LLVM_HS_FOR_EACH_DEBUG_COMPRESSION_TYPE(ENUM_CASE)
+#undef ENUM_CASE
+    default:
+            assert(false && "Unknown debug compression type");
+        return llvm::DebugCompressionType::None;
+    }
+}
+
+static LLVM_Hs_DebugCompressionType wrap(llvm::DebugCompressionType compressionType) {
+    switch(compressionType) {
+#define ENUM_CASE(op)                                   \
+        case llvm::DebugCompressionType::op:            \
+            return LLVM_Hs_DebugCompressionType_ ## op;
+        LLVM_HS_FOR_EACH_DEBUG_COMPRESSION_TYPE(ENUM_CASE)
+#undef ENUM_CASE
+    default: {
+            assert(false && "Unknown debug compression type");
+            return LLVM_Hs_DebugCompressionType_None;
+        }
+    }
+}
+
+void LLVM_Hs_SetCompressDebugSections(TargetOptions *to,
+                                      LLVM_Hs_DebugCompressionType compress) {
+    to->CompressDebugSections = unwrap(compress);
+}
+
+LLVM_Hs_DebugCompressionType LLVM_Hs_GetCompressDebugSections(TargetOptions* to) {
+    return wrap(to->CompressDebugSections);
 }
 
 unsigned LLVM_Hs_GetTargetOptionFlag(TargetOptions *to,
@@ -241,7 +277,7 @@ LLVMBool LLVM_Hs_GetLibFunc(
 	const char *funcName,
 	LLVMLibFunc *f
 ) {
-	LibFunc::Func func;
+	LibFunc func;
 	LLVMBool result = unwrap(l)->getLibFunc(funcName, func);
 	*f = wrap(func);
 	return result;

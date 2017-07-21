@@ -21,11 +21,11 @@ foreign import ccall unsafe "LLVMGetFunctionCallConv" getFunctionCallingConventi
 foreign import ccall unsafe "LLVMSetFunctionCallConv" setFunctionCallingConvention ::
   Ptr Function -> CallingConvention -> IO ()
 
-foreign import ccall unsafe "LLVM_Hs_GetFunctionMixedAttributeSet" getMixedAttributeSet ::
-  Ptr Function -> IO MixedAttributeSet
+foreign import ccall unsafe "LLVM_Hs_SetFunctionAttributeList" setAttributeList ::
+  Ptr Function -> AttributeList -> IO ()
 
-foreign import ccall unsafe "LLVM_Hs_SetFunctionMixedAttributeSet" setMixedAttributeSet ::
-  Ptr Function -> MixedAttributeSet -> IO ()
+foreign import ccall unsafe "LLVM_Hs_FunctionAttributesAtIndex" attributesAtIndex ::
+  Ptr Function -> AttributeIndex -> IO (AttributeSet b)
 
 foreign import ccall unsafe "LLVMGetFirstBasicBlock" getFirstBasicBlock ::
   Ptr Function -> IO (Ptr BasicBlock)

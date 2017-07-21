@@ -289,7 +289,7 @@ tests = testGroup "Module" [
 
   testCase "moduleAST" $ withContext $ \context -> do
     ast <- withModuleFromLLVMAssembly' context handString moduleAST
-    ast @?= handAST,
+    assertEqPretty ast handAST,
     
   testCase "withModuleFromAST" $ withContext $ \context -> do
     s <- withModuleFromAST context handAST moduleLLVMAssembly

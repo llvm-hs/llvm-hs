@@ -1,5 +1,6 @@
 {-# LANGUAGE
-  ForeignFunctionInterface
+  ForeignFunctionInterface,
+  RankNTypes
   #-}
 module LLVM.Internal.FFI.Attribute where
 
@@ -11,7 +12,6 @@ import Foreign.Ptr
 import LLVM.Internal.FFI.Context
 import LLVM.Internal.FFI.LLVMCTypes
 
-type Index = CInt
 type Slot = CUInt
 type IntValue = Word64
 
@@ -19,24 +19,14 @@ type IntValue = Word64
 Data model:
 llvm::Attribute is one function or parameter attribute
 
-llvm::AttributeSet is a mess.
-It's used to represent, at different times:
-a) the set of parameter attributes on a parameter
-b) the set of parameter attributes for a functions return value
-c) the set of function attributes for a function
-d) All of the above
+llvm::AttributeSet stores a set of function, return or parameter attributes
 
-It is only possible to enumerate the attributes in an attribute set
-given a "slot".
+llvm::AttributeList stores the AttributeSet for the function itself,
+the return value and for the functions parameters.
 
 Encode path:
-Use AttrBuilder on the C++ side only, to implement [Attribute] -> AttributeSet
-AttributeSets -> whole AttributeSet
-
-Decode strategy:
-Store maps of AttributeSetImpl (Mess | Parameter | Function),
-keyed by raw pointer. Expect Parameter and Function AttributeSetImpls
-to have only one slot. Use the per-slot iterators to decode them
+Use AttrBuilder on the C++ side only, to implement [Attribute] -> AttributeList
+AttributeLists -> whole AttributeList
 -}
 
 data MixedAttributeType
@@ -44,23 +34,31 @@ data FunctionAttributeType
 data ParameterAttributeType
 data AttributeImpl a
 data AttributeSetImpl a
+data AttributeListImpl
 
 type Attribute a = Ptr (AttributeImpl a)
 type FunctionAttribute = Attribute FunctionAttributeType
 type ParameterAttribute = Attribute ParameterAttributeType
+newtype AttributeIndex = AttributeIndex CUInt
 
 type AttributeSet a = Ptr (AttributeSetImpl a)
-type MixedAttributeSet = AttributeSet MixedAttributeType
+-- type MixedAttributeSet = AttributeSet MixedAttributeType
 type FunctionAttributeSet = AttributeSet FunctionAttributeType
 type ParameterAttributeSet = AttributeSet ParameterAttributeType
+type AttributeList = Ptr AttributeListImpl
 
 forgetAttributeType :: AttributeSet a -> AttributeSet MixedAttributeType
 forgetAttributeType = castPtr
 
-functionIndex :: Index
-functionIndex = -1
-returnIndex :: Index
-returnIndex = 0
+functionIndex :: AttributeIndex
+functionIndex = AttributeIndex (-1)
+returnIndex :: AttributeIndex
+returnIndex = AttributeIndex 0
+
+data AttrSetDecoder a = AttrSetDecoder {
+    attrSetDecoderAttributesAtIndex :: forall b. a -> AttributeIndex -> IO (AttributeSet b),
+    attrSetDecoderCountParams :: a -> IO CUInt
+  }
 
 foreign import ccall unsafe "LLVM_Hs_AttributeKindAsEnum" parameterAttributeKindAsEnum ::
   ParameterAttribute -> IO ParameterAttributeKind
@@ -80,23 +78,32 @@ foreign import ccall unsafe "LLVM_Hs_AttributeValueAsString" attributeValueAsStr
 foreign import ccall unsafe "LLVM_Hs_AttributeValueAsInt" attributeValueAsInt ::
   Attribute a -> IO Word64
 
-foreign import ccall unsafe "LLVM_Hs_AttributeSetNumSlots" attributeSetNumSlots ::
-  AttributeSet a -> IO Slot
+foreign import ccall unsafe "LLVM_Hs_getNumAttributes" getNumAttributes ::
+  AttributeSet a -> IO CUInt
 
-foreign import ccall unsafe "LLVM_Hs_AttributeSetSlotIndex" attributeSetSlotIndex ::
-  AttributeSet a -> Slot -> IO Index
+foreign import ccall unsafe "LLVM_Hs_getAttributes" getAttributes ::
+  AttributeSet a -> Ptr (Attribute a) -> IO ()
 
-foreign import ccall unsafe "LLVM_Hs_AttributeSetSlotAttributes" attributeSetSlotAttributes ::
-  MixedAttributeSet -> Slot -> IO (AttributeSet a)
+foreign import ccall unsafe "LLVM_Hs_GetAttributeList" getAttributeList ::
+  Ptr Context -> AttributeIndex -> AttributeSet a -> IO AttributeList
 
-foreign import ccall unsafe "LLVM_Hs_AttributeSetGetAttributes" attributeSetGetAttributes ::
-  AttributeSet a -> Slot -> Ptr CUInt -> IO (Ptr (Attribute a))
+foreign import ccall unsafe "LLVM_Hs_BuildAttributeList" buildAttributeList ::
+  Ptr Context -> FunctionAttributeSet -> ParameterAttributeSet -> Ptr ParameterAttributeSet -> CUInt -> IO AttributeList
+
+foreign import ccall unsafe "LLVM_Hs_DisposeAttributeList" disposeAttributeList ::
+  AttributeList -> IO ()
 
 foreign import ccall unsafe "LLVM_Hs_GetAttributeSet" getAttributeSet ::
-  Ptr Context -> Index -> Ptr (AttrBuilder a) -> IO (AttributeSet a)
+  Ptr Context -> Ptr (AttrBuilder a) -> IO (AttributeSet a)
 
-foreign import ccall unsafe "LLVM_Hs_MixAttributeSets" mixAttributeSets ::
-  Ptr Context -> Ptr MixedAttributeSet -> CUInt -> IO MixedAttributeSet
+foreign import ccall unsafe "LLVM_Hs_DisposeAttributeSet" disposeAttributeSet ::
+  AttributeSet a -> IO ()
+
+foreign import ccall unsafe "LLVM_Hs_AttributeSetsEqual" attributeSetsEqual ::
+  AttributeSet a -> AttributeSet a -> IO LLVMBool
+
+foreign import ccall unsafe "LLVM_Hs_AttributeSetHasAttributes" attributeSetHasAttributes ::
+  AttributeSet a -> IO LLVMBool
 
 data AttrBuilder a
 type FunctionAttrBuilder = AttrBuilder FunctionAttributeType
@@ -104,6 +111,12 @@ type ParameterAttrBuilder = AttrBuilder ParameterAttributeType
 
 foreign import ccall unsafe "LLVM_Hs_GetAttrBuilderSize" getAttrBuilderSize ::
   CSize
+
+foreign import ccall unsafe "LLVM_Hs_AttrBuilderFromAttrSet" attrBuilderFromSet ::
+  AttributeSet a -> IO (Ptr (AttrBuilder a))
+
+foreign import ccall unsafe "LLVM_Hs_AttrBuilderMerge" mergeAttrBuilder ::
+  Ptr (AttrBuilder a) -> Ptr (AttrBuilder a) -> IO ()
 
 foreign import ccall unsafe "LLVM_Hs_ConstructAttrBuilder" constructAttrBuilder ::
   Ptr Word8 -> IO (Ptr (AttrBuilder a))

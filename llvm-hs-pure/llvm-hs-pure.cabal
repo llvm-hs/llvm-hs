@@ -1,5 +1,5 @@
 name: llvm-hs-pure
-version: 4.1.0.0
+version: 5.0.0
 license: BSD3
 license-file: LICENSE
 author: Anthony Cowley, Stephen Diehl, Moritz Kiefer <moritz.kiefer@purelyfunctional.org>, Benjamin S. Scarlet
@@ -22,7 +22,7 @@ extra-source-files: CHANGELOG.md
 source-repository head
   type: git
   location: git://github.com/llvm-hs/llvm-hs.git
-  branch: llvm-4
+  branch: llvm-5
 
 flag semigroups
   description: Add semigroups to build-depends for Data.List.NonEmpty. This will be selected automatically by cabal.

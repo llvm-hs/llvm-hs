@@ -1,3 +1,7 @@
+## 5.0.0 (unreleased)
+
+* Support for LLVM 5.0
+
 ## 4.1.0 (2017-05-17)
 
 * Switch AST to `ByteString`/`ShortByteString` reflecting LLVM’s use

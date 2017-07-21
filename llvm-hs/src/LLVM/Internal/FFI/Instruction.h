@@ -27,7 +27,7 @@
 
 #define LLVM_HS_FOR_EACH_SYNCRONIZATION_SCOPE(macro) \
 	macro(SingleThread) \
-	macro(CrossThread)
+	macro(System)
 
 typedef enum {
 #define ENUM_CASE(x) LLVM ## x ## SynchronizationScope,
@@ -35,21 +35,23 @@ LLVM_HS_FOR_EACH_SYNCRONIZATION_SCOPE(ENUM_CASE)
 #undef ENUM_CASE
 } LLVMSynchronizationScope;
 
+/* The last parameter to the macro indicates whether the set<param> function takes a boolean argument or not */
 #define LLVM_HS_FOR_EACH_FAST_MATH_FLAG(macro) \
-	macro(UnsafeAlgebra, unsafeAlgebra)								\
-	macro(NoNaNs, noNaNs)															\
-	macro(NoInfs, noInfs)															\
-	macro(NoSignedZeros, noSignedZeros)								\
-	macro(AllowReciprocal, allowReciprocal)
+	macro(UnsafeAlgebra, unsafeAlgebra, F)								\
+	macro(NoNaNs, noNaNs, F)                                              \
+	macro(NoInfs, noInfs, F)                                              \
+	macro(NoSignedZeros, noSignedZeros, F)								\
+	macro(AllowReciprocal, allowReciprocal, F)                            \
+    macro(AllowContract, allowContract, T)
 
 typedef enum {
-#define ENUM_CASE(x,l) LLVM ## x ## Bit,
+#define ENUM_CASE(x,l,takesArg) LLVM ## x ## Bit,
 LLVM_HS_FOR_EACH_FAST_MATH_FLAG(ENUM_CASE)
 #undef ENUM_CASE
 } LLVMFastMathFlagBit;
 
 typedef enum {
-#define ENUM_CASE(x,l) LLVM ## x = (1 << LLVM ## x ## Bit),
+#define ENUM_CASE(x,l,takesArg) LLVM ## x = (1 << LLVM ## x ## Bit),
 LLVM_HS_FOR_EACH_FAST_MATH_FLAG(ENUM_CASE)
 #undef ENUM_CASE
 } LLVMFastMathFlags;

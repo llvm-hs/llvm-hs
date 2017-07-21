@@ -27,6 +27,7 @@ import qualified Data.List as List
 import Data.List.NonEmpty (NonEmpty((:|)))
 import qualified Data.List.NonEmpty as NonEmpty
 
+import qualified LLVM.Internal.FFI.Attribute as FFI
 import qualified LLVM.Internal.FFI.PtrHierarchy as FFI
 import qualified LLVM.Internal.FFI.BinaryOperator as FFI
 import qualified LLVM.Internal.FFI.Instruction as FFI
@@ -35,6 +36,7 @@ import qualified LLVM.Internal.FFI.User as FFI
 import qualified LLVM.Internal.FFI.Builder as FFI
 import qualified LLVM.Internal.FFI.Constant as FFI
 import qualified LLVM.Internal.FFI.BasicBlock as FFI
+import qualified LLVM.Internal.FFI.Function as FFI
 
 import LLVM.Internal.Atomicity ()
 import LLVM.Internal.Attribute
@@ -54,8 +56,13 @@ import qualified LLVM.AST as A
 import qualified LLVM.AST.Constant as A.C
 import LLVM.Exception
 
-callInstAttributeSet :: Ptr FFI.Instruction -> DecodeAST MixedAttributeSet
-callInstAttributeSet = decodeM <=< liftIO . FFI.getCallSiteAttributeSet
+callInstAttributeList :: Ptr FFI.Instruction -> DecodeAST AttributeList
+callInstAttributeList instr =
+  decodeM
+    ( FFI.AttrSetDecoder
+        FFI.getCallSiteAttributesAtIndex
+        FFI.getCallSiteNumArgOperands
+    , instr)
 
 meta :: Ptr FFI.Instruction -> DecodeAST A.InstructionMetadata
 meta i = do
@@ -129,12 +136,11 @@ instance DecodeM DecodeAST A.Terminator (Ptr FFI.Instruction) where
         }
       [instrP|Invoke|] -> do
         cc <- decodeM =<< liftIO (FFI.getCallSiteCallingConvention i)
-        attrs <- callInstAttributeSet i
+        attrs <- callInstAttributeList i
         fv <- liftIO $ FFI.getCallSiteCalledValue i
         f <- decodeM fv
-        args <- forM [1..nOps-3] $ \j -> do
-                  let pAttrs = Map.findWithDefault [] (j-1) (parameterAttributes attrs)
-                  return (, pAttrs) `ap` op (j-1)
+        args <- forM (leftBiasedZip [1..nOps-3] (parameterAttributes attrs)) $ \(j, pAttrs) ->
+                  (, fromMaybe [] pAttrs) <$> op (j-1)
         rd <- successor (nOps - 2)
         ed <- successor (nOps - 1)
         return A.Invoke {
@@ -240,8 +246,8 @@ instance EncodeM EncodeAST A.Terminator (Ptr FFI.Instruction) where
         let (argvs, argAttrs) = unzip args
         (n, argvs) <- encodeM argvs
         i <- liftIO $ FFI.buildInvoke builder fv argvs n rb eb s
-        attrs <- encodeM $ MixedAttributeSet fAttrs rAttrs (Map.fromList (zip [0..] argAttrs))
-        liftIO $ FFI.setCallSiteAttributeSet i attrs
+        attrs <- encodeM $ AttributeList fAttrs rAttrs argAttrs
+        liftIO $ FFI.setCallSiteAttributeList i attrs
         cc <- encodeM cc
         liftIO $ FFI.setCallSiteCallingConvention i cc
         return $ FFI.upCast i
@@ -328,14 +334,12 @@ $(do
                 "fpPredicate" -> ([], [| decodeM =<< liftIO (FFI.getFCmpPredicate i) |])
                 "tailCallKind" -> ([], [| decodeM =<< liftIO (FFI.getTailCallKind i) |])
                 "callingConvention" -> ([], [| decodeM =<< liftIO (FFI.getCallSiteCallingConvention i) |])
-                "attrs" -> ([], [| callInstAttributeSet i |])
+                "attrs" -> ([], [| callInstAttributeList i |])
                 "returnAttributes" -> (["attrs"], [| return $ returnAttributes $(TH.dyn "attrs") |])
                 "f" -> ([], [| liftIO $ FFI.getCallSiteCalledValue i |])
                 "function" -> (["f"], [| decodeM $(TH.dyn "f") |])
-                "arguments" -> ([], [| forM [1..nOps-1] $ \j -> do
-                                         let pAttrs = Map.findWithDefault [] (j-1) (parameterAttributes $(TH.dyn "attrs"))
-                                         p <- op (j-1)
-                                         return (p, pAttrs) |])
+                "arguments" -> ([], [| forM (leftBiasedZip [1..nOps-1] (parameterAttributes $(TH.dyn "attrs"))) $ \(j, pAttrs) ->
+                                         (\p -> (p, fromMaybe [] pAttrs)) <$> op (j - 1) |])
                 "clauses" ->
                   ([], [|do
                           nClauses <- liftIO $ FFI.getNumClauses i
@@ -459,8 +463,8 @@ $(do
             let (argvs, argAttrs) = unzip args
             (n, argvs) <- encodeM argvs
             i <- liftIO $ FFI.buildCall builder fv argvs n s
-            attrs <- encodeM $ MixedAttributeSet fAttrs rAttrs (Map.fromList (zip [0..] argAttrs))
-            liftIO $ FFI.setCallSiteAttributeSet i attrs
+            attrs <- encodeM $ AttributeList fAttrs rAttrs argAttrs
+            liftIO $ FFI.setCallSiteAttributeList i attrs
             tck <- encodeM tck
             liftIO $ FFI.setTailCallKind i tck
             cc <- encodeM cc

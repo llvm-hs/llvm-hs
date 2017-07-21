@@ -78,8 +78,8 @@ void LLVM_Hs_Add ## p ## Pass(LLVMPassManagerRef PM) {	\
 LLVM_HS_FOR_EACH_PASS_WITHOUT_LLVM_C_BINDING(ENUM_CASE)
 #undef ENUM_CASE
 
-void LLVM_Hs_AddCodeGenPreparePass(LLVMPassManagerRef PM, LLVMTargetMachineRef T) {
-	unwrap(PM)->add(createCodeGenPreparePass(unwrap(T)));
+void LLVM_Hs_AddCodeGenPreparePass(LLVMPassManagerRef PM) {
+	unwrap(PM)->add(createCodeGenPreparePass());
 }
 	
 void LLVM_Hs_AddGlobalValueNumberingPass(LLVMPassManagerRef PM, LLVMBool noLoads) {
@@ -112,58 +112,6 @@ void LLVM_Hs_AddLowerInvokePass(LLVMPassManagerRef PM) {
 	
 void LLVM_Hs_AddSROAPass(LLVMPassManagerRef PM) {
 	unwrap(PM)->add(createSROAPass());
-}
-
-void LLVM_Hs_AddBasicBlockVectorizePass(
-	LLVMPassManagerRef PM,
-	unsigned vectorBits,
-	LLVMBool vectorizeBools,
-	LLVMBool vectorizeInts,
-	LLVMBool vectorizeFloats,
-	LLVMBool vectorizePointers,
-	LLVMBool vectorizeCasts,
-	LLVMBool vectorizeMath,
-	LLVMBool vectorizeFusedMultiplyAdd,
-	LLVMBool vectorizeSelect,
-	LLVMBool vectorizeCmp,
-	LLVMBool vectorizeGetElementPtr,
-	LLVMBool vectorizeMemoryOperations,
-	LLVMBool alignedOnly,
-	unsigned reqChainDepth,
-	unsigned searchLimit,
-	unsigned maxCandidatePairsForCycleCheck,
-	LLVMBool splatBreaksChain,
-	unsigned maxInstructions,
-	unsigned maxIterations,
-	LLVMBool powerOfTwoLengthsOnly,
-	LLVMBool noMemoryOperationBoost,
-	LLVMBool fastDependencyAnalysis
-) {
-	VectorizeConfig vectorizeConfig;
-	vectorizeConfig.VectorBits = vectorBits;
-	vectorizeConfig.VectorizeBools = vectorizeBools;
-	vectorizeConfig.VectorizeInts = vectorizeInts;
-	vectorizeConfig.VectorizeFloats = vectorizeFloats;
-	vectorizeConfig.VectorizePointers = vectorizePointers;
-	vectorizeConfig.VectorizeCasts = vectorizeCasts;
-	vectorizeConfig.VectorizeMath = vectorizeMath;
-	vectorizeConfig.VectorizeFMA = vectorizeFusedMultiplyAdd;
-	vectorizeConfig.VectorizeSelect = vectorizeSelect;
-	vectorizeConfig.VectorizeCmp = vectorizeCmp;
-	vectorizeConfig.VectorizeGEP = vectorizeGetElementPtr;
-	vectorizeConfig.VectorizeMemOps = vectorizeMemoryOperations;
-	vectorizeConfig.AlignedOnly = alignedOnly;
-	vectorizeConfig.ReqChainDepth = reqChainDepth;
-	vectorizeConfig.SearchLimit = searchLimit;
-	vectorizeConfig.MaxCandPairsForCycleCheck = maxCandidatePairsForCycleCheck;
-	vectorizeConfig.SplatBreaksChain = splatBreaksChain;
-	vectorizeConfig.MaxInsts = maxInstructions;
-	vectorizeConfig.MaxIter = maxIterations;
-	vectorizeConfig.Pow2LenOnly = powerOfTwoLengthsOnly;
-	vectorizeConfig.NoMemOpBoost = noMemoryOperationBoost;
-	vectorizeConfig.FastDep = fastDependencyAnalysis;	
-
-	unwrap(PM)->add(createBBVectorizePass(vectorizeConfig));
 }
 
 void LLVM_Hs_AddGCOVProfilerPass(

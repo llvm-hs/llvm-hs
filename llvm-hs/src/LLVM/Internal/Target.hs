@@ -75,6 +75,12 @@ genCodingInstance [t| TO.FloatingPointOperationFusionMode |] ''FFI.FPOpFusionMod
   (FFI.fpOpFusionModeStrict, TO.FloatingPointOperationFusionStrict)
  ]
 
+genCodingInstance[t| TO.DebugCompressionType |] ''FFI.DebugCompressionType [
+  (FFI.debugCompressionTypeNone, TO.CompressNone),
+  (FFI.debugCompressionTypeGNU, TO.CompressGNU),
+  (FFI.debugCompressionTypeZ, TO.CompressZ)
+  ]
+
 -- | <http://llvm.org/doxygen/classllvm_1_1Target.html>
 newtype Target = Target (Ptr FFI.Target)
 
@@ -128,7 +134,6 @@ pokeTargetOptions :: TO.Options -> TargetOptions -> IO ()
 pokeTargetOptions hOpts (TargetOptions cOpts) = do
   mapM_ (\(c, ha) -> FFI.setTargetOptionFlag cOpts c =<< encodeM (ha hOpts)) [
     (FFI.targetOptionFlagPrintMachineCode, TO.printMachineCode),
-    (FFI.targetOptionFlagLessPreciseFPMADOption, TO.lessPreciseFloatingPointMultiplyAddOption),
     (FFI.targetOptionFlagUnsafeFPMath, TO.unsafeFloatingPointMath),
     (FFI.targetOptionFlagNoInfsFPMath, TO.noInfinitiesFloatingPointMath),
     (FFI.targetOptionFlagNoNaNsFPMath, TO.noNaNsFloatingPointMath),
@@ -138,12 +143,12 @@ pokeTargetOptions hOpts (TargetOptions cOpts) = do
     (FFI.targetOptionFlagEnableFastISel, TO.enableFastInstructionSelection),
     (FFI.targetOptionFlagUseInitArray, TO.useInitArray),
     (FFI.targetOptionFlagDisableIntegratedAS, TO.disableIntegratedAssembler),
-    (FFI.targetOptionFlagCompressDebugSections, TO.compressDebugSections),
     (FFI.targetOptionFlagTrapUnreachable, TO.trapUnreachable)
    ]
   FFI.setStackAlignmentOverride cOpts =<< encodeM (TO.stackAlignmentOverride hOpts)
   FFI.setFloatABIType cOpts =<< encodeM (TO.floatABIType hOpts)
   FFI.setAllowFPOpFusion cOpts =<< encodeM (TO.allowFloatingPointOperationFusion hOpts)
+  FFI.setCompressDebugSections cOpts =<< encodeM (TO.compressDebugSections hOpts)
 
 -- | get all target options
 peekTargetOptions :: TargetOptions -> IO TO.Options
@@ -151,8 +156,6 @@ peekTargetOptions (TargetOptions tOpts) = do
   let gof = decodeM <=< FFI.getTargetOptionsFlag tOpts
   printMachineCode
     <- gof FFI.targetOptionFlagPrintMachineCode
-  lessPreciseFloatingPointMultiplyAddOption
-    <- gof FFI.targetOptionFlagLessPreciseFPMADOption
   unsafeFloatingPointMath
     <- gof FFI.targetOptionFlagUnsafeFPMath
   noInfinitiesFloatingPointMath
@@ -171,8 +174,7 @@ peekTargetOptions (TargetOptions tOpts) = do
     <- gof FFI.targetOptionFlagUseInitArray
   disableIntegratedAssembler
     <- gof FFI.targetOptionFlagDisableIntegratedAS
-  compressDebugSections
-    <- gof FFI.targetOptionFlagCompressDebugSections
+  compressDebugSections <- decodeM =<< FFI.getCompressDebugSections tOpts
   trapUnreachable
     <- gof FFI.targetOptionFlagTrapUnreachable
   stackAlignmentOverride <- decodeM =<< FFI.getStackAlignmentOverride tOpts

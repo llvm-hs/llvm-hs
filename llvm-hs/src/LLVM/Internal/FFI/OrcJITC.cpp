@@ -1,3 +1,5 @@
+#include "llvm/Support/Error.h"
+
 #include "LLVM/Internal/FFI/OrcJIT.h"
 #include "LLVM/Internal/FFI/Target.hpp"
 #include "llvm/ExecutionEngine/JITSymbol.h"
@@ -7,7 +9,8 @@
 #include "llvm/ExecutionEngine/Orc/IRTransformLayer.h"
 #include "llvm/ExecutionEngine/Orc/IndirectionUtils.h"
 #include "llvm/ExecutionEngine/Orc/LambdaResolver.h"
-#include "llvm/ExecutionEngine/Orc/ObjectLinkingLayer.h"
+#include "llvm/ExecutionEngine/Orc/RTDyldObjectLinkingLayer.h"
+#include "llvm/ExecutionEngine/SectionMemoryManager.h"
 #include "llvm/IR/Mangler.h"
 
 #include <type_traits>
@@ -16,13 +19,13 @@
 using namespace llvm;
 using namespace orc;
 
-typedef unsigned LLVMModuleSetHandle;
+typedef unsigned LLVMModuleHandle;
 typedef unsigned LLVMObjSetHandle;
 typedef llvm::orc::LambdaResolver<
     std::function<JITSymbol(const std::string &name)>,
     std::function<JITSymbol(const std::string &name)>>
     LLVMLambdaResolver;
-typedef LLVMLambdaResolver *LLVMLambdaResolverRef;
+typedef std::shared_ptr<LLVMLambdaResolver> *LLVMLambdaResolverRef;
 
 // We want to allow users to choose themselves which layers they want to use.
 // However, the LLVM API requires that this is selected statically via template
@@ -49,154 +52,97 @@ template <typename T> class HandleSet {
 class LinkingLayer {
   public:
     virtual ~LinkingLayer(){};
-    typedef unsigned ObjSetHandleT;
-    virtual ObjSetHandleT
-    addObjectSet(std::vector<std::unique_ptr<object::ObjectFile>> objects,
-                 SectionMemoryManager *memMgr, JITSymbolResolver *resolver) = 0;
-    virtual ObjSetHandleT addObjectSet(
-        std::vector<std::unique_ptr<object::OwningBinary<object::ObjectFile>>>
-            objects,
-        SectionMemoryManager *memMgr, JITSymbolResolver *resolver) = 0;
-    virtual ObjSetHandleT addObjectSet(
-        std::vector<std::unique_ptr<object::OwningBinary<object::ObjectFile>>>
-            objects,
-        std::unique_ptr<SectionMemoryManager> memMgr,
-        JITSymbolResolver *resolver) = 0;
-    virtual ObjSetHandleT addObjectSet(
-        std::vector<std::unique_ptr<object::OwningBinary<object::ObjectFile>>>
-            objects,
-        std::unique_ptr<SectionMemoryManager> memMgr,
-        std::unique_ptr<JITSymbolResolver> resolver) = 0;
-    virtual ObjSetHandleT addObjectSet(
-        std::vector<std::unique_ptr<object::OwningBinary<object::ObjectFile>>>
-            objects,
-        SectionMemoryManager *memMgr,
-        std::unique_ptr<JITSymbolResolver> resolver) = 0;
-    virtual void removeObjectSet(ObjSetHandleT H) = 0;
+    typedef unsigned ObjHandleT;
+    virtual Expected<ObjHandleT>
+    addObject(std::shared_ptr<object::OwningBinary<object::ObjectFile>> object,
+              std::shared_ptr<JITSymbolResolver> resolver) = 0;
+    virtual Error removeObject(ObjHandleT H) = 0;
     virtual JITSymbol findSymbol(StringRef name, bool exportedSymbolsOnly) = 0;
-    virtual JITSymbol findSymbolIn(ObjSetHandleT h, StringRef name,
+    virtual JITSymbol findSymbolIn(ObjHandleT h, StringRef name,
                                    bool exportedSymbolsOnly) = 0;
-    virtual void emitAndFinalize(ObjSetHandleT h) = 0;
+    virtual void emitAndFinalize(ObjHandleT h) = 0;
 };
 
 template <typename T> class LinkingLayerT : public LinkingLayer {
   public:
     LinkingLayerT(T data_) : data(std::move(data_)) {}
-    ObjSetHandleT
-    addObjectSet(std::vector<std::unique_ptr<object::ObjectFile>> objects,
-                 SectionMemoryManager *memMgr,
-                 JITSymbolResolver *resolver) override {
-        auto handle = data.addObjectSet(std::move(objects), std::move(memMgr),
-                                        std::move(resolver));
-        return handles.insert(handle);
+    Expected<ObjHandleT>
+    addObject(std::shared_ptr<object::OwningBinary<object::ObjectFile>> object,
+              std::shared_ptr<JITSymbolResolver> resolver) override {
+        if (auto handleOrErr =
+                data.addObject(std::move(object), std::move(resolver))) {
+            return handles.insert(*handleOrErr);
+        } else {
+            return handleOrErr.takeError();
+        }
     }
-    ObjSetHandleT addObjectSet(
-        std::vector<std::unique_ptr<object::OwningBinary<object::ObjectFile>>>
-            objects,
-        SectionMemoryManager *memMgr, JITSymbolResolver *resolver) override {
-        auto handle = data.addObjectSet(std::move(objects), std::move(memMgr),
-                                        std::move(resolver));
-        return handles.insert(handle);
-    }
-    ObjSetHandleT addObjectSet(
-        std::vector<std::unique_ptr<object::OwningBinary<object::ObjectFile>>>
-            objects,
-        std::unique_ptr<SectionMemoryManager> memMgr,
-        JITSymbolResolver *resolver) override {
-        auto handle = data.addObjectSet(std::move(objects), std::move(memMgr),
-                                        std::move(resolver));
-        return handles.insert(handle);
-    }
-    ObjSetHandleT addObjectSet(
-        std::vector<std::unique_ptr<object::OwningBinary<object::ObjectFile>>>
-            objects,
-        std::unique_ptr<SectionMemoryManager> memMgr,
-        std::unique_ptr<JITSymbolResolver> resolver) override {
-        auto handle = data.addObjectSet(std::move(objects), std::move(memMgr),
-                                        std::move(resolver));
-        return handles.insert(handle);
-    }
-    ObjSetHandleT addObjectSet(
-        std::vector<std::unique_ptr<object::OwningBinary<object::ObjectFile>>>
-            objects,
-        SectionMemoryManager *memMgr,
-        std::unique_ptr<JITSymbolResolver> resolver) override {
-        auto handle = data.addObjectSet(std::move(objects), std::move(memMgr),
-                                        std::move(resolver));
-        return handles.insert(handle);
-    }
-    void removeObjectSet(ObjSetHandleT h) override {
-        data.removeObjectSet(handles.lookup(h));
-        handles.remove(h);
+    Error removeObject(ObjHandleT h) override {
+        if (auto err = data.removeObject(handles.lookup(h))) {
+            return err;
+        } else {
+            handles.remove(h);
+            return err;
+        }
     }
     JITSymbol findSymbol(StringRef name, bool exportedSymbolsOnly) override {
         return data.findSymbol(name, exportedSymbolsOnly);
     }
-    JITSymbol findSymbolIn(ObjSetHandleT h, StringRef name,
+    JITSymbol findSymbolIn(ObjHandleT h, StringRef name,
                            bool exportedSymbolsOnly) override {
         return data.findSymbolIn(handles.lookup(h), name, exportedSymbolsOnly);
     }
-    void emitAndFinalize(ObjSetHandleT h) override {
+    void emitAndFinalize(ObjHandleT h) override {
         data.emitAndFinalize(handles.lookup(h));
     }
 
   private:
     T data;
-    HandleSet<typename T::ObjSetHandleT> handles;
+    HandleSet<typename T::ObjHandleT> handles;
 };
 
 class CompileLayer {
   public:
-    typedef LLVMModuleSetHandle ModuleSetHandleT;
+    typedef LLVMModuleHandle ModuleHandleT;
     virtual ~CompileLayer(){};
     virtual JITSymbol findSymbol(StringRef Name, bool ExportedSymbolsOnly) = 0;
-    virtual JITSymbol findSymbolIn(ModuleSetHandleT H, StringRef Name,
+    virtual JITSymbol findSymbolIn(ModuleHandleT H, StringRef Name,
                                    bool ExportedSymbolsOnly) = 0;
-    virtual ModuleSetHandleT
-    addModuleSet(std::vector<std::unique_ptr<Module>> Modules,
-                 std::unique_ptr<SectionMemoryManager> MemMgr,
-                 std::unique_ptr<JITSymbolResolver> Resolver) = 0;
-    virtual ModuleSetHandleT
-    addModuleSet(std::vector<std::unique_ptr<Module>> Modules,
-                 SectionMemoryManager *MemMgr,
-                 std::unique_ptr<JITSymbolResolver> Resolver) = 0;
-    virtual void removeModuleSet(ModuleSetHandleT H) = 0;
+    virtual Expected<ModuleHandleT>
+    addModule(std::shared_ptr<Module> Modules,
+              std::shared_ptr<JITSymbolResolver> Resolver) = 0;
+    virtual Error removeModule(ModuleHandleT H) = 0;
 };
 
 template <typename T> class CompileLayerT : public CompileLayer {
   public:
-    CompileLayerT(T data_) : data(std::move(data_)) {}
+    template <typename... Arg>
+    CompileLayerT(Arg &&... arg) : data{std::forward<Arg>(arg)...} {}
     JITSymbol findSymbol(StringRef Name, bool ExportedSymbolsOnly) override {
         return data.findSymbol(Name, ExportedSymbolsOnly);
     }
-    JITSymbol findSymbolIn(ModuleSetHandleT H, StringRef Name,
+    JITSymbol findSymbolIn(ModuleHandleT H, StringRef Name,
                            bool ExportedSymbolsOnly) override {
         return data.findSymbolIn(handles.lookup(H), Name, ExportedSymbolsOnly);
     }
-    ModuleSetHandleT
-    addModuleSet(std::vector<std::unique_ptr<Module>> Modules,
-                 std::unique_ptr<SectionMemoryManager> MemMgr,
-                 std::unique_ptr<JITSymbolResolver> Resolver) override {
-        auto handle = data.addModuleSet(std::move(Modules), std::move(MemMgr),
-                                        std::move(Resolver));
-        return handles.insert(handle);
+    Expected<ModuleHandleT>
+    addModule(std::shared_ptr<Module> Module,
+              std::shared_ptr<JITSymbolResolver> Resolver) override {
+        if (auto handleOrErr =
+                data.addModule(std::move(Module), std::move(Resolver))) {
+            return handles.insert(*handleOrErr);
+        } else {
+            return handleOrErr.takeError();
+        }
     }
-    ModuleSetHandleT
-    addModuleSet(std::vector<std::unique_ptr<Module>> Modules,
-                 SectionMemoryManager *MemMgr,
-                 std::unique_ptr<JITSymbolResolver> Resolver) override {
-        auto handle = data.addModuleSet(std::move(Modules), std::move(MemMgr),
-                                        std::move(Resolver));
-        return handles.insert(handle);
-    }
-    void removeModuleSet(ModuleSetHandleT H) override {
-        data.removeModuleSet(handles.lookup(H));
+    Error removeModule(ModuleHandleT H) override {
+        auto handle = handles.lookup(H);
         handles.remove(H);
+        return data.removeModule(handle);
     }
 
   private:
     T data;
-    HandleSet<typename T::ModuleSetHandleT> handles;
+    HandleSet<typename T::ModuleHandleT> handles;
 };
 
 typedef llvm::orc::CompileOnDemandLayer<CompileLayer> LLVMCompileOnDemandLayer;
@@ -204,7 +150,7 @@ typedef LLVMCompileOnDemandLayer *LLVMCompileOnDemandLayerRef;
 
 typedef llvm::orc::IRTransformLayer<
     CompileLayer,
-    std::function<std::unique_ptr<Module>(std::unique_ptr<Module>)>>
+    std::function<std::shared_ptr<Module>(std::shared_ptr<Module>)>>
     LLVMIRTransformLayer;
 
 typedef llvm::orc::JITCompileCallbackManager *LLVMJITCompileCallbackManagerRef;
@@ -225,19 +171,6 @@ static std::string mangle(StringRef name, LLVMTargetDataRef dataLayout) {
     return mangledName;
 }
 
-static std::vector<std::unique_ptr<Module>>
-getModules(LLVMModuleRef *modules, unsigned moduleCount,
-           LLVMTargetDataRef dataLayout) {
-    std::vector<std::unique_ptr<Module>> moduleVec(moduleCount);
-    for (unsigned i = 0; i < moduleCount; ++i) {
-        moduleVec.at(i) = std::unique_ptr<Module>(unwrap(modules[i]));
-        if (moduleVec.at(i)->getDataLayout().isDefault()) {
-            moduleVec.at(i)->setDataLayout(*unwrap(dataLayout));
-        }
-    }
-    return moduleVec;
-}
-
 extern "C" {
 
 /* Constructor functions for the different compile layers */
@@ -245,8 +178,9 @@ extern "C" {
 CompileLayer *LLVM_Hs_createIRCompileLayer(LinkingLayer *linkingLayer,
                                            LLVMTargetMachineRef tm) {
     TargetMachine *tmm = unwrap(tm);
-    return new CompileLayerT<IRCompileLayer<LinkingLayer>>(
-        IRCompileLayer<LinkingLayer>(*linkingLayer, SimpleCompiler(*tmm)));
+    return new CompileLayerT<IRCompileLayer<LinkingLayer, SimpleCompiler>>(
+        IRCompileLayer<LinkingLayer, SimpleCompiler>(*linkingLayer,
+                                                     SimpleCompiler(*tmm)));
 }
 
 CompileLayer *LLVM_Hs_createCompileOnDemandLayer(
@@ -255,24 +189,23 @@ CompileLayer *LLVM_Hs_createCompileOnDemandLayer(
     LLVMJITCompileCallbackManagerRef callbackManager,
     LLVMIndirectStubsManagerBuilderRef stubsManager,
     LLVMBool cloneStubsIntoPartitions) {
-    return new CompileLayerT<LLVMCompileOnDemandLayer>(LLVMCompileOnDemandLayer(
+    return new CompileLayerT<LLVMCompileOnDemandLayer>(
         *compileLayer,
         [partitioningFtor](llvm::Function &f) -> std::set<llvm::Function *> {
             std::set<llvm::Function *> result;
             partitioningFtor(&f, &result);
             return result;
         },
-        *callbackManager, *stubsManager, cloneStubsIntoPartitions));
+        *callbackManager, *stubsManager, cloneStubsIntoPartitions);
 }
 
 CompileLayer *LLVM_Hs_createIRTransformLayer(CompileLayer *compileLayer,
                                              Module *(*transform)(Module *)) {
-    std::function<std::unique_ptr<Module>(std::unique_ptr<Module>)> transform_ =
-        [transform](std::unique_ptr<Module> module) {
-            return std::unique_ptr<Module>(transform(module.release()));
+    std::function<std::shared_ptr<Module>(std::shared_ptr<Module>)> transform_ =
+        [transform](std::shared_ptr<Module> module) {
+            return std::shared_ptr<Module>(transform(module.get()));
         };
-    return new CompileLayerT<LLVMIRTransformLayer>(
-        LLVMIRTransformLayer(*compileLayer, transform_));
+    return new CompileLayerT<LLVMIRTransformLayer>(*compileLayer, transform_);
 }
 
 /* Functions that work on all compile layers */
@@ -285,40 +218,49 @@ LLVMJITSymbolRef LLVM_Hs_CompileLayer_findSymbol(CompileLayer *compileLayer,
                                                  const char *name,
                                                  LLVMBool exportedSymbolsOnly) {
     JITSymbol symbol = compileLayer->findSymbol(name, exportedSymbolsOnly);
-    return new JITSymbol(symbol);
+    return new JITSymbol(std::move(symbol));
 }
 
 LLVMJITSymbolRef
 LLVM_Hs_CompileLayer_findSymbolIn(CompileLayer *compileLayer,
-                                  LLVMModuleSetHandle handle, const char *name,
+                                  LLVMModuleHandle handle, const char *name,
                                   LLVMBool exportedSymbolsOnly) {
     JITSymbol symbol =
         compileLayer->findSymbolIn(handle, name, exportedSymbolsOnly);
-    return new JITSymbol(symbol);
+    return new JITSymbol(std::move(symbol));
 }
 
-LLVMModuleSetHandle
-LLVM_Hs_CompileLayer_addModuleSet(CompileLayer *compileLayer,
-                                  LLVMTargetDataRef dataLayout,
-                                  LLVMModuleRef *modules, unsigned moduleCount,
-                                  LLVMLambdaResolverRef resolver) {
-    auto moduleVec = getModules(modules, moduleCount, dataLayout);
-    std::unique_ptr<LLVMLambdaResolver> uniqueResolver(
-        new LLVMLambdaResolver(*resolver));
-    return compileLayer->addModuleSet(std::move(moduleVec),
-                                      make_unique<SectionMemoryManager>(),
-                                      std::move(uniqueResolver));
+LLVMModuleHandle LLVM_Hs_CompileLayer_addModule(CompileLayer *compileLayer,
+                                                LLVMTargetDataRef dataLayout,
+                                                LLVMModuleRef module,
+                                                LLVMLambdaResolverRef resolver,
+                                                char **errorMessage) {
+    std::shared_ptr<Module> mod{unwrap(module), [](Module *) {}};
+    if (mod->getDataLayout().isDefault()) {
+        mod->setDataLayout(*unwrap(dataLayout));
+    }
+    if (auto handleOrErr = compileLayer->addModule(std::move(mod), *resolver)) {
+        *errorMessage = nullptr;
+        return *handleOrErr;
+    } else {
+        std::string errString = toString(handleOrErr.takeError());
+        *errorMessage = strdup(errString.c_str());
+        return 0;
+    }
 }
 
-void LLVM_Hs_CompileLayer_removeModuleSet(CompileLayer *compileLayer,
-                                          LLVMModuleSetHandle moduleSetHandle) {
-    compileLayer->removeModuleSet(moduleSetHandle);
+void LLVM_Hs_CompileLayer_removeModule(CompileLayer *compileLayer,
+                                       LLVMModuleHandle moduleSetHandle) {
+    if (compileLayer->removeModule(moduleSetHandle)) {
+        // TODO handle failure
+    }
 }
 
 /* Constructor functions for the different object layers */
 
 LinkingLayer *LLVM_Hs_createObjectLinkingLayer() {
-    return new LinkingLayerT<ObjectLinkingLayer<>>(ObjectLinkingLayer<>());
+    return new LinkingLayerT<RTDyldObjectLinkingLayer>(RTDyldObjectLinkingLayer(
+        []() { return std::make_shared<SectionMemoryManager>(); }));
 }
 
 /* Fuctions that work on all object layers */
@@ -344,9 +286,8 @@ LLVMLambdaResolverRef LLVM_Hs_createLambdaResolver(
         externalResolver(name.c_str(), &symbol);
         return symbol;
     };
-    auto lambdaResolver =
-        createLambdaResolver(dylibResolverFun, externalResolverFun);
-    return lambdaResolver.release();
+    return new std::shared_ptr<LLVMLambdaResolver>(
+        createLambdaResolver(dylibResolverFun, externalResolverFun));
 }
 
 static JITSymbolFlags unwrap(LLVMJITSymbolFlags f) {
@@ -369,8 +310,16 @@ static LLVMJITSymbolFlags wrap(JITSymbolFlags f) {
     return LLVMJITSymbolFlags(r);
 }
 
-JITTargetAddress LLVM_Hs_JITSymbol_getAddress(LLVMJITSymbolRef symbol) {
-    return symbol->getAddress();
+JITTargetAddress LLVM_Hs_JITSymbol_getAddress(LLVMJITSymbolRef symbol,
+                                              char **errorMessage) {
+    *errorMessage = nullptr;
+    if (auto addrOrErr = symbol->getAddress()) {
+        return *addrOrErr;
+    } else {
+        std::string error = toString(addrOrErr.takeError());
+        *errorMessage = strdup(error.c_str());
+        return 0;
+    }
 }
 
 LLVMJITSymbolFlags LLVM_Hs_JITSymbol_getFlags(LLVMJITSymbolRef symbol) {

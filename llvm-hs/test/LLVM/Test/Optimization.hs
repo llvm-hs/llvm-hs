@@ -174,38 +174,63 @@ tests = testGroup "Optimization" [
         FunctionAttributes (A.GroupID 0) [A.NoUnwind, A.ReadNone, A.UWTable]
        ],
 
-    testCase "BasicBlockVectorization" $ do
+    testCase "SLPVectorization" $ do
       let
+        fadd op0 op1 =
+          FAdd { fastMathFlags = NoFastMathFlags, operand0 = op0, operand1 = op1, metadata = [] }
+        doubleVec = VectorType 2 double
+        constInt i = ConstantOperand (C.Int {C.integerBits = 32, C.integerValue = i})
+        undef = ConstantOperand (C.Undef doubleVec)
+        extractElement vec index' =
+          ExtractElement { vector = vec, index = index', metadata = [] }
+        insertElement vec el i =
+          InsertElement { vector = vec, element = el, index = i, metadata = [] }
         mIn = Module "<string>" "<string>" Nothing Nothing [
           GlobalDefinition $ functionDefaults {
-           G.returnType = double,
-            G.name = Name "foo",
+           G.returnType = doubleVec,
+            G.name = Name "buildVector_add_2f64",
             G.parameters = ([
-              Parameter double (Name (l <> n)) []
-                | l <- [ "a", "b" ], n <- ["1", "2"]
+              Parameter doubleVec n []
+                | n <- [ "a", "b" ]
              ], False),
             G.basicBlocks = [
-              BasicBlock (UnName 0) ([
-                Name (l <> n) := op NoFastMathFlags (LocalReference double (Name (o1 <> n))) (LocalReference double (Name (o2 <> n))) []
-                | (l, op, o1, o2) <- [
-                   ("x", FSub, "a", "b"),
-                   ("y", FMul, "x", "a"),
-                   ("z", FAdd, "y", "b")],
-                  n <- ["1", "2"]
-               ] ++ [
-                Name "r" := FMul NoFastMathFlags (LocalReference double (Name "z1")) (LocalReference double (Name "z2")) []
-              ]) (Do $ Ret (Just (LocalReference double (Name "r"))) [])
+              BasicBlock (UnName 0)
+                ["a0" := extractElement (LocalReference doubleVec "a") (constInt 0),
+                 "a1" := extractElement (LocalReference doubleVec "a") (constInt 1),
+                 "b0" := extractElement (LocalReference doubleVec "b") (constInt 0),
+                 "b1" := extractElement (LocalReference doubleVec "b") (constInt 1),
+                 "c0" := fadd (LocalReference double "a0") (LocalReference double "b0"),
+                 "c1" := fadd (LocalReference double "a1") (LocalReference double "b1"),
+                 "r0" := insertElement undef (LocalReference double "c0") (constInt 0),
+                 "r1" := insertElement (LocalReference doubleVec "r0") (LocalReference double "c1") (constInt 1)
+                ]
+                (Do (Ret (Just (LocalReference doubleVec "r1")) []))
              ]
           }
          ]
       mOut <- optimize (defaultPassSetSpec {
                     transforms = [
-                     T.defaultVectorizeBasicBlocks { T.requiredChainDepth = 3 },
-                     T.InstructionCombining, 
+                     T.SuperwordLevelParallelismVectorize,
+                     T.InstructionCombining,
                      T.GlobalValueNumbering False
                     ] }) mIn
-      isVectory mOut,
-      
+      mOut @?=
+        Module "<string>" "<string>" Nothing Nothing [
+            GlobalDefinition $ functionDefaults {
+             G.returnType = doubleVec,
+              G.name = Name "buildVector_add_2f64",
+              G.parameters = ([
+                Parameter doubleVec n []
+                  | n <- [ "a", "b" ]
+               ], False),
+              G.basicBlocks = [
+                BasicBlock (UnName 0)
+                  [UnName 1 := fadd (LocalReference doubleVec "a") (LocalReference doubleVec "b")]
+                  (Do (Ret (Just (LocalReference doubleVec (UnName 1))) []))
+               ]
+            }
+           ],
+
     testCase "LoopVectorize" $ do
       let
         mIn = 

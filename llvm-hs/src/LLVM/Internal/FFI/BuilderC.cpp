@@ -19,15 +19,14 @@ LLVM_HS_FOR_EACH_ATOMIC_ORDERING(ENUM_CASE)
 	}
 }
 
-static SynchronizationScope unwrap(LLVMSynchronizationScope l) {
+static SyncScope::ID unwrap(LLVMSynchronizationScope l) {
 	switch(l) {
-#define ENUM_CASE(x) case LLVM ## x ## SynchronizationScope: return x;
+#define ENUM_CASE(x) case LLVM ## x ## SynchronizationScope: return SyncScope::x;
 LLVM_HS_FOR_EACH_SYNCRONIZATION_SCOPE(ENUM_CASE)
 #undef ENUM_CASE
-	default: return SynchronizationScope(0);
+	default: assert(false && "Unknown synchronization scope");
 	}
 }
-
 
 static AtomicRMWInst::BinOp unwrap(LLVMAtomicRMWBinOp l) {
 	switch(l) {
@@ -40,7 +39,9 @@ LLVM_HS_FOR_EACH_RMW_OPERATION(ENUM_CASE)
 
 static FastMathFlags unwrap(LLVMFastMathFlags f) {
 	FastMathFlags r = FastMathFlags();
-#define ENUM_CASE(x,l) if (f & LLVM ## x) r.set ## x();
+#define ENUM_CASE_F(x,l) if (f & LLVM ## x) r.set ## x();
+#define ENUM_CASE_T(x,l) if (f & LLVM ## x) r.set ## x(true);
+#define ENUM_CASE(x,l,takesArg) ENUM_CASE_ ## takesArg(x,l)
 LLVM_HS_FOR_EACH_FAST_MATH_FLAG(ENUM_CASE)
 #undef ENUM_CASE
 	return r;
@@ -92,7 +93,7 @@ LLVMValueRef LLVM_Hs_BuildLoad(
 ) {
 	LoadInst *i = unwrap(b)->CreateAlignedLoad(unwrap(p), align, isVolatile, name);
 	i->setOrdering(unwrap(atomicOrdering));
-	if (atomicOrdering != LLVMAtomicOrderingNotAtomic) i->setSynchScope(unwrap(synchScope));
+	if (atomicOrdering != LLVMAtomicOrderingNotAtomic) i->setSyncScopeID(unwrap(synchScope));
 	return wrap(i);
 }
 
@@ -109,7 +110,7 @@ LLVMValueRef LLVM_Hs_BuildStore(
 	StoreInst *i = unwrap(b)->CreateAlignedStore(unwrap(v), unwrap(p), align, isVolatile);
 	i->setName(name);
 	i->setOrdering(unwrap(atomicOrdering));
-	if (atomicOrdering != LLVMAtomicOrderingNotAtomic) i->setSynchScope(unwrap(synchScope));
+	if (atomicOrdering != LLVMAtomicOrderingNotAtomic) i->setSyncScopeID(unwrap(synchScope));
 	return wrap(i);
 }
 

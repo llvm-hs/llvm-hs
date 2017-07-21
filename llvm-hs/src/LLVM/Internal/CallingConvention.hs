@@ -40,7 +40,7 @@ instance Monad m => EncodeM m A.CC.CallingConvention FFI.CallingConvention where
           A.CC.SPIR_KERNEL -> FFI.callingConventionSPIR_KERNEL
           A.CC.Intel_OCL_BI -> FFI.callingConventionIntel_OCL_BI
           A.CC.X86_64_SysV -> FFI.callingConventionX86_64_SysV
-          A.CC.X86_64_Win64 -> FFI.callingConventionX86_64_Win64
+          A.CC.Win64 -> FFI.callingConventionWin64
           A.CC.Numbered cc' -> FFI.CallingConvention (fromIntegral cc')
 
 instance Monad m => DecodeM m A.CC.CallingConvention FFI.CallingConvention where
@@ -67,5 +67,5 @@ instance Monad m => DecodeM m A.CC.CallingConvention FFI.CallingConvention where
     [callingConventionP|SPIR_KERNEL|] -> A.CC.SPIR_KERNEL
     [callingConventionP|Intel_OCL_BI|] -> A.CC.Intel_OCL_BI
     [callingConventionP|X86_64_SysV|] -> A.CC.X86_64_SysV
-    [callingConventionP|X86_64_Win64|] -> A.CC.X86_64_Win64
+    [callingConventionP|Win64|] -> A.CC.Win64
     FFI.CallingConvention (CUInt ci) | ci >= 64 -> A.CC.Numbered (fromIntegral ci)
