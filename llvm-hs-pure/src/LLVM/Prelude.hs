@@ -61,5 +61,5 @@ ifM cond ifTrue ifFalse = do
     else ifFalse
 
 findM :: Monad m => (a -> m Bool) -> [a] -> m (Maybe a)
-findM p [] = return Nothing
+findM _ [] = return Nothing
 findM p (x:xs) = ifM (p x) (return $ Just x) (findM p xs)

@@ -36,7 +36,6 @@ import qualified LLVM.Internal.FFI.User as FFI
 import qualified LLVM.Internal.FFI.Builder as FFI
 import qualified LLVM.Internal.FFI.Constant as FFI
 import qualified LLVM.Internal.FFI.BasicBlock as FFI
-import qualified LLVM.Internal.FFI.Function as FFI
 
 import LLVM.Internal.Atomicity ()
 import LLVM.Internal.Attribute

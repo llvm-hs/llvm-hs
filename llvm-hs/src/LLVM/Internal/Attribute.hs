@@ -24,9 +24,6 @@ import Control.Monad.State (gets)
 import Control.Exception
 import Foreign.C (CUInt)
 import Foreign.Ptr
-import Data.Either
-import Data.Map (Map)
-import qualified Data.Map as Map
 import Data.Maybe
 
 import qualified LLVM.Internal.FFI.Attribute as FFI

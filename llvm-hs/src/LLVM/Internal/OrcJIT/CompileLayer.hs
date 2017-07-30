@@ -9,7 +9,6 @@ import Control.Exception
 import Control.Monad.AnyCont
 import Control.Monad.IO.Class
 import Data.IORef
-import Foreign.Marshal.Array (withArrayLen)
 import Foreign.Ptr
 
 import LLVM.Internal.Coding

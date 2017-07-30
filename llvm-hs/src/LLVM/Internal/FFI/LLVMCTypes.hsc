@@ -7,7 +7,9 @@ module LLVM.Internal.FFI.LLVMCTypes where
 
 import LLVM.Prelude
 
+#ifndef __STDC_LIMIT_MACROS
 #define __STDC_LIMIT_MACROS
+#endif
 #include "llvm-c/Core.h"
 #include "llvm-c/Linker.h"
 #include "llvm-c/OrcBindings.h"

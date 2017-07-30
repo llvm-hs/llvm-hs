@@ -5,11 +5,7 @@ import LLVM.Prelude
 import Control.Monad.Trans
 import Control.Monad.AnyCont
 
-import Foreign.C (CUInt)
-import Foreign.Ptr  
-
-import Data.Map (Map)
-import qualified Data.Map as Map
+import Foreign.Ptr
 
 import qualified LLVM.Internal.FFI.Function as FFI
 import qualified LLVM.Internal.FFI.PtrHierarchy as FFI
