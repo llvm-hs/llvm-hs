@@ -248,7 +248,7 @@ instance CPP_OVERLAPPING EncodeM EncodeAST [Either A.FA.GroupID A.FA.FunctionAtt
       case attr of
         Left groupId -> do
           attrSet <- referAttributeGroup groupId
-          ab' <- liftIO (FFI.attrBuilderFromSet attrSet)
+          ab' <- anyContToM (bracket (FFI.attrBuilderFromSet attrSet) FFI.disposeAttrBuilder)
           liftIO (FFI.mergeAttrBuilder ab ab')
         Right attr -> do
           addAttr <- encodeM attr
@@ -263,8 +263,10 @@ instance EncodeM EncodeAST AttributeList FFI.AttributeList where
     rAttrSet <- encodeM rAttrs :: EncodeAST FFI.ParameterAttributeSet
     (numPAttrs, pAttrSets) <- encodeM pAttrs
     Context context <- gets encodeStateContext
-    liftIO $
-      FFI.buildAttributeList context fAttrSet rAttrSet pAttrSets numPAttrs
+    anyContToM
+      (bracket
+         (FFI.buildAttributeList context fAttrSet rAttrSet pAttrSets numPAttrs)
+         FFI.disposeAttributeList)
 
 instance DecodeM DecodeAST AttributeList (FFI.AttrSetDecoder a, a) where
   decodeM (FFI.AttrSetDecoder attrsAtIndex countParams, a) = do

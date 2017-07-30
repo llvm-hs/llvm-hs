@@ -115,6 +115,9 @@ foreign import ccall unsafe "LLVM_Hs_GetAttrBuilderSize" getAttrBuilderSize ::
 foreign import ccall unsafe "LLVM_Hs_AttrBuilderFromAttrSet" attrBuilderFromSet ::
   AttributeSet a -> IO (Ptr (AttrBuilder a))
 
+foreign import ccall unsafe "LLVM_Hs_DisposeAttrBuilder" disposeAttrBuilder ::
+  Ptr (AttrBuilder a) -> IO ()
+
 foreign import ccall unsafe "LLVM_Hs_AttrBuilderMerge" mergeAttrBuilder ::
   Ptr (AttrBuilder a) -> Ptr (AttrBuilder a) -> IO ()
 
