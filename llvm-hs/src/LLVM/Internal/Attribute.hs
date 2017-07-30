@@ -1,4 +1,5 @@
 {-# LANGUAGE
+  CPP,
   MultiParamTypeClasses,
   ConstraintKinds,
   QuasiQuotes,
@@ -6,6 +7,12 @@
   UndecidableInstances,
   RankNTypes
   #-}
+#if __GLASGOW_HASKELL__ < 710
+{-# LANGUAGE OverlappingInstances #-}
+#define CPP_OVERLAPPING
+#else
+#define CPP_OVERLAPPING {-# OVERLAPPING #-}
+#endif
 module LLVM.Internal.Attribute where
 
 import LLVM.Prelude
@@ -234,7 +241,7 @@ data PreSlot
   | ReturnAttributes [A.PA.ParameterAttribute]
   | ParameterAttributes CUInt [A.PA.ParameterAttribute]    
 
-instance {-# OVERLAPPING #-} EncodeM EncodeAST [Either A.FA.GroupID A.FA.FunctionAttribute] FFI.FunctionAttributeSet where
+instance CPP_OVERLAPPING EncodeM EncodeAST [Either A.FA.GroupID A.FA.FunctionAttribute] FFI.FunctionAttributeSet where
   encodeM attrs = do
     ab <- allocaAttrBuilder
     forM_ attrs $ \attr ->
