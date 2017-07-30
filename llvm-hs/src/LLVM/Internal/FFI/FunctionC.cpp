@@ -10,12 +10,6 @@
 using namespace llvm;
 
 extern "C" {
-
-// const AttributeListImpl *LLVM_Hs_GetFunctionMixedAttributeList(LLVMValueRef
-// f) {
-// 	return wrap(unwrap<Function>(f)->getAttributes());
-// }
-
 void LLVM_Hs_SetFunctionAttributeList(LLVMValueRef f,
                                       LLVMAttributeListRef attrs) {
     unwrap<Function>(f)->setAttributes(*attrs);

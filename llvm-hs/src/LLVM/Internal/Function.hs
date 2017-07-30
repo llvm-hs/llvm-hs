@@ -28,7 +28,7 @@ import qualified LLVM.AST.ParameterAttribute as A.PA
 
 getAttributeList :: Ptr FFI.Function -> DecodeAST AttributeList
 getAttributeList f = do
-  decodeM ( FFI.AttrSetDecoder FFI.attributesAtIndex FFI.countParams, f )
+  decodeM (FFI.AttrSetDecoder FFI.attributesAtIndex FFI.countParams, f)
 
 setFunctionAttributes :: Ptr FFI.Function -> AttributeList -> EncodeAST ()
 setFunctionAttributes f = liftIO . FFI.setAttributeList f <=< encodeM

@@ -270,7 +270,7 @@ instance DecodeM DecodeAST AttributeList (FFI.AttrSetDecoder a, a) where
   decodeM (FFI.AttrSetDecoder attrsAtIndex countParams, a) = do
     functionAttrSet <-
       do attrSet <-
-           liftIO (attrsAtIndex a FFI.functionIndex) :: DecodeAST FFI.FunctionAttributeSet
+           withAttrsAtIndex FFI.functionIndex :: DecodeAST FFI.FunctionAttributeSet
          hasAttributes <-
            decodeM =<< liftIO (FFI.attributeSetHasAttributes attrSet)
          if hasAttributes
@@ -278,16 +278,19 @@ instance DecodeM DecodeAST AttributeList (FFI.AttrSetDecoder a, a) where
            else return Nothing
     returnAttrs <-
       do attrSet <-
-           liftIO (attrsAtIndex a FFI.returnIndex) :: DecodeAST FFI.ParameterAttributeSet
+           withAttrsAtIndex FFI.returnIndex :: DecodeAST FFI.ParameterAttributeSet
          decodeM attrSet
     numParams <- liftIO (countParams a)
     paramAttrs <-
       forM [1 .. numParams] $ \i ->
-        decodeM =<<
-        (liftIO (attrsAtIndex a (FFI.AttributeIndex i)) :: DecodeAST FFI.ParameterAttributeSet)
+        decodeM =<< (withAttrsAtIndex (FFI.AttributeIndex i) :: DecodeAST FFI.ParameterAttributeSet)
     return
       (AttributeList
        { functionAttributes = maybeToList functionAttrSet
        , returnAttributes = returnAttrs
        , parameterAttributes = paramAttrs
        })
+    where
+      withAttrsAtIndex :: FFI.AttributeIndex -> DecodeAST (FFI.AttributeSet b)
+      withAttrsAtIndex index =
+        anyContToM (bracket (attrsAtIndex a index) (FFI.disposeAttributeSet))
