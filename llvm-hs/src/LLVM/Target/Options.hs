@@ -17,11 +17,17 @@ data FloatingPointOperationFusionMode
   | FloatingPointOperationFusionStrict
   deriving (Eq, Ord, Read, Show, Enum, Bounded, Typeable, Data, Generic)
 
+-- | <https://llvm.org/doxygen/namespacellvm.html#aa100a124c9d33561b0950011928aae00>
+data DebugCompressionType
+  = CompressNone -- ^ No compression
+  | CompressGNU -- ^ zlib-gnu style compression
+  | CompressZ -- ^ zlib style compression
+  deriving (Eq, Ord, Read, Show, Enum, Bounded, Typeable, Data, Generic)
+
 -- | The options of a 'LLVM.Target.TargetOptions'
 -- <http://llvm.org/doxygen/classllvm_1_1TargetOptions.html>
 data Options = Options {
   printMachineCode :: Bool,
-  lessPreciseFloatingPointMultiplyAddOption :: Bool,
   unsafeFloatingPointMath :: Bool,
   noInfinitiesFloatingPointMath :: Bool,
   noNaNsFloatingPointMath :: Bool,
@@ -31,7 +37,7 @@ data Options = Options {
   enableFastInstructionSelection :: Bool,
   useInitArray :: Bool,
   disableIntegratedAssembler :: Bool,
-  compressDebugSections :: Bool,
+  compressDebugSections :: DebugCompressionType,
   trapUnreachable :: Bool,
   stackAlignmentOverride :: Word32,
   floatABIType :: FloatABI,

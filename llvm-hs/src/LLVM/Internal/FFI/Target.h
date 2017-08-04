@@ -27,7 +27,6 @@
 
 #define LLVM_HS_FOR_EACH_TARGET_OPTION_FLAG(macro)	\
 	macro(PrintMachineCode)																\
-	macro(LessPreciseFPMADOption)													\
 	macro(UnsafeFPMath)																		\
 	macro(NoInfsFPMath)																		\
 	macro(NoNaNsFPMath)																		\
@@ -37,7 +36,6 @@
 	macro(EnableFastISel)																	\
 	macro(UseInitArray)																		\
 	macro(DisableIntegratedAS)														\
-	macro(CompressDebugSections)													\
 	macro(TrapUnreachable)
 
 typedef enum {
@@ -45,6 +43,17 @@ typedef enum {
 	LLVM_HS_FOR_EACH_TARGET_OPTION_FLAG(ENUM_CASE)
 #undef ENUM_CASE
 } LLVM_Hs_TargetOptionFlag;
+
+#define LLVM_HS_FOR_EACH_DEBUG_COMPRESSION_TYPE(macro) \
+    macro(None) \
+    macro(GNU) \
+    macro(Z)
+
+typedef enum {
+#define ENUM_CASE(n) LLVM_Hs_DebugCompressionType_ ## n,
+    LLVM_HS_FOR_EACH_DEBUG_COMPRESSION_TYPE(ENUM_CASE)
+#undef ENUM_CASE
+} LLVM_Hs_DebugCompressionType;
 
 #define LLVM_HS_FOR_EACH_FLOAT_ABI(macro)	\
 	macro(Default)																\

@@ -72,16 +72,16 @@ tests =
           withObjectLinkingLayer $ \linkingLayer ->
             withIRCompileLayer linkingLayer tm $ \compileLayer -> do
               testFunc <- mangleSymbol compileLayer "testFunc"
-              withModuleSet
+              withModule
                 compileLayer
-                [mod]
+                mod
                 (SymbolResolver (resolver testFunc compileLayer) nullResolver) $
-                \moduleSet -> do
+                \moduleHandle -> do
                   mainSymbol <- mangleSymbol compileLayer "main"
                   JITSymbol mainFn _ <- findSymbol compileLayer mainSymbol True
                   result <- mkMain (castPtrToFunPtr (wordPtrToPtr mainFn))
                   result @?= 42
-                  JITSymbol mainFn _ <- findSymbolIn compileLayer moduleSet mainSymbol True
+                  JITSymbol mainFn _ <- findSymbolIn compileLayer moduleHandle mainSymbol True
                   result <- mkMain (castPtrToFunPtr (wordPtrToPtr mainFn))
                   result @?= 42,
 
@@ -93,11 +93,11 @@ tests =
             withIRCompileLayer linkingLayer tm $ \compileLayer -> do
               withIRTransformLayer compileLayer tm (moduleTransform passmanagerSuccessful) $ \compileLayer -> do
                 testFunc <- mangleSymbol compileLayer "testFunc"
-                withModuleSet
+                withModule
                   compileLayer
-                  [mod]
+                  mod
                   (SymbolResolver (resolver testFunc compileLayer) nullResolver) $
-                  \moduleSet -> do
+                  \moduleHandle -> do
                     mainSymbol <- mangleSymbol compileLayer "main"
                     JITSymbol mainFn _ <- findSymbol compileLayer mainSymbol True
                     result <- mkMain (castPtrToFunPtr (wordPtrToPtr mainFn))
@@ -114,11 +114,11 @@ tests =
                 withJITCompileCallbackManager triple Nothing $ \callbackMgr ->
                   withCompileOnDemandLayer baseLayer tm (\x -> return [x]) callbackMgr stubsMgr False $ \compileLayer -> do
                     testFunc <- mangleSymbol compileLayer "testFunc"
-                    withModuleSet
+                    withModule
                       compileLayer
-                      [mod]
+                      mod
                       (SymbolResolver (resolver testFunc compileLayer) nullResolver) $
-                      \moduleSet -> do
+                      \moduleHandle -> do
                         mainSymbol <- mangleSymbol compileLayer "main"
                         JITSymbol mainFn _ <- findSymbol compileLayer mainSymbol True
                         result <- mkMain (castPtrToFunPtr (wordPtrToPtr mainFn))

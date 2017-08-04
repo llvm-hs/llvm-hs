@@ -42,7 +42,7 @@ foreign import ccall safe "LLVM_Hs_LinkingLayer_dispose" disposeLinkingLayer ::
   Ptr LinkingLayer -> IO ()
 
 foreign import ccall safe "LLVM_Hs_JITSymbol_getAddress" getAddress ::
-  Ptr JITSymbol -> IO TargetAddress
+  Ptr JITSymbol -> Ptr (OwnerTransfered CString) -> IO TargetAddress
 
 foreign import ccall safe "LLVM_Hs_JITSymbol_getFlags" getFlags ::
   Ptr JITSymbol -> IO JITSymbolFlags

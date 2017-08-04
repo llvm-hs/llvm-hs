@@ -7,7 +7,9 @@ module LLVM.Internal.FFI.LLVMCTypes where
 
 import LLVM.Prelude
 
+#ifndef __STDC_LIMIT_MACROS
 #define __STDC_LIMIT_MACROS
+#endif
 #include "llvm-c/Core.h"
 #include "llvm-c/Linker.h"
 #include "llvm-c/OrcBindings.h"
@@ -115,7 +117,7 @@ newtype MDKindID = MDKindID CUInt
 
 newtype FastMathFlags = FastMathFlags CUInt
   deriving (Eq, Ord, Show, Typeable, Data, Num, Bits, Generic)
-#define FMF_Rec(n,l) { #n, LLVM ## n, },
+#define FMF_Rec(n,l,ignored) { #n, LLVM ## n, },
 #{inject FAST_MATH_FLAG, FastMathFlags, FastMathFlags, fastMathFlags, FMF_Rec}
 
 newtype MemoryOrdering = MemoryOrdering CUInt
@@ -222,6 +224,11 @@ newtype TargetOptionFlag = TargetOptionFlag CUInt
   deriving (Eq, Read, Show, Typeable, Data, Generic)
 #define TOF_Rec(n) { #n, LLVM_Hs_TargetOptionFlag_ ## n },
 #{inject TARGET_OPTION_FLAG, TargetOptionFlag, TargetOptionFlag, targetOptionFlag, TOF_Rec}
+
+newtype DebugCompressionType = DebugCompressionType CUInt
+  deriving (Eq, Read, Show, Typeable, Data, Generic)
+#define DCT_Rec(n) { #n, LLVM_Hs_DebugCompressionType_ ## n },
+#{inject DEBUG_COMPRESSION_TYPE, DebugCompressionType, DebugCompressionType, debugCompressionType, DCT_Rec}
 
 newtype TypeKind = TypeKind CUInt
   deriving (Eq, Read, Show, Typeable, Data, Generic)

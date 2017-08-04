@@ -14,7 +14,10 @@ module LLVM.Prelude (
     module Control.Monad,
     ByteString,
     ShortByteString,
-    fromMaybe
+    fromMaybe,
+    leftBiasedZip,
+    findM,
+    ifM
     ) where
 
 import Prelude hiding (
@@ -44,3 +47,19 @@ import Control.Monad hiding (
 
 import Data.ByteString (ByteString)
 import Data.ByteString.Short (ShortByteString)
+
+leftBiasedZip :: [a] -> [b] -> [(a, Maybe b)]
+leftBiasedZip [] _ = []
+leftBiasedZip xs [] = map (, Nothing) xs
+leftBiasedZip (x:xs) (y:ys) = (x, Just y) : leftBiasedZip xs ys
+
+ifM :: Monad m => m Bool -> m a -> m a -> m a
+ifM cond ifTrue ifFalse = do
+  cond' <- cond
+  if cond'
+    then ifTrue
+    else ifFalse
+
+findM :: Monad m => (a -> m Bool) -> [a] -> m (Maybe a)
+findM _ [] = return Nothing
+findM p (x:xs) = ifM (p x) (return $ Just x) (findM p xs)

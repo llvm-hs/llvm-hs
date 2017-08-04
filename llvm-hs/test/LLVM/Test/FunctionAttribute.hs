@@ -19,6 +19,7 @@ import Control.Applicative
 import Data.Bits
 import Data.List
 import Text.Show.Pretty
+import Control.Monad.IO.Class (liftIO)
 import Prelude
 import qualified Data.ByteString.Short                    as B
 
@@ -78,12 +79,13 @@ tests =
   testGroup "FunctionAttribute"
     [ testProperty "round-trip"  $ \attr ->
         ioProperty $ withContext $ \ctx  -> do
-          x <- runEncodeAST ctx (encodeM [attr] :: EncodeAST FFI.FunctionAttributeSet)
-          y <- runDecodeAST (decodeM x :: DecodeAST [FunctionAttribute])
+          attr' <- runEncodeAST ctx $ do
+            attrSet <- encodeM [attr] :: EncodeAST FFI.FunctionAttributeSet
+            liftIO (runDecodeAST (decodeM attrSet :: DecodeAST [FunctionAttribute]))
           return $ counterexample (unlines [ "expected: " ++ ppShow [attr]
-                                           , "but got:  " ++ ppShow y
+                                           , "but got:  " ++ ppShow attr'
                                            ])
-                                  ([attr] == y)
+                                  ([attr] == attr')
     ]
 
 

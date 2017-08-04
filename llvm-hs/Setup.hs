@@ -35,7 +35,7 @@ versionNumbers = versionBranch
 mkFlagName = FlagName
 #endif
 
-llvmVersion = mkVersion [4,0]
+llvmVersion = mkVersion [5,0]
 
 llvmConfigNames = [
   "llvm-config-" ++ (intercalate "." . map show . versionNumbers $ llvmVersion),
@@ -79,13 +79,11 @@ instance OldHookable (Args -> PackageDescription -> LocalBuildInfo -> UserHooks 
 llvmProgram :: Program
 llvmProgram = (simpleProgram "llvm-config") {
   programFindLocation = programSearch (programFindLocation . simpleProgram),
-  programFindVersion =
+  programFindVersion = \verbosity path ->
     let
-      stripSuffix suf str = let r = reverse in liftM r (stripPrefix (r suf) (r str))
-      svnToTag v = maybe v (++"-svn") (stripSuffix "svn" v)
+      stripVcsSuffix = takeWhile (\c -> isDigit c || c == '.')
       trim = dropWhile isSpace . reverse . dropWhile isSpace . reverse
-    in
-      \v p -> findProgramVersion "--version" (svnToTag . trim) v p
+    in findProgramVersion "--version" (stripVcsSuffix . trim) verbosity path
  }
 
 getLLVMConfig :: ConfigFlags -> IO ([String] -> IO String)

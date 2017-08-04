@@ -7,8 +7,8 @@ cache:
   directories:
     - $HOME/.cabal/packages
     - $HOME/.cabal/store
-    - $HOME/llvm-build-4.0.1
-    - $HOME/llvm-src-4.0.1
+    - $HOME/llvm-build-5.0.0
+    - $HOME/llvm-src-5.0.0
 
 before_cache:
   - rm -fv $HOME/.cabal/packages/hackage.haskell.org/build-reports.log
@@ -18,7 +18,7 @@ env:
   global:
     - GCC=gcc-5
     - GXX=g++-5
-    - LLVM_VER=4.0.1
+    - LLVM_VER=5.0.0
 
 matrix:
   include:
@@ -44,10 +44,16 @@ before_install:
  - export LD_LIBRARY_PATH=$HOME/llvm-build-${LLVM_VER}/lib:$LD_LIBRARY_PATH
 
 install:
- - curl https://cmake.org/files/v3.6/cmake-3.6.1-Linux-x86_64.tar.gz | tar -xzf - -C $HOME
- - export PATH=$HOME/cmake-3.6.1-Linux-x86_64/bin:$PATH
- - curl http://releases.llvm.org/${LLVM_VER}/llvm-${LLVM_VER}.src.tar.xz | tar -xJf - -C $HOME
- - rsync -ac $HOME/llvm-${LLVM_VER}.src/ $HOME/llvm-src-${LLVM_VER}
+ - curl https://cmake.org/files/v3.9/cmake-3.9.0-Linux-x86_64.tar.gz | tar -xzf - -C $HOME
+ - export PATH=$HOME/cmake-3.9.0-Linux-x86_64/bin:$PATH
+
+ # Once LLVM 5.0 is released, we can go back to these two lines
+ # - curl http://releases.llvm.org/${LLVM_VER}/llvm-${LLVM_VER}.src.tar.xz | tar -xJf - -C $HOME
+ # - rsync -ac $HOME/llvm-${LLVM_VER}.src/ $HOME/llvm-src-${LLVM_VER}
+ - curl -L https://github.com/llvm-mirror/llvm/archive/release_50.zip -o release.zip
+ - unzip -q release.zip -d $HOME
+ - rsync -ac $HOME/llvm-release_50/ $HOME/llvm-src-${LLVM_VER}
+
  - cd $HOME/llvm-src-${LLVM_VER}
  - mkdir -p build && cd build
  - cmake -DCMAKE_BUILD_TYPE=Release -DCMAKE_INSTALL_PREFIX=$HOME/llvm-build-${LLVM_VER} -DLLVM_PARALLEL_LINK_JOBS=1 -DLLVM_TARGETS_TO_BUILD=X86 -DLLVM_BUILD_LLVM_DYLIB=True -DLLVM_LINK_LLVM_DYLIB=True ..
@@ -78,7 +84,7 @@ script:
  - cabal new-build llvm-hs-pure llvm-hs --with-gcc $GCC --ghc-options "-pgmc=${GCC}" ${TEST} ${BENCH} # -v2 provides useful information for debugging
 
  # there's no 'cabal new-test' yet, so let's emulate for now
- - TESTS=("llvm-hs-pure-4.1.0.0/build/test/test" "llvm-hs-4.2.0/build/test/test");
+ - TESTS=("llvm-hs-pure-5.0.0/build/test/test" "llvm-hs-5.0.0/build/test/test");
    RC=true; for T in ${TESTS[@]}; do echo "== $T ==";
    if dist-newstyle/build/$T; then echo "= $T OK =";
    else echo "= $T FAILED ="; RC=false; fi; done; $RC

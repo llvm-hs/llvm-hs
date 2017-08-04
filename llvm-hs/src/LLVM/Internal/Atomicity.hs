@@ -25,7 +25,7 @@ genCodingInstance [t| Maybe A.MemoryOrdering |] ''FFI.MemoryOrdering [
 
 genCodingInstance [t| A.SynchronizationScope |] ''FFI.SynchronizationScope [
   (FFI.synchronizationScopeSingleThread, A.SingleThread),
-  (FFI.synchronizationScopeCrossThread, A.CrossThread)
+  (FFI.synchronizationScopeSystem, A.System)
  ]
 
 instance Monad m => EncodeM m (Maybe A.Atomicity) (FFI.SynchronizationScope, FFI.MemoryOrdering) where

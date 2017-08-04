@@ -46,14 +46,17 @@ foreign import ccall unsafe "LLVM_Hs_GetTailCallKind" getTailCallKind ::
 foreign import ccall unsafe "LLVM_Hs_SetTailCallKind" setTailCallKind ::
   Ptr Instruction -> TailCallKind -> IO ()
 
-foreign import ccall unsafe "LLVM_Hs_GetCallSiteCalledValue" getCallSiteCalledValue ::
+foreign import ccall unsafe "LLVMGetCalledValue" getCallSiteCalledValue ::
   Ptr Instruction -> IO (Ptr Value)
 
-foreign import ccall unsafe "LLVM_Hs_GetCallSiteAttributeSet" getCallSiteAttributeSet ::
-  Ptr Instruction -> IO MixedAttributeSet
+foreign import ccall unsafe "LLVMGetNumArgOperands" getCallSiteNumArgOperands ::
+  Ptr Instruction -> IO CUInt
 
-foreign import ccall unsafe "LLVM_Hs_SetCallSiteAttributeSet" setCallSiteAttributeSet ::
-  Ptr Instruction -> MixedAttributeSet -> IO ()
+foreign import ccall unsafe "LLVM_Hs_CallSiteAttributesAtIndex" getCallSiteAttributesAtIndex ::
+  Ptr Instruction -> AttributeIndex -> IO (AttributeSet a)
+
+foreign import ccall unsafe "LLVM_Hs_CallSiteSetAttributeList" setCallSiteAttributeList ::
+  Ptr Instruction -> AttributeList -> IO ()
                      
 foreign import ccall unsafe "LLVMAddIncoming" addIncoming' ::
   Ptr Instruction -> Ptr (Ptr Value) -> Ptr (Ptr BasicBlock) -> CUInt -> IO ()

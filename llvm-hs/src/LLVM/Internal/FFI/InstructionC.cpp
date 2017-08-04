@@ -10,7 +10,6 @@
 
 #include "llvm-c/Core.h"
 
-#include "LLVM/Internal/FFI/Metadata.hpp"
 #include "LLVM/Internal/FFI/AttributeC.hpp"
 #include "LLVM/Internal/FFI/Instruction.h"
 
@@ -27,12 +26,12 @@ LLVM_HS_FOR_EACH_ATOMIC_ORDERING(ENUM_CASE)
 	}
 }
 
-static LLVMSynchronizationScope wrap(SynchronizationScope l) {
+static LLVMSynchronizationScope wrap(SyncScope::ID l) {
 	switch(l) {
-#define ENUM_CASE(x) case x: return LLVM ## x ## SynchronizationScope;
+#define ENUM_CASE(x) case SyncScope::x: return LLVM ## x ## SynchronizationScope;
 LLVM_HS_FOR_EACH_SYNCRONIZATION_SCOPE(ENUM_CASE)
 #undef ENUM_CASE
-	default: return LLVMSynchronizationScope(0);
+	default: assert(false && "Unknown synchronization scope");
 	}
 }
 
@@ -47,10 +46,10 @@ LLVM_HS_FOR_EACH_RMW_OPERATION(ENUM_CASE)
 
 LLVMFastMathFlags wrap(FastMathFlags f) {
 	unsigned r = 0;
-#define ENUM_CASE(u,l) if (f.l()) r |= unsigned(LLVM ## u);
+#define ENUM_CASE(u,l,takesArg) if (f.l()) r |= unsigned(LLVM ## u);
 LLVM_HS_FOR_EACH_FAST_MATH_FLAG(ENUM_CASE)
 #undef ENUM_CASE
-	return LLVMFastMathFlags(r);
+    return LLVMFastMathFlags(r);
 }
 
 }
@@ -77,16 +76,8 @@ LLVMFastMathFlags LLVM_Hs_GetFastMathFlags(LLVMValueRef val) {
 	return wrap(unwrap<Instruction>(val)->getFastMathFlags());
 }
 
-LLVMValueRef LLVM_Hs_GetCallSiteCalledValue(LLVMValueRef i) {
-	return wrap(CallSite(unwrap<Instruction>(i)).getCalledValue());
-}
-
-const AttributeSetImpl *LLVM_Hs_GetCallSiteAttributeSet(LLVMValueRef i) {
-	return wrap(CallSite(unwrap<Instruction>(i)).getAttributes());
-}
-
-void LLVM_Hs_SetCallSiteAttributeSet(LLVMValueRef i, const AttributeSetImpl *asi) {
-	CallSite(unwrap<Instruction>(i)).setAttributes(unwrap(asi));
+void LLVM_Hs_CallSiteSetAttributeList(LLVMValueRef i, LLVMAttributeListRef attrs) {
+	CallSite(unwrap<Instruction>(i)).setAttributes(*attrs);
 }
 
 unsigned LLVM_Hs_GetCallSiteCallingConvention(LLVMValueRef i) {
@@ -95,6 +86,11 @@ unsigned LLVM_Hs_GetCallSiteCallingConvention(LLVMValueRef i) {
 
 void LLVM_Hs_SetCallSiteCallingConvention(LLVMValueRef i, unsigned cc) {
   CallSite(unwrap<Instruction>(i)).setCallingConv(llvm::CallingConv::ID(cc));
+}
+
+LLVMAttributeSetRef LLVM_Hs_CallSiteAttributesAtIndex(LLVMValueRef i, LLVMAttributeIndex idx) {
+    auto cs = CallSite(unwrap<Instruction>(i));
+    return new AttributeSet(cs.getAttributes().getAttributes(idx));
 }
 
 #define CHECK(name)                                                            \
@@ -172,7 +168,7 @@ LLVMAtomicOrdering LLVM_Hs_GetFailureAtomicOrdering(LLVMValueRef i) {
 
 LLVMSynchronizationScope LLVM_Hs_GetSynchronizationScope(LLVMValueRef i) {
 	switch(unwrap<Instruction>(i)->getOpcode()) {
-#define ENUM_CASE(n,s) case Instruction::n: return wrap(unwrap<n ## Inst>(i)->getSynchScope());
+#define ENUM_CASE(n,s) case Instruction::n: return wrap(unwrap<n ## Inst>(i)->getSyncScopeID());
 		LLVM_HS_FOR_EACH_ATOMIC_INST(ENUM_CASE)
 #undef ENUM_CASE
 	default: return LLVMSynchronizationScope(0);
@@ -233,8 +229,8 @@ void LLVM_Hs_GetSwitchCases(
 ) {
 	SwitchInst *s = unwrap<SwitchInst>(v);
 	for(SwitchInst::CaseIt i = s->case_begin(); i != s->case_end(); ++i, ++values, ++dests) {
-		*values = wrap(i.getCaseValue());
-		*dests = wrap(i.getCaseSuccessor());
+		*values = wrap(i->getCaseValue());
+		*dests = wrap(i->getCaseSuccessor());
 	}
 }
 
@@ -245,10 +241,6 @@ void LLVM_Hs_GetIndirectBrDests(
 	IndirectBrInst *ib = unwrap<IndirectBrInst>(v);
 	for(unsigned i=0; i != ib->getNumDestinations(); ++i, ++dests)
 		*dests = wrap(ib->getDestination(i));
-}
-
-inline Metadata **unwrap(LLVMMetadataRef *vals) {
-    return reinterpret_cast<Metadata**>(vals);
 }
 
 void LLVM_Hs_SetMetadata(LLVMValueRef inst, unsigned kindID, LLVMMetadataRef md) {

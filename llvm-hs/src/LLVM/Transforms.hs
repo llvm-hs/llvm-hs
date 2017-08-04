@@ -79,30 +79,6 @@ data Pass
   | StripSymbols { onlyDebugInfo :: Bool }
 
   -- here begin the vectorization passes
-  | BasicBlockVectorize { 
-      vectorBits :: Word,
-      vectorizeBools :: Bool,
-      vectorizeInts :: Bool,
-      vectorizeFloats :: Bool,
-      vectorizePointers :: Bool,
-      vectorizeCasts :: Bool,
-      vectorizeMath :: Bool,
-      vectorizeFusedMultiplyAdd :: Bool,
-      vectorizeSelect :: Bool,
-      vectorizeCmp :: Bool,
-      vectorizeGetElementPtr :: Bool,
-      vectorizeMemoryOperations :: Bool,
-      alignedOnly :: Bool,
-      requiredChainDepth :: Word,
-      searchLimit :: Word,
-      maxCandidatePairsForCycleCheck :: Word,
-      splatBreaksChain :: Bool,
-      maxInstructions :: Word,
-      maxIterations :: Word,
-      powerOfTwoLengthsOnly :: Bool,
-      noMemoryOperationBoost :: Bool,
-      fastDependencyAnalysis :: Bool
-    }
   | LoopVectorize {
       noUnrolling :: Bool,
       alwaysVectorize :: Bool
@@ -132,36 +108,6 @@ defaultLoopVectorize :: Pass
 defaultLoopVectorize = LoopVectorize {
     noUnrolling = False,
     alwaysVectorize = True
-  }
-
--- | Defaults for the 'BasicBlockVectorize' pass - copied from the C++ code to keep these defaults
--- constant. (The C++ defaults are modifiable through global objects used for command-line processing,
--- in a design apparently oblivious to uses of LLVM besides the standard command-line tools).
-defaultVectorizeBasicBlocks :: Pass
-defaultVectorizeBasicBlocks = BasicBlockVectorize {
-    vectorBits = 128,
-    vectorizeBools = True,
-    vectorizeInts = True,
-    vectorizeFloats = True,
-    vectorizePointers = True,
-    vectorizeCasts = True,
-    vectorizeMath = True,
-    vectorizeFusedMultiplyAdd = True,
-    vectorizeSelect = True,
-    vectorizeCmp = True,
-    vectorizeGetElementPtr = True,
-    vectorizeMemoryOperations = True,
-    alignedOnly = True,
-
-    requiredChainDepth = 6,
-    searchLimit = 400,
-    maxCandidatePairsForCycleCheck = 200,
-    splatBreaksChain = False,
-    maxInstructions = 500,
-    maxIterations = 0,
-    powerOfTwoLengthsOnly = False,
-    noMemoryOperationBoost = False,
-    fastDependencyAnalysis = False
   }
 
 -- | See <http://gcc.gnu.org/viewcvs/gcc/trunk/gcc/gcov-io.h?view=markup>.

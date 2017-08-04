@@ -1,6 +1,6 @@
 module LLVM.Internal.OrcJIT.CompileLayer
   ( module LLVM.Internal.OrcJIT.CompileLayer
-  , FFI.ModuleSetHandle
+  , FFI.ModuleHandle
   ) where
 
 import LLVM.Prelude
@@ -9,7 +9,6 @@ import Control.Exception
 import Control.Monad.AnyCont
 import Control.Monad.IO.Class
 import Data.IORef
-import Foreign.Marshal.Array (withArrayLen)
 import Foreign.Ptr
 
 import LLVM.Internal.Coding
@@ -21,7 +20,7 @@ import LLVM.Internal.OrcJIT
 
 -- | There are two main types of operations provided by instances of 'CompileLayer'.
 --
--- 1. You can add \/ remove modules using 'addModuleSet' \/ 'removeModuleSet'.
+-- 1. You can add \/ remove modules using 'addModule' \/ 'removeModuleSet'.
 --
 -- 2. You can search for symbols using 'findSymbol' \/ 'findSymbolIn' in
 -- the previously added modules.
@@ -53,9 +52,9 @@ findSymbol compileLayer symbol exportedSymbolsOnly = flip runAnyContT return $ d
   decodeM symbol
 
 -- | @'findSymbolIn' layer handle symbol exportedSymbolsOnly@ searches for
--- @symbol@ in the context of the modules represented by @handle@. If
+-- @symbol@ in the context of the module represented by @handle@. If
 -- @exportedSymbolsOnly@ is 'True' only exported symbols are searched.
-findSymbolIn :: CompileLayer l => l -> FFI.ModuleSetHandle -> MangledSymbol -> Bool -> IO JITSymbol
+findSymbolIn :: CompileLayer l => l -> FFI.ModuleHandle -> MangledSymbol -> Bool -> IO JITSymbol
 findSymbolIn compileLayer handle symbol exportedSymbolsOnly = flip runAnyContT return $ do
   symbol' <- encodeM symbol
   exportedSymbolsOnly' <- encodeM exportedSymbolsOnly
@@ -63,41 +62,40 @@ findSymbolIn compileLayer handle symbol exportedSymbolsOnly = flip runAnyContT r
     (FFI.findSymbolIn (getCompileLayer compileLayer) handle symbol' exportedSymbolsOnly') FFI.disposeSymbol
   decodeM symbol
 
--- | Add a list of modules to the 'CompileLayer'. The 'SymbolResolver' is used
--- to resolve external symbols in these modules.
+-- | Add a module to the 'CompileLayer'. The 'SymbolResolver' is used
+-- to resolve external symbols in the module.
 --
--- /Note:/ This function consumes the modules passed be it and they
--- must not be used after calling this method.
-addModuleSet :: CompileLayer l => l -> [Module] -> SymbolResolver -> IO FFI.ModuleSetHandle
-addModuleSet compileLayer modules resolver = flip runAnyContT return $ do
+-- /Note:/ This function consumes the module passed to it and it must
+-- not be used after calling this method.
+addModule :: CompileLayer l => l -> Module -> SymbolResolver -> IO FFI.ModuleHandle
+addModule compileLayer mod resolver = flip runAnyContT return $ do
   resolverAct <- encodeM resolver
   resolver' <- liftIO $ resolverAct (getCleanups compileLayer)
-  modules' <- liftIO $ mapM readModule modules
-  liftIO $ mapM_ deleteModule modules
-  (moduleCount, modules'') <-
-    anyContToM $ \f -> withArrayLen modules' $ \n hs -> f (fromIntegral n, hs)
+  mod' <- liftIO $ readModule mod
+  liftIO $ deleteModule mod
+  errMsg <- alloca
   liftIO $
-    FFI.addModuleSet
+    FFI.addModule
       (getCompileLayer compileLayer)
       (getDataLayout compileLayer)
-      modules''
-      moduleCount
+      mod'
       resolver'
+      errMsg
 
--- | Remove a set of previously added modules.
-removeModuleSet :: CompileLayer l => l -> FFI.ModuleSetHandle -> IO ()
-removeModuleSet compileLayer handle =
-  FFI.removeModuleSet (getCompileLayer compileLayer) handle
+-- | Remove a previously added module.
+removeModule :: CompileLayer l => l -> FFI.ModuleHandle -> IO ()
+removeModule compileLayer handle =
+  FFI.removeModule (getCompileLayer compileLayer) handle
 
--- | 'bracket'-style wrapper around 'addModuleSet' and 'removeModuleSet'.
+-- | 'bracket'-style wrapper around 'addModule' and 'removeModule'.
 --
--- /Note:/ This function consumes the modules passed to it and they
--- must not be used after calling this method.
-withModuleSet :: CompileLayer l => l -> [Module] -> SymbolResolver -> (FFI.ModuleSetHandle -> IO a) -> IO a
-withModuleSet compileLayer modules resolver =
+-- /Note:/ This function consumes the module passed to it and it must
+-- not be used after calling this method.
+withModule :: CompileLayer l => l -> Module -> SymbolResolver -> (FFI.ModuleHandle -> IO a) -> IO a
+withModule compileLayer mod resolver =
   bracket
-    (addModuleSet compileLayer modules resolver)
-    (removeModuleSet compileLayer)
+    (addModule compileLayer mod resolver)
+    (removeModule compileLayer)
 
 -- | Dispose of a 'CompileLayer'. This should called when the
 -- 'CompileLayer' is not needed anymore.

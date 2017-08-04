@@ -5,14 +5,11 @@ import LLVM.Prelude
 import Control.Monad.Trans
 import Control.Monad.AnyCont
 
-import Foreign.C (CUInt)
-import Foreign.Ptr  
-
-import Data.Map (Map)
-import qualified Data.Map as Map
+import Foreign.Ptr
 
 import qualified LLVM.Internal.FFI.Function as FFI
 import qualified LLVM.Internal.FFI.PtrHierarchy as FFI
+import qualified LLVM.Internal.FFI.Attribute as FFI
 
 import LLVM.Internal.DecodeAST
 import LLVM.Internal.EncodeAST
@@ -23,25 +20,26 @@ import LLVM.Internal.Attribute
 
 import qualified LLVM.AST as A
 import qualified LLVM.AST.Constant as A
-import qualified LLVM.AST.ParameterAttribute as A.PA  
+import qualified LLVM.AST.ParameterAttribute as A.PA
 
-getMixedAttributeSet :: Ptr FFI.Function -> DecodeAST MixedAttributeSet
-getMixedAttributeSet = decodeM <=< liftIO . FFI.getMixedAttributeSet
+getAttributeList :: Ptr FFI.Function -> DecodeAST AttributeList
+getAttributeList f = do
+  decodeM (FFI.AttrSetDecoder FFI.attributesAtIndex FFI.countParams, f)
 
-setFunctionAttributes :: Ptr FFI.Function -> MixedAttributeSet -> EncodeAST ()
-setFunctionAttributes f = (liftIO . FFI.setMixedAttributeSet f) <=< encodeM
+setFunctionAttributes :: Ptr FFI.Function -> AttributeList -> EncodeAST ()
+setFunctionAttributes f = liftIO . FFI.setAttributeList f <=< encodeM
 
-getParameters :: Ptr FFI.Function -> Map CUInt [A.PA.ParameterAttribute] -> DecodeAST [A.Parameter]
+getParameters :: Ptr FFI.Function -> [[A.PA.ParameterAttribute]] -> DecodeAST [A.Parameter]
 getParameters f attrs = scopeAnyCont $ do
   n <- liftIO (FFI.countParams f)
   ps <- allocaArray n
   liftIO $ FFI.getParams f ps
   params <- peekArray n ps
-  forM (zip params [0..]) $ \(param, i) -> 
-    return A.Parameter 
-       `ap` typeOf param
-       `ap` getLocalName param
-       `ap` (return $ Map.findWithDefault [] i attrs)
+  forM (leftBiasedZip params attrs) $ \(param, pAttrs) ->
+    A.Parameter
+      <$> typeOf param
+      <*> getLocalName param
+      <*> (return $ fromMaybe [] pAttrs)
   
 getGC :: Ptr FFI.Function -> DecodeAST (Maybe ShortByteString)
 getGC f = scopeAnyCont $ decodeM =<< liftIO (FFI.getGC f)

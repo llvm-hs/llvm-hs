@@ -26,7 +26,7 @@ import LLVM.Internal.FFI.LLVMCTypes
 define hsc_inject() {                                       \
   hsc_printf("[");                                       \
   struct inst *i;                                           \
-  const char *kind;                                         \
+  const char *kind = NULL;                                  \
   int first = 1;                                            \
   for(i = insts; i->kind || i->opcode; ++i) {               \
     if (i->kind) { kind = i->kind; continue; }              \

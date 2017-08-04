@@ -1,6 +1,6 @@
 # llvm-hs - Haskell bindings for LLVM
 
-[![Build Status](https://travis-ci.org/llvm-hs/llvm-hs.svg?branch=llvm-4)](https://travis-ci.org/llvm-hs/llvm-hs) [![Hackage](https://img.shields.io/hackage/v/llvm-hs.svg)](https://hackage.haskell.org/package/llvm-hs)
+[![Build Status](https://travis-ci.org/llvm-hs/llvm-hs.svg?branch=llvm-5)](https://travis-ci.org/llvm-hs/llvm-hs) [![Hackage](https://img.shields.io/hackage/v/llvm-hs.svg)](https://hackage.haskell.org/package/llvm-hs)
 
 This project aims to provide a relatively complete set of bindings for
 the LLVM API. If you find that anything is missing please open an
@@ -33,7 +33,7 @@ inconveniences.
 Example using Homebrew on macOS:
 
 ```bash
-$ brew install llvm-hs/homebrew-llvm/llvm-4.0
+$ brew install llvm-hs/homebrew-llvm/llvm-5.0
 ```
 
 ### Debian/Ubuntu
@@ -44,7 +44,7 @@ instructions for adding the correct package database for your OS version, and
 then:
 
 ```bash
-$ apt-get install llvm-4.0-dev
+$ apt-get install llvm-5.0-dev
 ```
 
 ### Nix
@@ -71,7 +71,7 @@ on the LLVM.org website [here](http://llvm.org/docs/CMake.html). [CMake
 compiler are required, at least Clang 3.1, GCC 4.8, or Visual Studio 2015
 (Update 3).
 
-  1. Download and unpack the [LLVM-4.0 source code](http://releases.llvm.org/4.0.0/llvm-4.0.0.src.tar.xz).
+  1. Download and unpack the [LLVM-5.0 source code](http://releases.llvm.org/5.0.0/llvm-5.0.0.src.tar.xz).
      We'll refer to the path the source tree was unpacked to as `LLVM_SRC`.
 
   2. Create a temporary build directory and `cd` to it, for example:
@@ -98,7 +98,7 @@ compiler are required, at least Clang 3.1, GCC 4.8, or Visual Studio 2015
      to [System Integrity Protection](https://en.wikipedia.org/wiki/System_Integrity_Protection):
      ```sh
      cd $INSTALL_PREFIX/lib
-     ln -s libLLVM.dylib libLLVM-4.0.dylib
+     ln -s libLLVM.dylib libLLVM-5.0.dylib
      install_name_tool -id $PWD/libLTO.dylib libLTO.dylib
      install_name_tool -id $PWD/libLLVM.dylib libLLVM.dylib
      install_name_tool -change '@rpath/libLLVM.dylib' $PWD/libLLVM.dylib libLTO.dylib

@@ -36,7 +36,6 @@ instance Arbitrary FloatingPointOperationFusionMode where
 instance Arbitrary Options where
   arbitrary = do
     printMachineCode <- arbitrary
-    lessPreciseFloatingPointMultiplyAddOption <- arbitrary
     unsafeFloatingPointMath <- arbitrary
     noInfinitiesFloatingPointMath <- arbitrary
     noNaNsFloatingPointMath <- arbitrary
@@ -52,6 +51,9 @@ instance Arbitrary Options where
     floatABIType <- arbitrary
     allowFloatingPointOperationFusion <- arbitrary
     return Options { .. }
+
+instance Arbitrary DebugCompressionType where
+  arbitrary = elements [CompressNone, CompressGNU, CompressZ]
 
 arbitraryASCIIString :: Gen String
 #if MIN_VERSION_QuickCheck(2,10,0)
@@ -70,7 +72,7 @@ tests = testGroup "Target" [
        withTargetOptions $ \to -> do
          pokeTargetOptions options to
          options' <- peekTargetOptions to
-         return $ options == options'
+         return $ options === options'
    ],
   testGroup "LibraryFunction" [
     testGroup "set-get" [
