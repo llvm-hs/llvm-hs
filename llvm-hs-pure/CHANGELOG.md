@@ -2,6 +2,16 @@
 
 * Support for LLVM 5.0
 
+    We only give a summary of the changes affecting the public API of `llvm-hs-pure` here.
+    Please refer to the official
+    [release notes for LLVM 5.0](http://releases.llvm.org/5.0.0/docs/ReleaseNotes.html)
+    for an overview of all changes in LLVM 5.0.
+
+    * The `X86_64_Win64` calling convention is now called `Win64`.
+    * There is a new `Speculatable` function attribute.
+    * The `CrossThread` synchronization scope has been removed. There is
+      now a new `System` synchronization scope.
+
 ## 4.1.0 (2017-05-17)
 
 * Switch AST to `ByteString`/`ShortByteString` reflecting LLVM’s use

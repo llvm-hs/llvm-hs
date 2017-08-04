@@ -1,6 +1,25 @@
 ## 5.0.0 (unreleased)
 
 * Support for LLVM 5.0
+
+    We only give a summary of the changes affecting the public API of `llvm-hs` here.
+    Please refer to the official
+    [release notes for LLVM 5.0](http://releases.llvm.org/5.0.0/docs/ReleaseNotes.html)
+    for an overview of all changes in LLVM 5.0.
+
+    * The `X86_64_Win64` calling convention is now called `Win64`.
+    * There is a new `Speculatable` function attribute.
+    * The `CrossThread` synchronization scope has been removed. There is
+      now a new `System` synchronization scope.
+    * The `OrcJIT`-API now operates on individual modules instead of
+      sets of modules.
+    * The `lessPreciseFloatingPointMultiplyAddOption` field has been
+      removed from the target options.
+    * The `compressDebugSections` option field is now of type
+      `DebugCompressionType` instead of `Bool`.
+    * The `BasicBlockVectorize` pass has been removed. You should use
+      `SuperwordLevelParallelismVectorize` instead.
+
 * Throw 'EncodeException' when the type supplied in a
   'GlobalReference' does not match the type of the expression.
 * Throw 'EncodeException' when the result of instructions returning
