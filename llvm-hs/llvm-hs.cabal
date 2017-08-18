@@ -62,7 +62,7 @@ custom-setup
 
 library
   build-tools: llvm-config
-  ghc-options: -Wall -fno-warn-name-shadowing -fno-warn-orphans -fno-warn-incomplete-patterns
+  ghc-options: -Wall -fno-warn-name-shadowing -fno-warn-orphans
   if flag(semigroups)
     build-depends:
       base >= 4.7 && < 4.9,

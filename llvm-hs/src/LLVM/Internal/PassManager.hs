@@ -123,6 +123,7 @@ createPassManager pss = flip runAnyContT return $ do
               (n, fns) = case con of
                             TH.RecC n fs -> (n, [ TH.nameBase fn | (fn, _, _) <- fs ])
                             TH.NormalC n [] -> (n, [])
+                            _ -> error "pass descriptor constructors with fields need to be records"
               actions = 
                 [ TH.bindS (TH.varP . TH.mkName $ fn) [| encodeM $(TH.dyn fn) |] | fn <- fns ]
                 ++ [

@@ -20,7 +20,6 @@ import qualified Data.ByteString as ByteString
 import Data.Char
 import Data.Map (Map)
 import qualified Data.Map as Map
-import Data.Monoid
 import Foreign.C.String
 import Foreign.Ptr
 

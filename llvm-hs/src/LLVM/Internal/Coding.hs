@@ -39,8 +39,8 @@ genCodingInstance ht ctn chs = do
 
     instance Monad m => DecodeM m $(ht) $(conT ctn) where
       decodeM c = return $ $(
-        caseE [| c |] [ match (dataToPatQ n c) (normalB (dataToExpQ n h)) [] | (c,h) <- chs ]
-       )
+        caseE [| c |] ([ match (dataToPatQ n c) (normalB (dataToExpQ n h)) [] | (c,h) <- chs] ++
+                       [ match wildP (normalB [e| error ("Decoding failed: Unknown " <> $(litE (stringL (nameBase ctn)))) |]) []]))
    |]
 
 allocaArray :: (Integral i, Storable a, MonadAnyCont IO m) => i -> m (Ptr a)

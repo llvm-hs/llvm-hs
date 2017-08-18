@@ -29,6 +29,7 @@ define hsc_inject(m) { \
   for(p = list; p < list + sizeof(list)/sizeof(list[0]); ++p) { \
     hsc_printf("  decodeM (FFI.LibFunc %u) = return LF__%s \n", p->n, p->s); \
   } \
+  hsc_printf("  decodeM f = error (\"Unknown libfunc: \" <> show f)\n"); \
 }
 }
 

@@ -103,6 +103,7 @@ instance EncodeM EncodeAST A.Type (Ptr FFI.Type) where
       A.NamedTypeReference n -> lookupNamedType n
       A.MetadataType -> liftIO $ FFI.metadataTypeInContext context
       A.TokenType -> liftIO $ FFI.tokenTypeInContext context
+      A.LabelType -> liftIO $ FFI.labelTypeInContext context
 
 instance DecodeM DecodeAST A.Type (Ptr FFI.Type) where
   decodeM t = scopeAnyCont $ do

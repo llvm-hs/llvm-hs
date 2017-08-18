@@ -54,6 +54,10 @@ allocaWords :: forall a m . (Storable a, MonadAnyCont IO m, Monad m, MonadIO m) 
 allocaWords nBits = do
   allocaArray (((nBits-1) `div` (8*(fromIntegral (sizeOf (undefined :: a))))) + 1)
 
+inconsistentCases :: Show a => String -> a -> b
+inconsistentCases name attr =
+  error $ "llvm-hs internal error: cases inconstistent in " ++ name ++ " encoding for " ++ show attr
+
 instance EncodeM EncodeAST A.Constant (Ptr FFI.Constant) where
   encodeM c = scopeAnyCont $ case c of
     A.C.Int { A.C.integerBits = bits, A.C.integerValue = v } -> do
@@ -119,29 +123,37 @@ instance EncodeM EncodeAST A.Constant (Ptr FFI.Constant) where
       liftIO $ FFI.getConstTokenNone context
     o -> $(do
       let constExprInfo =  ID.outerJoin ID.astConstantRecs (ID.innerJoin ID.astInstructionRecs ID.instructionDefs)
-      TH.caseE [| o |] $ do
-        (name, (Just (TH.RecC n fs), instrInfo)) <- Map.toList constExprInfo
-        let fns = [ TH.mkName . TH.nameBase $ fn | (fn, _, _) <- fs ]
-            coreCall n = TH.dyn $ "FFI.constant" ++ n
-            buildBody c = [ TH.bindS (TH.varP fn) [| encodeM $(TH.varE fn) |] | fn <- fns ]
-                          ++ [ TH.noBindS [| liftIO $(foldl TH.appE c (map TH.varE fns)) |] ]
-            hasFlags = any (== ''Bool) [ h | (_, _, TH.ConT h) <- fs ]
-        core <- case instrInfo of
-          Just (_, iDef) -> do
-            let opcode = TH.dataToExpQ (const Nothing) (ID.cppOpcode iDef)
-            case ID.instructionKind iDef of
-              ID.Binary | hasFlags -> return $ coreCall name
-                        | True -> return [| $(coreCall "BinaryOperator") $(opcode) |]
-              ID.Cast -> return [| $(coreCall "Cast") $(opcode) |]
-              _ -> return $ coreCall name
-          Nothing -> if (name `elem` ["Vector", "Null", "Array", "Undef"])
-                      then return $ coreCall name
-                      else []
-        return $ TH.match
-          (TH.recP n [(fn,) <$> (TH.varP . TH.mkName . TH.nameBase $ fn) | (fn, _, _) <- fs])
-          (TH.normalB (TH.doE (buildBody core)))
-          []
-      )
+      TH.caseE [| o |] $
+        map (\p -> TH.match p (TH.normalB [|inconsistentCases "Constant" o|]) [])
+            [[p|A.C.Int{}|],
+             [p|A.C.Float{}|],
+             [p|A.C.Struct{}|],
+             [p|A.C.BlockAddress{}|],
+             [p|A.C.GlobalReference{}|],
+             [p|A.C.TokenNone{}|]] ++
+        (do (name, (Just (TH.RecC n fs), instrInfo)) <- Map.toList constExprInfo
+            let fns = [ TH.mkName . TH.nameBase $ fn | (fn, _, _) <- fs ]
+                coreCall n = TH.dyn $ "FFI.constant" ++ n
+                buildBody c = [ TH.bindS (TH.varP fn) [| encodeM $(TH.varE fn) |] | fn <- fns ]
+                              ++ [ TH.noBindS [| liftIO $(foldl TH.appE c (map TH.varE fns)) |] ]
+                hasFlags = any (== ''Bool) [ h | (_, _, TH.ConT h) <- fs ]
+            core <- case instrInfo of
+              Just (_, iDef) -> do
+                let opcode = TH.dataToExpQ (const Nothing) (ID.cppOpcode iDef)
+                case ID.instructionKind iDef of
+                  ID.Binary | hasFlags -> return $ coreCall name
+                            | True -> return [| $(coreCall "BinaryOperator") $(opcode) |]
+                  ID.Cast -> return [| $(coreCall "Cast") $(opcode) |]
+                  _ -> return $ coreCall name
+              Nothing ->
+                if (name `elem` ["Vector", "Null", "Array", "Undef"])
+                  then return $ coreCall name
+                  else []
+            return $ TH.match
+              (TH.recP n [(fn,) <$> (TH.varP . TH.mkName . TH.nameBase $ fn) | (fn, _, _) <- fs])
+              (TH.normalB (TH.doE (buildBody core)))
+              [])
+     )
 
 instance DecodeM DecodeAST A.Constant (Ptr FFI.Constant) where
   decodeM c = scopeAnyCont $ do
@@ -157,9 +169,11 @@ instance DecodeM DecodeAST A.Constant (Ptr FFI.Constant) where
         op = decodeM <=< liftIO . FFI.getConstantOperand c
         getConstantOperands = mapM op [0..nOps-1] 
         getConstantData = do
-          let nElements = case t of
-                            A.VectorType n _ -> n
-                            A.ArrayType n _ | n <= (fromIntegral (maxBound :: Word32)) -> fromIntegral n
+          let nElements =
+                case t of
+                  A.VectorType n _ -> n
+                  A.ArrayType n _ | n <= (fromIntegral (maxBound :: Word32)) -> fromIntegral n
+                  _ -> error "getConstantData can only be applied to vectors and arrays"
           forM [0..nElements-1] $ do
              decodeM <=< liftIO . FFI.getConstantDataSequentialElementAsConstant c . fromIntegral
 
@@ -214,47 +228,48 @@ instance DecodeM DecodeAST A.Constant (Ptr FFI.Constant) where
       [valueSubclassIdP|ConstantExpr|] -> do
             cppOpcode <- liftIO $ FFI.getConstantCPPOpcode c
             $(
-              TH.caseE [| cppOpcode |] $ do
-                (_, ((TH.RecC n fs, _), iDef)) <- Map.toList $
-                      ID.innerJoin (ID.innerJoin ID.astConstantRecs ID.astInstructionRecs) ID.instructionDefs
-                let apWrapper o (fn, _, ct) = do
-                      a <- case ct of
-                             TH.ConT h
-                               | h == ''A.Constant -> do
-                                               operandNumber <- get
-                                               modify (+1)
-                                               return [| op $(TH.litE . TH.integerL $ operandNumber) |]
-                               | h == ''A.Type -> return [| pure t |]
-                               | h == ''A.IntegerPredicate -> 
-                                 return [| liftIO $ decodeM =<< FFI.getConstantICmpPredicate c |]
-                               | h == ''A.FloatingPointPredicate -> 
-                                 return [| liftIO $ decodeM =<< FFI.getConstantFCmpPredicate c |]
-                               | h == ''Bool -> case TH.nameBase fn of
-                                                  "inBounds" -> return [| liftIO $ decodeM =<< FFI.getInBounds v |]
-                                                  "exact" -> return [| liftIO $ decodeM =<< FFI.isExact v |]
-                                                  "nsw" -> return [| liftIO $ decodeM =<< FFI.hasNoSignedWrap v |]
-                                                  "nuw" -> return [| liftIO $ decodeM =<< FFI.hasNoUnsignedWrap v |]
-                                                  x -> error $ "constant bool field " ++ show x ++ " not handled yet"
-                             TH.AppT TH.ListT (TH.ConT h) 
-                               | h == ''Word32 -> 
-                                  return [|
-                                        do
-                                          np <- alloca
-                                          isp <- liftIO $ FFI.getConstantIndices c np
-                                          n <- peek np
-                                          decodeM (n, isp)
-                                        |]
-                               | h == ''A.Constant -> 
-                                  case TH.nameBase fn of
-                                    "indices" -> do
-                                      operandNumber <- get
-                                      return [| mapM op [$(TH.litE . TH.integerL $ operandNumber)..nOps-1] |]
-                             _ -> error $ "unhandled constant expr field type: " ++ show fn ++ " - " ++ show ct
-                      return [| $(o) `ap` $(a) |]
-                return $ TH.match 
-                          (TH.dataToPatQ (const Nothing) (ID.cppOpcode iDef))
-                          (TH.normalB (evalState (foldM apWrapper [| return $(TH.conE n) |] fs) 0))
-                          []
+              TH.caseE [| cppOpcode |] $
+                (do (_, ((TH.RecC n fs, _), iDef)) <- Map.toList $
+                          ID.innerJoin (ID.innerJoin ID.astConstantRecs ID.astInstructionRecs) ID.instructionDefs
+                    let apWrapper o (fn, _, ct) = do
+                          a <- case ct of
+                                 TH.ConT h
+                                   | h == ''A.Constant -> do
+                                                   operandNumber <- get
+                                                   modify (+1)
+                                                   return [| op $(TH.litE . TH.integerL $ operandNumber) |]
+                                   | h == ''A.Type -> return [| pure t |]
+                                   | h == ''A.IntegerPredicate ->
+                                     return [| liftIO $ decodeM =<< FFI.getConstantICmpPredicate c |]
+                                   | h == ''A.FloatingPointPredicate ->
+                                     return [| liftIO $ decodeM =<< FFI.getConstantFCmpPredicate c |]
+                                   | h == ''Bool -> case TH.nameBase fn of
+                                                      "inBounds" -> return [| liftIO $ decodeM =<< FFI.getInBounds v |]
+                                                      "exact" -> return [| liftIO $ decodeM =<< FFI.isExact v |]
+                                                      "nsw" -> return [| liftIO $ decodeM =<< FFI.hasNoSignedWrap v |]
+                                                      "nuw" -> return [| liftIO $ decodeM =<< FFI.hasNoUnsignedWrap v |]
+                                                      x -> error $ "constant bool field " ++ show x ++ " not handled yet"
+                                 TH.AppT TH.ListT (TH.ConT h)
+                                   | h == ''Word32 ->
+                                      return [|
+                                            do
+                                              np <- alloca
+                                              isp <- liftIO $ FFI.getConstantIndices c np
+                                              n <- peek np
+                                              decodeM (n, isp)
+                                            |]
+                                   | h == ''A.Constant &&
+                                     TH.nameBase fn == "indices" -> do
+                                       operandNumber <- get
+                                       return [| mapM op [$(TH.litE . TH.integerL $ operandNumber)..nOps-1] |]
+
+                                 _ -> error $ "unhandled constant expr field type: " ++ show fn ++ " - " ++ show ct
+                          return [| $(o) `ap` $(a) |]
+                    return $ TH.match
+                              (TH.dataToPatQ (const Nothing) (ID.cppOpcode iDef))
+                              (TH.normalB (evalState (foldM apWrapper [| return $(TH.conE n) |] fs) 0))
+                              [])
+                ++ [TH.match TH.wildP (TH.normalB [|error ("Unknown constant opcode: " <> show cppOpcode)|]) []]
              )
       [valueSubclassIdP|ConstantTokenNone|] -> return A.C.TokenNone
       _ -> error $ "unhandled constant valueSubclassId: " ++ show valueSubclassId

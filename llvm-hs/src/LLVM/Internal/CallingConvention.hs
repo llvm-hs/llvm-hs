@@ -68,4 +68,6 @@ instance Monad m => DecodeM m A.CC.CallingConvention FFI.CallingConvention where
     [callingConventionP|Intel_OCL_BI|] -> A.CC.Intel_OCL_BI
     [callingConventionP|X86_64_SysV|] -> A.CC.X86_64_SysV
     [callingConventionP|Win64|] -> A.CC.Win64
-    FFI.CallingConvention (CUInt ci) | ci >= 64 -> A.CC.Numbered (fromIntegral ci)
+    FFI.CallingConvention (CUInt ci)
+      | ci >= 64 -> A.CC.Numbered (fromIntegral ci)
+      | otherwise -> error ("Unknown calling convention: " <> show ci)

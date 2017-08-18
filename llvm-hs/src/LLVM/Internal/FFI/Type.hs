@@ -150,3 +150,7 @@ foreign import ccall unsafe "LLVM_Hs_MetadataTypeInContext" metadataTypeInContex
 -- | <http://llvm.org/docs/doxygen/html/Core_8cpp.html#a5d3702e198e2373db7e31bb18879efc3>
 foreign import ccall unsafe "LLVM_Hs_TokenTypeInContext" tokenTypeInContext ::
   Ptr Context -> IO (Ptr Type)
+
+-- | <http://llvm.org/doxygen/group__LLVMCCoreTypeOther.html#ga7b7c56bf8406c50205fdd410b351ad81>
+foreign import ccall unsafe "LLVMLabelTypeInContext" labelTypeInContext ::
+  Ptr Context -> IO (Ptr Type)
