@@ -143,9 +143,13 @@ undefinedReference m n = throwM . EncodeException $ "reference to undefined " ++
 referOrThrow :: (Show n, Ord n) => (EncodeState -> Map n v) -> String -> n -> EncodeAST v
 referOrThrow r m n = refer r n $ undefinedReference m n
 
+referGlobal :: A.Name -> EncodeAST (Ptr FFI.GlobalValue)
 referGlobal = referOrThrow encodeStateGlobals "global"
+referMDNode :: A.MetadataNodeID -> EncodeAST (Ptr FFI.MDNode)
 referMDNode = referOrThrow encodeStateMDNodes "metadata node"
+referAttributeGroup :: A.A.GroupID -> EncodeAST FFI.FunctionAttributeSet
 referAttributeGroup = referOrThrow encodeStateAttributeGroups "attribute group"
+referCOMDAT :: ShortByteString -> EncodeAST (Ptr FFI.COMDAT)
 referCOMDAT = referOrThrow encodeStateCOMDATs "COMDAT"
 
 defineBasicBlock :: A.Name -> A.Name -> Ptr FFI.BasicBlock -> EncodeAST ()
