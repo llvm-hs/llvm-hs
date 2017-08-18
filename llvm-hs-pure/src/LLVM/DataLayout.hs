@@ -13,7 +13,6 @@ import Data.Attoparsec.ByteString.Char8
 import Data.ByteString.Char8 as ByteString hiding (map, foldr)
 import qualified Data.List as List
 import qualified Data.Map as Map
-import Data.Monoid
 import qualified Data.Set as Set
 
 import LLVM.AST.DataLayout

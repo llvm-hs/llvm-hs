@@ -114,6 +114,7 @@ instance Monad m => EncodeM m A.FA.FunctionAttribute (Ptr FFI.FunctionAttrBuilde
       A.FA.SanitizeThread -> FFI.functionAttributeKindSanitizeThread
       A.FA.SanitizeMemory -> FFI.functionAttributeKindSanitizeMemory
       A.FA.SafeStack -> FFI.functionAttributeKindSafeStack
+      A.FA.Speculatable -> FFI.functionAttributeKindSpeculatable
       A.FA.StackAlignment _ -> inconsistentCases "FunctionAttribute" a
       A.FA.AllocSize _ _ -> inconsistentCases "FunctionAttribute" a
       A.FA.StringAttribute _ _ -> inconsistentCases "FunctionAttribute" a

@@ -20,7 +20,6 @@ import qualified Data.ByteString as ByteString
 import Data.Char
 import Data.Map (Map)
 import qualified Data.Map as Map
-import Data.Monoid
 import Foreign.C.String
 import Foreign.Ptr
 
@@ -231,7 +230,7 @@ newtype TargetLowering = TargetLowering (Ptr FFI.TargetLowering)
 
 -- | get the 'TargetLowering' of a 'TargetMachine'
 getTargetLowering :: TargetMachine -> IO TargetLowering
-getTargetLowering (TargetMachine tm) = TargetLowering <$> error "FIXME: getTargetLowering" -- FFI.getTargetLowering tm
+getTargetLowering (TargetMachine _) = TargetLowering <$> error "FIXME: getTargetLowering" -- FFI.getTargetLowering tm
 
 -- | Initialize the native target. This function is called automatically in these Haskell bindings
 -- when creating an 'LLVM.ExecutionEngine.ExecutionEngine' which will require it, and so it should

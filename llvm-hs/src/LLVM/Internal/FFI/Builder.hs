@@ -115,6 +115,7 @@ foreign import ccall unsafe "LLVMBuildInBoundsGEP" buildInBoundsGetElementPtr' :
 buildGetElementPtr :: Ptr Builder -> LLVMBool -> Ptr Value -> (CUInt, Ptr (Ptr Value)) -> CString -> IO (Ptr Instruction)
 buildGetElementPtr builder (LLVMBool 1) a (n, is) s = buildInBoundsGetElementPtr' builder a is n s
 buildGetElementPtr builder (LLVMBool 0) a (n, is) s = buildGetElementPtr' builder a is n s
+buildGetElementPtr _ (LLVMBool i) _ _ _ = error ("LLVMBool should be 0 or 1 but is " <> show i)
 
 foreign import ccall unsafe "LLVM_Hs_BuildFence" buildFence' ::
   Ptr Builder -> MemoryOrdering -> SynchronizationScope -> CString -> IO (Ptr Instruction)

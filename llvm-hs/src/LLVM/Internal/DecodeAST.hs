@@ -50,6 +50,8 @@ data DecodeState = DecodeState {
     functionAttributeListIDs :: [(FFI.FunctionAttributeSet, A.A.GroupID)],
     comdats :: Map (Ptr FFI.COMDAT) (ShortByteString, A.COMDAT.SelectionKind)
   }
+
+initialDecode :: DecodeState
 initialDecode = DecodeState {
     globalVarNum = Map.empty,
     localVarNum = Map.empty,

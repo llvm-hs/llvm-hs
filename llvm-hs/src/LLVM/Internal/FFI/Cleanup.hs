@@ -23,9 +23,10 @@ import qualified LLVM.AST.Instruction as A (FastMathFlags)
 
 foreignDecl :: String -> String -> [TypeQ] -> TypeQ -> DecsQ
 foreignDecl cName hName argTypeQs returnTypeQ = do
-  let foreignDecl' hName argTypeQs = 
+  let retTyQ = appT (conT ''IO) returnTypeQ
+      foreignDecl' hName argTypeQs =
         forImpD cCall unsafe cName (mkName hName) 
-                  (foldr (\a b -> appT (appT arrowT a) b) (appT (conT ''IO) returnTypeQ) argTypeQs)
+                  (foldr (\a b -> appT (appT arrowT a) b) retTyQ argTypeQs)
       splitTuples :: [Type] -> Q ([Type], [Pat], [Exp])
       splitTuples ts = do
         let f :: Type -> Q (Seq Type, Pat, Seq Exp)
@@ -56,6 +57,7 @@ foreignDecl cName hName argTypeQs returnTypeQ = do
   let phName = hName ++ "'"
   sequence [
     foreignDecl' phName (map return ts),
+    sigD (mkName hName) (foldr (\argT retT -> appT (appT arrowT argT) retT) retTyQ argTypeQs),
     funD (mkName hName) [
      clause (map return ps) (normalB (foldl appE (varE (mkName phName)) (map return es))) []
     ]

@@ -17,7 +17,8 @@ module LLVM.Prelude (
     fromMaybe,
     leftBiasedZip,
     findM,
-    ifM
+    ifM,
+    (<>)
     ) where
 
 import Prelude hiding (
@@ -33,6 +34,7 @@ import Data.Data (Data, Typeable)
 import GHC.Generics (Generic)
 import Data.Int
 import Data.Maybe (fromMaybe)
+import Data.Monoid ((<>))
 import Data.Word
 import Data.Functor
 import Data.Foldable

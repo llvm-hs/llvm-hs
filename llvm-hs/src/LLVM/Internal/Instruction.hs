@@ -107,6 +107,7 @@ instance DecodeM DecodeAST A.Terminator (Ptr FFI.Instruction) where
                A.trueDest = trueDest,
                A.metadata' = md
              }
+          _ -> error "Branch instructions should always have 1 or 3 operands"
       [instrP|Switch|] -> do
         op0 <- op 0
         dd <- successor 1
@@ -190,6 +191,7 @@ instance DecodeM DecodeAST A.Terminator (Ptr FFI.Instruction) where
           A.defaultUnwindDest = unwindDest,
           A.metadata' = md
         }
+      i -> error ("Unknown terminator instruction kind: " <> show i)
 
 instance EncodeM EncodeAST A.Terminator (Ptr FFI.Instruction) where
   encodeM t = scopeAnyCont $ do
@@ -325,7 +327,10 @@ $(do
                 "argList" -> ([], [| op 0 |])
                 "vector" -> ([], [| op 0 |])
                 "element" -> ([], [| op 1 |])
-                "index" -> ([], case lrn of "ExtractElement" -> [| op 1 |]; "InsertElement" -> [| op 2 |])
+                "index" -> ([], case lrn of
+                                  "ExtractElement" -> [| op 1 |]
+                                  "InsertElement" -> [| op 2 |]
+                                  _ -> [|error "Index fields are only supported for 'ExtractElement' and 'InsertElement': " <> lrn|])
                 "mask" -> ([], [| cop 2 |])
                 "aggregate" -> ([], [| op 0 |])
                 "metadata" -> ([], [| meta i |])
@@ -390,8 +395,8 @@ $(do
                                               decodeM =<< liftIO (FFI.getArgOperand i op) |])
                 _ -> ([], [| error $ "unrecognized instruction field or depenency thereof: " ++ show s |])
           in
-          TH.caseE [| n |] [
-            TH.match opcodeP (TH.normalB (TH.doE handlerBody)) []
+          TH.caseE [| n |] $
+            [ TH.match opcodeP (TH.normalB (TH.doE handlerBody)) []
             | (lrn, iDef) <- Map.toList ID.instructionDefs,
               ID.instructionKind iDef /= ID.Terminator,
               let opcodeP = TH.dataToPatQ (const Nothing) (ID.cppOpcode iDef)
@@ -410,7 +415,8 @@ $(do
                                  [ (f,) <$> (TH.varE . TH.mkName . TH.nameBase $ f) | f <- fieldNames ])
                         |]
                       ]
-                ]
+            ] ++
+            [ TH.match TH.wildP (TH.normalB [| error ("Unknown instruction opcode: " <> show n) |]) [] ]
          )
 
     instance EncodeM EncodeAST A.Instruction (Ptr FFI.Instruction, EncodeAST ()) where
@@ -547,9 +553,9 @@ $(do
             (numArgs, args') <- encodeM args
             i <- liftIO $ FFI.buildCatchPad builder catchSwitch' args' numArgs s
             return' i
-          o -> $(TH.caseE [| o |] [
-                   TH.match
-                   (TH.recP fullName [ (f,) <$> (TH.varP . TH.mkName . TH.nameBase $ f) | f <- fieldNames ])
+          o -> $(TH.caseE [| o |] $
+                  [TH.match
+                   (TH.recP fullName [ (f,) <$> (TH.varP . TH.mkName . TH.nameBase $ f) | f <- encodeFieldNames ])
                    (TH.normalB (TH.doE handlerBody))
                    []
                    |
@@ -562,7 +568,8 @@ $(do
                      _ -> False,
                    let
                      TH.RecC fullName (unzip3 -> (fieldNames, _, _)) = findInstrFields name
-                     encodeMFields = map TH.nameBase fieldNames List.\\ [ "metadata" ]
+                     encodeFieldNames = filter (\f -> TH.nameBase f /= "metadata") fieldNames
+                     encodeMFields = map TH.nameBase encodeFieldNames
                      handlerBody = ([
                        TH.bindS (if s == "fastMathFlags" then TH.tupP [] else TH.varP (TH.mkName s))
                            [| encodeM $(TH.dyn s) |] | s <- encodeMFields
@@ -573,7 +580,23 @@ $(do
                         ) |],
                        TH.noBindS [| return' $(TH.dyn "i") |]
                       ])
-                  ]
+                  ] ++
+                  (map (\p -> TH.match p (TH.normalB [|inconsistentCases "Instruction" o|]) [])
+                       [[p|A.Alloca{}|],
+                        [p|A.ICmp{}|],
+                        [p|A.FCmp{}|],
+                        [p|A.Phi{}|],
+                        [p|A.Call{}|],
+                        [p|A.Select{}|],
+                        [p|A.VAArg{}|],
+                        [p|A.ExtractElement{}|],
+                        [p|A.InsertElement{}|],
+                        [p|A.ShuffleVector{}|],
+                        [p|A.ExtractValue{}|],
+                        [p|A.InsertValue{}|],
+                        [p|A.LandingPad{}|],
+                        [p|A.CatchPad{}|],
+                        [p|A.CleanupPad{}|]])
                 )
 
         setMD inst (A.metadata o)

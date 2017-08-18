@@ -62,7 +62,9 @@ foreign import ccall unsafe "LLVMAddIncoming" addIncoming' ::
   Ptr Instruction -> Ptr (Ptr Value) -> Ptr (Ptr BasicBlock) -> CUInt -> IO ()
 
 addIncoming :: Ptr Instruction -> (CUInt, Ptr (Ptr Value)) -> (CUInt, Ptr (Ptr BasicBlock)) -> IO ()
-addIncoming i (nvs, vs) (nbs, bs) | nbs == nvs = addIncoming' i vs bs nbs
+addIncoming i (nvs, vs) (nbs, bs)
+  | nbs == nvs = addIncoming' i vs bs nbs
+  | otherwise = error "Number of incoming values and incoming blocks must be equal"
 
 foreign import ccall unsafe "LLVMCountIncoming" countIncoming ::
   Ptr Instruction -> IO CUInt

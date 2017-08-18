@@ -115,7 +115,11 @@ foreign import ccall unsafe "LLVMConstInBoundsGEP" constantInBoundsGetElementPtr
 
 constantGetElementPtr :: LLVMBool -> Ptr Constant -> (CUInt, Ptr (Ptr Constant)) -> IO (Ptr Constant)
 constantGetElementPtr (LLVMBool ib) a (n, is) =
-  (case ib of { 0 -> constantGetElementPtr'; 1 -> constantInBoundsGetElementPtr' }) a is n
+  (case ib of
+     0 -> constantGetElementPtr'
+     1 -> constantInBoundsGetElementPtr'
+     _ -> error ("LLVMBool should be 0 or 1 but is " <> show ib)
+  ) a is n
 
 foreign import ccall unsafe "LLVM_Hs_GetConstCPPOpcode" getConstantCPPOpcode ::
   Ptr Constant -> IO CPPOpcode

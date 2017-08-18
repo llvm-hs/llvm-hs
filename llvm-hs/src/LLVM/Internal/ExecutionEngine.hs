@@ -59,6 +59,7 @@ instance ExecutionEngine (Ptr FFI.ExecutionEngine) (FunPtr ()) where
         do
           p <- liftIO $ FFI.getPointerToGlobal e (FFI.upCast f)
           return $ if p == nullPtr then Nothing else Just (castPtrToFunPtr p)
+  getFunction _ _ = error "Only named functions can be looked up"
 
 withExecutionEngine :: 
   Context ->

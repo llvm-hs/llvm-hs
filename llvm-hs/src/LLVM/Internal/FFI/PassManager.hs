@@ -86,7 +86,7 @@ $(do
   liftM concat $ forM cons $ \con -> case con of
     TH.RecC n l -> declareForeign n [ t | (_,_,t) <- l ]
     TH.NormalC n [] -> declareForeign n []
-    TH.NormalC n _ -> error "pass descriptor constructors with fields need to be records"
+    _ -> error "pass descriptor constructors with fields need to be records"
  )
 
 data PassManagerBuilder

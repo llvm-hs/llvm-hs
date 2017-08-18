@@ -3,7 +3,6 @@ module LLVM.AST.Name where
 
 import LLVM.Prelude
 import Data.Char
-import Data.Monoid
 import Data.String
 
 {- |
