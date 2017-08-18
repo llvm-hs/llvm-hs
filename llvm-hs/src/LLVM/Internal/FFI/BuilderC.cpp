@@ -4,8 +4,9 @@
 
 #include "llvm-c/Core.h"
 
-#include "LLVM/Internal/FFI/Instruction.h"
 #include "LLVM/Internal/FFI/BinaryOperator.h"
+#include "LLVM/Internal/FFI/ErrorHandling.hpp"
+#include "LLVM/Internal/FFI/Instruction.h"
 
 using namespace llvm;
 
@@ -24,7 +25,7 @@ static SyncScope::ID unwrap(LLVMSynchronizationScope l) {
 #define ENUM_CASE(x) case LLVM ## x ## SynchronizationScope: return SyncScope::x;
 LLVM_HS_FOR_EACH_SYNCRONIZATION_SCOPE(ENUM_CASE)
 #undef ENUM_CASE
-	default: assert(false && "Unknown synchronization scope");
+	default: reportFatalError("Unknown synchronization scope");
 	}
 }
 
