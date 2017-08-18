@@ -11,6 +11,7 @@
 #include "llvm-c/Core.h"
 
 #include "LLVM/Internal/FFI/AttributeC.hpp"
+#include "LLVM/Internal/FFI/ErrorHandling.hpp"
 #include "LLVM/Internal/FFI/Instruction.h"
 
 using namespace llvm;
@@ -31,7 +32,7 @@ static LLVMSynchronizationScope wrap(SyncScope::ID l) {
 #define ENUM_CASE(x) case SyncScope::x: return LLVM ## x ## SynchronizationScope;
 LLVM_HS_FOR_EACH_SYNCRONIZATION_SCOPE(ENUM_CASE)
 #undef ENUM_CASE
-	default: assert(false && "Unknown synchronization scope");
+    default: reportFatalError("Unknown synchronization scope");
 	}
 }
 
