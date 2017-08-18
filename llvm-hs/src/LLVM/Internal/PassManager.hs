@@ -109,7 +109,7 @@ createPassManager pss = flip runAnyContT return $ do
         handleOption FFI.passManagerBuilderSetLoopVectorize loopVectorize
         handleOption FFI.passManagerBuilderSetSuperwordLevelParallelismVectorize superwordLevelParallelismVectorize
         FFI.passManagerBuilderPopulateModulePassManager b pm
-    PassSetSpec ps dl tli tm' -> do
+    PassSetSpec ps _ _ tm' -> do
       let tm = maybe nullPtr (\(TargetMachine tm) -> tm) tm'
       forM_ ps $ \p -> $(
         do

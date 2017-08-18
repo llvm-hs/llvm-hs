@@ -215,7 +215,7 @@ instance DecodeM DecodeAST A.Constant (Ptr FFI.Constant) where
             cppOpcode <- liftIO $ FFI.getConstantCPPOpcode c
             $(
               TH.caseE [| cppOpcode |] $ do
-                (name, ((TH.RecC n fs, _), iDef)) <- Map.toList $
+                (_, ((TH.RecC n fs, _), iDef)) <- Map.toList $
                       ID.innerJoin (ID.innerJoin ID.astConstantRecs ID.astInstructionRecs) ID.instructionDefs
                 let apWrapper o (fn, _, ct) = do
                       a <- case ct of

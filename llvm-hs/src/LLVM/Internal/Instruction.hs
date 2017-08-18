@@ -549,7 +549,7 @@ $(do
             return' i
           o -> $(TH.caseE [| o |] [
                    TH.match
-                   (TH.recP fullName [ (f,) <$> (TH.varP . TH.mkName . TH.nameBase $ f) | f <- fieldNames ])
+                   (TH.recP fullName [ (f,) <$> (TH.varP . TH.mkName . TH.nameBase $ f) | f <- encodeFieldNames ])
                    (TH.normalB (TH.doE handlerBody))
                    []
                    |
@@ -562,7 +562,8 @@ $(do
                      _ -> False,
                    let
                      TH.RecC fullName (unzip3 -> (fieldNames, _, _)) = findInstrFields name
-                     encodeMFields = map TH.nameBase fieldNames List.\\ [ "metadata" ]
+                     encodeFieldNames = filter (\f -> TH.nameBase f /= "metadata") fieldNames
+                     encodeMFields = map TH.nameBase encodeFieldNames
                      handlerBody = ([
                        TH.bindS (if s == "fastMathFlags" then TH.tupP [] else TH.varP (TH.mkName s))
                            [| encodeM $(TH.dyn s) |] | s <- encodeMFields
