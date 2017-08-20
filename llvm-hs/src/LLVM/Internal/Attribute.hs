@@ -198,6 +198,7 @@ instance DecodeM DecodeAST A.FA.FunctionAttribute FFI.FunctionAttribute where
            [functionAttributeKindP|InaccessibleMemOrArgMemOnly|] -> return A.FA.InaccessibleMemOrArgMemOnly
            [functionAttributeKindP|SafeStack|] -> return A.FA.SafeStack
            [functionAttributeKindP|WriteOnly|] -> return A.FA.WriteOnly
+           [functionAttributeKindP|Speculatable|] -> return A.FA.Speculatable
            _ -> error $ "unhandled function attribute enum value: " ++ show enum
 
 allocaAttrBuilder :: (Monad m, MonadAnyCont IO m) => m (Ptr (FFI.AttrBuilder a))

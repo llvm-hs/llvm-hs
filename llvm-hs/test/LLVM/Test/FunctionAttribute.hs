@@ -63,6 +63,7 @@ instance Arbitrary FunctionAttribute where
     , return InaccessibleMemOnly
     , return InaccessibleMemOrArgMemOnly
     , return SafeStack
+    , return Speculatable
     ]
 
   shrink = \case
