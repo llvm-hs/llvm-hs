@@ -196,7 +196,8 @@ CompileLayer *LLVM_Hs_createCompileOnDemandLayer(
             partitioningFtor(&f, &result);
             return result;
         },
-        *callbackManager, *stubsManager, cloneStubsIntoPartitions);
+        *callbackManager, *stubsManager,
+        static_cast<bool>(cloneStubsIntoPartitions));
 }
 
 CompileLayer *LLVM_Hs_createIRTransformLayer(CompileLayer *compileLayer,
