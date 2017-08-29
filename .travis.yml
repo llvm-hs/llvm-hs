@@ -50,8 +50,8 @@ install:
  # Once LLVM 5.0 is released, we can go back to these two lines
  # - curl http://releases.llvm.org/${LLVM_VER}/llvm-${LLVM_VER}.src.tar.xz | tar -xJf - -C $HOME
  # - rsync -ac $HOME/llvm-${LLVM_VER}.src/ $HOME/llvm-src-${LLVM_VER}
- - curl http://prereleases.llvm.org/5.0.0/rc2/llvm-5.0.0rc2.src.tar.xz | tar -xJf - -C $HOME
- - rsync -ac $HOME/llvm-5.0.0rc2.src/ $HOME/llvm-src-${LLVM_VER}
+ - curl http://prereleases.llvm.org/5.0.0/rc3/llvm-5.0.0rc3.src.tar.xz | tar -xJf - -C $HOME
+ - rsync -ac $HOME/llvm-5.0.0rc3.src/ $HOME/llvm-src-${LLVM_VER}
 
  - cd $HOME/llvm-src-${LLVM_VER}
  - mkdir -p build && cd build
