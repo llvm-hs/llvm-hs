@@ -1,4 +1,4 @@
-## 5.0.0 (unreleased)
+## 5.0.0 (2017-09-07)
 
 * Support for LLVM 5.0
 
