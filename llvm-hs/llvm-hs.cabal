@@ -35,7 +35,7 @@ extra-source-files:
   src/LLVM/Internal/FFI/Target.hpp
   src/LLVM/Internal/FFI/Type.h
   src/LLVM/Internal/FFI/Value.h
-tested-with: GHC == 7.8.4, GHC == 7.10.3, GHC == 8.0.2
+tested-with: GHC == 7.8.4, GHC == 7.10.3, GHC == 8.0.2, GHC == 8.2.1
 extra-source-files: CHANGELOG.md
 
 source-repository head
@@ -61,7 +61,7 @@ custom-setup
                , containers
 
 library
-  build-tools: llvm-config
+  build-tools: hsc2hs, llvm-config
   ghc-options: -Wall -fno-warn-name-shadowing -fno-warn-orphans
   if flag(semigroups)
     build-depends:
