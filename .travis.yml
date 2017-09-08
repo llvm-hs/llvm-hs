@@ -71,11 +71,11 @@ install:
  - travis_retry cabal update -v
  - sed -i.bak 's/^jobs:/-- jobs:/' ${HOME}/.cabal/config
  - rm -fv cabal.project.local
- - cabal new-build -w ${HC} --enable-tests --dep -j2 all
-
-script:
  - rm -rf .ghc.environment.*
  - cabal new-configure --with-gcc $GCC --ghc-options "-pgmc=${GCC}" --enable-tests
+ - cabal new-build -w ${HC} --dep -j2 all
+
+script:
  - cabal new-build -w ${HC} all
  - cabal new-test -w ${HC} all
  - cabal new-haddock -w ${HC} all
