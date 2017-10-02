@@ -225,6 +225,8 @@ instance DecodeM DecodeAST A.Constant (Ptr FFI.Constant) where
             return A.C.Array `ap` (return $ A.elementType t) `ap` getConstantOperands
       [valueSubclassIdP|ConstantDataVector|] -> 
             return A.C.Vector `ap` getConstantData
+      [valueSubclassIdP|ConstantVector|] ->
+            A.C.Vector <$> getConstantOperands
       [valueSubclassIdP|ConstantExpr|] -> do
             cppOpcode <- liftIO $ FFI.getConstantCPPOpcode c
             $(
