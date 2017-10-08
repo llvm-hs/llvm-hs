@@ -80,6 +80,40 @@ genCodingInstance[t| TO.DebugCompressionType |] ''FFI.DebugCompressionType [
   (FFI.debugCompressionTypeZ, TO.CompressZ)
   ]
 
+genCodingInstance[t| TO.ThreadModel |] ''FFI.ThreadModel [
+  (FFI.threadModelPOSIX, TO.ThreadModelPOSIX),
+  (FFI.threadModelSingle, TO.ThreadModelSingle)
+ ]
+
+genCodingInstance[t| TO.EABIVersion |] ''FFI.EABI [
+  (FFI.eabiVersionUnknown, TO.EABIVersionUnknown),
+  (FFI.eabiVersionDefault, TO.EABIVersionDefault),
+  (FFI.eabiVersionEABI4, TO.EABIVersion4),
+  (FFI.eabiVersionEABI5, TO.EABIVersion5),
+  (FFI.eabiVersionGNU, TO.EABIVersionGNU)
+ ]
+
+genCodingInstance[t| TO.DebuggerKind |] ''FFI.DebuggerKind [
+  (FFI.debuggerKindDefault, TO.DebuggerDefault),
+  (FFI.debuggerKindGDB, TO.DebuggerGDB),
+  (FFI.debuggerKindLLDB, TO.DebuggerLLDB),
+  (FFI.debuggerKindSCE, TO.DebuggerSCE)
+ ]
+
+genCodingInstance[t| TO.FloatingPointDenormalMode |] ''FFI.FPDenormalMode [
+  (FFI.fpDenormalModeIEEE, TO.FloatingPointDenormalIEEE),
+  (FFI.fpDenormalModePreserveSign, TO.FloatingPointDenormalPreserveSign),
+  (FFI.fpDenormalModePositiveZero, TO.FloatingPointDenormalPositiveZero)
+ ]
+
+genCodingInstance[t| TO.ExceptionHandling |] ''FFI.ExceptionHandling [
+  (FFI.exceptionHandlingNone, TO.ExceptionHandlingNone),
+  (FFI.exceptionHandlingDwarfCFI, TO.ExceptionHandlingDwarfCFI),
+  (FFI.exceptionHandlingSjLj, TO.ExceptionHandlingSjLj),
+  (FFI.exceptionHandlingARM, TO.ExceptionHandlingARM),
+  (FFI.exceptionHandlingWinEH, TO.ExceptionHandlingWinEH)
+ ]
+
 -- | <http://llvm.org/doxygen/classllvm_1_1Target.html>
 newtype Target = Target (Ptr FFI.Target)
 
@@ -136,18 +170,32 @@ pokeTargetOptions hOpts (TargetOptions cOpts) = do
     (FFI.targetOptionFlagUnsafeFPMath, TO.unsafeFloatingPointMath),
     (FFI.targetOptionFlagNoInfsFPMath, TO.noInfinitiesFloatingPointMath),
     (FFI.targetOptionFlagNoNaNsFPMath, TO.noNaNsFloatingPointMath),
+    (FFI.targetOptionFlagNoTrappingFPMath, TO.noTrappingFloatingPointMath),
+    (FFI.targetOptionFlagNoSignedZerosFPMath, TO.noSignedZeroesFloatingPointMath),
     (FFI.targetOptionFlagHonorSignDependentRoundingFPMathOption, TO.honorSignDependentRoundingFloatingPointMathOption),
     (FFI.targetOptionFlagNoZerosInBSS, TO.noZerosInBSS),
     (FFI.targetOptionFlagGuaranteedTailCallOpt, TO.guaranteedTailCallOptimization),
+    (FFI.targetOptionFlagStackSymbolOrdering, TO.stackSymbolOrdering),
     (FFI.targetOptionFlagEnableFastISel, TO.enableFastInstructionSelection),
     (FFI.targetOptionFlagUseInitArray, TO.useInitArray),
     (FFI.targetOptionFlagDisableIntegratedAS, TO.disableIntegratedAssembler),
-    (FFI.targetOptionFlagTrapUnreachable, TO.trapUnreachable)
+    (FFI.targetOptionFlagRelaxELFRelocations, TO.relaxELFRelocations),
+    (FFI.targetOptionFlagFunctionSections, TO.functionSections),
+    (FFI.targetOptionFlagDataSections, TO.dataSections),
+    (FFI.targetOptionFlagUniqueSectionNames, TO.uniqueSectionNames),
+    (FFI.targetOptionFlagTrapUnreachable, TO.trapUnreachable),
+    (FFI.targetOptionFlagEmulatedTLS, TO.emulatedThreadLocalStorage),
+    (FFI.targetOptionFlagEnableIPRA, TO.enableInterProceduralRegisterAllocation)
    ]
   FFI.setStackAlignmentOverride cOpts =<< encodeM (TO.stackAlignmentOverride hOpts)
   FFI.setFloatABIType cOpts =<< encodeM (TO.floatABIType hOpts)
   FFI.setAllowFPOpFusion cOpts =<< encodeM (TO.allowFloatingPointOperationFusion hOpts)
   FFI.setCompressDebugSections cOpts =<< encodeM (TO.compressDebugSections hOpts)
+  FFI.setThreadModel cOpts =<< encodeM (TO.threadModel hOpts)
+  FFI.setEABIVersion cOpts =<< encodeM (TO.eabiVersion hOpts)
+  FFI.setDebuggerTuning cOpts =<< encodeM (TO.debuggerTuning hOpts)
+  FFI.setFPDenormalMode cOpts =<< encodeM (TO.floatingPointDenormalMode hOpts)
+  FFI.setExceptionModel cOpts =<< encodeM (TO.exceptionModel hOpts)
 
 -- | get all target options
 peekTargetOptions :: TargetOptions -> IO TO.Options
@@ -161,12 +209,18 @@ peekTargetOptions (TargetOptions tOpts) = do
     <- gof FFI.targetOptionFlagNoInfsFPMath
   noNaNsFloatingPointMath
     <- gof FFI.targetOptionFlagNoNaNsFPMath
+  noTrappingFloatingPointMath
+    <- gof FFI.targetOptionFlagNoTrappingFPMath
+  noSignedZeroesFloatingPointMath
+    <- gof FFI.targetOptionFlagNoSignedZerosFPMath
   honorSignDependentRoundingFloatingPointMathOption
     <- gof FFI.targetOptionFlagHonorSignDependentRoundingFPMathOption
   noZerosInBSS
     <- gof FFI.targetOptionFlagNoZerosInBSS
   guaranteedTailCallOptimization
     <- gof FFI.targetOptionFlagGuaranteedTailCallOpt
+  stackSymbolOrdering
+    <- gof FFI.targetOptionFlagStackSymbolOrdering
   enableFastInstructionSelection
     <- gof FFI.targetOptionFlagEnableFastISel
   useInitArray
@@ -174,11 +228,28 @@ peekTargetOptions (TargetOptions tOpts) = do
   disableIntegratedAssembler
     <- gof FFI.targetOptionFlagDisableIntegratedAS
   compressDebugSections <- decodeM =<< FFI.getCompressDebugSections tOpts
+  relaxELFRelocations
+    <- gof FFI.targetOptionFlagRelaxELFRelocations
+  functionSections
+    <- gof FFI.targetOptionFlagFunctionSections
+  dataSections
+    <- gof FFI.targetOptionFlagDataSections
+  uniqueSectionNames
+    <- gof FFI.targetOptionFlagUniqueSectionNames
   trapUnreachable
     <- gof FFI.targetOptionFlagTrapUnreachable
+  emulatedThreadLocalStorage
+    <- gof FFI.targetOptionFlagEmulatedTLS
+  enableInterProceduralRegisterAllocation
+    <- gof FFI.targetOptionFlagEnableIPRA
   stackAlignmentOverride <- decodeM =<< FFI.getStackAlignmentOverride tOpts
   floatABIType <- decodeM =<< FFI.getFloatABIType tOpts
   allowFloatingPointOperationFusion <- decodeM =<< FFI.getAllowFPOpFusion tOpts
+  threadModel <- decodeM =<< FFI.getThreadModel tOpts
+  eabiVersion <- decodeM =<< FFI.getEABIVersion tOpts
+  debuggerTuning <- decodeM =<< FFI.getDebuggerTuning tOpts
+  floatingPointDenormalMode <- decodeM =<< FFI.getFPDenormalMode tOpts
+  exceptionModel <- decodeM =<< FFI.getExceptionModel tOpts
   return TO.Options { .. }
 
 -- | <http://llvm.org/doxygen/classllvm_1_1TargetMachine.html>

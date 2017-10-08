@@ -58,6 +58,36 @@ foreign import ccall unsafe "LLVM_Hs_SetAllowFPOpFusion" setAllowFPOpFusion ::
 foreign import ccall unsafe "LLVM_Hs_GetAllowFPOpFusion" getAllowFPOpFusion ::
   Ptr TargetOptions -> IO FPOpFusionMode
 
+foreign import ccall unsafe "LLVM_Hs_SetThreadModel" setThreadModel ::
+  Ptr TargetOptions -> ThreadModel -> IO ()
+
+foreign import ccall unsafe "LLVM_Hs_GetThreadModel" getThreadModel ::
+  Ptr TargetOptions -> IO ThreadModel
+
+foreign import ccall unsafe "LLVM_Hs_SetEABIVersion" setEABIVersion ::
+  Ptr TargetOptions -> EABI -> IO ()
+
+foreign import ccall unsafe "LLVM_Hs_GetEABIVersion" getEABIVersion ::
+  Ptr TargetOptions -> IO EABI
+
+foreign import ccall unsafe "LLVM_Hs_SetDebuggerTuning" setDebuggerTuning ::
+  Ptr TargetOptions -> DebuggerKind -> IO ()
+
+foreign import ccall unsafe "LLVM_Hs_GetDebuggerTuning" getDebuggerTuning ::
+  Ptr TargetOptions -> IO DebuggerKind
+
+foreign import ccall unsafe "LLVM_Hs_SetFPDenormalMode" setFPDenormalMode ::
+  Ptr TargetOptions -> FPDenormalMode -> IO ()
+
+foreign import ccall unsafe "LLVM_Hs_GetFPDenormalMode" getFPDenormalMode ::
+  Ptr TargetOptions -> IO FPDenormalMode
+
+foreign import ccall unsafe "LLVM_Hs_SetExceptionModel" setExceptionModel ::
+  Ptr TargetOptions -> ExceptionHandling -> IO ()
+
+foreign import ccall unsafe "LLVM_Hs_GetExceptionModel" getExceptionModel ::
+  Ptr TargetOptions -> IO ExceptionHandling
+
 foreign import ccall unsafe "LLVM_Hs_DisposeTargetOptions" disposeTargetOptions ::
   Ptr TargetOptions -> IO ()
 

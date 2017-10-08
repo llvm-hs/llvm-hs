@@ -110,6 +110,125 @@ static LLVM_Hs_FPOpFusionMode wrap(FPOpFusion::FPOpFusionMode x) {
         return LLVM_Hs_FPOpFusionMode(0);
     }
 }
+
+static ThreadModel::Model unwrap(LLVM_Hs_ThreadModel x) {
+    switch (x) {
+#define ENUM_CASE(x)                                                           \
+    case LLVM_Hs_ThreadModel_##x:                                              \
+        return ThreadModel::x;
+        LLVM_HS_FOR_EACH_THREAD_MODEL(ENUM_CASE)
+#undef ENUM_CASE
+    default:
+        return ThreadModel::Model(0);
+    }
+}
+
+static LLVM_Hs_ThreadModel wrap(ThreadModel::Model x) {
+    switch (x) {
+#define ENUM_CASE(x)                                                           \
+    case ThreadModel::x:                                                       \
+        return LLVM_Hs_ThreadModel_##x;
+        LLVM_HS_FOR_EACH_THREAD_MODEL(ENUM_CASE)
+#undef ENUM_CASE
+    default:
+        return LLVM_Hs_ThreadModel(0);
+    }
+}
+static EABI unwrap(LLVM_Hs_EABI x) {
+    switch (x) {
+#define ENUM_CASE(x)                                                           \
+    case LLVM_Hs_EABI_##x:                                                     \
+        return EABI::x;
+        LLVM_HS_FOR_EACH_EABI(ENUM_CASE)
+#undef ENUM_CASE
+    default:
+        return EABI(0);
+    }
+}
+
+static LLVM_Hs_EABI wrap(EABI x) {
+    switch (x) {
+#define ENUM_CASE(x)                                                           \
+    case EABI::x:                                                              \
+        return LLVM_Hs_EABI_##x;
+        LLVM_HS_FOR_EACH_EABI(ENUM_CASE)
+#undef ENUM_CASE
+    default:
+        return LLVM_Hs_EABI(0);
+    }
+}
+
+static DebuggerKind unwrap(LLVM_Hs_DebuggerKind x) {
+    switch (x) {
+#define ENUM_CASE(x)                                                           \
+    case LLVM_Hs_DebuggerKind_##x:                                             \
+      return DebuggerKind::x;
+      LLVM_HS_FOR_EACH_DEBUGGER_KIND(ENUM_CASE)
+#undef ENUM_CASE
+    default:
+      return DebuggerKind(0);
+    }
+}
+
+static LLVM_Hs_DebuggerKind wrap(DebuggerKind x) {
+    switch (x) {
+#define ENUM_CASE(x)                                                           \
+    case DebuggerKind::x:                                                      \
+        return LLVM_Hs_DebuggerKind_##x;
+        LLVM_HS_FOR_EACH_DEBUGGER_KIND(ENUM_CASE)
+#undef ENUM_CASE
+    default:
+        return LLVM_Hs_DebuggerKind(0);
+    }
+}
+
+static FPDenormal::DenormalMode unwrap(LLVM_Hs_FPDenormalMode x) {
+    switch (x) {
+#define ENUM_CASE(x)                                                           \
+    case LLVM_Hs_FPDenormalMode_##x:                                           \
+        return FPDenormal::x;
+        LLVM_HS_FOR_EACH_FP_DENORMAL_MODE(ENUM_CASE)
+#undef ENUM_CASE
+    default:
+        return FPDenormal::DenormalMode(0);
+    }
+}
+
+static LLVM_Hs_FPDenormalMode wrap(FPDenormal::DenormalMode x) {
+    switch (x) {
+#define ENUM_CASE(x)                                                           \
+    case FPDenormal::x:                                                        \
+        return LLVM_Hs_FPDenormalMode_##x;
+        LLVM_HS_FOR_EACH_FP_DENORMAL_MODE(ENUM_CASE)
+#undef ENUM_CASE
+    default:
+        return LLVM_Hs_FPDenormalMode(0);
+    }
+}
+static ExceptionHandling unwrap(LLVM_Hs_ExceptionHandling x) {
+    switch (x) {
+#define ENUM_CASE(x)                                                           \
+    case LLVM_Hs_ExceptionHandling_##x:                                        \
+        return ExceptionHandling::x;
+        LLVM_HS_FOR_EACH_EXCEPTION_HANDLING(ENUM_CASE)
+#undef ENUM_CASE
+    default:
+        return ExceptionHandling(0);
+    }
+}
+
+static LLVM_Hs_ExceptionHandling wrap(ExceptionHandling x) {
+    switch (x) {
+#define ENUM_CASE(x)                                                           \
+    case ExceptionHandling::x:                                                 \
+        return LLVM_Hs_ExceptionHandling_##x;
+        LLVM_HS_FOR_EACH_EXCEPTION_HANDLING(ENUM_CASE)
+#undef ENUM_CASE
+    default:
+        return LLVM_Hs_ExceptionHandling(0);
+    }
+}
+
 } // namespace llvm
 
 extern "C" {
@@ -225,6 +344,46 @@ void LLVM_Hs_SetAllowFPOpFusion(TargetOptions *to, LLVM_Hs_FPOpFusionMode v) {
 
 LLVM_Hs_FPOpFusionMode LLVM_Hs_GetAllowFPOpFusion(TargetOptions *to) {
     return wrap(to->AllowFPOpFusion);
+}
+
+void LLVM_Hs_SetThreadModel(TargetOptions *to, LLVM_Hs_ThreadModel v) {
+    to->ThreadModel = unwrap(v);
+}
+
+LLVM_Hs_ThreadModel LLVM_Hs_GetThreadModel(TargetOptions *to) {
+    return wrap(to->ThreadModel);
+}
+
+void LLVM_Hs_SetEABIVersion(TargetOptions *to, LLVM_Hs_EABI v) {
+    to->EABIVersion = unwrap(v);
+}
+
+LLVM_Hs_EABI LLVM_Hs_GetEABIVersion(TargetOptions *to) {
+    return wrap(to->EABIVersion);
+}
+
+void LLVM_Hs_SetDebuggerTuning(TargetOptions *to, LLVM_Hs_DebuggerKind v) {
+    to->DebuggerTuning = unwrap(v);
+}
+
+LLVM_Hs_DebuggerKind LLVM_Hs_GetDebuggerTuning(TargetOptions *to) {
+    return wrap(to->DebuggerTuning);
+}
+
+void LLVM_Hs_SetFPDenormalMode(TargetOptions *to, LLVM_Hs_FPDenormalMode v) {
+    to->FPDenormalMode = unwrap(v);
+}
+
+LLVM_Hs_FPDenormalMode LLVM_Hs_GetFPDenormalMode(TargetOptions *to) {
+    return wrap(to->FPDenormalMode);
+}
+
+void LLVM_Hs_SetExceptionModel(TargetOptions *to, LLVM_Hs_ExceptionHandling v) {
+    to->ExceptionModel = unwrap(v);
+}
+
+LLVM_Hs_ExceptionHandling LLVM_Hs_GetExceptionModel(TargetOptions *to) {
+    return wrap(to->ExceptionModel);
 }
 
 void LLVM_Hs_DisposeTargetOptions(TargetOptions *t) { delete t; }
