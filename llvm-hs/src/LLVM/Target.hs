@@ -7,7 +7,7 @@ module LLVM.Target (
    Target, TargetMachine, TargetLowering,
    CPUFeature(..),
    withTargetOptions, peekTargetOptions, pokeTargetOptions,
-   withTargetMachine, withHostTargetMachine,
+   withTargetMachine, withHostTargetMachine, targetMachineOptions,
    getTargetLowering,
    getTargetMachineTriple, getDefaultTargetTriple, getProcessTargetTriple, getHostCPUName, getHostCPUFeatures,
    getTargetMachineDataLayout, initializeNativeTarget, initializeAllTargets,

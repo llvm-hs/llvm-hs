@@ -274,6 +274,8 @@ tests = testGroup "Module" [
             \main:\n\
             \\t.cfi_startproc\n\
             \\txorl\t%eax, %eax\n\
+            \\tmovl\t%edi, -4(%rsp)\n\
+            \\tmovq\t%rsi, -16(%rsp)\n\
             \\tretq\n\
             \.Lfunc_end0:\n\
             \\t.size\tmain, .Lfunc_end0-main\n\

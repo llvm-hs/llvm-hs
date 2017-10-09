@@ -63,7 +63,7 @@ foreign import ccall unsafe "LLVM_Hs_DisposeTargetOptions" disposeTargetOptions 
 
 data TargetMachine
 
-foreign import ccall unsafe "LLVMCreateTargetMachine" createTargetMachine ::
+foreign import ccall unsafe "LLVM_Hs_CreateTargetMachine" createTargetMachine ::
   Ptr Target
   -> CString
   -> CString
@@ -76,6 +76,9 @@ foreign import ccall unsafe "LLVMCreateTargetMachine" createTargetMachine ::
 
 foreign import ccall unsafe "LLVMDisposeTargetMachine" disposeTargetMachine ::
   Ptr TargetMachine -> IO ()
+
+foreign import ccall unsafe "LLVM_Hs_TargetMachineOptions" targetMachineOptions ::
+  Ptr TargetMachine -> IO (Ptr TargetOptions)
 
 foreign import ccall unsafe "LLVM_Hs_TargetMachineEmit" targetMachineEmit ::
   Ptr TargetMachine

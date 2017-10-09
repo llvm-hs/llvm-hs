@@ -225,6 +225,9 @@ withTargetMachine
       FFI.disposeTargetMachine
       . (. TargetMachine)
 
+targetMachineOptions :: TargetMachine -> IO TargetOptions
+targetMachineOptions (TargetMachine tm) = TargetOptions <$> FFI.targetMachineOptions tm
+
 -- | <http://llvm.org/doxygen/classllvm_1_1TargetLowering.html>
 newtype TargetLowering = TargetLowering (Ptr FFI.TargetLowering)
 
