@@ -1,3 +1,9 @@
+## Unreleased
+
+* Bugfixes
+  * Set target options in `withTargetMachine`. Previously the options
+    passed there were simply ignored.
+
 ## 5.0.0 (2017-09-07)
 
 * Support for LLVM 5.0

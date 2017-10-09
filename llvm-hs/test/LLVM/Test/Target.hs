@@ -6,26 +6,30 @@
   #-}
 module LLVM.Test.Target where
 
-import Test.Tasty
-import Test.Tasty.HUnit
-import Test.Tasty.QuickCheck
-import Test.QuickCheck
+import           Test.Tasty
+import           Test.Tasty.HUnit
+import           Test.Tasty.QuickCheck
+import           Test.QuickCheck
 
-import Control.Applicative
-import Control.Monad
-import Control.Monad.IO.Class
+import           Control.Applicative
+import           Control.Monad
+import           Control.Monad.IO.Class
 import qualified Data.ByteString.Char8 as ByteString
-import Data.Char
-import Data.Map (Map)
-import Foreign.C.String
+import           Data.Char
+import           Data.Map (Map)
+import           Data.Monoid (mempty)
+import           Foreign.C.String
 
-import LLVM.Context
-import LLVM.Internal.Coding
-import LLVM.Internal.EncodeAST
-import LLVM.Internal.DecodeAST
-import LLVM.Target
-import LLVM.Target.Options
-import LLVM.Target.LibraryFunction
+import qualified LLVM.CodeGenOpt as CodeGenOpt
+import qualified LLVM.CodeModel as CodeModel
+import           LLVM.Context
+import           LLVM.Internal.Coding
+import           LLVM.Internal.DecodeAST
+import           LLVM.Internal.EncodeAST
+import qualified LLVM.Relocation as Reloc
+import           LLVM.Target
+import           LLVM.Target.LibraryFunction
+import           LLVM.Target.Options
 
 instance Arbitrary FloatABI where
   arbitrary = elements [minBound .. maxBound]
@@ -72,7 +76,20 @@ tests = testGroup "Target" [
        withTargetOptions $ \to -> do
          pokeTargetOptions options to
          options' <- peekTargetOptions to
-         return $ options === options'
+         return $ options === options',
+     testProperty "target machine" $ \options -> ioProperty $ do
+         withTargetOptions $ \to -> do
+           pokeTargetOptions options to
+           let triple = "i386-linux-gnu"
+               cpu = ""
+               features = mempty
+               reloc = Reloc.Default
+               codeModel = CodeModel.Default
+               codeGenOpt = CodeGenOpt.Default
+           (target, _) <- lookupTarget Nothing triple
+           withTargetMachine target triple cpu features to reloc codeModel codeGenOpt $ \tm -> do
+             options' <- peekTargetOptions =<< targetMachineOptions tm
+             return $ options === options'
    ],
   testGroup "LibraryFunction" [
     testGroup "set-get" [
