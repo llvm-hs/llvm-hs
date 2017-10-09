@@ -24,4 +24,8 @@ data ParameterAttribute
     | Returned
     | SwiftSelf
     | SwiftError
+    | StringAttribute {
+        stringAttributeKind :: ShortByteString,
+        stringAttributeValue :: ShortByteString -- ^ Use "" for no value -- the two are conflated
+      }
   deriving (Eq, Ord, Read, Show, Typeable, Data, Generic)
