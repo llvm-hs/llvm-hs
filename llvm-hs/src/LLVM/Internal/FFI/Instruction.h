@@ -59,7 +59,8 @@ LLVM_HS_FOR_EACH_FAST_MATH_FLAG(ENUM_CASE)
 #define LLVM_HS_FOR_EACH_TAIL_CALL_KIND(macro) \
 	macro(None)                                       \
 	macro(Tail)                                       \
-	macro(MustTail)
+	macro(MustTail)                                   \
+	macro(NoTail)
 
 typedef enum {
 #define ENUM_CASE(x) LLVM_Hs_TailCallKind_ ## x,
