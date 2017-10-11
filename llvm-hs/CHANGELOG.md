@@ -1,8 +1,17 @@
 ## Unreleased
 
-* Bugfixes
-  * Set target options in `withTargetMachine`. Previously the options
-    passed there were simply ignored.
+### Bugfixes
+
+* Set target options in `withTargetMachine`. Previously the options
+  passed there were simply ignored.
+* Fix decoding of constant vectors
+
+### Enhancements
+
+* Support for more target options
+* Suport string attributes as parameter attributes
+* Support more calling conventions
+* Support `NoTail` `TailCallKind`
 
 ## 5.0.0 (2017-09-07)
 

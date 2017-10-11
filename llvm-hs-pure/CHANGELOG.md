@@ -1,3 +1,11 @@
+## Unreleased
+
+### Enhancements
+
+* Suport string attributes as parameter attributes
+* Support more calling conventions
+* Support `NoTail` `TailCallKind`
+
 ## 5.0.0 (2017-09-07)
 
 * Support for LLVM 5.0

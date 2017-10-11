@@ -134,7 +134,7 @@ foreign import ccall unsafe "LLVM_Hs_AttrBuilderAddAttributeKind" attrBuilderAdd
   Ptr ParameterAttrBuilder -> ParameterAttributeKind -> IO ()
 
 foreign import ccall unsafe "LLVM_Hs_AttrBuilderAddStringAttribute" attrBuilderAddStringAttribute ::
-  Ptr FunctionAttrBuilder -> Ptr CChar -> CSize -> Ptr CChar -> CSize -> IO ()
+  Ptr (AttrBuilder a) -> Ptr CChar -> CSize -> Ptr CChar -> CSize -> IO ()
 
 foreign import ccall unsafe "LLVM_Hs_AttrBuilderAddAlignment" attrBuilderAddAlignment ::
   Ptr ParameterAttrBuilder -> Word64 -> IO ()

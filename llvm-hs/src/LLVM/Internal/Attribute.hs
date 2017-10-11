@@ -43,6 +43,10 @@ inconsistentCases name attr =
   error $ "llvm-hs internal error: cases inconstistent in " ++ name ++ " encoding for " ++ show attr
 
 instance Monad m => EncodeM m A.PA.ParameterAttribute (Ptr FFI.ParameterAttrBuilder -> EncodeAST ()) where
+  encodeM (A.PA.StringAttribute kind value) = return $ \b -> do
+    (kindP, kindLen) <- encodeM kind
+    (valueP, valueLen) <- encodeM value
+    liftIO $ FFI.attrBuilderAddStringAttribute b kindP kindLen valueP valueLen
   encodeM a = return $ \b -> liftIO $ case a of
     A.PA.Alignment v -> FFI.attrBuilderAddAlignment b v
     A.PA.Dereferenceable v -> FFI.attrBuilderAddDereferenceable b v
@@ -67,6 +71,7 @@ instance Monad m => EncodeM m A.PA.ParameterAttribute (Ptr FFI.ParameterAttrBuil
       A.PA.Alignment _ -> inconsistentCases "ParameterAttribute" a
       A.PA.Dereferenceable _ -> inconsistentCases "ParameterAttribute" a
       A.PA.DereferenceableOrNull _ -> inconsistentCases "ParameterAttribute" a
+      A.PA.StringAttribute _ _ -> inconsistentCases "ParameterAttribute" a
 
 instance Monad m => EncodeM m A.FA.FunctionAttribute (Ptr FFI.FunctionAttrBuilder -> EncodeAST ()) where
   encodeM (A.FA.StringAttribute kind value) = return $ \b -> do
@@ -121,28 +126,35 @@ instance Monad m => EncodeM m A.FA.FunctionAttribute (Ptr FFI.FunctionAttrBuilde
 
 instance DecodeM DecodeAST A.PA.ParameterAttribute FFI.ParameterAttribute where
   decodeM a = do
-    enum <- liftIO $ FFI.parameterAttributeKindAsEnum a
-    case enum of
-      [parameterAttributeKindP|ZExt|] -> return A.PA.ZeroExt
-      [parameterAttributeKindP|SExt|] -> return A.PA.SignExt
-      [parameterAttributeKindP|InReg|] -> return A.PA.InReg
-      [parameterAttributeKindP|StructRet|] -> return A.PA.SRet
-      [parameterAttributeKindP|Alignment|] -> return A.PA.Alignment `ap` (liftIO $ FFI.attributeValueAsInt a)
-      [parameterAttributeKindP|NoAlias|] -> return A.PA.NoAlias
-      [parameterAttributeKindP|ByVal|] -> return A.PA.ByVal
-      [parameterAttributeKindP|NoCapture|] -> return A.PA.NoCapture
-      [parameterAttributeKindP|Nest|] -> return A.PA.Nest
-      [parameterAttributeKindP|ReadOnly|] -> return A.PA.ReadOnly
-      [parameterAttributeKindP|ReadNone|] -> return A.PA.ReadNone
-      [parameterAttributeKindP|WriteOnly|] -> return A.PA.WriteOnly
-      [parameterAttributeKindP|InAlloca|] -> return A.PA.InAlloca
-      [parameterAttributeKindP|NonNull|] -> return A.PA.NonNull
-      [parameterAttributeKindP|Dereferenceable|] -> return A.PA.Dereferenceable `ap` (liftIO $ FFI.attributeValueAsInt a)
-      [parameterAttributeKindP|DereferenceableOrNull|] -> return A.PA.DereferenceableOrNull `ap` (liftIO $ FFI.attributeValueAsInt a)
-      [parameterAttributeKindP|Returned|] -> return A.PA.Returned
-      [parameterAttributeKindP|SwiftSelf|] -> return A.PA.SwiftSelf
-      [parameterAttributeKindP|SwiftError|] -> return A.PA.SwiftError
-      _ -> error $ "unhandled parameter attribute enum value: " ++ show enum
+    isString <- decodeM =<< liftIO (FFI.isStringAttribute a)
+    if isString
+      then
+        A.PA.StringAttribute
+          <$> decodeM (FFI.attributeKindAsString a)
+          <*> decodeM (FFI.attributeValueAsString a)
+      else do
+        enum <- liftIO $ FFI.parameterAttributeKindAsEnum a
+        case enum of
+          [parameterAttributeKindP|ZExt|] -> return A.PA.ZeroExt
+          [parameterAttributeKindP|SExt|] -> return A.PA.SignExt
+          [parameterAttributeKindP|InReg|] -> return A.PA.InReg
+          [parameterAttributeKindP|StructRet|] -> return A.PA.SRet
+          [parameterAttributeKindP|Alignment|] -> return A.PA.Alignment `ap` (liftIO $ FFI.attributeValueAsInt a)
+          [parameterAttributeKindP|NoAlias|] -> return A.PA.NoAlias
+          [parameterAttributeKindP|ByVal|] -> return A.PA.ByVal
+          [parameterAttributeKindP|NoCapture|] -> return A.PA.NoCapture
+          [parameterAttributeKindP|Nest|] -> return A.PA.Nest
+          [parameterAttributeKindP|ReadOnly|] -> return A.PA.ReadOnly
+          [parameterAttributeKindP|ReadNone|] -> return A.PA.ReadNone
+          [parameterAttributeKindP|WriteOnly|] -> return A.PA.WriteOnly
+          [parameterAttributeKindP|InAlloca|] -> return A.PA.InAlloca
+          [parameterAttributeKindP|NonNull|] -> return A.PA.NonNull
+          [parameterAttributeKindP|Dereferenceable|] -> return A.PA.Dereferenceable `ap` (liftIO $ FFI.attributeValueAsInt a)
+          [parameterAttributeKindP|DereferenceableOrNull|] -> return A.PA.DereferenceableOrNull `ap` (liftIO $ FFI.attributeValueAsInt a)
+          [parameterAttributeKindP|Returned|] -> return A.PA.Returned
+          [parameterAttributeKindP|SwiftSelf|] -> return A.PA.SwiftSelf
+          [parameterAttributeKindP|SwiftError|] -> return A.PA.SwiftError
+          _ -> error $ "unhandled parameter attribute enum value: " ++ show enum
 
 instance DecodeM DecodeAST A.FA.FunctionAttribute FFI.FunctionAttribute where
   decodeM a = do

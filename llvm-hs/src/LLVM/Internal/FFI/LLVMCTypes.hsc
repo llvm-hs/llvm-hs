@@ -121,22 +121,22 @@ newtype FastMathFlags = FastMathFlags CUInt
 #{inject FAST_MATH_FLAG, FastMathFlags, FastMathFlags, fastMathFlags, FMF_Rec}
 
 newtype MemoryOrdering = MemoryOrdering CUInt
-  deriving (Eq, Typeable, Data, Generic)
+  deriving (Eq, Show, Typeable, Data, Generic)
 #define MO_Rec(n) { #n, LLVMAtomicOrdering ## n },
 #{inject ATOMIC_ORDERING, MemoryOrdering, MemoryOrdering, memoryOrdering, MO_Rec}
 
 newtype UnnamedAddr = UnnamedAddr CUInt
-  deriving (Eq, Typeable, Data, Generic)
+  deriving (Eq, Show, Typeable, Data, Generic)
 #define UA_Rec(n) { #n, LLVMUnnamedAddr ## n },
 #{inject UNNAMED_ADDR, UnnamedAddr, UnnamedAddr, unnamedAddr, UA_Rec}
 
 newtype SynchronizationScope = SynchronizationScope CUInt
-  deriving (Eq, Typeable, Data, Generic)
+  deriving (Eq, Show, Typeable, Data, Generic)
 #define SS_Rec(n) { #n, LLVM ## n ## SynchronizationScope },
 #{inject SYNCRONIZATION_SCOPE, SynchronizationScope, SynchronizationScope, synchronizationScope, SS_Rec}
 
 newtype TailCallKind = TailCallKind CUInt
-  deriving (Eq, Typeable, Data, Generic)
+  deriving (Eq, Show, Typeable, Data, Generic)
 #define TCK_Rec(n) { #n, LLVM_Hs_TailCallKind_ ## n },
 #{inject TAIL_CALL_KIND, TailCallKind, TailCallKind, tailCallKind, TCK_Rec}
 

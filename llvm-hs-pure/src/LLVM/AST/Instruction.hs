@@ -123,7 +123,7 @@ data LandingPadClause
 
 -- | For the call instruction
 -- <http://llvm.org/docs/LangRef.html#call-instruction>
-data TailCallKind = Tail | MustTail
+data TailCallKind = Tail | MustTail | NoTail
     deriving (Eq, Ord, Read, Show, Typeable, Data, Generic)
 
 -- | non-terminator instructions:

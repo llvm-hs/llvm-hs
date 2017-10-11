@@ -64,6 +64,11 @@ handString = "; ModuleID = '<string>'\n\
     \  ret i32 %1\n\
     \}\n\
     \\n\
+    \define i32 @baz() prefix i32 1 {\n\
+    \  %1 = notail call zeroext i32 @foo(i32 inreg align 16 1, i8 signext 4) #0\n\
+    \  ret i32 %1\n\
+    \}\n\
+    \\n\
     \; Function Attrs: nounwind readnone uwtable\n\
     \define zeroext i32 @foo(i32 inreg align 16 %x, i8 signext %y) #0 {\n\
     \  %1 = mul nsw i32 %x, %x\n\
@@ -160,6 +165,29 @@ handAST = Module "<string>" "<string>" Nothing Nothing [
           BasicBlock (UnName 0) [
            UnName 1 := Call {
              tailCallKind = Just MustTail,
+             callingConvention = CC.C,
+             returnAttributes = [PA.ZeroExt],
+             function = Right (ConstantOperand (C.GlobalReference (ptr (FunctionType i32 [i32, i8] False)) (Name "foo"))),
+             arguments = [
+              (ConstantOperand (C.Int 32 1), [PA.InReg, PA.Alignment 16]),
+              (ConstantOperand (C.Int 8 4), [PA.SignExt])
+             ],
+             functionAttributes = [Left (FA.GroupID 0)],
+             metadata = []
+           }
+         ] (
+           Do $ Ret (Just (LocalReference i32 (UnName 1))) []
+         )
+        ]
+      },
+      GlobalDefinition $ functionDefaults {
+        G.returnType = i32,
+        G.name = Name "baz",
+        G.prefix = Just (C.Int 32 1),
+        G.basicBlocks = [
+          BasicBlock (UnName 0) [
+           UnName 1 := Call {
+             tailCallKind = Just NoTail,
              callingConvention = CC.C,
              returnAttributes = [PA.ZeroExt],
              function = Right (ConstantOperand (C.GlobalReference (ptr (FunctionType i32 [i32, i8] False)) (Name "foo"))),

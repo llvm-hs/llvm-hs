@@ -13,5 +13,7 @@ module LLVM.AST.Attribute (
     GroupID(..)
   ) where
 
-import LLVM.AST.ParameterAttribute hiding (ReadNone, ReadOnly, WriteOnly)
+import LLVM.AST.ParameterAttribute
+       hiding (ReadNone, ReadOnly, StringAttribute, WriteOnly,
+               stringAttributeKind, stringAttributeValue)
 import LLVM.AST.FunctionAttribute

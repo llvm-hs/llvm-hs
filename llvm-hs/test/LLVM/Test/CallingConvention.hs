@@ -43,6 +43,8 @@ tests = testGroup "CallingConvention" [
    ("anyregcc", CC.AnyReg),
    ("preserve_mostcc", CC.PreserveMost),
    ("preserve_allcc", CC.PreserveAll),
+   ("swiftcc", CC.Swift),
+   ("cxx_fast_tlscc", CC.CXX_FastTLS),
    ("x86_stdcallcc", CC.X86_StdCall),
    ("x86_fastcallcc", CC.X86_FastCall),
    ("arm_apcscc", CC.ARM_APCS),
@@ -56,6 +58,21 @@ tests = testGroup "CallingConvention" [
    ("spir_kernel", CC.SPIR_KERNEL),
    ("intel_ocl_bicc", CC.Intel_OCL_BI),
    ("x86_64_sysvcc", CC.X86_64_SysV),
-   ("win64cc", CC.Win64)
+   ("win64cc", CC.Win64),
+   ("x86_vectorcallcc", CC.X86_VectorCall),
+   ("hhvmcc", CC.HHVM),
+   ("hhvm_ccc", CC.HHVM_C),
+   ("x86_intrcc", CC.X86_Intr),
+   ("avr_intrcc ", CC.AVR_Intr), -- The spaces are necessary because there is a typo in LLVM’s printer
+   ("avr_signalcc ", CC.AVR_Signal),
+   ("cc86", CC.AVR_Builtin),
+   ("amdgpu_vs", CC.AMDGPU_VS),
+   ("amdgpu_hs", CC.AMDGPU_HS),
+   ("amdgpu_gs", CC.AMDGPU_GS),
+   ("amdgpu_ps", CC.AMDGPU_PS),
+   ("amdgpu_cs", CC.AMDGPU_CS),
+   ("amdgpu_kernel", CC.AMDGPU_Kernel),
+   ("x86_regcallcc", CC.X86_RegCall),
+   ("cc94", CC.MSP430_Builtin)
   ]
  ]
