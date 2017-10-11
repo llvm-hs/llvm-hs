@@ -37,23 +37,52 @@ instance Arbitrary FloatABI where
 instance Arbitrary FloatingPointOperationFusionMode where
   arbitrary = elements [minBound .. maxBound]
 
+instance Arbitrary ThreadModel where
+  arbitrary = elements [minBound .. maxBound]
+
+instance Arbitrary EABIVersion where
+  arbitrary = elements [minBound .. maxBound]
+
+instance Arbitrary DebuggerKind where
+  arbitrary = elements [minBound .. maxBound]
+
+instance Arbitrary FloatingPointDenormalMode where
+  arbitrary = elements [minBound .. maxBound]
+
+instance Arbitrary ExceptionHandling where
+  arbitrary = elements [minBound .. maxBound]
+
 instance Arbitrary Options where
   arbitrary = do
     printMachineCode <- arbitrary
     unsafeFloatingPointMath <- arbitrary
     noInfinitiesFloatingPointMath <- arbitrary
     noNaNsFloatingPointMath <- arbitrary
+    noTrappingFloatingPointMath <- arbitrary
+    noSignedZeroesFloatingPointMath <- arbitrary
     honorSignDependentRoundingFloatingPointMathOption <- arbitrary
     noZerosInBSS <- arbitrary
     guaranteedTailCallOptimization <- arbitrary
+    stackSymbolOrdering <- arbitrary
     enableFastInstructionSelection <- arbitrary
     useInitArray <- arbitrary
     disableIntegratedAssembler <- arbitrary
     compressDebugSections <- arbitrary
+    relaxELFRelocations <- arbitrary
+    functionSections <- arbitrary
+    dataSections <- arbitrary
+    uniqueSectionNames <- arbitrary
     trapUnreachable <- arbitrary
+    emulatedThreadLocalStorage <- arbitrary
+    enableInterProceduralRegisterAllocation <- arbitrary
     stackAlignmentOverride <- arbitrary
     floatABIType <- arbitrary
     allowFloatingPointOperationFusion <- arbitrary
+    threadModel <- arbitrary
+    eabiVersion <- arbitrary
+    debuggerTuning <- arbitrary
+    floatingPointDenormalMode <- arbitrary
+    exceptionModel <- arbitrary
     return Options { .. }
 
 instance Arbitrary DebugCompressionType where

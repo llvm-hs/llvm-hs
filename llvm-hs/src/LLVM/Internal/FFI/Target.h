@@ -30,13 +30,22 @@
 	macro(UnsafeFPMath)																		\
 	macro(NoInfsFPMath)																		\
 	macro(NoNaNsFPMath)																		\
+	macro(NoTrappingFPMath)                               \
+	macro(NoSignedZerosFPMath)                            \
 	macro(HonorSignDependentRoundingFPMathOption)					\
 	macro(NoZerosInBSS)																		\
 	macro(GuaranteedTailCallOpt)													\
+	macro(StackSymbolOrdering)                            \
 	macro(EnableFastISel)																	\
 	macro(UseInitArray)																		\
 	macro(DisableIntegratedAS)														\
-	macro(TrapUnreachable)
+	macro(RelaxELFRelocations)                            \
+	macro(FunctionSections)                               \
+	macro(DataSections)                                   \
+	macro(UniqueSectionNames)                             \
+	macro(TrapUnreachable)                                \
+	macro(EmulatedTLS)                                    \
+	macro(EnableIPRA)
 
 typedef enum {
 #define ENUM_CASE(n) LLVM_Hs_TargetOptionFlag_ ## n,
@@ -76,5 +85,64 @@ typedef enum {
 	LLVM_HS_FOR_EACH_FP_OP_FUSION_MODE(ENUM_CASE)
 #undef ENUM_CASE
 } LLVM_Hs_FPOpFusionMode;
+
+#define LLVM_HS_FOR_EACH_THREAD_MODEL(macro) \
+	macro(POSIX) \
+	macro(Single)
+
+typedef enum {
+#define ENUM_CASE(n) LLVM_Hs_ThreadModel_ ## n,
+	LLVM_HS_FOR_EACH_THREAD_MODEL(ENUM_CASE)
+#undef ENUM_CASE
+} LLVM_Hs_ThreadModel;
+
+#define LLVM_HS_FOR_EACH_EABI(macro) \
+	macro(Unknown)																				\
+	macro(Default)																				\
+	macro(EABI4)																					\
+	macro(EABI5)																					\
+	macro(GNU)
+
+typedef enum {
+#define ENUM_CASE(n) LLVM_Hs_EABI_ ## n,
+	LLVM_HS_FOR_EACH_EABI(ENUM_CASE)
+#undef ENUM_CASE
+} LLVM_Hs_EABI;
+
+#define LLVM_HS_FOR_EACH_DEBUGGER_KIND(macro) \
+	macro(Default)																				\
+	macro(GDB)																						\
+	macro(LLDB)																						\
+	macro(SCE)
+
+typedef enum {
+#define ENUM_CASE(n) LLVM_Hs_DebuggerKind_ ## n,
+	LLVM_HS_FOR_EACH_DEBUGGER_KIND(ENUM_CASE)
+#undef ENUM_CASE
+} LLVM_Hs_DebuggerKind;
+
+#define LLVM_HS_FOR_EACH_FP_DENORMAL_MODE(macro) \
+	macro(IEEE)																						\
+	macro(PreserveSign)																		\
+	macro(PositiveZero)
+
+typedef enum {
+#define ENUM_CASE(n) LLVM_Hs_FPDenormalMode_ ## n,
+	LLVM_HS_FOR_EACH_FP_DENORMAL_MODE(ENUM_CASE)
+#undef ENUM_CASE
+} LLVM_Hs_FPDenormalMode;
+
+#define LLVM_HS_FOR_EACH_EXCEPTION_HANDLING(macro) \
+	macro(None)																						\
+	macro(DwarfCFI)																				\
+	macro(SjLj)																						\
+	macro(ARM)																						\
+	macro(WinEH)
+
+typedef enum {
+#define ENUM_CASE(n) LLVM_Hs_ExceptionHandling_ ## n,
+	LLVM_HS_FOR_EACH_EXCEPTION_HANDLING(ENUM_CASE)
+#undef ENUM_CASE
+} LLVM_Hs_ExceptionHandling;
 
 #endif

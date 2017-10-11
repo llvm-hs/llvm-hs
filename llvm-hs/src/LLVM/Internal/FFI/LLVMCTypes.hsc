@@ -220,6 +220,31 @@ newtype FPOpFusionMode = FPOpFusionMode CUInt
 #define FPOFM_Rec(n) { #n, LLVM_Hs_FPOpFusionMode_ ## n },
 #{inject FP_OP_FUSION_MODE, FPOpFusionMode, FPOpFusionMode, fpOpFusionMode, FPOFM_Rec}
 
+newtype ThreadModel = ThreadModel CUInt
+  deriving (Eq, Read, Show, Typeable, Data, Generic)
+#define TM_Rec(n) { #n, LLVM_Hs_ThreadModel_ ## n },
+#{inject THREAD_MODEL, ThreadModel, ThreadModel, threadModel, TM_Rec}
+
+newtype EABI = EABI CUInt
+  deriving (Eq, Read, Show, Typeable, Data, Generic)
+#define EABI_Rec(n) { #n, LLVM_Hs_EABI_ ## n },
+#{inject EABI, EABI, EABI, eabiVersion, EABI_Rec}
+
+newtype DebuggerKind = DebuggerKind CUInt
+  deriving (Eq, Read, Show, Typeable, Data, Generic)
+#define DBGK_Rec(n) { #n, LLVM_Hs_DebuggerKind_ ## n },
+#{inject DEBUGGER_KIND, DebuggerKind, DebuggerKind, debuggerKind, DBGK_Rec}
+
+newtype FPDenormalMode = FPDenormalMode CUInt
+  deriving (Eq, Read, Show, Typeable, Data, Generic)
+#define FPDM_Rec(n) { #n, LLVM_Hs_FPDenormalMode_ ## n },
+#{inject FP_DENORMAL_MODE, FPDenormalMode, FPDenormalMode, fpDenormalMode, FPDM_Rec}
+
+newtype ExceptionHandling = ExceptionHandling CUInt
+  deriving (Eq, Read, Show, Typeable, Data, Generic)
+#define EH_Rec(n) { #n, LLVM_Hs_ExceptionHandling_ ## n },
+#{inject EXCEPTION_HANDLING, ExceptionHandling, ExceptionHandling, exceptionHandling, EH_Rec}
+
 newtype TargetOptionFlag = TargetOptionFlag CUInt
   deriving (Eq, Read, Show, Typeable, Data, Generic)
 #define TOF_Rec(n) { #n, LLVM_Hs_TargetOptionFlag_ ## n },
