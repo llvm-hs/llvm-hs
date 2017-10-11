@@ -1,22 +1,18 @@
 {-# LANGUAGE CPP, FlexibleInstances #-}
 import Control.Exception (SomeException, try)
 import Control.Monad
-import Data.Functor
-import Data.Maybe
-import Data.List (isPrefixOf, (\\), intercalate, stripPrefix, find)
-import Data.Map (Map)
-import qualified Data.Map as Map
-import Data.Monoid
 import Data.Char
+import Data.List
+import Data.Maybe
+import Data.Monoid
+import Distribution.PackageDescription hiding (buildInfo, includeDirs)
 import Distribution.Simple
+import Distribution.Simple.LocalBuildInfo
 import Distribution.Simple.PreProcess
 import Distribution.Simple.Program
 import Distribution.Simple.Setup hiding (Flag)
-import Distribution.Simple.LocalBuildInfo
-import Distribution.PackageDescription
-import Distribution.Version
-import System.Environment
 import Distribution.System
+import System.Environment
 
 #ifdef MIN_VERSION_Cabal
 #if MIN_VERSION_Cabal(2,0,0)
@@ -27,16 +23,22 @@ import Distribution.System
 -- define these selectively in C files (we are _not_ using HsFFI.h),
 -- rather than universally in the ccOptions, because HsFFI.h currently defines them
 -- without checking they're already defined and so causes warnings.
+uncheckedHsFFIDefines :: [String]
 uncheckedHsFFIDefines = ["__STDC_LIMIT_MACROS"]
 
 #ifndef MIN_VERSION_Cabal_2_0_0
+mkVersion :: [Int] -> Version
 mkVersion ver = Version ver []
+versionNumbers :: Version -> [Int]
 versionNumbers = versionBranch
+mkFlagName :: String -> FlagName
 mkFlagName = FlagName
 #endif
 
+llvmVersion :: Version
 llvmVersion = mkVersion [5,0]
 
+llvmConfigNames :: [String]
 llvmConfigNames = [
   "llvm-config-" ++ (intercalate "." . map show . versionNumbers $ llvmVersion),
   "llvm-config"
@@ -50,35 +52,9 @@ findJustBy f (x:xs) = do
     j -> return j
 findJustBy _ [] = return Nothing
 
-class ProgramSearch a where
-  programSearch :: (String -> a) -> a
-
--- this instance is used before Cabal-1.18.0, when programFindLocation took one argument
-instance Monad m => ProgramSearch (v -> m (Maybe b)) where
-  programSearch checkName = \v -> findJustBy (\n -> checkName n v) llvmConfigNames
-
--- this instance is used for and after Cabal-1.18.0, when programFindLocation took two arguments
-instance Monad m => ProgramSearch (v -> p -> m (Maybe b)) where
-  programSearch checkName = \v p -> findJustBy (\n -> checkName n v p) llvmConfigNames
-
-class OldHookable hook where
-  preHookOld :: (PackageDescription -> LocalBuildInfo -> UserHooks -> TestFlags -> IO ()) -> hook -> hook
-
--- this instance is used before Cabal-1.22.0.0, when testHook took four arguments
-instance OldHookable (PackageDescription -> LocalBuildInfo -> UserHooks -> TestFlags -> IO ()) where
-  preHookOld f hook = \packageDescription localBuildInfo userHooks testFlags -> do
-    f packageDescription localBuildInfo userHooks testFlags
-    hook packageDescription localBuildInfo userHooks testFlags
-
--- this instance is used for and after Cabal-1.22.0.0, when testHook took four five arguments
-instance OldHookable (Args -> PackageDescription -> LocalBuildInfo -> UserHooks -> TestFlags -> IO ()) where
-  preHookOld f hook = \args packageDescription localBuildInfo userHooks testFlags -> do
-    f packageDescription localBuildInfo userHooks testFlags
-    hook args packageDescription localBuildInfo userHooks testFlags
-
 llvmProgram :: Program
 llvmProgram = (simpleProgram "llvm-config") {
-  programFindLocation = programSearch (programFindLocation . simpleProgram),
+  programFindLocation = \v p -> findJustBy (\n -> programFindLocation (simpleProgram n) v p) llvmConfigNames,
   programFindVersion = \verbosity path ->
     let
       stripVcsSuffix = takeWhile (\c -> isDigit c || c == '.')
@@ -87,11 +63,11 @@ llvmProgram = (simpleProgram "llvm-config") {
  }
 
 getLLVMConfig :: ConfigFlags -> IO ([String] -> IO String)
-getLLVMConfig configFlags = do
-  let verbosity = fromFlag $ configVerbosity configFlags
+getLLVMConfig confFlags = do
+  let verbosity = fromFlag $ configVerbosity confFlags
   (program, _, _) <- requireProgramVersion verbosity llvmProgram
                      (withinVersion llvmVersion)
-                     (configPrograms configFlags)
+                     (configPrograms confFlags)
   return $ getProgramOutput verbosity program
 
 addToLdLibraryPath :: String -> IO ()
@@ -104,8 +80,8 @@ addToLdLibraryPath path = do
   setEnv ldLibraryPathVar (path ++ either (const "") (ldLibraryPathSep ++) v)
 
 addLLVMToLdLibraryPath :: ConfigFlags -> IO ()
-addLLVMToLdLibraryPath configFlags = do
-  llvmConfig <- getLLVMConfig configFlags
+addLLVMToLdLibraryPath confFlags = do
+  llvmConfig <- getLLVMConfig confFlags
   [libDir] <- liftM lines $ llvmConfig ["--libdir"]
   addToLdLibraryPath libDir
 
@@ -128,14 +104,15 @@ isIgnoredCFlag flag = flag `elem` ignoredCFlags || isIncludeFlag flag
 isIgnoredCxxFlag :: String -> Bool
 isIgnoredCxxFlag flag = flag `elem` ignoredCxxFlags || isIncludeFlag flag
 
+main :: IO ()
 main = do
   let origUserHooks = simpleUserHooks
 
   defaultMainWithHooks origUserHooks {
     hookedPrograms = [ llvmProgram ],
 
-    confHook = \(genericPackageDescription, hookedBuildInfo) configFlags -> do
-      llvmConfig <- getLLVMConfig configFlags
+    confHook = \(genericPackageDescription, hookedBuildInfo) confFlags -> do
+      llvmConfig <- getLLVMConfig confFlags
       llvmCxxFlags <- do
         rawLlvmCxxFlags <- llvmConfig ["--cxxflags"]
         return . filter (not . isIgnoredCxxFlag) $ words rawLlvmCxxFlags
@@ -144,10 +121,10 @@ main = do
                          (find (isPrefixOf stdlibPrefix) llvmCxxFlags)
             where stdlibPrefix = "-stdlib=lib"
       includeDirs <- liftM lines $ llvmConfig ["--includedir"]
-      libDirs@[libDir] <- liftM lines $ llvmConfig ["--libdir"]
+      libDirs <- liftM lines $ llvmConfig ["--libdir"]
       [llvmVersion] <- liftM lines $ llvmConfig ["--version"]
       let getLibs = liftM (map (fromJust . stripPrefix "-l") . words) . llvmConfig
-          flags    = configConfigurationsFlags configFlags
+          flags    = configConfigurationsFlags confFlags
           linkFlag = case lookup (mkFlagName "shared-llvm") flags of
                        Nothing     -> "--link-shared"
                        Just shared -> if shared then "--link-shared" else "--link-static"
@@ -167,9 +144,9 @@ main = do
                   }
               }
            }
-          configFlags' = configFlags {
-            configExtraLibDirs = libDirs ++ configExtraLibDirs configFlags,
-            configExtraIncludeDirs = includeDirs ++ configExtraIncludeDirs configFlags
+          configFlags' = confFlags {
+            configExtraLibDirs = libDirs ++ configExtraLibDirs confFlags,
+            configExtraIncludeDirs = includeDirs ++ configExtraIncludeDirs confFlags
            }
       addLLVMToLdLibraryPath configFlags'
       confHook simpleUserHooks (genericPackageDescription', hookedBuildInfo) configFlags',
@@ -191,21 +168,22 @@ main = do
                       let buildInfo' = buildInfo { ccOptions = "-Wno-variadic-macros" : llvmCFlags }
                       runPreProcessor (origHsc buildInfo') inFiles outFiles verbosity
               }
-              where origHsc buildInfo =
+              where origHsc buildInfo' =
                       fromMaybe
                         ppHsc2hs
                         (lookup "hsc" origHookedPreprocessors)
-                        buildInfo
+                        buildInfo'
                         localBuildInfo
 #ifdef MIN_VERSION_Cabal_2_0_0
                         componentLocalBuildInfo
 #endif
       in [("hsc", newHsc)] ++ origHookedPreprocessors,
 
-    buildHook = \packageDescription localBuildInfo userHooks buildFlags -> do
-          addLLVMToLdLibraryPath (configFlags localBuildInfo)
-          buildHook origUserHooks packageDescription localBuildInfo userHooks buildFlags,
+    buildHook = \packageDesc localBuildInfo userHooks buildFlags ->
+      do addLLVMToLdLibraryPath (configFlags localBuildInfo)
+         buildHook origUserHooks packageDesc localBuildInfo userHooks buildFlags,
 
-    testHook = preHookOld (\_ localBuildInfo _ _ -> addLLVMToLdLibraryPath (configFlags localBuildInfo))
-               (testHook origUserHooks)
+    testHook = \args packageDesc localBuildInfo userHooks testFlags ->
+      do addLLVMToLdLibraryPath (configFlags localBuildInfo)
+         testHook origUserHooks args packageDesc localBuildInfo userHooks testFlags
    }

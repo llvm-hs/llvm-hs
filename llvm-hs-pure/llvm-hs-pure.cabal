@@ -16,7 +16,7 @@ description:
   llvm-hs-pure is a set of pure Haskell types and functions for interacting with LLVM <http://llvm.org/>.
   It includes an ADT to represent LLVM IR (<http://llvm.org/docs/LangRef.html>). The llvm-hs package
   builds on this one with FFI bindings to LLVM, but llvm-hs-pure does not require LLVM to be available.
-tested-with: GHC == 7.8.4, GHC == 7.10.3, GHC == 8.0.2, GHC == 8.2.1
+tested-with: GHC == 7.10.3, GHC == 8.0.2, GHC == 8.2.1
 extra-source-files: CHANGELOG.md
 
 source-repository head
@@ -32,7 +32,7 @@ library
   ghc-options: -Wall
   if flag(semigroups)
     build-depends:
-      base >= 4.7 && < 4.9,
+      base >= 4.8 && < 4.9,
       semigroups >= 0.18 && < 0.19
   else
     build-depends:
@@ -41,7 +41,6 @@ library
     attoparsec >= 0.13,
     bytestring >= 0.10 && < 0.11,
     transformers >= 0.3 && < 0.6,
-    transformers-compat >= 0.4,
     mtl >= 2.1,
     template-haskell >= 2.5.0.0,
     containers >= 0.4.2.1
@@ -82,13 +81,12 @@ library
     LLVM.AST.COMDAT
     LLVM.DataLayout
     LLVM.Prelude
-    LLVM.TH
 
 test-suite test
   type: exitcode-stdio-1.0
   if flag(semigroups)
     build-depends:
-      base >= 4.7 && < 4.9,
+      base >= 4.8 && < 4.9,
       semigroups >= 0.18 && < 0.19
   else
     build-depends:
@@ -99,7 +97,6 @@ test-suite test
     tasty-quickcheck >= 0.8,
     llvm-hs-pure,
     transformers >= 0.3,
-    transformers-compat >= 0.4,
     containers >= 0.4.2.1,
     mtl >= 2.1
   hs-source-dirs: test
