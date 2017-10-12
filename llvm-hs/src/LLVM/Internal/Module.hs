@@ -23,6 +23,7 @@ import qualified Data.ByteString.Short as SBS
 import qualified Data.Map as Map
 
 import qualified LLVM.Internal.FFI.Assembly as FFI
+import qualified LLVM.Internal.FFI.Attribute as FFI
 import qualified LLVM.Internal.FFI.Builder as FFI
 import qualified LLVM.Internal.FFI.Bitcode as FFI
 import qualified LLVM.Internal.FFI.Function as FFI
@@ -518,8 +519,10 @@ moduleAST m = runDecodeAST $ do
       metadata <- getMetadataDefinitions
       functionAttributes <- do
         functionAttributes <- gets $ functionAttributeListIDs
-        forM functionAttributes $ \(as, gid) ->
-          A.FunctionAttributes <$> return gid <*> decodeM as
+        forM functionAttributes $ \(as, gid) -> do
+          fAttrs <- A.FunctionAttributes <$> return gid <*> decodeM as
+          liftIO (FFI.disposeAttributeSet as)
+          pure fAttrs
       comdats <- gets $ map (uncurry A.COMDAT) . Map.elems . comdats
       return $
         structDefinitions ++
