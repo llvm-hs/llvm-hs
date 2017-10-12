@@ -1,4 +1,4 @@
-## Unreleased
+## 5.1.0 (2017-10-12)
 
 ### Bugfixes
 
