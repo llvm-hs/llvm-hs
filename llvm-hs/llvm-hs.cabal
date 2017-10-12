@@ -259,6 +259,7 @@ test-suite test
   main-is: Test.hs
   other-modules:
     LLVM.Test.Analysis
+    LLVM.Test.Attribute
     LLVM.Test.CallingConvention
     LLVM.Test.Constants
     LLVM.Test.DataLayout

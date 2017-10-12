@@ -3,6 +3,7 @@ module LLVM.Test.Tests where
 import Test.Tasty
 
 import qualified LLVM.Test.Analysis as Analysis
+import qualified LLVM.Test.Attribute as Attribute
 import qualified LLVM.Test.CallingConvention as CallingConvention
 import qualified LLVM.Test.Constants as Constants
 import qualified LLVM.Test.DataLayout as DataLayout
@@ -25,6 +26,7 @@ tests = testGroup "llvm-hs" [
     CallingConvention.tests,
     Constants.tests,
     DataLayout.tests,
+    Attribute.tests,
     FunctionAttribute.tests,
     ExecutionEngine.tests,
     Global.tests,

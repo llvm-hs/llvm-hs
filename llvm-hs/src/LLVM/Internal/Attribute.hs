@@ -275,13 +275,21 @@ instance EncodeM EncodeAST AttributeList FFI.AttributeList where
 instance DecodeM DecodeAST AttributeList (FFI.AttrSetDecoder a, a) where
   decodeM (FFI.AttrSetDecoder attrsAtIndex countParams, a) = do
     functionAttrSet <-
-      do attrSet <-
-           withAttrsAtIndex FFI.functionIndex :: DecodeAST FFI.FunctionAttributeSet
-         hasAttributes <-
-           decodeM =<< liftIO (FFI.attributeSetHasAttributes attrSet)
-         if hasAttributes
-           then Just . Left <$> getAttributeGroupID attrSet
-           else return Nothing
+      do mAttrSet <-
+           -- function attributes are grouped and decoded later. Since
+           -- we are sometimes decoding inside of scopeAnyConT, we
+           -- cannot use withAttrsAtIndex to allocate the attribute
+           -- set since it will be freed before we decode it.
+           liftIO . mask_ $ do
+             attrSet <-
+               attrsAtIndex a FFI.functionIndex :: IO FFI.FunctionAttributeSet
+             hasAttributes <- decodeM =<< FFI.attributeSetHasAttributes attrSet
+             if hasAttributes
+               then pure (Just attrSet)
+               else FFI.disposeAttributeSet attrSet >> pure Nothing
+         case mAttrSet of
+           Nothing -> pure Nothing
+           Just attrSet -> Just . Left <$> getAttributeGroupID attrSet
     returnAttrs <-
       do attrSet <-
            withAttrsAtIndex FFI.returnIndex :: DecodeAST FFI.ParameterAttributeSet
@@ -289,7 +297,8 @@ instance DecodeM DecodeAST AttributeList (FFI.AttrSetDecoder a, a) where
     numParams <- liftIO (countParams a)
     paramAttrs <-
       forM [1 .. numParams] $ \i ->
-        decodeM =<< (withAttrsAtIndex (FFI.AttributeIndex i) :: DecodeAST FFI.ParameterAttributeSet)
+        decodeM =<<
+        (withAttrsAtIndex (FFI.AttributeIndex i) :: DecodeAST FFI.ParameterAttributeSet)
     return
       (AttributeList
        { functionAttributes = maybeToList functionAttrSet
