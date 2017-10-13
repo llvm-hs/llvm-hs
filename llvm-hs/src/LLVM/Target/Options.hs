@@ -94,6 +94,26 @@ data Options = Options {
   eabiVersion :: EABIVersion,
   debuggerTuning :: DebuggerKind,
   floatingPointDenormalMode :: FloatingPointDenormalMode,
-  exceptionModel :: ExceptionHandling
+  exceptionModel :: ExceptionHandling,
+  machineCodeOptions :: MachineCodeOptions
+  }
+  deriving (Eq, Ord, Read, Show)
+
+-- | <http://llvm.org/doxygen/classllvm_1_1MCTargetOptions.html>
+data MachineCodeOptions = MachineCodeOptions {
+  sanitizeAddresses :: Bool,
+  relaxAll :: Bool,
+  noExecutableStack :: Bool,
+  fatalWarnings :: Bool,
+  noWarnings :: Bool,
+  noDeprecatedWarning :: Bool,
+  saveTemporaryLabels :: Bool,
+  useDwarfDirectory :: Bool,
+  incrementalLinkerCompatible :: Bool,
+  pieCopyRelocations :: Bool,
+  showMachineCodeEncoding :: Bool,
+  showMachineCodeInstructions :: Bool,
+  verboseAssembly :: Bool,
+  preserveComentsInAssembly :: Bool
   }
   deriving (Eq, Ord, Read, Show)

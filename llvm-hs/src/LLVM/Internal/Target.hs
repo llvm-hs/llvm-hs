@@ -158,13 +158,15 @@ lookupTarget arch triple = flip runAnyContT return $ do
 -- | <http://llvm.org/doxygen/classllvm_1_1TargetOptions.html>
 newtype TargetOptions = TargetOptions (Ptr FFI.TargetOptions)
 
+newtype MCTargetOptions = MCTargetOptions (Ptr FFI.MCTargetOptions)
+
 -- | bracket creation and destruction of a 'TargetOptions' object
 withTargetOptions :: (TargetOptions -> IO a) -> IO a
 withTargetOptions = bracket FFI.createTargetOptions FFI.disposeTargetOptions . (. TargetOptions)
 
 -- | set all target options
 pokeTargetOptions :: TO.Options -> TargetOptions -> IO ()
-pokeTargetOptions hOpts (TargetOptions cOpts) = do
+pokeTargetOptions hOpts opts@(TargetOptions cOpts) = do
   mapM_ (\(c, ha) -> FFI.setTargetOptionFlag cOpts c =<< encodeM (ha hOpts)) [
     (FFI.targetOptionFlagPrintMachineCode, TO.printMachineCode),
     (FFI.targetOptionFlagUnsafeFPMath, TO.unsafeFloatingPointMath),
@@ -196,10 +198,30 @@ pokeTargetOptions hOpts (TargetOptions cOpts) = do
   FFI.setDebuggerTuning cOpts =<< encodeM (TO.debuggerTuning hOpts)
   FFI.setFPDenormalMode cOpts =<< encodeM (TO.floatingPointDenormalMode hOpts)
   FFI.setExceptionModel cOpts =<< encodeM (TO.exceptionModel hOpts)
+  pokeMachineCodeOptions (TO.machineCodeOptions hOpts) =<< machineCodeOptions opts
+
+pokeMachineCodeOptions :: TO.MachineCodeOptions -> MCTargetOptions -> IO ()
+pokeMachineCodeOptions hOpts (MCTargetOptions cOpts) =
+  mapM_ (\(c, ha) -> FFI.setMCTargetOptionFlag cOpts c =<< encodeM (ha hOpts)) [
+    (FFI.mcTargetOptionFlagSanitizeAddress, TO.sanitizeAddresses),
+    (FFI.mcTargetOptionFlagMCRelaxAll, TO.relaxAll),
+    (FFI.mcTargetOptionFlagMCNoExecStack, TO.noExecutableStack),
+    (FFI.mcTargetOptionFlagMCFatalWarnings, TO.fatalWarnings),
+    (FFI.mcTargetOptionFlagMCNoWarn, TO.noWarnings),
+    (FFI.mcTargetOptionFlagMCNoDeprecatedWarn, TO.noDeprecatedWarning),
+    (FFI.mcTargetOptionFlagMCSaveTempLabels, TO.saveTemporaryLabels),
+    (FFI.mcTargetOptionFlagMCUseDwarfDirectory, TO.useDwarfDirectory),
+    (FFI.mcTargetOptionFlagMCIncrementalLinkerCompatible, TO.incrementalLinkerCompatible),
+    (FFI.mcTargetOptionFlagMCPIECopyRelocations, TO.pieCopyRelocations),
+    (FFI.mcTargetOptionFlagShowMCEncoding, TO.showMachineCodeEncoding),
+    (FFI.mcTargetOptionFlagShowMCInst, TO.showMachineCodeInstructions),
+    (FFI.mcTargetOptionFlagAsmVerbose, TO.verboseAssembly),
+    (FFI.mcTargetOptionFlagPreserveAsmComments, TO.preserveComentsInAssembly)
+   ]
 
 -- | get all target options
 peekTargetOptions :: TargetOptions -> IO TO.Options
-peekTargetOptions (TargetOptions tOpts) = do
+peekTargetOptions opts@(TargetOptions tOpts) = do
   let gof = decodeM <=< FFI.getTargetOptionsFlag tOpts
   printMachineCode
     <- gof FFI.targetOptionFlagPrintMachineCode
@@ -250,7 +272,42 @@ peekTargetOptions (TargetOptions tOpts) = do
   debuggerTuning <- decodeM =<< FFI.getDebuggerTuning tOpts
   floatingPointDenormalMode <- decodeM =<< FFI.getFPDenormalMode tOpts
   exceptionModel <- decodeM =<< FFI.getExceptionModel tOpts
+  machineCodeOptions <- peekMachineCodeOptions =<< machineCodeOptions opts
   return TO.Options { .. }
+
+-- | get all machine code options
+peekMachineCodeOptions :: MCTargetOptions -> IO TO.MachineCodeOptions
+peekMachineCodeOptions (MCTargetOptions tOpts) = do
+  let gof = decodeM <=< FFI.getMCTargetOptionsFlag tOpts
+  sanitizeAddresses
+    <- gof FFI.mcTargetOptionFlagSanitizeAddress
+  relaxAll
+    <- gof FFI.mcTargetOptionFlagMCRelaxAll
+  noExecutableStack
+    <- gof FFI.mcTargetOptionFlagMCNoExecStack
+  fatalWarnings
+    <- gof FFI.mcTargetOptionFlagMCFatalWarnings
+  noWarnings
+    <- gof FFI.mcTargetOptionFlagMCNoWarn
+  noDeprecatedWarning
+    <- gof FFI.mcTargetOptionFlagMCNoDeprecatedWarn
+  saveTemporaryLabels
+    <- gof FFI.mcTargetOptionFlagMCSaveTempLabels
+  useDwarfDirectory
+    <- gof FFI.mcTargetOptionFlagMCUseDwarfDirectory
+  incrementalLinkerCompatible
+    <- gof FFI.mcTargetOptionFlagMCIncrementalLinkerCompatible
+  pieCopyRelocations
+    <- gof FFI.mcTargetOptionFlagMCPIECopyRelocations
+  showMachineCodeEncoding
+    <- gof FFI.mcTargetOptionFlagShowMCEncoding
+  showMachineCodeInstructions
+    <- gof FFI.mcTargetOptionFlagShowMCInst
+  verboseAssembly
+    <- gof FFI.mcTargetOptionFlagAsmVerbose
+  preserveComentsInAssembly
+    <- gof FFI.mcTargetOptionFlagPreserveAsmComments
+  return TO.MachineCodeOptions { .. }
 
 -- | <http://llvm.org/doxygen/classllvm_1_1TargetMachine.html>
 newtype TargetMachine = TargetMachine (Ptr FFI.TargetMachine)
@@ -298,6 +355,9 @@ withTargetMachine
 
 targetMachineOptions :: TargetMachine -> IO TargetOptions
 targetMachineOptions (TargetMachine tm) = TargetOptions <$> FFI.targetMachineOptions tm
+
+machineCodeOptions :: TargetOptions -> IO MCTargetOptions
+machineCodeOptions (TargetOptions to) = MCTargetOptions <$> FFI.machineCodeOptions to
 
 -- | <http://llvm.org/doxygen/classllvm_1_1TargetLowering.html>
 newtype TargetLowering = TargetLowering (Ptr FFI.TargetLowering)

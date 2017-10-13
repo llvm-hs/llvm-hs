@@ -24,6 +24,7 @@ foreign import ccall unsafe "LLVM_Hs_LookupTarget" lookupTarget ::
     CString -> CString -> Ptr (OwnerTransfered CString) -> Ptr (OwnerTransfered CString) -> IO (Ptr Target)
 
 data TargetOptions
+data MCTargetOptions
 
 foreign import ccall unsafe "LLVM_Hs_CreateTargetOptions" createTargetOptions ::
   IO (Ptr TargetOptions)
@@ -33,6 +34,12 @@ foreign import ccall unsafe "LLVM_Hs_SetTargetOptionFlag" setTargetOptionFlag ::
 
 foreign import ccall unsafe "LLVM_Hs_GetTargetOptionFlag" getTargetOptionsFlag ::
   Ptr TargetOptions -> TargetOptionFlag -> IO LLVMBool
+
+foreign import ccall unsafe "LLVM_Hs_SetMCTargetOptionFlag" setMCTargetOptionFlag ::
+  Ptr MCTargetOptions -> MCTargetOptionFlag -> LLVMBool -> IO ()
+
+foreign import ccall unsafe "LLVM_Hs_GetMCTargetOptionFlag" getMCTargetOptionsFlag ::
+  Ptr MCTargetOptions -> MCTargetOptionFlag -> IO LLVMBool
 
 foreign import ccall unsafe "LLVM_Hs_GetCompressDebugSections" getCompressDebugSections ::
   Ptr TargetOptions -> IO DebugCompressionType
@@ -109,6 +116,9 @@ foreign import ccall unsafe "LLVMDisposeTargetMachine" disposeTargetMachine ::
 
 foreign import ccall unsafe "LLVM_Hs_TargetMachineOptions" targetMachineOptions ::
   Ptr TargetMachine -> IO (Ptr TargetOptions)
+
+foreign import ccall unsafe "LLVM_Hs_MCTargetOptions" machineCodeOptions ::
+  Ptr TargetOptions -> IO (Ptr MCTargetOptions)
 
 foreign import ccall unsafe "LLVM_Hs_TargetMachineEmit" targetMachineEmit ::
   Ptr TargetMachine

@@ -269,6 +269,18 @@ void LLVM_Hs_SetTargetOptionFlag(TargetOptions *to, LLVM_Hs_TargetOptionFlag f,
     }
 }
 
+void LLVM_Hs_SetMCTargetOptionFlag(MCTargetOptions *to, LLVM_Hs_MCTargetOptionFlag f,
+                                   unsigned v) {
+    switch (f) {
+#define ENUM_CASE(op)                                                          \
+    case LLVM_Hs_MCTargetOptionFlag_##op:                                      \
+        to->op = v ? 1 : 0;                                                    \
+        break;
+        LLVM_HS_FOR_EACH_MC_TARGET_OPTION_FLAG(ENUM_CASE)
+#undef ENUM_CASE
+    }
+}
+
 static llvm::DebugCompressionType
 unwrap(LLVM_Hs_DebugCompressionType compressionType) {
     switch (compressionType) {
@@ -318,6 +330,20 @@ unsigned LLVM_Hs_GetTargetOptionFlag(TargetOptions *to,
 #undef ENUM_CASE
     default:
         assert(false && "Unknown target option flag");
+        return 0;
+    }
+}
+
+unsigned LLVM_Hs_GetMCTargetOptionFlag(MCTargetOptions *to,
+                                       LLVM_Hs_MCTargetOptionFlag f) {
+    switch (f) {
+#define ENUM_CASE(op)                                                          \
+    case LLVM_Hs_MCTargetOptionFlag_##op:                                      \
+        return to->op;
+        LLVM_HS_FOR_EACH_MC_TARGET_OPTION_FLAG(ENUM_CASE)
+#undef ENUM_CASE
+    default:
+        assert(false && "Unknown machine code target option flag");
         return 0;
     }
 }
@@ -511,6 +537,10 @@ LLVM_Hs_CreateTargetMachine(LLVMTargetRef T, const char *Triple,
 
 TargetOptions *LLVM_Hs_TargetMachineOptions(LLVMTargetMachineRef TM) {
     return &unwrap(TM)->Options;
+}
+
+MCTargetOptions *LLVM_Hs_MCTargetOptions(TargetOptions *to) {
+    return &to->MCOptions;
 }
 
 // This is identical to LLVMTargetMachineEmit but LLVM doesn’t expose this
