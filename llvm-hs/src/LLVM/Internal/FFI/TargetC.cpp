@@ -1,4 +1,5 @@
 #define __STDC_LIMIT_MACROS
+#include "LLVM/Internal/FFI/ErrorHandling.hpp"
 #include "LLVM/Internal/FFI/LibFunc.h"
 #include "LLVM/Internal/FFI/Target.h"
 #include "LLVM/Internal/FFI/Target.hpp"
@@ -290,7 +291,7 @@ unwrap(LLVM_Hs_DebugCompressionType compressionType) {
         LLVM_HS_FOR_EACH_DEBUG_COMPRESSION_TYPE(ENUM_CASE)
 #undef ENUM_CASE
     default:
-        assert(false && "Unknown debug compression type");
+        reportFatalError("Unknown debug compression type");
         return llvm::DebugCompressionType::None;
     }
 }
@@ -304,7 +305,7 @@ wrap(llvm::DebugCompressionType compressionType) {
         LLVM_HS_FOR_EACH_DEBUG_COMPRESSION_TYPE(ENUM_CASE)
 #undef ENUM_CASE
     default: {
-        assert(false && "Unknown debug compression type");
+        reportFatalError("Unknown debug compression type");
         return LLVM_Hs_DebugCompressionType_None;
     }
     }
@@ -329,7 +330,7 @@ unsigned LLVM_Hs_GetTargetOptionFlag(TargetOptions *to,
         LLVM_HS_FOR_EACH_TARGET_OPTION_FLAG(ENUM_CASE)
 #undef ENUM_CASE
     default:
-        assert(false && "Unknown target option flag");
+        reportFatalError("Unknown target option flag");
         return 0;
     }
 }
@@ -343,7 +344,7 @@ unsigned LLVM_Hs_GetMCTargetOptionFlag(MCTargetOptions *to,
         LLVM_HS_FOR_EACH_MC_TARGET_OPTION_FLAG(ENUM_CASE)
 #undef ENUM_CASE
     default:
-        assert(false && "Unknown machine code target option flag");
+        reportFatalError("Unknown machine code target option flag");
         return 0;
     }
 }
