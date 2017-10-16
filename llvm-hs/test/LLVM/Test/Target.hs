@@ -83,7 +83,26 @@ instance Arbitrary Options where
     debuggerTuning <- arbitrary
     floatingPointDenormalMode <- arbitrary
     exceptionModel <- arbitrary
+    machineCodeOptions <- arbitrary
     return Options { .. }
+
+instance Arbitrary MachineCodeOptions where
+  arbitrary = do
+    sanitizeAddresses <- arbitrary
+    relaxAll <- arbitrary
+    noExecutableStack <- arbitrary
+    fatalWarnings <- arbitrary
+    noWarnings <- arbitrary
+    noDeprecatedWarning <- arbitrary
+    saveTemporaryLabels <- arbitrary
+    useDwarfDirectory <- arbitrary
+    incrementalLinkerCompatible <- arbitrary
+    pieCopyRelocations <- arbitrary
+    showMachineCodeEncoding <- arbitrary
+    showMachineCodeInstructions <- arbitrary
+    verboseAssembly <- arbitrary
+    preserveComentsInAssembly <- arbitrary
+    return MachineCodeOptions { .. }
 
 instance Arbitrary DebugCompressionType where
   arbitrary = elements [CompressNone, CompressGNU, CompressZ]
