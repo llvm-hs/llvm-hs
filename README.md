@@ -14,6 +14,8 @@ TODO
 - [ ] Handle variadic functions?
 - [ ] Metadata generation
 - [ ] Interface for non-standard calling conventions and linkage
+- [ ] Rewrite Kaleidoscope tutorial to use new builder monad instead of deriving it from scratch.
+- [ ] Integrate with Joachim's typed-IR AST.
 
 License
 -------
