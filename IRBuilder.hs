@@ -35,6 +35,7 @@ import Control.Applicative
 import Control.Monad.Reader
 import Control.Monad.State.Strict
 
+import Data.Word
 import Data.Coerce
 import Data.Map as Map
 import Data.Text.Lazy.IO as T
@@ -204,7 +205,7 @@ fdiv :: Operand -> Operand -> IRBuilder Block Operand
 fdiv a b = emitInstr (typeOf a) (typeOf a) $ FDiv NoFastMathFlags a b []
 
 frem :: Operand -> Operand -> IRBuilder Block Operand
-frem a b = emitInstr (typeOf a) (typeOf a) $ FDiv NoFastMathFlags a b []
+frem a b = emitInstr (typeOf a) (typeOf a) $ FRem NoFastMathFlags a b []
 
 add :: Operand -> Operand -> IRBuilder Block Operand
 add a b = emitInstr (typeOf a) (typeOf a) $ Add False False a b []
@@ -222,7 +223,7 @@ sdiv :: Operand -> Operand -> IRBuilder Block Operand
 sdiv a b = emitInstr (typeOf a) (typeOf a) $ SDiv True a b []
 
 urem :: Operand -> Operand -> IRBuilder Block Operand
-urem a b = emitInstr (typeOf a) (typeOf a) $ SDiv True a b []
+urem a b = emitInstr (typeOf a) (typeOf a) $ URem a b []
 
 shl :: Operand -> Operand -> IRBuilder Block Operand
 shl a b = emitInstr (typeOf a) (typeOf a) $ Shl False False a b []
@@ -242,14 +243,14 @@ or a b = emitInstr (typeOf a) (typeOf a) $ Or a b []
 xor :: Operand -> Operand -> IRBuilder Block Operand
 xor a b = emitInstr (typeOf a) (typeOf a) $ Xor a b []
 
-alloca :: IRBuilder Block Operand
-alloca = undefined
+alloca :: Type -> Maybe Operand -> Word32 -> IRBuilder Block Operand
+alloca ty count align = emitInstr ty (ptr ty) $ Alloca ty count align []
 
-load :: IRBuilder Block Operand
-load = undefined
+load :: Operand -> Word32 -> IRBuilder Block Operand
+load a align = emitInstr (ptr (typeOf a)) (typeOf a) $ Load False a Nothing align []
 
-store :: IRBuilder Block Operand
-store = undefined
+store :: Operand -> Word32 -> Operand -> IRBuilder Block Operand
+store addr align val = emitInstr (ptr (typeOf addr)) (typeOf addr) $ Store False addr val Nothing align []
 
 gep :: IRBuilder Block Operand
 gep = undefined
