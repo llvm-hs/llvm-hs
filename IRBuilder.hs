@@ -11,6 +11,7 @@ module IRBuilder (
   emptyIRBuilder,
 
   -- ** Module
+  BlockRef,
   function,
   block,
 
@@ -45,8 +46,11 @@ import LLVM.AST as AST hiding (function)
 import LLVM.AST.Type as AST
 import LLVM.AST.Name
 import LLVM.AST.Global
+import LLVM.AST.ParameterAttribute
 import qualified LLVM.AST.Float as F
 import qualified LLVM.AST.Constant as C
+import qualified LLVM.AST.IntegerPredicate as IP
+import qualified LLVM.AST.FloatingPointPredicate as FP
 
 -- | This provides a uniform API for creating instructions and inserting them
 -- into a basic block: either at the end of a BasicBlock, or at a specific
@@ -55,6 +59,7 @@ import qualified LLVM.AST.Constant as C
 newtype IRBuilder s a = IRBuilder (State IRBuilderState a)
   deriving (Functor, Applicative, Monad, MonadFix, MonadState IRBuilderState)
 
+-- | A partially constructed block as a sequence of instructions
 type PartialBlock = ([Named Instruction], Maybe (Named Terminator))
 
 -- | A block reference (lazy in second parameter to allow MonadFix)
@@ -102,14 +107,6 @@ addDefn d = do
   defs <- gets (moduleDefinitions . builderModule)
   modify $ \s -> s { builderModule = (builderModule s) { moduleDefinitions = defs ++ [d] } }
 
-block :: Name -> IRBuilder Block r -> IRBuilder Function BlockRef
-block nm m = do
-  start <- gets builderBlock
-  result <- runBlock m
-  resultState <- gets builderBlock
-  modify $ \s -> s { builderBlock = start }
-  pure (nm, resultState)
-
 -- | Generate fresh name
 fresh :: IRBuilder Block Name
 fresh = do
@@ -122,7 +119,11 @@ resetFresh :: IRBuilder Toplevel ()
 resetFresh = modify $ \s -> s { builderSupply = 0 }
 
 -- | Emit instruction
-emitInstr :: Type -> Type -> Instruction -> IRBuilder Block Operand
+emitInstr
+  :: Type -- ^ Type
+  -> Type -- ^ Return type
+  -> Instruction
+  -> IRBuilder Block Operand
 emitInstr ty retty instr = do
   (instrs, term) <- gets builderBlock
   nm <- fresh
@@ -136,12 +137,29 @@ emitTerm term = do
   modify $ \s -> s { builderBlock = (instrs, Just (Do term)) }
   pure ()
 
+
+-------------------------------------------------------------------------------
+-- Toplevel
+-------------------------------------------------------------------------------
+
+-- | Emit block
+block
+  :: Name                         -- ^ Block name
+  -> IRBuilder Block r            -- ^ Basic block generation
+  -> IRBuilder Function BlockRef
+block nm m = do
+  start <- gets builderBlock
+  result <- runBlock m
+  resultState <- gets builderBlock
+  modify $ \s -> s { builderBlock = start }
+  pure (nm, resultState)
+
 -- | Emit function
 function
   :: Name                            -- ^ Function name
   -> [(Type, Name)]                  -- ^ Parameters (non-variadic)
   -> Type                            -- ^ Return type
-  -> IRBuilder Function [BasicBlock] -- ^ Block generator
+  -> IRBuilder Function [BasicBlock] -- ^ Function generation
   -> IRBuilder Toplevel ()
 function label argtys retty blockm = do
   blocks <- runLocal blockm
@@ -173,27 +191,106 @@ globalRef = C.GlobalReference
 -- Insturctions
 -------------------------------------------------------------------------------
 
--- Arithmetic and Constants
 fadd :: Operand -> Operand -> IRBuilder Block Operand
 fadd a b = emitInstr (typeOf a) (typeOf a) $ FAdd NoFastMathFlags a b []
 
--- Arithmetic and Constants
 fmul :: Operand -> Operand -> IRBuilder Block Operand
 fmul a b = emitInstr (typeOf a) (typeOf a) $ FMul NoFastMathFlags a b []
 
--- Arithmetic and Constants
+fsub :: Operand -> Operand -> IRBuilder Block Operand
+fsub a b = emitInstr (typeOf a) (typeOf a) $ FSub NoFastMathFlags a b []
+
+fdiv :: Operand -> Operand -> IRBuilder Block Operand
+fdiv a b = emitInstr (typeOf a) (typeOf a) $ FDiv NoFastMathFlags a b []
+
+frem :: Operand -> Operand -> IRBuilder Block Operand
+frem a b = emitInstr (typeOf a) (typeOf a) $ FDiv NoFastMathFlags a b []
+
 add :: Operand -> Operand -> IRBuilder Block Operand
 add a b = emitInstr (typeOf a) (typeOf a) $ Add False False a b []
 
--- Arithmetic and Constants
 mul :: Operand -> Operand -> IRBuilder Block Operand
 mul a b = emitInstr (typeOf a) (typeOf a) $ Mul False False a b []
 
--- Arithmetic and Constants
 sub :: Operand -> Operand -> IRBuilder Block Operand
-sub a b = emitInstr (typeOf a) (typeOf a) $ Mul False False a b []
+sub a b = emitInstr (typeOf a) (typeOf a) $ Sub False False a b []
 
--- | Branch
+udiv :: Operand -> Operand -> IRBuilder Block Operand
+udiv a b = emitInstr (typeOf a) (typeOf a) $ UDiv True a b []
+
+sdiv :: Operand -> Operand -> IRBuilder Block Operand
+sdiv a b = emitInstr (typeOf a) (typeOf a) $ SDiv True a b []
+
+urem :: Operand -> Operand -> IRBuilder Block Operand
+urem a b = emitInstr (typeOf a) (typeOf a) $ SDiv True a b []
+
+shl :: Operand -> Operand -> IRBuilder Block Operand
+shl a b = emitInstr (typeOf a) (typeOf a) $ Shl False False a b []
+
+lshr :: Operand -> Operand -> IRBuilder Block Operand
+lshr a b = emitInstr (typeOf a) (typeOf a) $ LShr True a b []
+
+ashr :: Operand -> Operand -> IRBuilder Block Operand
+ashr a b = emitInstr (typeOf a) (typeOf a) $ AShr True a b []
+
+and :: Operand -> Operand -> IRBuilder Block Operand
+and a b = emitInstr (typeOf a) (typeOf a) $ And a b []
+
+or :: Operand -> Operand -> IRBuilder Block Operand
+or a b = emitInstr (typeOf a) (typeOf a) $ Or a b []
+
+xor :: Operand -> Operand -> IRBuilder Block Operand
+xor a b = emitInstr (typeOf a) (typeOf a) $ Xor a b []
+
+alloca :: IRBuilder Block Operand
+alloca = undefined
+
+load :: IRBuilder Block Operand
+load = undefined
+
+store :: IRBuilder Block Operand
+store = undefined
+
+gep :: IRBuilder Block Operand
+gep = undefined
+
+trunc :: Operand -> Type -> IRBuilder Block Operand
+trunc a to = emitInstr (typeOf a) to $ Trunc a to []
+
+zext :: Operand -> Type -> IRBuilder Block Operand
+zext a to = emitInstr (typeOf a) to $ ZExt a to []
+
+sext :: Operand -> Type -> IRBuilder Block Operand
+sext a to = emitInstr (typeOf a) to $ SExt a to []
+
+fptoui :: Operand -> Type -> IRBuilder Block Operand
+fptoui a to = emitInstr (typeOf a) to $ FPToUI a to []
+
+fptosi :: Operand -> Type -> IRBuilder Block Operand
+fptosi a to = emitInstr (typeOf a) to $ FPToSI a to []
+
+uitofp :: Operand -> Type -> IRBuilder Block Operand
+uitofp a to = emitInstr (typeOf a) to $ UIToFP a to []
+
+sitofp :: Operand -> Type -> IRBuilder Block Operand
+sitofp a to = emitInstr (typeOf a) to $ SIToFP a to []
+
+ptrtoint :: Operand -> Type -> IRBuilder Block Operand
+ptrtoint a to = emitInstr (typeOf a) to $ PtrToInt a to []
+
+inttoptr :: Operand -> Type -> IRBuilder Block Operand
+inttoptr a to = emitInstr (typeOf a) to $ IntToPtr a to []
+
+bitcast :: Operand -> Type -> IRBuilder Block Operand
+bitcast a to = emitInstr (typeOf a) to $ BitCast a to []
+
+icmp :: IP.IntegerPredicate -> Operand -> Operand -> IRBuilder Block Operand
+icmp pred a b = emitInstr (typeOf a) i1 $ ICmp pred a b []
+
+fcmp :: FP.FloatingPointPredicate -> Operand -> Operand -> IRBuilder Block Operand
+fcmp pred a b = emitInstr (typeOf a) i1 $ FCmp pred a b []
+
+-- | Unconditional Branch
 br :: (Name, PartialBlock) -> IRBuilder Block ()
 br ~(val, _) = emitTerm (Br val [])
 
@@ -209,9 +306,21 @@ phi incoming@(i:is) = emitInstr AST.void ty $ Phi ty vals []
 retVoid :: IRBuilder Block ()
 retVoid = emitTerm (Ret Nothing [])
 
+call :: Name -> [(Operand, [ParameterAttribute])] -> IRBuilder Block ()
+call = undefined
+
 -- | Ret
 ret :: Operand -> IRBuilder Block ()
 ret val = emitTerm (Ret (Just val) [])
+
+switch :: IRBuilder Block ()
+switch = undefined
+
+select :: IRBuilder Block ()
+select = undefined
+
+condBr :: IRBuilder Block ()
+condBr = undefined
 
 -- | Constant
 cons :: C.Constant -> Operand
@@ -245,7 +354,7 @@ example = T.putStrLn $ ppllvm $ runIRBuilder emptyIRBuilder $ do
       br blk3
 
     blk3 <- block "b3" $ do
-      l <- phi [(c1, blk1), (c1, blk2) ]
+      l <- phi [(c1, blk1), (c1, blk2), (c1, blk3)]
       a <- fadd c1 c1
       b <- fadd a a
       retVoid
