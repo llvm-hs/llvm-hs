@@ -365,14 +365,14 @@ call fun args = do
 ret :: Operand -> IRBuilder Block ()
 ret val = emitTerm (Ret (Just val) [])
 
-switch :: IRBuilder Block ()
-switch = undefined
+switch :: Operand -> Name -> [(C.Constant, Name)] -> IRBuilder Block ()
+switch val def dests = emitTerm $ Switch val def dests []
 
-select :: IRBuilder Block ()
-select = undefined
+select :: Operand -> Operand -> Operand -> IRBuilder Block Operand
+select cond t f = emitInstr (typeOf t) $ Select cond t f []
 
-condBr :: IRBuilder Block ()
-condBr = undefined
+condBr :: Operand -> Name -> Name -> IRBuilder Block ()
+condBr cond tdest fdest = emitTerm $ CondBr cond tdest fdest []
 
 -- | Constant
 cons :: C.Constant -> Operand
@@ -420,6 +420,22 @@ example = T.putStrLn $ ppllvm $ runIRBuilder (emptyIRBuilder "exampleModule") $ 
     blk3 <- block "b3" $ do
       a <- fadd c1 c1
       b <- fadd a a
+      retVoid
+
+    pure ()
+
+  function "baz" [] double $ mdo
+
+    blk1 <- block "b1" $ do
+      switch c2 blk1 [(C.Int 32 0, blk2), (C.Int 32 1, blk3)]
+
+    blk2 <- block "b2" $ do
+      a <- fadd c1 c1
+      b <- fadd a a
+      select (cons $ C.Int 1 0) a b
+      retVoid
+
+    blk3 <- block "b3" $ do
       retVoid
 
     pure ()
