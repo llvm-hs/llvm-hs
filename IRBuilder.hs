@@ -192,7 +192,7 @@ globalRef :: Type -> Name -> C.Constant
 globalRef = C.GlobalReference
 
 -------------------------------------------------------------------------------
--- Insturctions
+-- Instructions
 -------------------------------------------------------------------------------
 
 fadd :: Operand -> Operand -> IRBuilder Block Operand
