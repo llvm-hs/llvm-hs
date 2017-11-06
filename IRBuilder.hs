@@ -201,11 +201,13 @@ function
   :: Name                  -- ^ Function name
   -> [(Type, Name)]        -- ^ Parameters (non-variadic)
   -> Type                  -- ^ Return type
-  -> IRBuilder Function () -- ^ Function generation
+  -> ([Operand] -> IRBuilder Function ()) -- ^ Function generation
   -> IRBuilder Toplevel Operand
-function label argtys retty blockm = do
+function label argtys retty body = do
   start <- gets builderBlocks
-  runLocal blockm
+  let
+    params = [LocalReference ty nm | (ty, nm) <- argtys]
+  runLocal $ body params
   blocks <- gets builderBlocks
   modify $ \s -> s { builderBlocks = start }
   let
@@ -392,7 +394,7 @@ c2 = cons $ C.Int 32 10
 example :: IO ()
 example = T.putStrLn $ ppllvm $ runIRBuilder (emptyIRBuilder "exampleModule") $ mdo
 
-  foo <- function "foo" [] double $ mdo
+  foo <- function "foo" [] double $ \_ -> mdo
 
     blk1 <- block "b1" $ do
       a <- fadd c1 c1
@@ -415,7 +417,7 @@ example = T.putStrLn $ ppllvm $ runIRBuilder (emptyIRBuilder "exampleModule") $ 
     pure ()
 
 
-  function "bar" [] double $ mdo
+  function "bar" [] double $ \_ -> mdo
 
     blk3 <- block "b3" $ do
       a <- fadd c1 c1
@@ -424,13 +426,13 @@ example = T.putStrLn $ ppllvm $ runIRBuilder (emptyIRBuilder "exampleModule") $ 
 
     pure ()
 
-  function "baz" [] double $ mdo
+  function "baz" [(double, "arg")] double $ \[arg] -> mdo
 
     blk1 <- block "b1" $ do
       switch c2 blk1 [(C.Int 32 0, blk2), (C.Int 32 1, blk3)]
 
     blk2 <- block "b2" $ do
-      a <- fadd c1 c1
+      a <- fadd arg c1
       b <- fadd a a
       select (cons $ C.Int 1 0) a b
       retVoid
