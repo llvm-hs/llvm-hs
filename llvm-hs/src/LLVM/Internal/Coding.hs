@@ -138,3 +138,9 @@ instance Monad m => EncodeM m Word64 Word64 where
 
 instance Monad m => DecodeM m Word64 Word64 where
   decodeM = return
+
+instance Monad m => EncodeM m String (IO CString) where
+  encodeM = return . newCString
+
+instance Monad m => DecodeM m (IO String) CString where
+  decodeM = return . peekCString

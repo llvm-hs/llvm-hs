@@ -29,6 +29,7 @@ data Constant
     | Array { memberType :: Type, memberValues :: [ Constant ] }
     | Vector { memberValues :: [ Constant ] }
     | Undef { constantType :: Type }
+    | Str { innerString :: String }
     | BlockAddress { blockAddressFunction :: Name, blockAddressBlock :: Name }
     | GlobalReference Type Name
     | TokenNone
@@ -212,7 +213,6 @@ data Constant
         indices' :: [Word32]
       }
     deriving (Eq, Ord, Read, Show, Typeable, Data, Generic)
-
 
 -- | Since LLVM types don't include signedness, there's ambiguity in interpreting
 -- an constant as an Integer. The LLVM assembly printer prints integers as signed, but

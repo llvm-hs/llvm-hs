@@ -94,7 +94,14 @@ tests = testGroup "Constants" [
       StructureType False (replicate 2 i32),
       C.Struct Nothing False (replicate 2 (C.Int 32 1)),
       "global { i32, i32 } { i32 1, i32 1 }"
-    ), (
+    ),
+{-( -- thinks c"string" and i8 array are not the same
+      "string",
+      ArrayType 5 i8,
+      C.Str "test",
+      [r|global [5 x i8] c"test\00"|]
+),-}
+    (
       "dataarray",
       ArrayType 3 i32,
       C.Array i32 [C.Int 32 i | i <- [1,2,1]],
@@ -137,7 +144,7 @@ tests = testGroup "Constants" [
     ), (
       "selectvalue",
       i32,
-      C.Select (C.PtrToInt (C.GlobalReference (ptr i32) (UnName 1)) i1) 
+      C.Select (C.PtrToInt (C.GlobalReference (ptr i32) (UnName 1)) i1)
          (C.Int 32 1)
          (C.Int 32 2),
       "global i32 select (i1 ptrtoint (i32* @1 to i1), i32 1, i32 2)"
@@ -161,7 +168,7 @@ tests = testGroup "Constants" [
       "extractvalue",
       i8,
       C.ExtractValue
-        (C.Select (C.PtrToInt (C.GlobalReference (p i32) (UnName 1)) i1) 
+        (C.Select (C.PtrToInt (C.GlobalReference (p i32) (UnName 1)) i1)
          (C.Array i8 [C.Int 8 0])
          (C.Array i8 [C.Int 8 1]))
         [0],
@@ -171,13 +178,13 @@ tests = testGroup "Constants" [
    ],
    let mAST = Module "<string>" "<string>" Nothing Nothing [
              GlobalDefinition $ globalVariableDefaults {
-               G.name = UnName 0, G.type' = type', G.initializer = Just value 
+               G.name = UnName 0, G.type' = type', G.initializer = Just value
              },
              GlobalDefinition $ globalVariableDefaults {
-               G.name = UnName 1, G.type' = i32, G.initializer = Nothing 
+               G.name = UnName 1, G.type' = i32, G.initializer = Nothing
              },
              GlobalDefinition $ globalVariableDefaults {
-               G.name = UnName 2, G.type' = i32, G.initializer = Nothing 
+               G.name = UnName 2, G.type' = i32, G.initializer = Nothing
              }
            ]
        mStr = "; ModuleID = '<string>'\nsource_filename = \"<string>\"\n\n@0 = " <> str <> "\n\

@@ -108,6 +108,12 @@ instance EncodeM EncodeAST A.Constant (Ptr FFI.Constant) where
       f' <- referGlobal f
       b' <- getBlockForAddress f b
       liftIO $ FFI.blockAddress (FFI.upCast f') b'
+    A.C.Str st -> do
+      st' <- encodeM st
+      Context context <- gets encodeStateContext
+      liftIO $ FFI.constStringInContext context st'
+              (fromIntegral $ ((length st) + 1)) -- + NULL byte
+              (FFI.LLVMBool $ fromIntegral (1 :: Int)) -- Haskell strings are already null terminated
     A.C.Struct nm p ms -> do
       p <- encodeM p
       ms <- encodeM ms
@@ -127,6 +133,7 @@ instance EncodeM EncodeAST A.Constant (Ptr FFI.Constant) where
         map (\p -> TH.match p (TH.normalB [|inconsistentCases "Constant" o|]) [])
             [[p|A.C.Int{}|],
              [p|A.C.Float{}|],
+             [p|A.C.Str{}|],
              [p|A.C.Struct{}|],
              [p|A.C.BlockAddress{}|],
              [p|A.C.GlobalReference{}|],
@@ -163,11 +170,11 @@ instance DecodeM DecodeAST A.Constant (Ptr FFI.Constant) where
     t <- decodeM ft
     valueSubclassId <- liftIO $ FFI.getValueSubclassId v
     nOps <- liftIO $ FFI.getNumOperands u
-    let globalRef = return A.C.GlobalReference 
+    let globalRef = return A.C.GlobalReference
                     `ap` (return t)
                     `ap` (getGlobalName =<< liftIO (FFI.isAGlobalValue v))
         op = decodeM <=< liftIO . FFI.getConstantOperand c
-        getConstantOperands = mapM op [0..nOps-1] 
+        getConstantOperands = mapM op [0..nOps-1]
         getConstantData = do
           let nElements =
                 case t of
