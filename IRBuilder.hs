@@ -354,9 +354,9 @@ c2 = cons $ C.Int 32 10
 
 
 example :: IO ()
-example = T.putStrLn $ ppllvm $ runIRBuilder emptyIRBuilder $ do
+example = T.putStrLn $ ppllvm $ runIRBuilder emptyIRBuilder $ mdo
 
-  function "foo" [] double $ mdo
+  foo <- function "foo" [] double $ mdo
 
     blk1 <- block "b1" $ do
       a <- fadd c1 c1
@@ -367,6 +367,7 @@ example = T.putStrLn $ ppllvm $ runIRBuilder emptyIRBuilder $ do
     blk2 <- block "b2" $ do
       a <- fadd c1 c1
       b <- fadd a a
+      c <- call foo []
       br blk3
 
     blk3 <- block "b3" $ do
