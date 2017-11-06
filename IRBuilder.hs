@@ -121,11 +121,10 @@ resetFresh = modify $ \s -> s { builderSupply = 0 }
 
 -- | Emit instruction
 emitInstr
-  :: Type -- ^ Type
-  -> Type -- ^ Return type
+  :: Type -- ^ Return type
   -> Instruction
   -> IRBuilder Block Operand
-emitInstr ty retty instr = do
+emitInstr retty instr = do
   (instrs, term) <- gets builderBlock
   nm <- fresh
   modify $ \s -> s { builderBlock = ((instrs ++ [nm := instr]), term) }
@@ -174,7 +173,7 @@ function label argtys retty blockm = do
   resetFresh
   addDefn def
 
-genBlock :: (Name, PartialBlock) -> BasicBlock
+genBlock :: BlockRef -> BasicBlock
 genBlock (blockLabel, (instrs, term)) =
   case term of
     Nothing   -> BasicBlock blockLabel instrs (Do (Ret Nothing []))
@@ -193,103 +192,103 @@ globalRef = C.GlobalReference
 -------------------------------------------------------------------------------
 
 fadd :: Operand -> Operand -> IRBuilder Block Operand
-fadd a b = emitInstr (typeOf a) (typeOf a) $ FAdd NoFastMathFlags a b []
+fadd a b = emitInstr (typeOf a) $ FAdd NoFastMathFlags a b []
 
 fmul :: Operand -> Operand -> IRBuilder Block Operand
-fmul a b = emitInstr (typeOf a) (typeOf a) $ FMul NoFastMathFlags a b []
+fmul a b = emitInstr (typeOf a) $ FMul NoFastMathFlags a b []
 
 fsub :: Operand -> Operand -> IRBuilder Block Operand
-fsub a b = emitInstr (typeOf a) (typeOf a) $ FSub NoFastMathFlags a b []
+fsub a b = emitInstr (typeOf a) $ FSub NoFastMathFlags a b []
 
 fdiv :: Operand -> Operand -> IRBuilder Block Operand
-fdiv a b = emitInstr (typeOf a) (typeOf a) $ FDiv NoFastMathFlags a b []
+fdiv a b = emitInstr (typeOf a) $ FDiv NoFastMathFlags a b []
 
 frem :: Operand -> Operand -> IRBuilder Block Operand
-frem a b = emitInstr (typeOf a) (typeOf a) $ FRem NoFastMathFlags a b []
+frem a b = emitInstr (typeOf a) $ FRem NoFastMathFlags a b []
 
 add :: Operand -> Operand -> IRBuilder Block Operand
-add a b = emitInstr (typeOf a) (typeOf a) $ Add False False a b []
+add a b = emitInstr (typeOf a) $ Add False False a b []
 
 mul :: Operand -> Operand -> IRBuilder Block Operand
-mul a b = emitInstr (typeOf a) (typeOf a) $ Mul False False a b []
+mul a b = emitInstr (typeOf a) $ Mul False False a b []
 
 sub :: Operand -> Operand -> IRBuilder Block Operand
-sub a b = emitInstr (typeOf a) (typeOf a) $ Sub False False a b []
+sub a b = emitInstr (typeOf a) $ Sub False False a b []
 
 udiv :: Operand -> Operand -> IRBuilder Block Operand
-udiv a b = emitInstr (typeOf a) (typeOf a) $ UDiv True a b []
+udiv a b = emitInstr (typeOf a) $ UDiv True a b []
 
 sdiv :: Operand -> Operand -> IRBuilder Block Operand
-sdiv a b = emitInstr (typeOf a) (typeOf a) $ SDiv True a b []
+sdiv a b = emitInstr (typeOf a) $ SDiv True a b []
 
 urem :: Operand -> Operand -> IRBuilder Block Operand
-urem a b = emitInstr (typeOf a) (typeOf a) $ URem a b []
+urem a b = emitInstr (typeOf a) $ URem a b []
 
 shl :: Operand -> Operand -> IRBuilder Block Operand
-shl a b = emitInstr (typeOf a) (typeOf a) $ Shl False False a b []
+shl a b = emitInstr (typeOf a) $ Shl False False a b []
 
 lshr :: Operand -> Operand -> IRBuilder Block Operand
-lshr a b = emitInstr (typeOf a) (typeOf a) $ LShr True a b []
+lshr a b = emitInstr (typeOf a) $ LShr True a b []
 
 ashr :: Operand -> Operand -> IRBuilder Block Operand
-ashr a b = emitInstr (typeOf a) (typeOf a) $ AShr True a b []
+ashr a b = emitInstr (typeOf a) $ AShr True a b []
 
 and :: Operand -> Operand -> IRBuilder Block Operand
-and a b = emitInstr (typeOf a) (typeOf a) $ And a b []
+and a b = emitInstr (typeOf a) $ And a b []
 
 or :: Operand -> Operand -> IRBuilder Block Operand
-or a b = emitInstr (typeOf a) (typeOf a) $ Or a b []
+or a b = emitInstr (typeOf a) $ Or a b []
 
 xor :: Operand -> Operand -> IRBuilder Block Operand
-xor a b = emitInstr (typeOf a) (typeOf a) $ Xor a b []
+xor a b = emitInstr (typeOf a) $ Xor a b []
 
 alloca :: Type -> Maybe Operand -> Word32 -> IRBuilder Block Operand
-alloca ty count align = emitInstr ty (ptr ty) $ Alloca ty count align []
+alloca ty count align = emitInstr (ptr ty) $ Alloca ty count align []
 
 load :: Operand -> Word32 -> IRBuilder Block Operand
-load a align = emitInstr (ptr (typeOf a)) (typeOf a) $ Load False a Nothing align []
+load a align = emitInstr (typeOf a) $ Load False a Nothing align []
 
 store :: Operand -> Word32 -> Operand -> IRBuilder Block Operand
-store addr align val = emitInstr (ptr (typeOf addr)) (typeOf addr) $ Store False addr val Nothing align []
+store addr align val = emitInstr (typeOf val) $ Store False addr val Nothing align []
 
 gep :: IRBuilder Block Operand
 gep = undefined
 
 trunc :: Operand -> Type -> IRBuilder Block Operand
-trunc a to = emitInstr (typeOf a) to $ Trunc a to []
+trunc a to = emitInstr to $ Trunc a to []
 
 zext :: Operand -> Type -> IRBuilder Block Operand
-zext a to = emitInstr (typeOf a) to $ ZExt a to []
+zext a to = emitInstr to $ ZExt a to []
 
 sext :: Operand -> Type -> IRBuilder Block Operand
-sext a to = emitInstr (typeOf a) to $ SExt a to []
+sext a to = emitInstr to $ SExt a to []
 
 fptoui :: Operand -> Type -> IRBuilder Block Operand
-fptoui a to = emitInstr (typeOf a) to $ FPToUI a to []
+fptoui a to = emitInstr to $ FPToUI a to []
 
 fptosi :: Operand -> Type -> IRBuilder Block Operand
-fptosi a to = emitInstr (typeOf a) to $ FPToSI a to []
+fptosi a to = emitInstr to $ FPToSI a to []
 
 uitofp :: Operand -> Type -> IRBuilder Block Operand
-uitofp a to = emitInstr (typeOf a) to $ UIToFP a to []
+uitofp a to = emitInstr to $ UIToFP a to []
 
 sitofp :: Operand -> Type -> IRBuilder Block Operand
-sitofp a to = emitInstr (typeOf a) to $ SIToFP a to []
+sitofp a to = emitInstr to $ SIToFP a to []
 
 ptrtoint :: Operand -> Type -> IRBuilder Block Operand
-ptrtoint a to = emitInstr (typeOf a) to $ PtrToInt a to []
+ptrtoint a to = emitInstr to $ PtrToInt a to []
 
 inttoptr :: Operand -> Type -> IRBuilder Block Operand
-inttoptr a to = emitInstr (typeOf a) to $ IntToPtr a to []
+inttoptr a to = emitInstr to $ IntToPtr a to []
 
 bitcast :: Operand -> Type -> IRBuilder Block Operand
-bitcast a to = emitInstr (typeOf a) to $ BitCast a to []
+bitcast a to = emitInstr to $ BitCast a to []
 
 icmp :: IP.IntegerPredicate -> Operand -> Operand -> IRBuilder Block Operand
-icmp pred a b = emitInstr (typeOf a) i1 $ ICmp pred a b []
+icmp pred a b = emitInstr i1 $ ICmp pred a b []
 
 fcmp :: FP.FloatingPointPredicate -> Operand -> Operand -> IRBuilder Block Operand
-fcmp pred a b = emitInstr (typeOf a) i1 $ FCmp pred a b []
+fcmp pred a b = emitInstr i1 $ FCmp pred a b []
 
 -- | Unconditional Branch
 br :: (Name, PartialBlock) -> IRBuilder Block ()
@@ -297,8 +296,8 @@ br ~(val, _) = emitTerm (Br val [])
 
 -- | Phi
 phi :: [(Operand, BlockRef)] -> IRBuilder Block Operand
-phi [] = emitInstr AST.void AST.void $ Phi AST.void [] []
-phi incoming@(i:is) = emitInstr AST.void ty $ Phi ty vals []
+phi [] = emitInstr AST.void $ Phi AST.void [] []
+phi incoming@(i:is) = emitInstr ty $ Phi ty vals []
   where
     ty = typeOf (fst i) -- result type
     vals = [(op, nm) | (op, (nm, _)) <- incoming] -- XXX: slightly ugly
