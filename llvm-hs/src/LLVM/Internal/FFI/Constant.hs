@@ -147,3 +147,6 @@ foreign import ccall unsafe "LLVM_Hs_GetBlockAddressBlock" getBlockAddressBlock 
 
 foreign import ccall unsafe "LLVM_Hs_GetConstTokenNone" getConstTokenNone ::
   Ptr Context -> IO (Ptr Constant)
+
+foreign import ccall unsafe "LLVMConstStringInContext" constStringInContext ::
+  Ptr Context -> CString -> CUInt -> LLVMBool -> IO (Ptr Constant)
