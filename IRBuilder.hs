@@ -26,7 +26,6 @@ module IRBuilder (
   retVoid,
 
   -- ** Low-level
-  genBlock,
   emitInstr,
   emitTerm,
 ) where
@@ -65,8 +64,8 @@ newtype IRBuilder s a = IRBuilder (State IRBuilderState a)
 -- | A partially constructed block as a sequence of instructions
 type PartialBlock = ([Named Instruction], Maybe (Named Terminator))
 
--- | A block reference (lazy in second parameter to allow MonadFix)
-type BlockRef = (Name, PartialBlock)
+-- | A block reference
+type BlockRef = Name
 
 -- Index types
 data Toplevel -- Module-level
@@ -78,7 +77,7 @@ data IRBuilderState = IRBuilderState
   { builderModule :: AST.Module
   , builderSupply :: Word
   , builderBlock  :: PartialBlock
-  , builderFunc   :: Maybe Definition
+  , builderBlocks :: [BasicBlock]
   }
 
 emptyIRBuilder :: IRBuilderState
@@ -86,7 +85,7 @@ emptyIRBuilder = IRBuilderState
   { builderModule = emptyModule ""
   , builderSupply = 0
   , builderBlock  = ([], Nothing)
-  , builderFunc   = Nothing
+  , builderBlocks = []
   }
 
 -- | Evaluate IRBuilder to a
@@ -152,19 +151,26 @@ block
 block nm m = do
   start <- gets builderBlock
   result <- runBlock m
-  resultState <- gets builderBlock
-  modify $ \s -> s { builderBlock = start }
-  pure (nm, resultState)
+  (instrs, term) <- gets builderBlock
+  let
+    bb = case term of
+      Nothing   -> BasicBlock nm instrs (Do (Ret Nothing []))
+      Just term -> BasicBlock nm instrs term
+  modify $ \s -> s { builderBlock = start, builderBlocks = builderBlocks s ++ [bb] }
+  pure nm
 
 -- | Emit function
 function
-  :: Name                            -- ^ Function name
-  -> [(Type, Name)]                  -- ^ Parameters (non-variadic)
-  -> Type                            -- ^ Return type
-  -> IRBuilder Function [BasicBlock] -- ^ Function generation
+  :: Name                  -- ^ Function name
+  -> [(Type, Name)]        -- ^ Parameters (non-variadic)
+  -> Type                  -- ^ Return type
+  -> IRBuilder Function () -- ^ Function generation
   -> IRBuilder Toplevel Operand
 function label argtys retty blockm = do
-  blocks <- runLocal blockm
+  start <- gets builderBlocks
+  runLocal blockm
+  blocks <- gets builderBlocks
+  modify $ \s -> s { builderBlocks = start }
   let
     def = GlobalDefinition $ functionDefaults {
       name        = label
@@ -176,12 +182,6 @@ function label argtys retty blockm = do
   resetFresh
   addDefn def
   pure $ ConstantOperand $ globalRef funty label
-
-genBlock :: BlockRef -> BasicBlock
-genBlock (blockLabel, (instrs, term)) =
-  case term of
-    Nothing   -> BasicBlock blockLabel instrs (Do (Ret Nothing []))
-    Just term -> BasicBlock blockLabel instrs term
 
 -- Local reference
 localRef ::  Type -> Name -> Operand
@@ -295,16 +295,15 @@ fcmp :: FP.FloatingPointPredicate -> Operand -> Operand -> IRBuilder Block Opera
 fcmp pred a b = emitInstr i1 $ FCmp pred a b []
 
 -- | Unconditional Branch
-br :: (Name, PartialBlock) -> IRBuilder Block ()
-br ~(val, _) = emitTerm (Br val [])
+br :: Name -> IRBuilder Block ()
+br val = emitTerm (Br val [])
 
 -- | Phi
 phi :: [(Operand, BlockRef)] -> IRBuilder Block Operand
 phi [] = emitInstr AST.void $ Phi AST.void [] []
-phi incoming@(i:is) = emitInstr ty $ Phi ty vals []
+phi incoming@(i:is) = emitInstr ty $ Phi ty incoming []
   where
     ty = typeOf (fst i) -- result type
-    vals = [(op, nm) | (op, (nm, _)) <- incoming] -- XXX: slightly ugly
 
 -- | RetVoid
 retVoid :: IRBuilder Block ()
@@ -376,7 +375,7 @@ example = T.putStrLn $ ppllvm $ runIRBuilder emptyIRBuilder $ mdo
       b <- fadd a a
       retVoid
 
-    pure [genBlock blk1, genBlock blk2, genBlock blk3]
+    pure ()
 
 
   function "bar" [] double $ mdo
@@ -386,4 +385,4 @@ example = T.putStrLn $ ppllvm $ runIRBuilder emptyIRBuilder $ mdo
       b <- fadd a a
       retVoid
 
-    pure [genBlock blk3]
+    pure ()
