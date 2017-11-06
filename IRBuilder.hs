@@ -160,7 +160,7 @@ function
   -> [(Type, Name)]                  -- ^ Parameters (non-variadic)
   -> Type                            -- ^ Return type
   -> IRBuilder Function [BasicBlock] -- ^ Function generation
-  -> IRBuilder Toplevel ()
+  -> IRBuilder Toplevel Operand
 function label argtys retty blockm = do
   blocks <- runLocal blockm
   let
@@ -170,8 +170,10 @@ function label argtys retty blockm = do
     , returnType  = retty
     , basicBlocks = blocks
     }
+    funty = FunctionType retty (fst <$> argtys) False
   resetFresh
   addDefn def
+  pure $ ConstantOperand $ globalRef funty label
 
 genBlock :: BlockRef -> BasicBlock
 genBlock (blockLabel, (instrs, term)) =
