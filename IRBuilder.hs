@@ -73,6 +73,7 @@ import Control.Monad.State.Strict
 import Data.Word
 import Data.Coerce
 import Data.Map as Map
+import Data.Monoid
 import Data.Text.Lazy.IO as T
 import Data.ByteString.Short as BS
 
@@ -98,32 +99,41 @@ newtype IRBuilder s a = IRBuilder (State IRBuilderState a)
   deriving (Functor, Applicative, Monad, MonadFix, MonadState IRBuilderState)
 
 -- | A partially constructed block as a sequence of instructions
-type PartialBlock = ([Named Instruction], Maybe (Named Terminator))
+type PartialBlock = (SnocList (Named Instruction), Maybe (Named Terminator))
 
 -- Index types
 data Toplevel -- Module-level
 data Function -- Function-level
 data Block    -- Block-level
 
+newtype SnocList a = SnocList { unSnocList :: Dual [a] }
+  deriving (Eq, Show, Monoid)
+
+snoc :: SnocList a -> a -> SnocList a
+snoc (SnocList (Dual xs)) x = SnocList $ Dual $ x : xs
+
+getSnocList :: SnocList a -> [a]
+getSnocList = reverse . getDual . unSnocList
+
 -- | Builder monad state
 data IRBuilderState = IRBuilderState
-  { builderModule :: AST.Module
+  { builderDefs  :: SnocList AST.Definition
   , builderSupply :: Word
   , builderBlock  :: PartialBlock
-  , builderBlocks :: [BasicBlock]
+  , builderBlocks :: SnocList BasicBlock
   }
 
-emptyIRBuilder :: ShortByteString -> IRBuilderState
-emptyIRBuilder modName = IRBuilderState
-  { builderModule = emptyModule modName
+emptyIRBuilder :: IRBuilderState
+emptyIRBuilder = IRBuilderState
+  { builderDefs = mempty
   , builderSupply = 0
-  , builderBlock  = ([], Nothing)
-  , builderBlocks = []
+  , builderBlock  = (mempty, Nothing)
+  , builderBlocks = mempty
   }
 
 -- | Evaluate IRBuilder to a
-runIRBuilder :: IRBuilderState -> IRBuilder s a -> AST.Module
-runIRBuilder mod (IRBuilder m) = builderModule (execState m mod)
+runIRBuilder :: IRBuilderState -> IRBuilder s a -> [AST.Definition]
+runIRBuilder mod (IRBuilder m) = getSnocList $ builderDefs (execState m mod)
 
 emptyModule :: ShortByteString -> AST.Module
 emptyModule label = defaultModule { moduleName = label }
@@ -159,14 +169,14 @@ emitInstr
 emitInstr retty instr = do
   (instrs, term) <- gets builderBlock
   nm <- fresh
-  modify $ \s -> s { builderBlock = ((instrs ++ [nm := instr]), term) }
+  modify $ \s -> s { builderBlock = (instrs `snoc` (nm := instr), term) }
   pure (localRef retty nm)
 
 -- | Add definition to current module.
 emitDefn :: Definition -> IRBuilder g ()
 emitDefn d = do
-  defs <- gets (moduleDefinitions . builderModule)
-  modify $ \s -> s { builderModule = (builderModule s) { moduleDefinitions = defs ++ [d] } }
+  defs <- gets builderDefs
+  modify $ \s -> s { builderDefs = defs `snoc` d }
 
 -- | Emit terminator
 emitTerm :: Terminator -> IRBuilder Block ()
@@ -190,10 +200,11 @@ block nm m = do
   result <- runBlock m
   (instrs, term) <- gets builderBlock
   let
+    instrs' = getSnocList instrs
     bb = case term of
-      Nothing   -> BasicBlock nm instrs (Do (Ret Nothing []))
-      Just term -> BasicBlock nm instrs term
-  modify $ \s -> s { builderBlock = start, builderBlocks = builderBlocks s ++ [bb] }
+      Nothing   -> BasicBlock nm instrs' (Do (Ret Nothing []))
+      Just term -> BasicBlock nm instrs' term
+  modify $ \s -> s { builderBlock = start, builderBlocks = builderBlocks s `snoc` bb }
   pure nm
 
 -- | Emit function
@@ -205,7 +216,7 @@ function
   -> IRBuilder Toplevel Operand
 function label argtys retty body = do
   start <- gets builderBlocks
-  modify $ \s -> s { builderBlocks = [] }
+  modify $ \s -> s { builderBlocks = mempty }
   let
     params = [LocalReference ty nm | (ty, nm) <- argtys]
   runLocal $ body params
@@ -216,7 +227,7 @@ function label argtys retty body = do
       name        = label
     , parameters  = ([Parameter ty nm [] | (ty, nm) <- argtys], False)
     , returnType  = retty
-    , basicBlocks = blocks
+    , basicBlocks = getSnocList blocks
     }
     funty = FunctionType retty (fst <$> argtys) False
   resetFresh
@@ -393,7 +404,7 @@ c2 = cons $ C.Int 32 10
 
 
 example :: IO ()
-example = T.putStrLn $ ppllvm $ runIRBuilder (emptyIRBuilder "exampleModule") $ mdo
+example = T.putStrLn $ ppllvm $ mkModule $ runIRBuilder emptyIRBuilder $ mdo
 
   foo <- function "foo" [] double $ \_ -> mdo
 
@@ -442,3 +453,5 @@ example = T.putStrLn $ ppllvm $ runIRBuilder (emptyIRBuilder "exampleModule") $ 
       retVoid
 
     pure ()
+  where
+    mkModule ds = (emptyModule "exampleModule") { moduleDefinitions = ds }
