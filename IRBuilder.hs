@@ -18,17 +18,54 @@ module IRBuilder (
   -- ** Instructions
   fadd,
   fmul,
+  fsub,
+  fdiv,
+  frem,
   add,
   mul,
   sub,
+  udiv,
+  sdiv,
+  urem,
+  shl,
+  lshr,
+  ashr,
+  and,
+  or,
+  xor,
+  alloca,
+  load,
+  store,
+  gep,
+  trunc,
+  zext,
+  sext,
+  fptoui,
+  fptosi,
+  uitofp,
+  sitofp,
+  ptrtoint,
+  inttoptr,
+  bitcast,
+  icmp,
+  fcmp,
+  br,
+  call,
+  switch,
+  select,
+  condBr,
+  cons,
   phi,
   ret,
   retVoid,
 
   -- ** Low-level
+  addDefn,
   emitInstr,
   emitTerm,
 ) where
+
+import Prelude hiding (and, or)
 
 import Control.Applicative
 import Control.Monad.Reader
@@ -80,9 +117,9 @@ data IRBuilderState = IRBuilderState
   , builderBlocks :: [BasicBlock]
   }
 
-emptyIRBuilder :: IRBuilderState
-emptyIRBuilder = IRBuilderState
-  { builderModule = emptyModule ""
+emptyIRBuilder :: ShortByteString -> IRBuilderState
+emptyIRBuilder modName = IRBuilderState
+  { builderModule = emptyModule modName
   , builderSupply = 0
   , builderBlock  = ([], Nothing)
   , builderBlocks = []
@@ -353,7 +390,7 @@ c2 = cons $ C.Int 32 10
 
 
 example :: IO ()
-example = T.putStrLn $ ppllvm $ runIRBuilder emptyIRBuilder $ mdo
+example = T.putStrLn $ ppllvm $ runIRBuilder (emptyIRBuilder "exampleModule") $ mdo
 
   foo <- function "foo" [] double $ mdo
 
