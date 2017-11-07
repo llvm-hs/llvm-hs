@@ -11,9 +11,8 @@ module IRBuilder (
   emptyIRBuilder,
 
   -- ** Module
-  BlockRef,
-  function,
   block,
+  function,
 
   -- ** Instructions
   fadd,
@@ -60,7 +59,7 @@ module IRBuilder (
   retVoid,
 
   -- ** Low-level
-  addDefn,
+  emitDefn,
   emitInstr,
   emitTerm,
 ) where
@@ -101,9 +100,6 @@ newtype IRBuilder s a = IRBuilder (State IRBuilderState a)
 -- | A partially constructed block as a sequence of instructions
 type PartialBlock = ([Named Instruction], Maybe (Named Terminator))
 
--- | A block reference
-type BlockRef = Name
-
 -- Index types
 data Toplevel -- Module-level
 data Function -- Function-level
@@ -140,12 +136,6 @@ runLocal = coerce
 runBlock :: IRBuilder Block a -> IRBuilder Function a
 runBlock = coerce
 
--- | Add definition to current module.
-addDefn :: Definition -> IRBuilder g ()
-addDefn d = do
-  defs <- gets (moduleDefinitions . builderModule)
-  modify $ \s -> s { builderModule = (builderModule s) { moduleDefinitions = defs ++ [d] } }
-
 -- | Generate fresh name
 fresh :: IRBuilder Block Name
 fresh = do
@@ -157,6 +147,10 @@ fresh = do
 resetFresh :: IRBuilder Toplevel ()
 resetFresh = modify $ \s -> s { builderSupply = 0 }
 
+-------------------------------------------------------------------------------
+-- State Manipulation
+-------------------------------------------------------------------------------
+
 -- | Emit instruction
 emitInstr
   :: Type -- ^ Return type
@@ -167,6 +161,12 @@ emitInstr retty instr = do
   nm <- fresh
   modify $ \s -> s { builderBlock = ((instrs ++ [nm := instr]), term) }
   pure (localRef retty nm)
+
+-- | Add definition to current module.
+emitDefn :: Definition -> IRBuilder g ()
+emitDefn d = do
+  defs <- gets (moduleDefinitions . builderModule)
+  modify $ \s -> s { builderModule = (builderModule s) { moduleDefinitions = defs ++ [d] } }
 
 -- | Emit terminator
 emitTerm :: Terminator -> IRBuilder Block ()
@@ -184,7 +184,7 @@ emitTerm term = do
 block
   :: Name                         -- ^ Block name
   -> IRBuilder Block r            -- ^ Basic block generation
-  -> IRBuilder Function BlockRef
+  -> IRBuilder Function Name
 block nm m = do
   start <- gets builderBlock
   result <- runBlock m
@@ -217,7 +217,7 @@ function label argtys retty blockm = do
     }
     funty = FunctionType retty (fst <$> argtys) False
   resetFresh
-  addDefn def
+  emitDefn def
   pure $ ConstantOperand $ globalRef funty label
 
 -- Local reference
@@ -336,7 +336,7 @@ br :: Name -> IRBuilder Block ()
 br val = emitTerm (Br val [])
 
 -- | Phi
-phi :: [(Operand, BlockRef)] -> IRBuilder Block Operand
+phi :: [(Operand, Name)] -> IRBuilder Block Operand
 phi [] = emitInstr AST.void $ Phi AST.void [] []
 phi incoming@(i:is) = emitInstr ty $ Phi ty incoming []
   where
