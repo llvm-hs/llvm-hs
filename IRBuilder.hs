@@ -205,6 +205,7 @@ function
   -> IRBuilder Toplevel Operand
 function label argtys retty body = do
   start <- gets builderBlocks
+  modify $ \s -> s { builderBlocks = [] }
   let
     params = [LocalReference ty nm | (ty, nm) <- argtys]
   runLocal $ body params
