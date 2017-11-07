@@ -43,12 +43,14 @@ import Data.ByteString.Short as BS
 
 import LLVM.Typed
 import LLVM.Pretty
-import LLVM.AST as AST hiding (function)
+import LLVM.AST hiding (function)
 import LLVM.AST.Type as AST
 import LLVM.AST.Name
 import LLVM.AST.Global
 import LLVM.AST.ParameterAttribute
+import qualified LLVM.AST as AST
 import qualified LLVM.AST.Float as F
+import qualified LLVM.AST.CallingConvention as CC
 import qualified LLVM.AST.Constant as C
 import qualified LLVM.AST.IntegerPredicate as IP
 import qualified LLVM.AST.FloatingPointPredicate as FP
@@ -160,7 +162,7 @@ function
   -> [(Type, Name)]                  -- ^ Parameters (non-variadic)
   -> Type                            -- ^ Return type
   -> IRBuilder Function [BasicBlock] -- ^ Function generation
-  -> IRBuilder Toplevel ()
+  -> IRBuilder Toplevel Operand
 function label argtys retty blockm = do
   blocks <- runLocal blockm
   let
@@ -170,8 +172,10 @@ function label argtys retty blockm = do
     , returnType  = retty
     , basicBlocks = blocks
     }
+    funty = FunctionType retty (fst <$> argtys) False
   resetFresh
   addDefn def
+  pure $ ConstantOperand $ globalRef funty label
 
 genBlock :: BlockRef -> BasicBlock
 genBlock (blockLabel, (instrs, term)) =
@@ -188,7 +192,7 @@ globalRef :: Type -> Name -> C.Constant
 globalRef = C.GlobalReference
 
 -------------------------------------------------------------------------------
--- Insturctions
+-- Instructions
 -------------------------------------------------------------------------------
 
 fadd :: Operand -> Operand -> IRBuilder Block Operand
@@ -306,8 +310,20 @@ phi incoming@(i:is) = emitInstr ty $ Phi ty vals []
 retVoid :: IRBuilder Block ()
 retVoid = emitTerm (Ret Nothing [])
 
-call :: Name -> [(Operand, [ParameterAttribute])] -> IRBuilder Block ()
-call = undefined
+call :: Operand -> [(Operand, [ParameterAttribute])] -> IRBuilder Block Operand
+call fun args = do
+  let retty = case typeOf fun of
+        FunctionType r _ _ -> r
+        _ -> VoidType -- XXX: or error?
+  emitInstr retty Call {
+    AST.tailCallKind = Nothing
+  , AST.callingConvention = CC.C
+  , AST.returnAttributes = []
+  , AST.function = Right fun
+  , AST.arguments = args
+  , AST.functionAttributes = []
+  , AST.metadata = []
+  }
 
 -- | Ret
 ret :: Operand -> IRBuilder Block ()
@@ -338,9 +354,9 @@ c2 = cons $ C.Int 32 10
 
 
 example :: IO ()
-example = T.putStrLn $ ppllvm $ runIRBuilder emptyIRBuilder $ do
+example = T.putStrLn $ ppllvm $ runIRBuilder emptyIRBuilder $ mdo
 
-  function "foo" [] double $ mdo
+  foo <- function "foo" [] double $ mdo
 
     blk1 <- block "b1" $ do
       a <- fadd c1 c1
@@ -351,6 +367,7 @@ example = T.putStrLn $ ppllvm $ runIRBuilder emptyIRBuilder $ do
     blk2 <- block "b2" $ do
       a <- fadd c1 c1
       b <- fadd a a
+      c <- call foo []
       br blk3
 
     blk3 <- block "b3" $ do
