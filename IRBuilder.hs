@@ -306,8 +306,19 @@ load a align = emitInstr (typeOf a) $ Load False a Nothing align []
 store :: Operand -> Word32 -> Operand -> IRBuilder Block Operand
 store addr align val = emitInstr (typeOf val) $ Store False addr val Nothing align []
 
-gep :: IRBuilder Block Operand
-gep = undefined
+gep :: Operand -> [Operand] -> IRBuilder Block Operand
+gep addr is = emitInstr (gepType (typeOf addr) is) (GetElementPtr False addr is [])
+
+-- TODO: Perhaps use the function from llvm-hs-pretty (https://github.com/llvm-hs/llvm-hs-pretty/blob/master/src/LLVM/Typed.hs)
+gepType :: Type -> [Operand] -> Type
+gepType ty [] = ptr ty
+gepType (PointerType ty _) (_:is) = gepType ty is
+gepType (StructureType _ elTys) (ConstantOperand (C.Int 32 val):is) =
+  gepType (elTys !! fromIntegral val) is
+gepType (StructureType _ _) (i:_) = error $ "gep: Indices into structures should be 32-bit constants. " ++ show i
+gepType (VectorType _ elTy) (_:is) = gepType elTy is
+gepType (ArrayType _ elTy) (_:is) = gepType elTy is
+gepType t (_:_) = error $ "gep: Can't index into a " ++ show t
 
 trunc :: Operand -> Type -> IRBuilder Block Operand
 trunc a to = emitInstr to $ Trunc a to []
@@ -450,6 +461,9 @@ example = T.putStrLn $ ppllvm $ mkModule $ runIRBuilder emptyIRBuilder $ mdo
       retVoid
 
     blk3 <- block "b3" $ do
+      let nul = cons $ C.Null $ ptr $ ptr $ ptr $ IntegerType 32
+      addr <- gep nul [cons $ C.Int 32 10, cons $ C.Int 32 20, cons $ C.Int 32 30]
+      addr <- gep addr [cons $ C.Int 32 40]
       retVoid
 
     pure ()
