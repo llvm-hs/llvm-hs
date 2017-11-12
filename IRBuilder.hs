@@ -10,9 +10,8 @@ module IRBuilder (
   runIRBuilder,
   emptyIRBuilder,
 
-  -- ** Module
+  -- ** Function
   block,
-  function,
 
   -- ** Instructions
   fadd,
@@ -59,7 +58,6 @@ module IRBuilder (
   retVoid,
 
   -- ** Low-level
-  emitDefn,
   emitInstr,
   emitTerm,
 ) where
@@ -91,22 +89,6 @@ import qualified LLVM.AST.Constant as C
 import qualified LLVM.AST.IntegerPredicate as IP
 import qualified LLVM.AST.FloatingPointPredicate as FP
 
--- | This provides a uniform API for creating instructions and inserting them
--- into a basic block: either at the end of a BasicBlock, or at a specific
--- location in a block.
-newtype IRBuilder a = IRBuilder (State IRBuilderState a)
-  deriving (Functor, Applicative, Monad, MonadFix, MonadState IRBuilderState)
-
--- | A partially constructed block as a sequence of instructions
-data PartialBlock = PartialBlock
-  { partialName :: Name
-  , partialInstrs :: SnocList (Named Instruction)
-  , partialTerm :: Maybe (Named Terminator)
-  }
-
-emptyPartialBlock :: Name -> PartialBlock
-emptyPartialBlock nm = PartialBlock nm mempty Nothing
-
 newtype SnocList a = SnocList { unSnocList :: Dual [a] }
   deriving (Eq, Show, Monoid)
 
@@ -116,28 +98,48 @@ snoc (SnocList (Dual xs)) x = SnocList $ Dual $ x : xs
 getSnocList :: SnocList a -> [a]
 getSnocList = reverse . getDual . unSnocList
 
+-- | This provides a uniform API for creating instructions and inserting them
+-- into a basic block: either at the end of a BasicBlock, or at a specific
+-- location in a block.
+newtype IRBuilder a = IRBuilder { unIRBuilder :: State IRBuilderState a }
+  deriving (Functor, Applicative, Monad, MonadFix, MonadState IRBuilderState)
+
+-- | A partially constructed block as a sequence of instructions
+data PartialBlock = PartialBlock
+  { partialBlockName :: !Name
+  , partialBlockInstrs :: SnocList (Named Instruction)
+  , partialBlockTerm :: Maybe (Named Terminator)
+  }
+
+emptyPartialBlock :: Name -> PartialBlock
+emptyPartialBlock nm = PartialBlock nm mempty Nothing
+
 -- | Builder monad state
 data IRBuilderState = IRBuilderState
-  { builderDefs  :: SnocList AST.Definition
-  , builderSupply :: Word
-  , builderBlock  :: PartialBlock
+  { builderSupply :: Word
   , builderBlocks :: SnocList BasicBlock
+  , builderBlock :: !PartialBlock
   }
 
 emptyIRBuilder :: IRBuilderState
 emptyIRBuilder = IRBuilderState
-  { builderDefs = mempty
-  , builderSupply = 0
-  , builderBlock  = emptyPartialBlock "entry"
+  { builderSupply = 0
   , builderBlocks = mempty
+  , builderBlock = emptyPartialBlock "entry"
   }
 
 -- | Evaluate IRBuilder to a list of definitions
-runIRBuilder :: IRBuilderState -> IRBuilder a -> [AST.Definition]
-runIRBuilder mod (IRBuilder m) = getSnocList $ builderDefs (execState m mod)
+runIRBuilder :: IRBuilderState -> IRBuilder a -> [BasicBlock]
+runIRBuilder mod m = getSnocList $ builderBlocks $ execState (unIRBuilder $ m >> block "entry") mod
 
-emptyModule :: ShortByteString -> AST.Module
-emptyModule label = defaultModule { moduleName = label }
+-------------------------------------------------------------------------------
+-- State Manipulation
+-------------------------------------------------------------------------------
+
+modifyBlock
+  :: (PartialBlock -> PartialBlock)
+  -> IRBuilder ()
+modifyBlock f = modify $ \s -> s { builderBlock = f $ builderBlock s }
 
 -- | Generate fresh name
 fresh :: IRBuilder Name
@@ -145,10 +147,6 @@ fresh = do
   n <- gets builderSupply
   modify $ \s -> s { builderSupply = 1 + n }
   pure (UnName n)
-
--------------------------------------------------------------------------------
--- State Manipulation
--------------------------------------------------------------------------------
 
 -- | Emit instruction
 emitInstr
@@ -158,90 +156,41 @@ emitInstr
 emitInstr retty instr = do
   bb <- gets builderBlock
   nm <- fresh
-  modify $ \s -> s
-    { builderBlock = bb
-      { partialInstrs = partialInstrs bb `snoc` (nm := instr)
-      }
+  modifyBlock $ \bb -> bb
+    { partialBlockInstrs = partialBlockInstrs bb `snoc` (nm := instr)
     }
   pure (localRef retty nm)
 
--- | Add definition to current IRBuilder.
-emitDefn :: Definition -> IRBuilder ()
-emitDefn d = do
-  defs <- gets builderDefs
-  modify $ \s -> s { builderDefs = defs `snoc` d }
-
 -- | Emit terminator
 emitTerm :: Terminator -> IRBuilder ()
-emitTerm term = do
-  bb <- gets builderBlock
-  modify $ \s -> s
-    { builderBlock = bb
-      { partialTerm = Just (Do term)
-      }
-    }
-  pure ()
+emitTerm term = modifyBlock $ \bb -> bb
+  { partialBlockTerm = Just (Do term)
+  }
 
 
 -------------------------------------------------------------------------------
 -- Toplevel
 -------------------------------------------------------------------------------
 
--- | Emit block
+-- | Starts a new block and ends the previous one
 block
   :: Name                         -- ^ Block name
   -> IRBuilder Name
 block nm = do
   bb <- gets builderBlock
   modify $ \s -> s { builderBlock = emptyPartialBlock nm }
-  let instrs' = getSnocList $ partialInstrs bb
-  case (instrs', partialTerm bb) of
+  let instrs' = getSnocList $ partialBlockInstrs bb
+  case (instrs', partialBlockTerm bb) of
     ([], Nothing) -> return ()
     _ -> do
       let
-        newBb = case partialTerm bb of
-          Nothing   -> BasicBlock (partialName bb) instrs' (Do (Ret Nothing []))
-          Just term -> BasicBlock (partialName bb) instrs' term
+        newBb = case partialBlockTerm bb of
+          Nothing   -> BasicBlock (partialBlockName bb) instrs' (Do (Ret Nothing []))
+          Just term -> BasicBlock (partialBlockName bb) instrs' term
       modify $ \s -> s
         { builderBlocks = builderBlocks s `snoc` newBb
         }
   pure nm
-
--- | Emit function
-function
-  :: Name                  -- ^ Function name
-  -> [(Type, Name)]        -- ^ Parameters (non-variadic)
-  -> Type                  -- ^ Return type
-  -> ([Operand] -> IRBuilder ()) -- ^ Function generation
-  -> IRBuilder Operand
-function label argtys retty body = do
-  startBlock <- gets builderBlock
-  startBlocks <- gets builderBlocks
-  startSupply <- gets builderSupply
-  modify $ \s -> s
-    { builderBlock = emptyPartialBlock "entry"
-    , builderBlocks = mempty
-    , builderSupply = 0
-    }
-  let
-    params = [LocalReference ty nm | (ty, nm) <- argtys]
-  body params
-  blocks <- gets builderBlocks
-  modify $ \s -> s
-    { builderBlock = startBlock
-    , builderBlocks = startBlocks
-    , builderSupply = startSupply
-    }
-  let
-    def = GlobalDefinition $ functionDefaults {
-      name        = label
-    , parameters  = ([Parameter ty nm [] | (ty, nm) <- argtys], False)
-    , returnType  = retty
-    , basicBlocks = getSnocList blocks
-    }
-    funty = FunctionType retty (fst <$> argtys) False
-  emitDefn def
-  pure $ ConstantOperand $ globalRef funty label
 
 -- Local reference
 localRef ::  Type -> Name -> Operand
@@ -422,11 +371,10 @@ c1 = cons $ C.Float (F.Double 10)
 c2 :: Operand
 c2 = cons $ C.Int 32 10
 
-
 example :: IO ()
-example = T.putStrLn $ ppllvm $ mkModule $ runIRBuilder emptyIRBuilder $ mdo
+example = T.putStrLn $ ppll $ mkFunction $ runIRBuilder emptyIRBuilder $ mdo
 
-  foo <- function "foo" [] double $ \_ -> mdo
+    xxx <- fadd c1 c1
 
     blk1 <- block "b1"; do
       a <- fadd c1 c1
@@ -437,7 +385,6 @@ example = T.putStrLn $ ppllvm $ mkModule $ runIRBuilder emptyIRBuilder $ mdo
     blk2 <- block "b2"; do
       a <- fadd c1 c1
       b <- fadd a a
-      c <- call foo []
       br blk3
 
     blk3 <- block "b3"; do
@@ -447,36 +394,69 @@ example = T.putStrLn $ ppllvm $ mkModule $ runIRBuilder emptyIRBuilder $ mdo
       retVoid
 
     pure ()
-
-
-  function "bar" [] double $ \_ -> mdo
-
-    blk3 <- block "b3"; do
-      a <- fadd c1 c1
-      b <- fadd a a
-      retVoid
-
-    pure ()
-
-  function "baz" [(double, "arg")] double $ \[arg] -> mdo
-
-    switch c2 blk1 [(C.Int 32 0, blk2), (C.Int 32 1, blk3)]
-
-    blk1 <- block "b1"; do
-      br blk2
-
-    blk2 <- block "b2"; do
-      a <- fadd arg c1
-      b <- fadd a a
-      select (cons $ C.Int 1 0) a b
-      retVoid
-
-    blk3 <- block "b3"; do
-      let nul = cons $ C.Null $ ptr $ ptr $ ptr $ IntegerType 32
-      addr <- gep nul [cons $ C.Int 32 10, cons $ C.Int 32 20, cons $ C.Int 32 30]
-      addr <- gep addr [cons $ C.Int 32 40]
-      retVoid
-
-    pure ()
   where
-    mkModule ds = (emptyModule "exampleModule") { moduleDefinitions = ds }
+    mkFunction bs = GlobalDefinition functionDefaults
+      { name = "example"
+      , parameters = ([], False)
+      , returnType = double
+      , basicBlocks = bs
+      }
+
+
+-- example :: IO ()
+-- example = T.putStrLn $ ppllvm $ mkModule $ runIRBuilder emptyIRBuilder $ mdo
+
+--   foo <- function "foo" [] double $ \_ -> mdo
+
+--     blk1 <- block "b1" $ do
+--       a <- fadd c1 c1
+--       b <- fadd a a
+--       c <- add c2 c2
+--       br blk2
+
+--     blk2 <- block "b2" $ do
+--       a <- fadd c1 c1
+--       b <- fadd a a
+--       c <- call foo []
+--       br blk3
+
+--     blk3 <- block "b3" $ do
+--       l <- phi [(c1, blk1), (c1, blk2), (c1, blk3)]
+--       a <- fadd c1 c1
+--       b <- fadd a a
+--       retVoid
+
+--     pure ()
+
+
+--   function "bar" [] double $ \_ -> mdo
+
+--     blk3 <- block "b3"; do
+--       a <- fadd c1 c1
+--       b <- fadd a a
+--       retVoid
+
+--     pure ()
+
+--   function "baz" [(double, "arg")] double $ \[arg] -> mdo
+
+--     switch c2 blk1 [(C.Int 32 0, blk2), (C.Int 32 1, blk3)]
+
+--     blk1 <- block "b1"; do
+--       br blk2
+
+--     blk2 <- block "b2"; do
+--       a <- fadd arg c1
+--       b <- fadd a a
+--       select (cons $ C.Int 1 0) a b
+--       retVoid
+
+--     blk3 <- block "b3"; do
+--       let nul = cons $ C.Null $ ptr $ ptr $ ptr $ IntegerType 32
+--       addr <- gep nul [cons $ C.Int 32 10, cons $ C.Int 32 20, cons $ C.Int 32 30]
+--       addr <- gep addr [cons $ C.Int 32 40]
+--       retVoid
+
+--     pure ()
+--   where
+--     mkModule ds = defaultModule { moduleName = "exampleModule", moduleDefinitions = ds }
