@@ -123,14 +123,14 @@ data IRBuilderState = IRBuilderState
 
 emptyIRBuilder :: IRBuilderState
 emptyIRBuilder = IRBuilderState
-  { builderSupply = 0
+  { builderSupply = 1
   , builderBlocks = mempty
-  , builderBlock = emptyPartialBlock "entry"
+  , builderBlock = emptyPartialBlock $ UnName 0
   }
 
 -- | Evaluate IRBuilder to a list of definitions
 runIRBuilder :: IRBuilderState -> IRBuilder a -> [BasicBlock]
-runIRBuilder mod m = getSnocList $ builderBlocks $ execState (unIRBuilder $ m >> block "entry") mod
+runIRBuilder mod m = getSnocList $ builderBlocks $ execState (unIRBuilder $ m >> block) mod
 
 -------------------------------------------------------------------------------
 -- State Manipulation
@@ -174,9 +174,9 @@ emitTerm term = modifyBlock $ \bb -> bb
 
 -- | Starts a new block and ends the previous one
 block
-  :: Name                         -- ^ Block name
-  -> IRBuilder Name
-block nm = do
+  :: IRBuilder Name
+block = do
+  nm <- fresh
   bb <- gets builderBlock
   modify $ \s -> s { builderBlock = emptyPartialBlock nm }
   let instrs' = getSnocList $ partialBlockInstrs bb
@@ -376,18 +376,18 @@ example = T.putStrLn $ ppll $ mkFunction $ runIRBuilder emptyIRBuilder $ mdo
 
     xxx <- fadd c1 c1
 
-    blk1 <- block "b1"; do
+    blk1 <- block; do
       a <- fadd c1 c1
       b <- fadd a a
       c <- add c2 c2
       br blk2
 
-    blk2 <- block "b2"; do
+    blk2 <- block; do
       a <- fadd c1 c1
       b <- fadd a a
       br blk3
 
-    blk3 <- block "b3"; do
+    blk3 <- block; do
       l <- phi [(c1, blk1), (c1, blk2), (c1, blk3)]
       a <- fadd c1 c1
       b <- fadd a a
