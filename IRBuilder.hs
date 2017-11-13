@@ -64,13 +64,11 @@ module IRBuilder (
 
 import Prelude hiding (and, or)
 
-import Control.Applicative
 import Control.Monad.Identity
 import Control.Monad.Reader
 import Control.Monad.State.Strict
 
 import Data.Word
-import Data.Coerce
 import Data.Monoid
 import Data.String
 import Data.Text.Lazy.IO as T
@@ -82,7 +80,6 @@ import LLVM.Typed
 import LLVM.Pretty
 import LLVM.AST hiding (function)
 import LLVM.AST.Type as AST
-import LLVM.AST.Name
 import LLVM.AST.Global
 import LLVM.AST.ParameterAttribute
 import qualified LLVM.AST as AST
