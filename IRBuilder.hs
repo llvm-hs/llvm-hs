@@ -395,6 +395,61 @@ condBr :: MonadIRBuilder m => Operand -> Name -> Name -> m ()
 condBr cond tdest fdest = emitTerm $ CondBr cond tdest fdest []
 
 -------------------------------------------------------------------------------
+-- Module builder
+-------------------------------------------------------------------------------
+
+newtype ModuleBuilderT m a = ModuleBuilderT { unModuleBuilderT :: StateT ModuleBuilderState m a }
+  deriving (Functor, Applicative, Monad, MonadFix, MonadTrans, MonadState ModuleBuilderState)
+
+data ModuleBuilderState = ModuleBuilderState
+  { builderDefs :: SnocList Definition
+  }
+
+emptyModuleBuilder :: ModuleBuilderState
+emptyModuleBuilder = ModuleBuilderState
+  { builderDefs = mempty
+  }
+
+type ModuleBuilder = ModuleBuilderT Identity
+type MonadModuleBuilder = MonadState ModuleBuilderState
+
+-- | Evaluate 'ModuleBuilder' to a list of definitions
+runModuleBuilder :: ModuleBuilderState -> ModuleBuilder a -> [Definition]
+runModuleBuilder s (ModuleBuilderT m) = getSnocList $ builderDefs $ execState m s
+
+-- | Evaluate 'ModuleBuilderT' to a list of definitions
+runModuleBuilderT :: Monad m => ModuleBuilderState -> ModuleBuilderT m a -> m [Definition]
+runModuleBuilderT s (ModuleBuilderT m) = getSnocList . builderDefs <$> execStateT m s
+
+emitDefn :: MonadModuleBuilder m => Definition -> m ()
+emitDefn def = modify $ \s -> s { builderDefs = builderDefs s `snoc` def }
+
+function
+  :: MonadModuleBuilder m
+  => Name  -- ^ Function name
+  -> [(Type, Name)]  -- ^ Parameters (non-variadic)
+  -> Type  -- ^ Return type
+  -> ([Operand] -> IRBuilderT m ())  -- ^ Function body builder
+  -> m Operand
+function label argtys retty body = do
+  let
+    params = [LocalReference ty nm | (ty, nm) <- argtys]
+    irBuilder = emptyIRBuilder
+      { builderUsedNames = HS.fromList [n | (_, Name n) <- argtys]
+      }
+  blocks <- runIRBuilderT irBuilder $ body params
+  let
+    def = GlobalDefinition functionDefaults
+      { name        = label
+      , parameters  = ([Parameter ty nm [] | (ty, nm) <- argtys], False)
+      , returnType  = retty
+      , basicBlocks = blocks
+      }
+    funty = FunctionType retty (fst <$> argtys) False
+  emitDefn def
+  pure $ ConstantOperand $ C.GlobalReference funty label
+
+-------------------------------------------------------------------------------
 -- Testing
 -------------------------------------------------------------------------------
 
@@ -405,8 +460,9 @@ c2 :: Operand
 c2 = ConstantOperand $ C.Int 32 10
 
 example :: IO ()
-example = T.putStrLn $ ppll $ mkFunction $ runIRBuilder emptyIRBuilder $ mdo
+example = T.putStrLn $ ppllvm $ mkModule $ runModuleBuilder emptyModuleBuilder $ mdo
 
+  foo <- function "foo" [] double $ \_ -> mdo
     xxx <- fadd c1 c1 `named` "xxx"
 
     blk1 <- block `named` "blk"; do
@@ -427,70 +483,37 @@ example = T.putStrLn $ ppll $ mkFunction $ runIRBuilder emptyIRBuilder $ mdo
       retVoid
 
     pure ()
+
+
+  function "bar" [] double $ \_ -> mdo
+
+    blk3 <- block; do
+      a <- fadd c1 c1
+      b <- fadd a a
+      retVoid
+
+    pure ()
+
+  function "baz" [(double, "arg")] double $ \[arg] -> mdo
+
+    switch c2 blk1 [(C.Int 32 0, blk2), (C.Int 32 1, blk3)]
+
+    blk1 <- block; do
+      br blk2
+
+    blk2 <- block; do
+      a <- fadd arg c1 `named` "arg"
+      b <- fadd a a
+      select (cons $ C.Int 1 0) a b
+      retVoid
+
+    blk3 <- block; do
+      let nul = cons $ C.Null $ ptr $ ptr $ ptr $ IntegerType 32
+      addr <- gep nul [cons $ C.Int 32 10, cons $ C.Int 32 20, cons $ C.Int 32 30]
+      addr' <- gep addr [cons $ C.Int 32 40]
+      retVoid
+
+    pure ()
   where
-    mkFunction bs = GlobalDefinition functionDefaults
-      { name = "example"
-      , parameters = ([], False)
-      , returnType = double
-      , basicBlocks = bs
-      }
-
-
--- example :: IO ()
--- example = T.putStrLn $ ppllvm $ mkModule $ runIRBuilder emptyIRBuilder $ mdo
-
---   foo <- function "foo" [] double $ \_ -> mdo
-
---     blk1 <- block "b1" $ do
---       a <- fadd c1 c1
---       b <- fadd a a
---       c <- add c2 c2
---       br blk2
-
---     blk2 <- block "b2" $ do
---       a <- fadd c1 c1
---       b <- fadd a a
---       c <- call foo []
---       br blk3
-
---     blk3 <- block "b3" $ do
---       l <- phi [(c1, blk1), (c1, blk2), (c1, blk3)]
---       a <- fadd c1 c1
---       b <- fadd a a
---       retVoid
-
---     pure ()
-
-
---   function "bar" [] double $ \_ -> mdo
-
---     blk3 <- block "b3"; do
---       a <- fadd c1 c1
---       b <- fadd a a
---       retVoid
-
---     pure ()
-
---   function "baz" [(double, "arg")] double $ \[arg] -> mdo
-
---     switch c2 blk1 [(C.Int 32 0, blk2), (C.Int 32 1, blk3)]
-
---     blk1 <- block "b1"; do
---       br blk2
-
---     blk2 <- block "b2"; do
---       a <- fadd arg c1
---       b <- fadd a a
---       select (cons $ C.Int 1 0) a b
---       retVoid
-
---     blk3 <- block "b3"; do
---       let nul = cons $ C.Null $ ptr $ ptr $ ptr $ IntegerType 32
---       addr <- gep nul [cons $ C.Int 32 10, cons $ C.Int 32 20, cons $ C.Int 32 30]
---       addr <- gep addr [cons $ C.Int 32 40]
---       retVoid
-
---     pure ()
---   where
---     mkModule ds = defaultModule { moduleName = "exampleModule", moduleDefinitions = ds }
---     cons = ConstantOperand
+    mkModule ds = defaultModule { moduleName = "exampleModule", moduleDefinitions = ds }
+    cons = ConstantOperand
