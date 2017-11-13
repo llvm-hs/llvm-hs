@@ -18,6 +18,7 @@ library
     , llvm-hs-pretty
     , llvm-hs-pure
     , mtl
+    , unordered-containers
     , text
     , transformers
   exposed-modules:

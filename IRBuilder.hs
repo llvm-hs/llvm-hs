@@ -70,10 +70,12 @@ import Control.Monad.State.Strict
 
 import Data.Word
 import Data.Coerce
-import Data.Map as Map
 import Data.Monoid
+import Data.String
 import Data.Text.Lazy.IO as T
 import Data.ByteString.Short as BS
+import Data.HashSet(HashSet)
+import qualified Data.HashSet as HS
 
 import LLVM.Typed
 import LLVM.Pretty
@@ -117,6 +119,8 @@ emptyPartialBlock nm = PartialBlock nm mempty Nothing
 -- | Builder monad state
 data IRBuilderState = IRBuilderState
   { builderSupply :: !Word
+  , builderUsedNames :: !(HashSet ShortByteString)
+  , builderNameSuggestion :: Maybe ShortByteString
   , builderBlocks :: SnocList BasicBlock
   , builderBlock :: !PartialBlock
   }
@@ -124,6 +128,8 @@ data IRBuilderState = IRBuilderState
 emptyIRBuilder :: IRBuilderState
 emptyIRBuilder = IRBuilderState
   { builderSupply = 1
+  , builderUsedNames = mempty
+  , builderNameSuggestion = Nothing
   , builderBlocks = mempty
   , builderBlock = emptyPartialBlock $ UnName 0
   }
@@ -144,9 +150,30 @@ modifyBlock f = modify $ \s -> s { builderBlock = f $ builderBlock s }
 -- | Generate fresh name
 fresh :: IRBuilder Name
 fresh = do
-  n <- gets builderSupply
-  modify $ \s -> s { builderSupply = 1 + n }
-  pure (UnName n)
+  msuggestion <- gets builderNameSuggestion
+  case msuggestion of
+    Nothing -> do
+      n <- gets builderSupply
+      modify $ \s -> s { builderSupply = 1 + n }
+      pure (UnName n)
+    Just suggestion -> do
+      usedNames <- gets builderUsedNames
+      let
+        candidates = suggestion : [suggestion <> fromString (show n) | n <- [(1 :: Int)..]]
+        (unusedName:_) = filter (not . (`HS.member` usedNames)) candidates
+      modify $ \s -> s { builderUsedNames = HS.insert unusedName $ builderUsedNames s }
+      return $ Name unusedName
+
+-- | @ir `named` name@ executes the 'IRBuilder' @ir@ using @name@ as the base
+-- name whenever a fresh local name is generated. Collisions are avoided by
+-- appending numbers (first @"name"@, then @"name1"@, @"name2"@, and so on).
+named :: IRBuilder r -> ShortByteString -> IRBuilder r
+named ir name = do
+  before <- gets builderNameSuggestion
+  modify $ \s -> s { builderNameSuggestion = Just name }
+  result <- ir
+  modify $ \s -> s { builderNameSuggestion = before }
+  return result
 
 -- | Emit instruction
 emitInstr
@@ -374,21 +401,21 @@ c2 = cons $ C.Int 32 10
 example :: IO ()
 example = T.putStrLn $ ppll $ mkFunction $ runIRBuilder emptyIRBuilder $ mdo
 
-    xxx <- fadd c1 c1
+    xxx <- fadd c1 c1 `named` "xxx"
 
-    blk1 <- block; do
+    blk1 <- block `named` "blk"; do
       a <- fadd c1 c1
       b <- fadd a a
       c <- add c2 c2
       br blk2
 
-    blk2 <- block; do
-      a <- fadd c1 c1
+    blk2 <- block `named` "blk"; do
+      a <- fadd c1 c1 `named` "c"
       b <- fadd a a
       br blk3
 
-    blk3 <- block; do
-      l <- phi [(c1, blk1), (c1, blk2), (c1, blk3)]
+    blk3 <- block `named` "blk"; do
+      l <- phi [(c1, blk1), (c1, blk2), (c1, blk3)] `named` "phi"
       a <- fadd c1 c1
       b <- fadd a a
       retVoid
