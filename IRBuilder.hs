@@ -192,7 +192,6 @@ emitInstr
   -> Instruction
   -> m Operand
 emitInstr retty instr = do
-  bb <- gets builderBlock
   nm <- fresh
   modifyBlock $ \bb -> bb
     { partialBlockInstrs = partialBlockInstrs bb `snoc` (nm := instr)
@@ -355,7 +354,7 @@ br val = emitTerm (Br val [])
 -- | Phi
 phi :: MonadIRBuilder m => [(Operand, Name)] -> m Operand
 phi [] = emitInstr AST.void $ Phi AST.void [] []
-phi incoming@(i:is) = emitInstr ty $ Phi ty incoming []
+phi incoming@(i:_) = emitInstr ty $ Phi ty incoming []
   where
     ty = typeOf (fst i) -- result type
 
