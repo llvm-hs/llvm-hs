@@ -116,7 +116,7 @@ emptyPartialBlock nm = PartialBlock nm mempty Nothing
 
 -- | Builder monad state
 data IRBuilderState = IRBuilderState
-  { builderSupply :: Word
+  { builderSupply :: !Word
   , builderBlocks :: SnocList BasicBlock
   , builderBlock :: !PartialBlock
   }
