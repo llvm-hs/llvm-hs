@@ -53,7 +53,6 @@ module IRBuilder (
   switch,
   select,
   condBr,
-  cons,
   phi,
   ret,
   retVoid,
@@ -201,7 +200,7 @@ emitInstr retty instr = do
   modifyBlock $ \bb -> bb
     { partialBlockInstrs = partialBlockInstrs bb `snoc` (nm := instr)
     }
-  pure (localRef retty nm)
+  pure (LocalReference retty nm)
 
 -- | Emit terminator
 emitTerm
@@ -237,14 +236,6 @@ block = do
         { builderBlocks = builderBlocks s `snoc` newBb
         }
   pure nm
-
--- Local reference
-localRef ::  Type -> Name -> Operand
-localRef = LocalReference
-
--- | Global reference
-globalRef :: Type -> Name -> C.Constant
-globalRef = C.GlobalReference
 
 -------------------------------------------------------------------------------
 -- Instructions
@@ -403,19 +394,15 @@ select cond t f = emitInstr (typeOf t) $ Select cond t f []
 condBr :: MonadIRBuilder m => Operand -> Name -> Name -> m ()
 condBr cond tdest fdest = emitTerm $ CondBr cond tdest fdest []
 
--- | Constant
-cons :: C.Constant -> Operand
-cons = ConstantOperand
-
 -------------------------------------------------------------------------------
 -- Testing
 -------------------------------------------------------------------------------
 
 c1 :: Operand
-c1 = cons $ C.Float (F.Double 10)
+c1 = ConstantOperand $ C.Float (F.Double 10)
 
 c2 :: Operand
-c2 = cons $ C.Int 32 10
+c2 = ConstantOperand $ C.Int 32 10
 
 example :: IO ()
 example = T.putStrLn $ ppll $ mkFunction $ runIRBuilder emptyIRBuilder $ mdo
@@ -506,3 +493,4 @@ example = T.putStrLn $ ppll $ mkFunction $ runIRBuilder emptyIRBuilder $ mdo
 --     pure ()
 --   where
 --     mkModule ds = defaultModule { moduleName = "exampleModule", moduleDefinitions = ds }
+--     cons = ConstantOperand
