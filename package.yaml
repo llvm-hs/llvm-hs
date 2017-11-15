@@ -1,6 +1,6 @@
 name: irbuilder
 version: '0.1.0.0'
-author: Stephen Diehl
+author: Stephen Diehl, Olle Fredriksson
 license: MIT
 dependencies:
 - base ==4.9.*
@@ -9,6 +9,7 @@ dependencies:
 - bytestring
 - text
 - containers
+- unordered-containers
 - llvm-hs-pure
 - llvm-hs-pretty
 library:
