@@ -2,6 +2,7 @@ name: irbuilder
 version: '0.1.0.0'
 author: Stephen Diehl, Olle Fredriksson
 license: MIT
+source-dirs: src
 dependencies:
 - base ==4.9.*
 - transformers
@@ -17,3 +18,7 @@ library:
     -fwarn-incomplete-patterns
   exposed-modules:
   - IRBuilder
+  - IRBuilder.Monad
+  - IRBuilder.Instruction
+  - ModuleBuilder
+  - Util.SnocList
