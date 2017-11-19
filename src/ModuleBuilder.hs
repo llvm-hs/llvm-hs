@@ -10,8 +10,8 @@ import Control.Monad.Identity
 import Control.Monad.Reader
 import Control.Monad.State.Strict
 
-import qualified Data.HashSet as HS
 import Data.Bifunctor
+import Data.ByteString.Short as BS
 
 import LLVM.AST hiding (function)
 import LLVM.AST.Global
@@ -56,25 +56,25 @@ execModuleBuilderT s m = snd <$> runModuleBuilderT s m
 emitDefn :: MonadModuleBuilder m => Definition -> m ()
 emitDefn def = modify $ \s -> s { builderDefs = builderDefs s `snoc` def }
 
--- | Define and emit a function definition.
+-- | Define and emit a (non-variadic) function definition
 function
   :: MonadModuleBuilder m
   => Name  -- ^ Function name
-  -> [(Type, Name)]  -- ^ Parameters (non-variadic)
+  -> [(Type, Maybe ShortByteString)]  -- ^ Parameter types and name suggestions
   -> Type  -- ^ Return type
   -> ([Operand] -> IRBuilderT m ())  -- ^ Function body builder
   -> m Operand
 function label argtys retty body = do
-  let
-    params = [LocalReference ty nm | (ty, nm) <- argtys]
-    irBuilder = emptyIRBuilder
-      { builderUsedNames = HS.fromList [n | (_, Name n) <- argtys]
-      }
-  blocks <- execIRBuilderT irBuilder $ body params
+  let tys = fst <$> argtys
+  (paramNames, blocks) <- runIRBuilderT emptyIRBuilder $ do
+    paramNames <- forM argtys $ \(_, mname) ->
+      maybe fresh (fresh `named`) mname
+    body $ zipWith LocalReference tys paramNames
+    return paramNames
   let
     def = GlobalDefinition functionDefaults
       { name        = label
-      , parameters  = ([Parameter ty nm [] | (ty, nm) <- argtys], False)
+      , parameters  = (zipWith (\ty nm -> Parameter ty nm []) tys paramNames, False)
       , returnType  = retty
       , basicBlocks = blocks
       }
