@@ -44,18 +44,18 @@ emptyPartialBlock nm = PartialBlock nm mempty Nothing
 data IRBuilderState = IRBuilderState
   { builderSupply :: !Word
   , builderUsedNames :: !(HashSet ShortByteString)
-  , builderNameSuggestion :: Maybe ShortByteString
+  , builderNameSuggestion :: !(Maybe ShortByteString)
   , builderBlocks :: SnocList BasicBlock
-  , builderBlock :: !PartialBlock
+  , builderBlock :: !(Maybe PartialBlock)
   }
 
 emptyIRBuilder :: IRBuilderState
 emptyIRBuilder = IRBuilderState
-  { builderSupply = 1
+  { builderSupply = 0
   , builderUsedNames = mempty
   , builderNameSuggestion = Nothing
   , builderBlocks = mempty
-  , builderBlock = emptyPartialBlock $ UnName 0
+  , builderBlock = Nothing
   }
 
 -- | Evaluate IRBuilder to a result and a list of basic blocks
@@ -84,17 +84,21 @@ modifyBlock
   :: MonadIRBuilder m
   => (PartialBlock -> PartialBlock)
   -> m ()
-modifyBlock f = modify $ \s -> s { builderBlock = f $ builderBlock s }
+modifyBlock f = do
+  mbb <- gets builderBlock
+  case mbb of
+    Nothing -> do
+      nm <- freshUnName
+      modify $ \s -> s { builderBlock = Just $! f $ emptyPartialBlock nm }
+    Just bb ->
+      modify $ \s -> s { builderBlock = Just $! f bb }
 
 -- | Generate fresh name
 fresh :: MonadIRBuilder m => m Name
 fresh = do
   msuggestion <- gets builderNameSuggestion
   case msuggestion of
-    Nothing -> do
-      n <- gets builderSupply
-      modify $ \s -> s { builderSupply = 1 + n }
-      pure (UnName n)
+    Nothing -> freshUnName
     Just suggestion -> do
       usedNames <- gets builderUsedNames
       let
@@ -102,6 +106,13 @@ fresh = do
         (unusedName:_) = filter (not . (`HS.member` usedNames)) candidates
       modify $ \s -> s { builderUsedNames = HS.insert unusedName $ builderUsedNames s }
       return $ Name unusedName
+
+-- | Generate a fresh numbered name
+freshUnName :: MonadIRBuilder m => m Name
+freshUnName = do
+  n <- gets builderSupply
+  modify $ \s -> s { builderSupply = 1 + n }
+  pure $ UnName n
 
 -- | Emit instruction
 emitInstr
@@ -134,20 +145,20 @@ block
   :: MonadIRBuilder m
   => m Name
 block = do
-  nm <- fresh
-  bb <- gets builderBlock
-  modify $ \s -> s { builderBlock = emptyPartialBlock nm }
-  let instrs' = getSnocList $ partialBlockInstrs bb
-  case (instrs', partialBlockTerm bb) of
-    ([], Nothing) -> return ()
-    _ -> do
+  mbb <- gets builderBlock
+  case mbb of
+    Nothing -> return ()
+    Just bb -> do
       let
+        instrs = getSnocList $ partialBlockInstrs bb
         newBb = case partialBlockTerm bb of
-          Nothing   -> BasicBlock (partialBlockName bb) instrs' (Do (Ret Nothing []))
-          Just term -> BasicBlock (partialBlockName bb) instrs' term
+          Nothing   -> BasicBlock (partialBlockName bb) instrs (Do (Ret Nothing []))
+          Just term -> BasicBlock (partialBlockName bb) instrs term
       modify $ \s -> s
         { builderBlocks = builderBlocks s `snoc` newBb
         }
+  nm <- fresh
+  modify $ \s -> s { builderBlock = Just $ emptyPartialBlock nm }
   pure nm
 
 -- | @ir `named` name@ executes the 'IRBuilder' @ir@ using @name@ as the base

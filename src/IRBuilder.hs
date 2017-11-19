@@ -30,7 +30,7 @@ c2 :: Operand
 c2 = ConstantOperand $ C.Int 32 10
 
 example :: IO ()
-example = T.putStrLn $ ppllvm $ mkModule $ runModuleBuilder emptyModuleBuilder $ mdo
+example = T.putStrLn $ ppllvm $ mkModule $ execModuleBuilder emptyModuleBuilder $ mdo
 
   foo <- function "foo" [] double $ \_ -> mdo
     xxx <- fadd c1 c1 `named` "xxx"
@@ -64,9 +64,9 @@ example = T.putStrLn $ ppllvm $ mkModule $ runModuleBuilder emptyModuleBuilder $
 
     pure ()
 
-  function "baz" [(double, "arg")] double $ \[arg] -> mdo
+  function "baz" [(i32, Nothing), (double, Just "arg"), (i32, Nothing), (double, Just "arg")] double $ \[rrr, arg, arg2, arg3] -> mdo
 
-    switch c2 blk1 [(C.Int 32 0, blk2), (C.Int 32 1, blk3)]
+    switch arg2 blk1 [(C.Int 32 0, blk2), (C.Int 32 1, blk3)]
 
     blk1 <- block; do
       br blk2
