@@ -11,6 +11,7 @@ import Control.Monad.Reader
 import Control.Monad.State.Strict
 
 import qualified Data.HashSet as HS
+import Data.Bifunctor
 
 import LLVM.AST hiding (function)
 import LLVM.AST.Global
@@ -34,13 +35,23 @@ emptyModuleBuilder = ModuleBuilderState
 type ModuleBuilder = ModuleBuilderT Identity
 type MonadModuleBuilder = MonadState ModuleBuilderState
 
+-- | Evaluate 'ModuleBuilder' to a result and a list of definitions
+runModuleBuilder :: ModuleBuilderState -> ModuleBuilder a -> (a, [Definition])
+runModuleBuilder s m = runIdentity $ runModuleBuilderT s m
+
+-- | Evaluate 'ModuleBuilderT' to a result and a list of definitions
+runModuleBuilderT :: Monad m => ModuleBuilderState -> ModuleBuilderT m a -> m (a, [Definition])
+runModuleBuilderT s (ModuleBuilderT m)
+  = second (getSnocList . builderDefs)
+  <$> runStateT m s
+
 -- | Evaluate 'ModuleBuilder' to a list of definitions
-runModuleBuilder :: ModuleBuilderState -> ModuleBuilder a -> [Definition]
-runModuleBuilder s (ModuleBuilderT m) = getSnocList $ builderDefs $ execState m s
+execModuleBuilder :: ModuleBuilderState -> ModuleBuilder a -> [Definition]
+execModuleBuilder s m = snd $ runModuleBuilder s m
 
 -- | Evaluate 'ModuleBuilderT' to a list of definitions
-runModuleBuilderT :: Monad m => ModuleBuilderState -> ModuleBuilderT m a -> m [Definition]
-runModuleBuilderT s (ModuleBuilderT m) = getSnocList . builderDefs <$> execStateT m s
+execModuleBuilderT :: Monad m => ModuleBuilderState -> ModuleBuilderT m a -> m [Definition]
+execModuleBuilderT s m = snd <$> runModuleBuilderT s m
 
 emitDefn :: MonadModuleBuilder m => Definition -> m ()
 emitDefn def = modify $ \s -> s { builderDefs = builderDefs s `snoc` def }
@@ -59,7 +70,7 @@ function label argtys retty body = do
     irBuilder = emptyIRBuilder
       { builderUsedNames = HS.fromList [n | (_, Name n) <- argtys]
       }
-  blocks <- runIRBuilderT irBuilder $ body params
+  blocks <- execIRBuilderT irBuilder $ body params
   let
     def = GlobalDefinition functionDefaults
       { name        = label

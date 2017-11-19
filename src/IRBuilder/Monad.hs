@@ -10,6 +10,7 @@ import Control.Monad.Identity
 import Control.Monad.Reader
 import Control.Monad.State.Strict
 
+import Data.Bifunctor
 import Data.Monoid
 import Data.String
 import Data.ByteString.Short as BS
@@ -57,13 +58,23 @@ emptyIRBuilder = IRBuilderState
   , builderBlock = emptyPartialBlock $ UnName 0
   }
 
+-- | Evaluate IRBuilder to a result and a list of basic blocks
+runIRBuilder :: IRBuilderState -> IRBuilder a -> (a, [BasicBlock])
+runIRBuilder s m = runIdentity $ runIRBuilderT s m
+
+-- | Evaluate IRBuilderT to a result and a list of basic blocks
+runIRBuilderT :: Monad m => IRBuilderState -> IRBuilderT m a -> m (a, [BasicBlock])
+runIRBuilderT s m
+  = second (getSnocList . builderBlocks)
+  <$> runStateT (unIRBuilderT $ m <* block) s
+
 -- | Evaluate IRBuilder to a list of basic blocks
-runIRBuilder :: IRBuilderState -> IRBuilder a -> [BasicBlock]
-runIRBuilder s m = getSnocList $ builderBlocks $ execState (unIRBuilderT $ m >> block) s
+execIRBuilder :: IRBuilderState -> IRBuilder a -> [BasicBlock]
+execIRBuilder s m = snd $ runIRBuilder s m
 
 -- | Evaluate IRBuilderT to a list of basic blocks
-runIRBuilderT :: Monad m => IRBuilderState -> IRBuilderT m a -> m [BasicBlock]
-runIRBuilderT s m = getSnocList . builderBlocks <$> execStateT (unIRBuilderT $ m >> block) s
+execIRBuilderT :: Monad m => IRBuilderState -> IRBuilderT m a -> m [BasicBlock]
+execIRBuilderT s m = snd <$> runIRBuilderT s m
 
 -------------------------------------------------------------------------------
 -- * Low-level functionality
