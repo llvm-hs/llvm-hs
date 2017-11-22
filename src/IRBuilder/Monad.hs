@@ -1,17 +1,32 @@
-{-# LANGUAGE ConstraintKinds #-}
+{-# LANGUAGE DefaultSignatures #-}
 {-# LANGUAGE FlexibleContexts #-}
+{-# LANGUAGE FlexibleInstances #-}
+{-# LANGUAGE GADTs #-}
 {-# LANGUAGE GeneralizedNewtypeDeriving #-}
+{-# LANGUAGE MultiParamTypeClasses #-}
+{-# LANGUAGE UndecidableInstances #-} -- For MonadState s (ModuleBuilderT m) instance
 
 module IRBuilder.Monad where
 
 import Prelude hiding (and, or)
 
+import Control.Applicative
+import Control.Monad.Cont
+import Control.Monad.Except
+import Control.Monad.Fail
 import Control.Monad.Identity
+import Control.Monad.Writer.Lazy as Lazy
+import Control.Monad.Writer.Strict as Strict
 import Control.Monad.Reader
+import Control.Monad.RWS.Lazy as Lazy
+import Control.Monad.RWS.Strict as Strict
+import qualified Control.Monad.State.Lazy as Lazy
 import Control.Monad.State.Strict
+import Control.Monad.List
+import Control.Monad.Trans.Maybe
+import Control.Monad.Trans.Identity
 
 import Data.Bifunctor
-import Data.Monoid
 import Data.String
 import Data.ByteString.Short as BS
 import Data.HashSet(HashSet)
@@ -25,10 +40,24 @@ import Util.SnocList
 -- into a basic block: either at the end of a BasicBlock, or at a specific
 -- location in a block.
 newtype IRBuilderT m a = IRBuilderT { unIRBuilderT :: StateT IRBuilderState m a }
-  deriving (Functor, Applicative, Monad, MonadFix, MonadTrans, MonadState IRBuilderState)
+  deriving
+    ( Functor, Alternative, Applicative, Monad, MonadCont, MonadError e, MonadFail
+    , MonadFix, MonadIO, MonadPlus, MonadReader r, MonadTrans, MonadWriter w
+    )
 
 type IRBuilder = IRBuilderT Identity
-type MonadIRBuilder = MonadState IRBuilderState
+
+class Monad m => MonadIRBuilder m where
+  liftIRState :: State IRBuilderState a -> m a
+
+  default liftIRState
+    :: (MonadTrans t, MonadIRBuilder m1, m ~ t m1)
+    => State IRBuilderState a
+    -> m a
+  liftIRState = lift . liftIRState
+
+instance Monad m => MonadIRBuilder (IRBuilderT m) where
+  liftIRState (StateT s) = IRBuilderT $ StateT $ pure . runIdentity . s
 
 -- | A partially constructed block as a sequence of instructions
 data PartialBlock = PartialBlock
@@ -85,31 +114,31 @@ modifyBlock
   => (PartialBlock -> PartialBlock)
   -> m ()
 modifyBlock f = do
-  mbb <- gets builderBlock
+  mbb <- liftIRState $ gets builderBlock
   case mbb of
     Nothing -> do
       nm <- freshUnName
-      modify $ \s -> s { builderBlock = Just $! f $ emptyPartialBlock nm }
+      liftIRState $ modify $ \s -> s { builderBlock = Just $! f $ emptyPartialBlock nm }
     Just bb ->
-      modify $ \s -> s { builderBlock = Just $! f bb }
+      liftIRState $ modify $ \s -> s { builderBlock = Just $! f bb }
 
 -- | Generate fresh name
 fresh :: MonadIRBuilder m => m Name
 fresh = do
-  msuggestion <- gets builderNameSuggestion
+  msuggestion <- liftIRState $ gets builderNameSuggestion
   case msuggestion of
     Nothing -> freshUnName
     Just suggestion -> do
-      usedNames <- gets builderUsedNames
+      usedNames <- liftIRState $ gets builderUsedNames
       let
         candidates = suggestion : [suggestion <> fromString (show n) | n <- [(1 :: Int)..]]
         (unusedName:_) = filter (not . (`HS.member` usedNames)) candidates
-      modify $ \s -> s { builderUsedNames = HS.insert unusedName $ builderUsedNames s }
+      liftIRState $ modify $ \s -> s { builderUsedNames = HS.insert unusedName $ builderUsedNames s }
       return $ Name unusedName
 
 -- | Generate a fresh numbered name
 freshUnName :: MonadIRBuilder m => m Name
-freshUnName = do
+freshUnName = liftIRState $ do
   n <- gets builderSupply
   modify $ \s -> s { builderSupply = 1 + n }
   pure $ UnName n
@@ -145,7 +174,7 @@ block
   :: MonadIRBuilder m
   => m Name
 block = do
-  mbb <- gets builderBlock
+  mbb <- liftIRState $ gets builderBlock
   case mbb of
     Nothing -> return ()
     Just bb -> do
@@ -154,11 +183,11 @@ block = do
         newBb = case partialBlockTerm bb of
           Nothing   -> BasicBlock (partialBlockName bb) instrs (Do (Ret Nothing []))
           Just term -> BasicBlock (partialBlockName bb) instrs term
-      modify $ \s -> s
+      liftIRState $ modify $ \s -> s
         { builderBlocks = builderBlocks s `snoc` newBb
         }
   nm <- fresh
-  modify $ \s -> s { builderBlock = Just $ emptyPartialBlock nm }
+  liftIRState $ modify $ \s -> s { builderBlock = Just $ emptyPartialBlock nm }
   pure nm
 
 -- | @ir `named` name@ executes the 'IRBuilder' @ir@ using @name@ as the base
@@ -170,8 +199,28 @@ named
   -> ShortByteString
   -> m r
 named ir name = do
-  before <- gets builderNameSuggestion
-  modify $ \s -> s { builderNameSuggestion = Just name }
+  before <- liftIRState $ gets builderNameSuggestion
+  liftIRState $ modify $ \s -> s { builderNameSuggestion = Just name }
   result <- ir
-  modify $ \s -> s { builderNameSuggestion = before }
+  liftIRState $ modify $ \s -> s { builderNameSuggestion = before }
   return result
+
+-------------------------------------------------------------------------------
+-- mtl instances
+-------------------------------------------------------------------------------
+
+instance MonadState s m => MonadState s (IRBuilderT m) where
+  state = lift . state
+
+instance MonadIRBuilder m => MonadIRBuilder (ContT r m)
+instance MonadIRBuilder m => MonadIRBuilder (ExceptT e m)
+instance MonadIRBuilder m => MonadIRBuilder (IdentityT m)
+instance MonadIRBuilder m => MonadIRBuilder (ListT m)
+instance MonadIRBuilder m => MonadIRBuilder (MaybeT m)
+instance MonadIRBuilder m => MonadIRBuilder (ReaderT r m)
+instance (MonadIRBuilder m, Monoid w) => MonadIRBuilder (Strict.RWST r w s m)
+instance (MonadIRBuilder m, Monoid w) => MonadIRBuilder (Lazy.RWST r w s m)
+instance MonadIRBuilder m => MonadIRBuilder (StateT s m)
+instance MonadIRBuilder m => MonadIRBuilder (Lazy.StateT s m)
+instance (Monoid w, MonadIRBuilder m) => MonadIRBuilder (Strict.WriterT w m)
+instance (Monoid w, MonadIRBuilder m) => MonadIRBuilder (Lazy.WriterT w m)
