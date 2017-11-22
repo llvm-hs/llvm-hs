@@ -15,7 +15,7 @@ library
       src
   ghc-options: -fwarn-incomplete-patterns
   build-depends:
-      base ==4.9.*
+      base >=4.9 && <4.11
     , transformers
     , mtl
     , bytestring
