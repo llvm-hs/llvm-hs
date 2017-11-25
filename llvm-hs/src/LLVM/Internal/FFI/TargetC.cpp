@@ -497,8 +497,8 @@ void LLVM_Hs_InitializeAllTargets() {
 LLVMTargetMachineRef
 LLVM_Hs_CreateTargetMachine(LLVMTargetRef T, const char *Triple,
                             const char *CPU, const char *Features,
-                            TargetOptions *TO, LLVMCodeGenOptLevel Level,
-                            LLVMRelocMode Reloc, LLVMCodeModel CodeModel) {
+                            TargetOptions *TO, LLVMRelocMode Reloc,
+                            LLVMCodeModel CodeModel, LLVMCodeGenOptLevel Level) {
     Optional<Reloc::Model> RM;
     switch (Reloc) {
     case LLVMRelocStatic:
