@@ -130,6 +130,12 @@ extern name argtys retty = do
   let funty = FunctionType retty argtys False
   pure $ ConstantOperand $ C.GlobalReference funty name
 
+-- | Convenience function for module construction
+buildModule :: ShortByteString -> [Definition] -> ModuleBuilder a -> Module
+buildModule name ds = mkModule . execModuleBuilder emptyModuleBuilder
+  where
+    mkModule ds = defaultModule { moduleName = name, moduleDefinitions = ds }
+
 -------------------------------------------------------------------------------
 -- mtl instances
 -------------------------------------------------------------------------------
