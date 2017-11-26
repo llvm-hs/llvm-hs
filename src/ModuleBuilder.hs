@@ -31,6 +31,7 @@ import Data.ByteString.Short as BS
 
 import LLVM.AST hiding (function)
 import LLVM.AST.Global
+import LLVM.AST.Linkage
 import qualified LLVM.AST.Constant as C
 
 import Util.SnocList
@@ -111,6 +112,23 @@ function label argtys retty body = do
     funty = FunctionType retty (fst <$> argtys) False
   emitDefn def
   pure $ ConstantOperand $ C.GlobalReference funty label
+
+-- | An external function definition
+extern
+  :: MonadModuleBuilder m
+  => Name   -- ^ Definition name
+  -> [Type] -- ^ Parametere types
+  -> Type   -- ^ Type
+  -> m Operand
+extern name argtys retty = do
+  emitDefn $ GlobalDefinition functionDefaults
+    { name        = name
+    , linkage     = External
+    , parameters  = ([Parameter ty (mkName "") [] | ty <- argtys], False)
+    , returnType  = retty
+    }
+  let funty = FunctionType retty argtys False
+  pure $ ConstantOperand $ C.GlobalReference funty name
 
 -------------------------------------------------------------------------------
 -- mtl instances
