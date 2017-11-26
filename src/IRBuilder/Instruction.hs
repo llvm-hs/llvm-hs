@@ -167,3 +167,6 @@ select cond t f = emitInstr (typeOf t) $ Select cond t f []
 
 condBr :: MonadIRBuilder m => Operand -> Name -> Name -> m ()
 condBr cond tdest fdest = emitTerm $ CondBr cond tdest fdest []
+
+unreachable :: MonadIRBuilder m => m ()
+unreachable = emitTerm $ Unreachable []
