@@ -156,6 +156,17 @@ emitInstr retty instr = do
     }
   pure (LocalReference retty nm)
 
+-- | Emit instruction that returns void
+emitInstrVoid
+  :: MonadIRBuilder m
+  => Instruction
+  -> m ()
+emitInstrVoid instr = do
+  modifyBlock $ \bb -> bb
+    { partialBlockInstrs = partialBlockInstrs bb `snoc` (Do instr)
+    }
+  pure ()
+
 -- | Emit terminator
 emitTerm
   :: MonadIRBuilder m

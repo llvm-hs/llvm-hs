@@ -143,10 +143,7 @@ retVoid = emitTerm (Ret Nothing [])
 
 call :: MonadIRBuilder m => Operand -> [(Operand, [ParameterAttribute])] -> m Operand
 call fun args = do
-  let retty = case typeOf fun of
-        FunctionType r _ _ -> r
-        _ -> VoidType -- XXX: or error?
-  emitInstr retty Call {
+  let instr = Call {
     AST.tailCallKind = Nothing
   , AST.callingConvention = CC.C
   , AST.returnAttributes = []
@@ -155,6 +152,11 @@ call fun args = do
   , AST.functionAttributes = []
   , AST.metadata = []
   }
+  case typeOf fun of
+      FunctionType r _ _ -> case r of
+        VoidType -> emitInstrVoid instr >> (pure (ConstantOperand (C.Undef void)))
+        _        -> emitInstr r instr
+      _ -> error "Cannot call non-function (Malformed AST)."
 
 ret :: MonadIRBuilder m => Operand -> m ()
 ret val = emitTerm (Ret (Just val) [])
