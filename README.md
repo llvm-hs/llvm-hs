@@ -35,7 +35,7 @@ import IRBuilder.Instruction
 simple :: IO ()
 simple = T.putStrLn $ ppllvm $ buildModule "exampleModule" $ mdo
 
-  function "add" [(i32, Just "a"), (i32, Just "b")] i32 $ \[a, b] -> mdo
+  function "add" [(i32, "a"), (i32, "b")] i32 $ \[a, b] -> mdo
 
     entry <- block `named` "entry"; do
       c <- add a b
