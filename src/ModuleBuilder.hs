@@ -130,6 +130,16 @@ extern name argtys retty = do
   let funty = FunctionType retty argtys False
   pure $ ConstantOperand $ C.GlobalReference funty name
 
+-- | A named type definition
+typedef
+  :: MonadModuleBuilder m
+  => Name
+  -> Maybe Type
+  -> m ()
+typedef nm ty = do
+  emitDefn $ TypeDefinition nm ty
+  pure ()
+
 -- | Convenience function for module construction
 buildModule :: ShortByteString -> [Definition] -> ModuleBuilder a -> Module
 buildModule name ds = mkModule . execModuleBuilder emptyModuleBuilder
