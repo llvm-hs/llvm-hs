@@ -156,6 +156,9 @@ call fun args = do
       FunctionType r _ _ -> case r of
         VoidType -> emitInstrVoid instr >> (pure (ConstantOperand (C.Undef void)))
         _        -> emitInstr r instr
+      PointerType (FunctionType r _ _) _ -> case r of
+        VoidType -> emitInstrVoid instr >> (pure (ConstantOperand (C.Undef void)))
+        _        -> emitInstr r instr
       _ -> error "Cannot call non-function (Malformed AST)."
 
 ret :: MonadIRBuilder m => Operand -> m ()
