@@ -146,6 +146,12 @@ buildModule name = mkModule . execModuleBuilder emptyModuleBuilder
   where
     mkModule ds = defaultModule { moduleName = name, moduleDefinitions = ds }
 
+-- | Convenience function for module construction (transformer version)
+buildModuleT :: Monad m => ShortByteString -> ModuleBuilderT m a -> m Module
+buildModuleT name = fmap mkModule . execModuleBuilderT emptyModuleBuilder
+  where
+    mkModule ds = defaultModule { moduleName = name, moduleDefinitions = ds }
+
 -------------------------------------------------------------------------------
 -- mtl instances
 -------------------------------------------------------------------------------
