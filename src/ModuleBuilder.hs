@@ -141,8 +141,8 @@ typedef nm ty = do
   pure ()
 
 -- | Convenience function for module construction
-buildModule :: ShortByteString -> [Definition] -> ModuleBuilder a -> Module
-buildModule name ds = mkModule . execModuleBuilder emptyModuleBuilder
+buildModule :: ShortByteString -> ModuleBuilder a -> Module
+buildModule name = mkModule . execModuleBuilder emptyModuleBuilder
   where
     mkModule ds = defaultModule { moduleName = name, moduleDefinitions = ds }
 
