@@ -30,16 +30,13 @@ c2 :: Operand
 c2 = ConstantOperand $ C.Int 32 10
 
 simple :: IO ()
-simple = T.putStrLn $ ppllvm $ mkModule $ execModuleBuilder emptyModuleBuilder $ mdo
+simple = T.putStrLn $ ppllvm $ buildModule "exampleModule" $ mdo
 
-  function "add" [(i32, Just "a"), (i32, (Just "b"))] i32 $ \[a,b] -> mdo
+  function "add" [(i32, "a"), (i32, "b")] i32 $ \[a, b] -> mdo
 
     entry <- block `named` "entry"; do
       c <- add a b
       ret c
-
-  where
-    mkModule ds = defaultModule { moduleName = "exampleModule", moduleDefinitions = ds }
 
 example :: IO ()
 example = T.putStrLn $ ppllvm $ mkModule $ execModuleBuilder emptyModuleBuilder $ mdo
@@ -76,7 +73,7 @@ example = T.putStrLn $ ppllvm $ mkModule $ execModuleBuilder emptyModuleBuilder 
 
     pure ()
 
-  function "baz" [(i32, Nothing), (double, Just "arg"), (i32, Nothing), (double, Just "arg")] double $ \[rrr, arg, arg2, arg3] -> mdo
+  function "baz" [(i32, NoParameterName), (double, "arg"), (i32, NoParameterName), (double, "arg")] double $ \[rrr, arg, arg2, arg3] -> mdo
 
     switch arg2 blk1 [(C.Int 32 0, blk2), (C.Int 32 1, blk3)]
 

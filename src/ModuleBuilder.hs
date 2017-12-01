@@ -1,4 +1,6 @@
 {-# LANGUAGE DefaultSignatures #-}
+{-# LANGUAGE DeriveDataTypeable #-}
+{-# LANGUAGE DeriveGeneric #-}
 {-# LANGUAGE FlexibleContexts #-}
 {-# LANGUAGE FlexibleInstances #-}
 {-# LANGUAGE GADTs #-}
@@ -28,6 +30,11 @@ import Control.Monad.Trans.Identity
 
 import Data.Bifunctor
 import Data.ByteString.Short as BS
+import Data.Char
+import Data.Data
+import Data.String
+
+import GHC.Generics(Generic)
 
 import LLVM.AST hiding (function)
 import LLVM.AST.Global
@@ -87,19 +94,34 @@ execModuleBuilderT s m = snd <$> runModuleBuilderT s m
 emitDefn :: MonadModuleBuilder m => Definition -> m ()
 emitDefn def = liftModuleState $ modify $ \s -> s { builderDefs = builderDefs s `snoc` def }
 
+-- | A parameter name suggestion
+data ParameterName
+  = NoParameterName
+  | ParameterName ShortByteString
+  deriving (Eq, Ord, Read, Show, Typeable, Data, Generic)
+
+-- | Using 'fromString` on non-ASCII strings will throw an error.
+instance IsString ParameterName where
+  fromString s
+    | all isAscii s = ParameterName (fromString s)
+    | otherwise =
+      error ("Only ASCII strings are automatically converted to LLVM parameter names. "
+      <> "Other strings need to be encoded to a `ShortByteString` using an arbitrary encoding.")
+
 -- | Define and emit a (non-variadic) function definition
 function
   :: MonadModuleBuilder m
   => Name  -- ^ Function name
-  -> [(Type, Maybe ShortByteString)]  -- ^ Parameter types and name suggestions
+  -> [(Type, ParameterName)]  -- ^ Parameter types and name suggestions
   -> Type  -- ^ Return type
   -> ([Operand] -> IRBuilderT m ())  -- ^ Function body builder
   -> m Operand
 function label argtys retty body = do
   let tys = fst <$> argtys
   (paramNames, blocks) <- runIRBuilderT emptyIRBuilder $ do
-    paramNames <- forM argtys $ \(_, mname) ->
-      maybe fresh (fresh `named`) mname
+    paramNames <- forM argtys $ \(_, paramName) -> case paramName of
+      NoParameterName -> fresh
+      ParameterName p -> fresh `named` p
     body $ zipWith LocalReference tys paramNames
     return paramNames
   let
@@ -141,8 +163,14 @@ typedef nm ty = do
   pure ()
 
 -- | Convenience function for module construction
-buildModule :: ShortByteString -> [Definition] -> ModuleBuilder a -> Module
-buildModule name ds = mkModule . execModuleBuilder emptyModuleBuilder
+buildModule :: ShortByteString -> ModuleBuilder a -> Module
+buildModule name = mkModule . execModuleBuilder emptyModuleBuilder
+  where
+    mkModule ds = defaultModule { moduleName = name, moduleDefinitions = ds }
+
+-- | Convenience function for module construction (transformer version)
+buildModuleT :: Monad m => ShortByteString -> ModuleBuilderT m a -> m Module
+buildModuleT name = fmap mkModule . execModuleBuilderT emptyModuleBuilder
   where
     mkModule ds = defaultModule { moduleName = name, moduleDefinitions = ds }
 
