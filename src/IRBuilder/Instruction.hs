@@ -79,8 +79,8 @@ load a align = emitInstr retty $ Load False a Nothing align []
       PointerType ty _ -> ty
       _ -> error "Cannot load non-pointer (Malformed AST)."
 
-store :: MonadIRBuilder m => Operand -> Word32 -> Operand -> m Operand
-store addr align val = emitInstr (typeOf val) $ Store False addr val Nothing align []
+store :: MonadIRBuilder m => Operand -> Word32 -> Operand -> m ()
+store addr align val = emitInstrVoid $ Store False addr val Nothing align []
 
 gep :: MonadIRBuilder m => Operand -> [Operand] -> m Operand
 gep addr is = emitInstr (gepType (typeOf addr) is) (GetElementPtr False addr is [])
