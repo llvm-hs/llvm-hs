@@ -1,3 +1,4 @@
 *.sw[pon]
 *.o
 *.stack-work
+*~

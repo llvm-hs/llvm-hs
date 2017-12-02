@@ -2,7 +2,6 @@ name: irbuilder
 version: '0.1.0.0'
 author: Stephen Diehl, Olle Fredriksson
 license: MIT
-source-dirs: src
 dependencies:
 - base >=4.9 && <4.11
 - transformers
@@ -14,6 +13,7 @@ dependencies:
 - llvm-hs-pure
 - llvm-hs-pretty
 library:
+  source-dirs: src
   ghc-options:
     -fwarn-incomplete-patterns
   exposed-modules:
@@ -22,3 +22,10 @@ library:
   - IRBuilder.Instruction
   - ModuleBuilder
   - Util.SnocList
+tests:
+  irbuilder:
+    source-dirs: test
+    main: Spec.hs
+    dependencies:
+      - hspec
+      - irbuilder
