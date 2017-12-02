@@ -142,15 +142,15 @@ extern
   -> [Type] -- ^ Parametere types
   -> Type   -- ^ Type
   -> m Operand
-extern name argtys retty = do
+extern nm argtys retty = do
   emitDefn $ GlobalDefinition functionDefaults
-    { name        = name
+    { name        = nm
     , linkage     = External
     , parameters  = ([Parameter ty (mkName "") [] | ty <- argtys], False)
     , returnType  = retty
     }
   let funty = FunctionType retty argtys False
-  pure $ ConstantOperand $ C.GlobalReference funty name
+  pure $ ConstantOperand $ C.GlobalReference funty nm
 
 -- | A named type definition
 typedef
@@ -164,15 +164,15 @@ typedef nm ty = do
 
 -- | Convenience function for module construction
 buildModule :: ShortByteString -> ModuleBuilder a -> Module
-buildModule name = mkModule . execModuleBuilder emptyModuleBuilder
+buildModule nm = mkModule . execModuleBuilder emptyModuleBuilder
   where
-    mkModule ds = defaultModule { moduleName = name, moduleDefinitions = ds }
+    mkModule ds = defaultModule { moduleName = nm, moduleDefinitions = ds }
 
 -- | Convenience function for module construction (transformer version)
 buildModuleT :: Monad m => ShortByteString -> ModuleBuilderT m a -> m Module
-buildModuleT name = fmap mkModule . execModuleBuilderT emptyModuleBuilder
+buildModuleT nm = fmap mkModule . execModuleBuilderT emptyModuleBuilder
   where
-    mkModule ds = defaultModule { moduleName = name, moduleDefinitions = ds }
+    mkModule ds = defaultModule { moduleName = nm, moduleDefinitions = ds }
 
 -------------------------------------------------------------------------------
 -- mtl instances
