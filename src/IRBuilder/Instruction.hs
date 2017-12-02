@@ -73,10 +73,14 @@ alloca :: MonadIRBuilder m => Type -> Maybe Operand -> Word32 -> m Operand
 alloca ty count align = emitInstr (ptr ty) $ Alloca ty count align []
 
 load :: MonadIRBuilder m => Operand -> Word32 -> m Operand
-load a align = emitInstr (typeOf a) $ Load False a Nothing align []
+load a align = emitInstr retty $ Load False a Nothing align []
+  where
+    retty = case typeOf a of
+      PointerType ty _ -> ty
+      _ -> error "Cannot load non-pointer (Malformed AST)."
 
-store :: MonadIRBuilder m => Operand -> Word32 -> Operand -> m Operand
-store addr align val = emitInstr (typeOf val) $ Store False addr val Nothing align []
+store :: MonadIRBuilder m => Operand -> Word32 -> Operand -> m ()
+store addr align val = emitInstrVoid $ Store False addr val Nothing align []
 
 gep :: MonadIRBuilder m => Operand -> [Operand] -> m Operand
 gep addr is = emitInstr (gepType (typeOf addr) is) (GetElementPtr False addr is [])
