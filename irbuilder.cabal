@@ -33,3 +33,22 @@ library
   other-modules:
       Paths_irbuilder
   default-language: Haskell2010
+
+test-suite irbuilder
+  type: exitcode-stdio-1.0
+  main-is: Spec.hs
+  hs-source-dirs:
+      test
+  build-depends:
+      base >=4.9 && <4.11
+    , transformers
+    , mtl
+    , bytestring
+    , text
+    , containers
+    , unordered-containers
+    , llvm-hs-pure
+    , llvm-hs-pretty
+    , hspec
+    , irbuilder
+  default-language: Haskell2010
