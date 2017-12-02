@@ -122,19 +122,22 @@ modifyBlock f = do
     Just bb ->
       liftIRState $ modify $ \s -> s { builderBlock = Just $! f bb }
 
--- | Generate fresh name
+-- | Generate a fresh name. The resulting name is numbered or
+-- based on the name suggested with 'named' if that's used.
 fresh :: MonadIRBuilder m => m Name
 fresh = do
   msuggestion <- liftIRState $ gets builderNameSuggestion
-  case msuggestion of
-    Nothing -> freshUnName
-    Just suggestion -> do
-      usedNames <- liftIRState $ gets builderUsedNames
-      let
-        candidates = suggestion : [suggestion <> fromString (show n) | n <- [(1 :: Int)..]]
-        (unusedName:_) = filter (not . (`HS.member` usedNames)) candidates
-      liftIRState $ modify $ \s -> s { builderUsedNames = HS.insert unusedName $ builderUsedNames s }
-      return $ Name unusedName
+  maybe freshUnName freshName msuggestion
+
+-- | Generate a fresh name from a name suggestion
+freshName :: MonadIRBuilder m => ShortByteString -> m Name
+freshName suggestion = do
+  usedNames <- liftIRState $ gets builderUsedNames
+  let
+    candidates = suggestion : [suggestion <> fromString (show n) | n <- [(1 :: Int)..]]
+    (unusedName:_) = filter (not . (`HS.member` usedNames)) candidates
+  liftIRState $ modify $ \s -> s { builderUsedNames = HS.insert unusedName $ builderUsedNames s }
+  return $ Name unusedName
 
 -- | Generate a fresh numbered name
 freshUnName :: MonadIRBuilder m => m Name
@@ -176,15 +179,13 @@ emitTerm term = modifyBlock $ \bb -> bb
   { partialBlockTerm = Just (Do term)
   }
 
--------------------------------------------------------------------------------
--- * High-level functionality
--------------------------------------------------------------------------------
-
--- | Starts a new block and ends the previous one
-block
+-- | Starts a new block labelled using the given name and ends the previous
+-- one. The name is assumed to be fresh.
+emitBlockStart
   :: MonadIRBuilder m
-  => m Name
-block = do
+  => Name
+  -> m ()
+emitBlockStart nm = do
   mbb <- liftIRState $ gets builderBlock
   case mbb of
     Nothing -> return ()
@@ -197,9 +198,20 @@ block = do
       liftIRState $ modify $ \s -> s
         { builderBlocks = builderBlocks s `snoc` newBb
         }
-  nm <- fresh
   liftIRState $ modify $ \s -> s { builderBlock = Just $ emptyPartialBlock nm }
-  pure nm
+
+-------------------------------------------------------------------------------
+-- * High-level functionality
+-------------------------------------------------------------------------------
+
+-- | Starts a new block and ends the previous one
+block
+  :: MonadIRBuilder m
+  => m Name
+block = do
+  nm <- fresh
+  emitBlockStart nm
+  return nm
 
 -- | @ir `named` name@ executes the 'IRBuilder' @ir@ using @name@ as the base
 -- name whenever a fresh local name is generated. Collisions are avoided by
