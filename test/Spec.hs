@@ -10,8 +10,8 @@ import qualified Data.Text.Lazy.IO as T
 import           LLVM.AST hiding (function)
 import qualified LLVM.AST.Constant as C
 import qualified LLVM.AST.Float as F
+import           LLVM.AST.Global (basicBlocks, name, parameters, returnType)
 import           LLVM.AST.Type as AST
-import           LLVM.Pretty (ppllvm)
 import           Test.Hspec hiding (example)
 
 import           LLVM.IRBuilder
@@ -21,63 +21,148 @@ main =
   hspec $ do
     describe "module builder" $ do
       it "builds the simple module" $
-        ppllvm simple <> "\n" `shouldBe`
-        T.unlines
-          [ "; ModuleID = 'exampleModule'"
-          , ""
-          , "define external ccc i32 @add(i32 %a, i32 %b){"
-          , "entry:"
-          , "  %0 = add i32 %a, %b"
-          , "  ret i32 %0"
-          , "}"
-          ]
-      it "builds the example" $
-        ppllvm example <> "\n" `shouldBe`
-        T.unlines
-          [ "; ModuleID = 'exampleModule'"
-          , ""
-          , "define external ccc double @foo(){"
-          , "; <label>:0:"
-          , "  %xxx = fadd double 1.000000e1, 1.000000e1"
-          , "  ret void"
-          , "blk:"
-          , "  %1 = fadd double 1.000000e1, 1.000000e1"
-          , "  %2 = fadd double %1, %1"
-          , "  %3 = add i32 10, 10"
-          , "  br label %blk1"
-          , "blk1:"
-          , "  %c = fadd double 1.000000e1, 1.000000e1"
-          , "  %4 = fadd double %c, %c"
-          , "  br label %blk2"
-          , "blk2:"
-          , "  %phi = phi double [1.000000e1, %blk], [1.000000e1, %blk1], [1.000000e1, %blk2]"
-          , "  %5 = fadd double 1.000000e1, 1.000000e1"
-          , "  %6 = fadd double %5, %5"
-          , "  ret void"
-          , "}"
-          , ""
-          , "define external ccc double @bar(){"
-          , "  %1 = fadd double 1.000000e1, 1.000000e1"
-          , "  %2 = fadd double %1, %1"
-          , "  ret void"
-          , "}"
-          , ""
-          , "define external ccc double @baz(i32, double %arg, i32, double %arg1){"
-          , "; <label>:2:"
-          , "  switch i32 %1, label %3 [i32 0, label %4 i32 1, label %7]"
-          , "; <label>:3:"
-          , "  br label %4"
-          , "; <label>:4:"
-          , "  %arg2 = fadd double %arg, 1.000000e1"
-          , "  %5 = fadd double %arg2, %arg2"
-          , "  %6 = select i1 0, double %arg2, double %5"
-          , "  ret void"
-          , "; <label>:7:"
-          , "  %8 = getelementptr i32**, i32*** zeroinitializer, i32 10, i32 20, i32 30"
-          , "  %9 = getelementptr i32, i32* %8, i32 40"
-          , "  ret void"
-          , "}"
-          ]
+        simple `shouldBe`
+        defaultModule {
+          moduleName = "exampleModule",
+          moduleDefinitions =
+            [ GlobalDefinition functionDefaults {
+                name = "add",
+                parameters =
+                  ( [ Parameter i32 "a" []
+                    , Parameter i32 "b" []
+                    ]
+                  , False
+                  ),
+                returnType = i32,
+                basicBlocks =
+                  [ BasicBlock
+                      "entry"
+                      [ UnName 0 := Add {
+                          operand0 = LocalReference i32 "a",
+                          operand1 = LocalReference i32 "b",
+                          nsw = False,
+                          nuw = False,
+                          metadata = []
+                        }
+                      ]
+                      (Do (Ret (Just (LocalReference i32 (UnName 0))) []))
+                  ]
+              }
+            ]
+        }
+      it "builds the example" $ do
+        let f10 = ConstantOperand (C.Float (F.Double 10))
+            fadd a b = FAdd { operand0 = a, operand1 = b, fastMathFlags = NoFastMathFlags, metadata = [] }
+            add a b = Add { operand0 = a, operand1 = b, nsw = False, nuw = False, metadata = [] }
+        example `shouldBe`
+          defaultModule {
+            moduleName = "exampleModule",
+            moduleDefinitions =
+              [ GlobalDefinition functionDefaults {
+                  name = "foo",
+                  returnType = double,
+                  basicBlocks =
+                    [ BasicBlock (UnName 0) [ "xxx" := fadd f10 f10]
+                        (Do (Ret Nothing []))
+                    , BasicBlock
+                        "blk"
+                        [ UnName 1 := fadd f10 f10
+                        , UnName 2 := fadd (LocalReference double (UnName 1)) (LocalReference double (UnName 1))
+                        , UnName 3 := add (ConstantOperand (C.Int 32 10)) (ConstantOperand (C.Int 32 10))
+                        ]
+                        (Do (Br "blk1" []))
+                    , BasicBlock
+                        "blk1"
+                        [ "c" := fadd f10 f10
+                        , UnName 4 := fadd (LocalReference double "c") (LocalReference double "c")
+                        ]
+                        (Do (Br "blk2" []))
+                    , BasicBlock
+                        "blk2"
+                        [ "phi" :=
+                            Phi
+                              double
+                              [ ( f10, "blk" )
+                              , ( f10, "blk1" )
+                              , ( f10, "blk2" )
+                              ]
+                              []
+                        , UnName 5 := fadd f10 f10
+                        , UnName 6 := fadd (LocalReference double (UnName 5)) (LocalReference double (UnName 5))
+                        ]
+                        (Do (Ret Nothing []))
+                    ]
+                }
+              , GlobalDefinition functionDefaults {
+                  name = "bar",
+                  returnType = double,
+                  basicBlocks =
+                    [ BasicBlock
+                       (UnName 0)
+                       [ UnName 1 := fadd f10 f10
+                       , UnName 2 := fadd (LocalReference double (UnName 1)) (LocalReference double (UnName 1))
+                       ]
+                       (Do (Ret Nothing []))
+                    ]
+                }
+              , GlobalDefinition functionDefaults {
+                  name = "baz",
+                  parameters =
+                    ( [ Parameter i32 (UnName 0) []
+                      , Parameter double "arg" []
+                      , Parameter i32 (UnName 1) []
+                      , Parameter double "arg1" []]
+                    , False),
+                  returnType = double,
+                  basicBlocks =
+                    [ BasicBlock
+                        (UnName 2)
+                        []
+                        (Do
+                           (Switch
+                             (LocalReference i32 (UnName 1))
+                             (UnName 3)
+                             [ ( C.Int 32 0, UnName 4), ( C.Int 32 1, UnName 7) ] []))
+                    , BasicBlock
+                        (UnName 3)
+                        []
+                        (Do (Br (UnName 4) []))
+                    , BasicBlock
+                        (UnName 4)
+                        [ "arg2" := fadd (LocalReference double "arg") f10
+                        , UnName 5 := fadd (LocalReference double "arg2") (LocalReference double "arg2")
+                        , UnName 6 := Select {
+                            condition' = ConstantOperand (C.Int 1 0),
+                            trueValue = LocalReference double "arg2",
+                            falseValue = LocalReference double (UnName 5),
+                            metadata = []
+                          }
+                        ]
+                        (Do (Ret Nothing []))
+                    , BasicBlock
+                        (UnName 7)
+                        [ UnName 8 := GetElementPtr {
+                            inBounds = False,
+                            address = ConstantOperand (C.Null (ptr (ptr (ptr i32)))),
+                            indices =
+                              [ ConstantOperand (C.Int 32 10)
+                              , ConstantOperand (C.Int 32 20)
+                              , ConstantOperand (C.Int 32 30)
+                              ],
+                            metadata = []
+                          }
+                        , UnName 9 := GetElementPtr {
+                            inBounds = False,
+                            address = LocalReference (ptr i32) (UnName 8),
+                            indices = [ ConstantOperand (C.Int 32 40) ],
+                            metadata = []
+                          }
+                        ]
+                        (Do (Ret Nothing []))
+                    ]
+                }
+              ]
+          }
 
 simple :: Module
 simple = buildModule "exampleModule" $ mdo
