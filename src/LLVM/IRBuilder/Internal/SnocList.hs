@@ -1,4 +1,4 @@
-module Util.SnocList where
+module LLVM.IRBuilder.Internal.SnocList where
 
 newtype SnocList a = SnocList { unSnocList :: [a] }
   deriving (Eq, Show)

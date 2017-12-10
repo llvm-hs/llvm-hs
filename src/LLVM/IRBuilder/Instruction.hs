@@ -1,6 +1,6 @@
 {-# LANGUAGE FlexibleContexts #-}
 
-module IRBuilder.Instruction where
+module LLVM.IRBuilder.Instruction where
 
 import Prelude hiding (and, or, pred)
 
@@ -16,7 +16,7 @@ import qualified LLVM.AST.Constant as C
 import qualified LLVM.AST.IntegerPredicate as IP
 import qualified LLVM.AST.FloatingPointPredicate as FP
 
-import IRBuilder.Monad
+import LLVM.IRBuilder.Monad
 
 fadd :: MonadIRBuilder m => Operand -> Operand -> m Operand
 fadd a b = emitInstr (typeOf a) $ FAdd NoFastMathFlags a b []

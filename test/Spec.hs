@@ -14,9 +14,7 @@ import           LLVM.AST.Type as AST
 import           LLVM.Pretty (ppllvm)
 import           Test.Hspec hiding (example)
 
-import           IRBuilder.Instruction
-import           IRBuilder.Monad
-import           ModuleBuilder
+import           LLVM.IRBuilder
 
 main :: IO ()
 main =

@@ -6,7 +6,7 @@
 {-# LANGUAGE MultiParamTypeClasses #-}
 {-# LANGUAGE UndecidableInstances #-} -- For MonadState s (ModuleBuilderT m) instance
 
-module IRBuilder.Monad where
+module LLVM.IRBuilder.Monad where
 
 import Prelude hiding (and, or)
 
@@ -34,7 +34,7 @@ import qualified Data.HashSet as HS
 
 import LLVM.AST
 
-import Util.SnocList
+import LLVM.IRBuilder.Internal.SnocList
 
 -- | This provides a uniform API for creating instructions and inserting them
 -- into a basic block: either at the end of a BasicBlock, or at a specific

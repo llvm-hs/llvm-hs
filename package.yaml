@@ -17,11 +17,11 @@ library:
   ghc-options:
     -fwarn-incomplete-patterns
   exposed-modules:
-  - IRBuilder
-  - IRBuilder.Monad
-  - IRBuilder.Instruction
-  - ModuleBuilder
-  - Util.SnocList
+  - LLVM.IRBuilder
+  - LLVM.IRBuilder.Instruction
+  - LLVM.IRBuilder.Monad
+  - LLVM.IRBuilder.Module
+  - LLVM.IRBuilder.Internal.SnocList
 tests:
   irbuilder:
     source-dirs: test
