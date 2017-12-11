@@ -6,9 +6,9 @@ import Prelude hiding (and, or, pred)
 
 import Data.Word
 
-import LLVM.Typed
 import LLVM.AST hiding (args, dests)
 import LLVM.AST.Type as AST
+import LLVM.AST.Typed
 import LLVM.AST.ParameterAttribute
 import qualified LLVM.AST as AST
 import qualified LLVM.AST.CallingConvention as CC

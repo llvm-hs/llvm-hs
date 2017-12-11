@@ -11,7 +11,6 @@ dependencies:
 - containers
 - unordered-containers
 - llvm-hs-pure
-- llvm-hs-pretty
 library:
   source-dirs: src
   ghc-options:

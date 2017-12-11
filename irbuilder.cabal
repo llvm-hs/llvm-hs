@@ -2,7 +2,7 @@
 --
 -- see: https://github.com/sol/hpack
 --
--- hash: 8246c14e241453cb7760dc01cfcb2c1303a48d44110c7d222e0e820ef45019c6
+-- hash: 0538ae9ce3c9686975959296b931edd7be596063e7633b4381a8d1ef33294e90
 
 name:           irbuilder
 version:        0.1.0.0
@@ -20,7 +20,6 @@ library
       base >=4.9 && <4.11
     , bytestring
     , containers
-    , llvm-hs-pretty
     , llvm-hs-pure
     , mtl
     , text
@@ -47,7 +46,6 @@ test-suite irbuilder
     , containers
     , hspec
     , irbuilder
-    , llvm-hs-pretty
     , llvm-hs-pure
     , mtl
     , text
