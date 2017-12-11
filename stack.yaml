@@ -2,13 +2,11 @@ resolver: lts-9.10
 
 packages:
 - '.'
-- location:
-    git: https://github.com/llvm-hs/llvm-hs-pretty.git
-    commit: f5093c8e53fe8eb8bf384a44df2e9cf6d8c2983d
-  extra-dep: true
-
 extra-deps:
-- llvm-hs-pure-5.1.0
+- git: https://github.com/llvm-hs/llvm-hs.git
+  commit: 29c584b28800be81229f2c04e71ff2bb130407a5
+  subdirs:
+    - llvm-hs-pure
 
 flags: {}
 extra-package-dbs: []
