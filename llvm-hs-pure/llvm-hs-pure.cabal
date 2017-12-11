@@ -76,6 +76,7 @@ library
     LLVM.AST.RMWOperation
     LLVM.AST.ThreadLocalStorage
     LLVM.AST.Type
+    LLVM.AST.Typed
     LLVM.AST.Visibility
     LLVM.AST.DLL
     LLVM.AST.COMDAT
