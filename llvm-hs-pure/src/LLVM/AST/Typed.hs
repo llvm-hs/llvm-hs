@@ -81,12 +81,12 @@ instance Typed C.Constant where
   typeOf (C.Select {..})  = typeOf trueValue
   typeOf (C.ExtractElement {..})  = case typeOf vector of
                                       (VectorType _ t) -> t
-                                      _ -> VoidType {- error "The first operand of an extractelement instruction is a value of vector type." -}
+                                      _ -> VoidType {- error "The first operand of an extractelement instruction is a value of vector type." -}
   typeOf (C.InsertElement {..})   = typeOf vector
   typeOf (C.ShuffleVector {..})   = case (typeOf operand0, typeOf mask) of
                                       (VectorType _ t, VectorType m _) -> VectorType m t
                                       _ -> VoidType {- error -}
-  typeOf (C.ExtractValue {..})    = extractValueType (typeOf aggregate) indices
+  typeOf (C.ExtractValue {..})    = extractValueType (typeOf aggregate)
   typeOf (C.InsertValue {..})     = typeOf aggregate
   typeOf (C.TokenNone)          = TokenType
   typeOf (C.AddrSpaceCast {..}) = type'
@@ -98,14 +98,15 @@ getElementPtrType (StructureType _ elTys) (C.Int 32 val:is) =
   getElementPtrType (elTys !! fromIntegral val) is
 getElementPtrType (VectorType _ elTy) (_:is) = getElementPtrType elTy is
 getElementPtrType (ArrayType _ elTy) (_:is) = getElementPtrType elTy is
-getElementPtrType _ _ = error "getElementPtrType"
+getElementPtrType _ _ = error "Expecting aggregate type. (Malformed AST)"
 
 getElementType :: Type -> Type
 getElementType (PointerType t _) = t
-getElementType t = error $ "this should be a pointer type" ++ show t
+getElementType t = error $ "Expecting pointer type. (Malformed AST)"
 
-extractValueType :: a
-extractValueType = error "extractValueType"
+extractValueType :: Type -> Type
+extractValueType (VectorType _ elTy) = elTy
+extractValueType _ = error "Expecting vector type. (Malformed AST)"
 
 instance Typed F.SomeFloat where
   typeOf (F.Half _)          = FloatingPointType HalfFP
