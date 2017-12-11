@@ -8,7 +8,7 @@
 {-# LANGUAGE MultiParamTypeClasses #-}
 {-# LANGUAGE UndecidableInstances #-} -- For MonadState s (IRBuilderT m) instance
 
-module ModuleBuilder where
+module LLVM.IRBuilder.Module where
 
 import Prelude hiding (and, or)
 
@@ -41,8 +41,8 @@ import LLVM.AST.Global
 import LLVM.AST.Linkage
 import qualified LLVM.AST.Constant as C
 
-import Util.SnocList
-import IRBuilder.Monad
+import LLVM.IRBuilder.Internal.SnocList
+import LLVM.IRBuilder.Monad
 
 newtype ModuleBuilderT m a = ModuleBuilderT { unModuleBuilderT :: StateT ModuleBuilderState m a }
   deriving

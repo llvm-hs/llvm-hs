@@ -1,6 +1,8 @@
--- This file has been generated from package.yaml by hpack version 0.17.1.
+-- This file has been generated from package.yaml by hpack version 0.20.0.
 --
 -- see: https://github.com/sol/hpack
+--
+-- hash: 8246c14e241453cb7760dc01cfcb2c1303a48d44110c7d222e0e820ef45019c6
 
 name:           irbuilder
 version:        0.1.0.0
@@ -16,20 +18,20 @@ library
   ghc-options: -fwarn-incomplete-patterns
   build-depends:
       base >=4.9 && <4.11
-    , transformers
-    , mtl
     , bytestring
-    , text
     , containers
-    , unordered-containers
-    , llvm-hs-pure
     , llvm-hs-pretty
+    , llvm-hs-pure
+    , mtl
+    , text
+    , transformers
+    , unordered-containers
   exposed-modules:
-      IRBuilder
-      IRBuilder.Monad
-      IRBuilder.Instruction
-      ModuleBuilder
-      Util.SnocList
+      LLVM.IRBuilder
+      LLVM.IRBuilder.Instruction
+      LLVM.IRBuilder.Monad
+      LLVM.IRBuilder.Module
+      LLVM.IRBuilder.Internal.SnocList
   other-modules:
       Paths_irbuilder
   default-language: Haskell2010
@@ -41,14 +43,16 @@ test-suite irbuilder
       test
   build-depends:
       base >=4.9 && <4.11
-    , transformers
-    , mtl
     , bytestring
-    , text
     , containers
-    , unordered-containers
-    , llvm-hs-pure
-    , llvm-hs-pretty
     , hspec
     , irbuilder
+    , llvm-hs-pretty
+    , llvm-hs-pure
+    , mtl
+    , text
+    , transformers
+    , unordered-containers
+  other-modules:
+      Paths_irbuilder
   default-language: Haskell2010
