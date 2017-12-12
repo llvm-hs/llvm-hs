@@ -40,10 +40,12 @@ library
   build-depends:
     attoparsec >= 0.13,
     bytestring >= 0.10 && < 0.11,
+    fail,
     transformers >= 0.3 && < 0.6,
     mtl >= 2.1,
     template-haskell >= 2.5.0.0,
-    containers >= 0.4.2.1
+    containers >= 0.4.2.1,
+    unordered-containers >= 0.2
   hs-source-dirs: src
   extensions:
     NoImplicitPrelude
@@ -81,6 +83,11 @@ library
     LLVM.AST.DLL
     LLVM.AST.COMDAT
     LLVM.DataLayout
+    LLVM.IRBuilder
+    LLVM.IRBuilder.Instruction
+    LLVM.IRBuilder.Internal.SnocList
+    LLVM.IRBuilder.Module
+    LLVM.IRBuilder.Monad
     LLVM.Prelude
 
 test-suite test
@@ -109,3 +116,19 @@ test-suite test
   other-modules:
     LLVM.Test.DataLayout
     LLVM.Test.Tests
+
+test-suite test-irbuilder
+  type: exitcode-stdio-1.0
+  main-is: IRBuilder.hs
+  hs-source-dirs:
+      test
+  build-depends:
+      base >=4.8 && <4.11
+    , bytestring
+    , containers
+    , hspec
+    , llvm-hs-pure
+    , mtl
+    , text
+    , transformers
+    , unordered-containers
