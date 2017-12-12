@@ -11,7 +11,7 @@ import           LLVM.AST hiding (function)
 import qualified LLVM.AST.Constant as C
 import qualified LLVM.AST.Float as F
 import           LLVM.AST.Global (basicBlocks, name, parameters, returnType)
-import           LLVM.AST.Type as AST
+import qualified LLVM.AST.Type as AST
 import           Test.Hspec hiding (example)
 
 import           LLVM.IRBuilder
@@ -28,24 +28,24 @@ main =
             [ GlobalDefinition functionDefaults {
                 name = "add",
                 parameters =
-                  ( [ Parameter i32 "a" []
-                    , Parameter i32 "b" []
+                  ( [ Parameter AST.i32 "a" []
+                    , Parameter AST.i32 "b" []
                     ]
                   , False
                   ),
-                returnType = i32,
+                returnType = AST.i32,
                 basicBlocks =
                   [ BasicBlock
                       "entry"
                       [ UnName 0 := Add {
-                          operand0 = LocalReference i32 "a",
-                          operand1 = LocalReference i32 "b",
+                          operand0 = LocalReference AST.i32 "a",
+                          operand1 = LocalReference AST.i32 "b",
                           nsw = False,
                           nuw = False,
                           metadata = []
                         }
                       ]
-                      (Do (Ret (Just (LocalReference i32 (UnName 0))) []))
+                      (Do (Ret (Just (LocalReference AST.i32 (UnName 0))) []))
                   ]
               }
             ]
@@ -60,47 +60,47 @@ main =
             moduleDefinitions =
               [ GlobalDefinition functionDefaults {
                   name = "foo",
-                  returnType = double,
+                  returnType = AST.double,
                   basicBlocks =
                     [ BasicBlock (UnName 0) [ "xxx" := fadd f10 f10]
                         (Do (Ret Nothing []))
                     , BasicBlock
                         "blk"
                         [ UnName 1 := fadd f10 f10
-                        , UnName 2 := fadd (LocalReference double (UnName 1)) (LocalReference double (UnName 1))
+                        , UnName 2 := fadd (LocalReference AST.double (UnName 1)) (LocalReference AST.double (UnName 1))
                         , UnName 3 := add (ConstantOperand (C.Int 32 10)) (ConstantOperand (C.Int 32 10))
                         ]
                         (Do (Br "blk1" []))
                     , BasicBlock
                         "blk1"
                         [ "c" := fadd f10 f10
-                        , UnName 4 := fadd (LocalReference double "c") (LocalReference double "c")
+                        , UnName 4 := fadd (LocalReference AST.double "c") (LocalReference AST.double "c")
                         ]
                         (Do (Br "blk2" []))
                     , BasicBlock
                         "blk2"
                         [ "phi" :=
                             Phi
-                              double
+                              AST.double
                               [ ( f10, "blk" )
                               , ( f10, "blk1" )
                               , ( f10, "blk2" )
                               ]
                               []
                         , UnName 5 := fadd f10 f10
-                        , UnName 6 := fadd (LocalReference double (UnName 5)) (LocalReference double (UnName 5))
+                        , UnName 6 := fadd (LocalReference AST.double (UnName 5)) (LocalReference AST.double (UnName 5))
                         ]
                         (Do (Ret Nothing []))
                     ]
                 }
               , GlobalDefinition functionDefaults {
                   name = "bar",
-                  returnType = double,
+                  returnType = AST.double,
                   basicBlocks =
                     [ BasicBlock
                        (UnName 0)
                        [ UnName 1 := fadd f10 f10
-                       , UnName 2 := fadd (LocalReference double (UnName 1)) (LocalReference double (UnName 1))
+                       , UnName 2 := fadd (LocalReference AST.double (UnName 1)) (LocalReference AST.double (UnName 1))
                        ]
                        (Do (Ret Nothing []))
                     ]
@@ -108,19 +108,19 @@ main =
               , GlobalDefinition functionDefaults {
                   name = "baz",
                   parameters =
-                    ( [ Parameter i32 (UnName 0) []
-                      , Parameter double "arg" []
-                      , Parameter i32 (UnName 1) []
-                      , Parameter double "arg1" []]
+                    ( [ Parameter AST.i32 (UnName 0) []
+                      , Parameter AST.double "arg" []
+                      , Parameter AST.i32 (UnName 1) []
+                      , Parameter AST.double "arg1" []]
                     , False),
-                  returnType = double,
+                  returnType = AST.double,
                   basicBlocks =
                     [ BasicBlock
                         (UnName 2)
                         []
                         (Do
                            (Switch
-                             (LocalReference i32 (UnName 1))
+                             (LocalReference AST.i32 (UnName 1))
                              (UnName 3)
                              [ ( C.Int 32 0, UnName 4), ( C.Int 32 1, UnName 7) ] []))
                     , BasicBlock
@@ -129,12 +129,12 @@ main =
                         (Do (Br (UnName 4) []))
                     , BasicBlock
                         (UnName 4)
-                        [ "arg2" := fadd (LocalReference double "arg") f10
-                        , UnName 5 := fadd (LocalReference double "arg2") (LocalReference double "arg2")
+                        [ "arg2" := fadd (LocalReference AST.double "arg") f10
+                        , UnName 5 := fadd (LocalReference AST.double "arg2") (LocalReference AST.double "arg2")
                         , UnName 6 := Select {
                             condition' = ConstantOperand (C.Int 1 0),
-                            trueValue = LocalReference double "arg2",
-                            falseValue = LocalReference double (UnName 5),
+                            trueValue = LocalReference AST.double "arg2",
+                            falseValue = LocalReference AST.double (UnName 5),
                             metadata = []
                           }
                         ]
@@ -143,7 +143,7 @@ main =
                         (UnName 7)
                         [ UnName 8 := GetElementPtr {
                             inBounds = False,
-                            address = ConstantOperand (C.Null (ptr (ptr (ptr i32)))),
+                            address = ConstantOperand (C.Null (AST.ptr (AST.ptr (AST.ptr AST.i32)))),
                             indices =
                               [ ConstantOperand (C.Int 32 10)
                               , ConstantOperand (C.Int 32 20)
@@ -153,7 +153,7 @@ main =
                           }
                         , UnName 9 := GetElementPtr {
                             inBounds = False,
-                            address = LocalReference (ptr i32) (UnName 8),
+                            address = LocalReference (AST.ptr AST.i32) (UnName 8),
                             indices = [ ConstantOperand (C.Int 32 40) ],
                             metadata = []
                           }
@@ -167,7 +167,7 @@ main =
 simple :: Module
 simple = buildModule "exampleModule" $ mdo
 
-  function "add" [(i32, "a"), (i32, "b")] i32 $ \[a, b] -> mdo
+  function "add" [(AST.i32, "a"), (AST.i32, "b")] AST.i32 $ \[a, b] -> mdo
 
     entry <- block `named` "entry"; do
       c <- add a b
@@ -176,7 +176,7 @@ simple = buildModule "exampleModule" $ mdo
 example :: Module
 example = mkModule $ execModuleBuilder emptyModuleBuilder $ mdo
 
-  foo <- function "foo" [] double $ \_ -> mdo
+  foo <- function "foo" [] AST.double $ \_ -> mdo
     xxx <- fadd c1 c1 `named` "xxx"
 
     blk1 <- block `named` "blk"; do
@@ -199,7 +199,7 @@ example = mkModule $ execModuleBuilder emptyModuleBuilder $ mdo
     pure ()
 
 
-  function "bar" [] double $ \_ -> mdo
+  function "bar" [] AST.double $ \_ -> mdo
 
     blk3 <- block; do
       a <- fadd c1 c1
@@ -208,7 +208,7 @@ example = mkModule $ execModuleBuilder emptyModuleBuilder $ mdo
 
     pure ()
 
-  function "baz" [(i32, NoParameterName), (double, "arg"), (i32, NoParameterName), (double, "arg")] double $ \[rrr, arg, arg2, arg3] -> mdo
+  function "baz" [(AST.i32, NoParameterName), (AST.double, "arg"), (AST.i32, NoParameterName), (AST.double, "arg")] AST.double $ \[rrr, arg, arg2, arg3] -> mdo
 
     switch arg2 blk1 [(C.Int 32 0, blk2), (C.Int 32 1, blk3)]
 
@@ -222,7 +222,7 @@ example = mkModule $ execModuleBuilder emptyModuleBuilder $ mdo
       retVoid
 
     blk3 <- block; do
-      let nul = cons $ C.Null $ ptr $ ptr $ ptr $ IntegerType 32
+      let nul = cons $ C.Null $ AST.ptr $ AST.ptr $ AST.ptr $ IntegerType 32
       addr <- gep nul [cons $ C.Int 32 10, cons $ C.Int 32 20, cons $ C.Int 32 30]
       addr' <- gep addr [cons $ C.Int 32 40]
       retVoid

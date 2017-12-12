@@ -84,6 +84,7 @@ library
     LLVM.AST.COMDAT
     LLVM.DataLayout
     LLVM.IRBuilder
+    LLVM.IRBuilder.Constant
     LLVM.IRBuilder.Instruction
     LLVM.IRBuilder.Internal.SnocList
     LLVM.IRBuilder.Module
