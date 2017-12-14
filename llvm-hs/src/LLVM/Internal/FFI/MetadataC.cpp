@@ -6,6 +6,7 @@
 #include "llvm/Config/llvm-config.h"
 #include "llvm/IR/LLVMContext.h"
 #include "llvm/IR/Metadata.h"
+#include "llvm/IR/DebugInfoMetadata.h"
 #include "llvm-c/Core.h"
 
 using namespace llvm;
@@ -46,6 +47,10 @@ LLVMMetadataRef LLVM_Hs_IsAMDNode(LLVMMetadataRef md) {
         return md;
     }
     return nullptr;
+}
+
+LLVMMetadataRef LLVM_Hs_IsDIFile(LLVMMetadataRef md) {
+    return isa<DIFile>(unwrap(md)) ? md : nullptr;
 }
 
 LLVMValueRef LLVM_Hs_GetMDValue(LLVMMetadataRef md) {
@@ -144,6 +149,12 @@ void LLVM_Hs_MetadataReplaceAllUsesWith(LLVMMetadataRef md, LLVMMetadataRef repl
     auto *Node = unwrap<MDNode>(md);
     Node->replaceAllUsesWith(unwrap<Metadata>(replacement));
     MDNode::deleteTemporary(Node);
+}
+
+LLVMMetadataRef LLVM_Hs_createDIFile(LLVMContextRef c,
+  const char *filename, const char *directory, unsigned checksumKind, const char *checksum) {
+    DIFile::ChecksumKind kind = static_cast<DIFile::ChecksumKind>(checksumKind);
+    return wrap(DIFile::get(*unwrap(c), StringRef(filename), StringRef(directory), kind, StringRef(checksum)));
 }
 
 }

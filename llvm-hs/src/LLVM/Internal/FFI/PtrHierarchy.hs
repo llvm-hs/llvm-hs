@@ -89,6 +89,10 @@ data MDNode
 
 instance ChildOf Metadata MDNode
 
+data DIFile
+
+instance ChildOf MDNode DIFile
+
 -- | <http://llvm.org/doxygen/classllvm_1_1MDString.html>
 data MDString
 

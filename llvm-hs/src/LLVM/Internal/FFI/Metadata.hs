@@ -20,6 +20,9 @@ foreign import ccall unsafe "LLVM_Hs_IsAMDString" isAMDString ::
 foreign import ccall unsafe "LLVM_Hs_IsAMDNode" isAMDNode ::
   Ptr Metadata -> IO (Ptr MDNode)
 
+foreign import ccall unsafe "LLVM_Hs_IsDIFile" isDIFile ::
+  Ptr Metadata -> IO (Ptr DIFile)
+
 foreign import ccall unsafe "LLVM_Hs_IsAMDValue" isAMDValue ::
   Ptr Metadata -> IO (Ptr MDValue)
 
@@ -58,6 +61,10 @@ foreign import ccall unsafe "LLVM_Hs_GetMDString" getMDString ::
 
 foreign import ccall unsafe "LLVM_Hs_MDNodeInContext" createMDNodeInContext' ::
   Ptr Context -> Ptr (Ptr Metadata) -> CUInt -> IO (Ptr MDNode)
+
+foreign import ccall unsafe "LLVM_Hs_createDIFile" createDIFile ::
+  Ptr Context -> CString -> CString -> CUInt -> CString -> IO (Ptr MDNode)
+
 
 createMDNodeInContext :: Ptr Context -> (CUInt, Ptr (Ptr Metadata)) -> IO (Ptr MDNode)
 createMDNodeInContext ctx (n, vs) = createMDNodeInContext' ctx vs n
