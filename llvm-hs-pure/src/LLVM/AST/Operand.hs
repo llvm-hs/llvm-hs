@@ -18,6 +18,7 @@ newtype MetadataNodeID = MetadataNodeID Word
 data MetadataNode 
   = MetadataNode [Maybe Metadata]
   | MetadataNodeReference MetadataNodeID
+  | MetadataNodeSpecialized SMetaNode
   deriving (Eq, Ord, Read, Show, Typeable, Data, Generic)
 
 -- | <http://llvm.org/docs/LangRef.html#metadata>
@@ -38,3 +39,16 @@ data Operand
 
 -- | The 'LLVM.AST.Instruction.Call' instruction is special: the callee can be inline assembly
 type CallableOperand  = Either InlineAssembly Operand
+
+-- | <http://llvm.org/docs/LangRef.html#specialized-metadata-nodes
+data SMetaNode
+  = DIFile {
+      filename :: ShortByteString,
+      directory :: ShortByteString,
+      checksumKind :: DIFileChecksum,
+      checksum :: Maybe ShortByteString
+    }
+  deriving (Eq, Ord, Read, Show, Typeable, Data, Generic)
+
+data DIFileChecksum = CSK_None | CSK_MD5 | CSK_SHA1
+  deriving (Eq, Ord, Read, Show, Typeable, Data, Generic)

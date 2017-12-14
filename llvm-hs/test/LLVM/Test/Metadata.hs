@@ -113,6 +113,25 @@ tests = testGroup "Metadata" [
               \\n\
               \!0 = !{void ()* @foo}\n"
       strCheck ast s
-   ]
-
+   ],
+  testGroup "specialized" [
+    testCase "metadata-global" $ do
+      let ast = Module "<string>" "<string>" Nothing Nothing [
+                NamedMetadataDefinition "debuginfo-file" [ MetadataNodeID 0 ],
+                MetadataNodeDefinition (MetadataNodeID 0) [ Just $
+                  MDNode $ MetadataNodeSpecialized $ DIFile {
+                    filename = "file.name",
+                    directory = "di/rec/to/ry",
+                    checksumKind = CSK_SHA1,
+                    checksum = Just $ "4e1243bd22c66e76c2ba9eddc1f91394e57f9f83"
+                  }]
+               ]
+      let s = "; ModuleID = '<string>'\n\
+              \source_filename = \"<string>\"\n\
+              \\n\
+              \!debuginfo-file = !{!0}\n\
+              \\n\
+              \!0 = !DIFile(filename: \"file.name\", directory: \"di/rec/to/ry\", checksumkind: CSK_SHA1, checksum: \"4e1243bd22c66e76c2ba9eddc1f91394e57f9f83\")\n"
+      strCheck ast s
+  ]
  ]

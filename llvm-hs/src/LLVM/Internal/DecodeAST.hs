@@ -21,6 +21,9 @@ import qualified Data.Map as Map
 import Data.Array (Array)
 import qualified Data.Array as Array
 
+import Text.Printf
+import qualified Debug.Trace as Debug
+
 import qualified LLVM.Internal.FFI.Attribute as FFI
 import qualified LLVM.Internal.FFI.GlobalValue as FFI
 import qualified LLVM.Internal.FFI.PtrHierarchy as FFI
@@ -141,6 +144,7 @@ saveNamedType t = do
 getMetadataNodeID :: Ptr FFI.MDNode -> DecodeAST A.MetadataNodeID
 getMetadataNodeID p = do
   mdns <- gets metadataNodes
+  Debug.traceM $ printf "Here!!! getMetadataNodeID %s" (show mdns)
   case Map.lookup p mdns of
     Just r -> return r
     Nothing -> do
