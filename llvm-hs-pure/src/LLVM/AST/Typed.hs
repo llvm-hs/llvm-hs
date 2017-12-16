@@ -5,6 +5,7 @@ module LLVM.AST.Typed (
   Typed(..),
   getElementType,
   getElementPtrType,
+  extractValueType,
 ) where
 
 import LLVM.Prelude
@@ -86,7 +87,7 @@ instance Typed C.Constant where
   typeOf (C.ShuffleVector {..})   = case (typeOf operand0, typeOf mask) of
                                       (VectorType _ t, VectorType m _) -> VectorType m t
                                       _ -> error "The first operand of an shufflevector instruction is a value of vector type. (Malformed AST)"
-  typeOf (C.ExtractValue {..})    = extractValueType (typeOf aggregate)
+  typeOf (C.ExtractValue {..})    = extractValueType indices' (typeOf aggregate)
   typeOf (C.InsertValue {..})     = typeOf aggregate
   typeOf (C.TokenNone)          = TokenType
   typeOf (C.AddrSpaceCast {..}) = type'
@@ -104,9 +105,15 @@ getElementType :: Type -> Type
 getElementType (PointerType t _) = t
 getElementType _ = error $ "Expecting pointer type. (Malformed AST)"
 
-extractValueType :: Type -> Type
-extractValueType (VectorType _ elTy) = elTy
-extractValueType _ = error "Expecting vector type. (Malformed AST)"
+extractValueType :: [Word32] -> Type -> Type
+extractValueType [] ty = ty
+extractValueType (i : is) (ArrayType numEls elTy)
+  | fromIntegral i < numEls = extractValueType is elTy
+  | fromIntegral i >= numEls = error "Expecting valid index into array type. (Malformed AST)"
+extractValueType (i : is) (StructureType _ elTys)
+  | fromIntegral i < length elTys = extractValueType is (elTys !! fromIntegral i)
+  | otherwise = error "Expecting valid index into structure type. (Malformed AST)"
+extractValueType _ _ = error "Expecting vector type. (Malformed AST)"
 
 instance Typed F.SomeFloat where
   typeOf (F.Half _)          = FloatingPointType HalfFP
