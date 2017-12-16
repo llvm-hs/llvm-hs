@@ -1,3 +1,8 @@
+## 5.1.1 (2017-12-26)
+
+* Fix argument order in `LLVM_Hs_CreateTargetMachine`. This affects `withTargetMachine` and `withHostTargetMachine`.
+* Add support for `MCTargetOptions`.
+
 ## 5.1.0 (2017-10-12)
 
 ### Bugfixes

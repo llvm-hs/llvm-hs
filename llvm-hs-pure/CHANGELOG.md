@@ -1,3 +1,10 @@
+## 5.1.1 (2017-12-26)
+
+* Add a completely new API for building modules in a monadic style similar to the IRBuilder provided by LLVM’s C++ API. The modules can be found in `LLVM.IRBuilder`. An example can be found in the readme and in the test suite.
+* Add an API for getting the type of LLVM values in
+  `LLVM.AST.Typed`. This is primarily intended to be used in other
+  libraries that build upon `llvm-hs-pure` such as `llvm-hs-pretty`.
+
 ## 5.1.0 (2017-10-12)
 
 ### Enhancements
