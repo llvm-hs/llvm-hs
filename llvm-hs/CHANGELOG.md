@@ -1,4 +1,8 @@
-## 5.1.1 (2017-12-26)
+## 5.1.2 (2017-12-19)
+
+* Reupload of 5.1.1 since [Hackage broke](https://github.com/haskell/hackage-server/issues/643) during the original upload.
+
+## 5.1.1 (2017-12-16)
 
 * Fix argument order in `LLVM_Hs_CreateTargetMachine`. This affects `withTargetMachine` and `withHostTargetMachine`.
 * Add support for `MCTargetOptions`.

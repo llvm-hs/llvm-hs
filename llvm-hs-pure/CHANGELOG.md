@@ -1,4 +1,4 @@
-## 5.1.1 (2017-12-26)
+## 5.1.1 (2017-12-16)
 
 * Add a completely new API for building modules in a monadic style similar to the IRBuilder provided by LLVM’s C++ API. The modules can be found in `LLVM.IRBuilder`. An example can be found in the readme and in the test suite.
 * Add an API for getting the type of LLVM values in
