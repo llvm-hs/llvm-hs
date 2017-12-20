@@ -141,17 +141,20 @@ entry:
 ```
 
 ```haskell
+{-# LANGUAGE OverloadedStrings #-}
+{-# LANGUAGE RecursiveDo #-}
+
 import Data.Text.Lazy.IO as T
 
-import LLVM.Pretty
+import LLVM.Pretty  -- from the llvm-hs-pretty package
 import LLVM.AST hiding (function)
 import LLVM.AST.Type as AST
 import qualified LLVM.AST.Float as F
 import qualified LLVM.AST.Constant as C
 
-import ModuleBuilder
-import IRBuilder.Monad
-import IRBuilder.Instruction
+import LLVM.IRBuilder.Module
+import LLVM.IRBuilder.Monad
+import LLVM.IRBuilder.Instruction
 
 simple :: IO ()
 simple = T.putStrLn $ ppllvm $ buildModule "exampleModule" $ mdo
