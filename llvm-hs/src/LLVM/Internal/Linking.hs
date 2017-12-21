@@ -18,7 +18,7 @@ import LLVM.Internal.OrcJIT
 getSymbolAddressInProcess
   :: MangledSymbol -> IO WordPtr
 getSymbolAddressInProcess (MangledSymbol sym)
-  = BS.useAsCString sym Dyld.getSymbolAddressInProcess
+  = fromIntegral <$> BS.useAsCString sym Dyld.getSymbolAddressInProcess
 
 -- | Loads the given dynamic library permanently. If 'Nothing'
 --   is given, this will make the symbols from the current

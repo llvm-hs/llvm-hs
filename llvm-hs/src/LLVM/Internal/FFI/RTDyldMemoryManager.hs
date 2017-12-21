@@ -5,9 +5,9 @@ module LLVM.Internal.FFI.RTDyldMemoryManager where
 
 import LLVM.Prelude
 
+import Data.Word
 import Foreign.C.String
-import Foreign.Ptr
 
 -- | <https://llvm.org/doxygen/classllvm_1_1RTDyldMemoryManager.html#a5fee247bdc0c5af393b66bfd73a0a347>
 foreign import ccall safe "LLVM_Hs_GetSymbolAddressInProcess" getSymbolAddressInProcess ::
-  CString -> IO WordPtr
+  CString -> IO Word64
