@@ -156,6 +156,7 @@ library
     LLVM.Internal.FFI.Constant
     LLVM.Internal.FFI.Context
     LLVM.Internal.FFI.DataLayout
+    LLVM.Internal.FFI.DynamicLibrary
     LLVM.Internal.FFI.ExecutionEngine
     LLVM.Internal.FFI.Function
     LLVM.Internal.FFI.GlobalAlias
@@ -177,6 +178,7 @@ library
     LLVM.Internal.FFI.PassManager
     LLVM.Internal.FFI.PtrHierarchy
     LLVM.Internal.FFI.RawOStream
+    LLVM.Internal.FFI.RTDyldMemoryManager
     LLVM.Internal.FFI.ShortByteString
     LLVM.Internal.FFI.SMDiagnostic
     LLVM.Internal.FFI.Target
@@ -185,6 +187,8 @@ library
     LLVM.Internal.FFI.Type
     LLVM.Internal.FFI.User
     LLVM.Internal.FFI.Value
+    LLVM.Internal.Linking
+    LLVM.Linking
     LLVM.Module
     LLVM.OrcJIT
     LLVM.PassManager
@@ -221,6 +225,7 @@ library
     src/LLVM/Internal/FFI/OrcJITC.cpp
     src/LLVM/Internal/FFI/RawOStreamC.cpp
     src/LLVM/Internal/FFI/PassManagerC.cpp
+    src/LLVM/Internal/FFI/RTDyldMemoryManager.cpp
     src/LLVM/Internal/FFI/SMDiagnosticC.cpp
     src/LLVM/Internal/FFI/TargetC.cpp
     src/LLVM/Internal/FFI/TypeC.cpp
