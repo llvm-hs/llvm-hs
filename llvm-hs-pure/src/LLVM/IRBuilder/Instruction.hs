@@ -99,6 +99,9 @@ gep addr is = emitInstr (gepType (typeOf addr) is) (GetElementPtr False addr is 
 trunc :: MonadIRBuilder m => Operand -> Type -> m Operand
 trunc a to = emitInstr to $ Trunc a to []
 
+fptrunc :: MonadIRBuilder m => Operand -> Type -> m Operand
+fptrunc a to = emitInstr to $ FPTrunc a to []
+
 zext :: MonadIRBuilder m => Operand -> Type -> m Operand
 zext a to = emitInstr to $ ZExt a to []
 
@@ -110,6 +113,9 @@ fptoui a to = emitInstr to $ FPToUI a to []
 
 fptosi :: MonadIRBuilder m => Operand -> Type -> m Operand
 fptosi a to = emitInstr to $ FPToSI a to []
+
+fpext :: MonadIRBuilder m => Operand -> Type -> m Operand
+fpext a to = emitInstr to $ FPExt a to []
 
 uitofp :: MonadIRBuilder m => Operand -> Type -> m Operand
 uitofp a to = emitInstr to $ UIToFP a to []
