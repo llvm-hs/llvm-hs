@@ -132,6 +132,21 @@ inttoptr a to = emitInstr to $ IntToPtr a to []
 bitcast :: MonadIRBuilder m => Operand -> Type -> m Operand
 bitcast a to = emitInstr to $ BitCast a to []
 
+extractElement :: MonadIRBuilder m => Operand -> Operand -> m Operand
+extractElement v i = emitInstr (typeOf v) $ ExtractElement v i []
+
+insertElement :: MonadIRBuilder m => Operand -> Operand -> Operand -> m Operand
+insertElement v e i = emitInstr (typeOf v) $ InsertElement v e i []
+
+shuffleVector :: MonadIRBuilder m => Operand -> Operand -> C.Constant -> m Operand
+shuffleVector a b m = emitInstr (typeOf a) $ ShuffleVector a b m []
+
+extractValue :: MonadIRBuilder m => Operand -> [Word32] -> m Operand
+extractValue a i = emitInstr (typeOf a) $ ExtractValue a i []
+
+insertValue :: MonadIRBuilder m => Operand -> Operand -> [Word32] -> m Operand
+insertValue a e i = emitInstr (typeOf a) $ InsertValue a e i []
+
 icmp :: MonadIRBuilder m => IP.IntegerPredicate -> Operand -> Operand -> m Operand
 icmp pred a b = emitInstr i1 $ ICmp pred a b []
 
