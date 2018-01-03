@@ -43,10 +43,10 @@ sub :: MonadIRBuilder m => Operand -> Operand -> m Operand
 sub a b = emitInstr (typeOf a) $ Sub False False a b []
 
 udiv :: MonadIRBuilder m => Operand -> Operand -> m Operand
-udiv a b = emitInstr (typeOf a) $ UDiv True a b []
+udiv a b = emitInstr (typeOf a) $ UDiv False a b []
 
 sdiv :: MonadIRBuilder m => Operand -> Operand -> m Operand
-sdiv a b = emitInstr (typeOf a) $ SDiv True a b []
+sdiv a b = emitInstr (typeOf a) $ SDiv False a b []
 
 urem :: MonadIRBuilder m => Operand -> Operand -> m Operand
 urem a b = emitInstr (typeOf a) $ URem a b []
