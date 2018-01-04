@@ -2,10 +2,7 @@ module LLVM.IRBuilder.Constant where
 import           Data.Word
 import           LLVM.Prelude
 import           LLVM.AST             hiding (args, dests)
-import qualified LLVM.AST.Constant    as C
-import           LLVM.AST.Type        as AST
 import           LLVM.AST.Typed
-import           LLVM.IRBuilder.Monad
 
 import           LLVM.AST.Constant
 import           LLVM.AST.Float

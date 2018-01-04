@@ -10,7 +10,6 @@ import Control.Arrow
 import Control.Monad.AnyCont
 import Control.Monad.IO.Class
 import Control.Exception (finally)
-import Data.Maybe (fromMaybe)
 import Foreign.C (CString, CChar)
 import Foreign.Ptr
 import Foreign.Storable (Storable)

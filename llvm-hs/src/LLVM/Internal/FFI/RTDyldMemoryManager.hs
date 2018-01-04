@@ -5,7 +5,6 @@ module LLVM.Internal.FFI.RTDyldMemoryManager where
 
 import LLVM.Prelude
 
-import Data.Word
 import Foreign.C.String
 
 -- | <https://llvm.org/doxygen/classllvm_1_1RTDyldMemoryManager.html#a5fee247bdc0c5af393b66bfd73a0a347>

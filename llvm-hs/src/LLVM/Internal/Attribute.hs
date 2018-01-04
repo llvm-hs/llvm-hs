@@ -96,6 +96,7 @@ instance Monad m => EncodeM m A.FA.FunctionAttribute (Ptr FFI.FunctionAttrBuilde
       A.FA.StackProtect -> FFI.functionAttributeKindStackProtect
       A.FA.StackProtectReq -> FFI.functionAttributeKindStackProtectReq
       A.FA.StackProtectStrong -> FFI.functionAttributeKindStackProtectStrong
+      A.FA.StrictFP -> FFI.functionAttributeKindStrictFP
       A.FA.NoRedZone -> FFI.functionAttributeKindNoRedZone
       A.FA.NoImplicitFloat -> FFI.functionAttributeKindNoImplicitFloat
       A.FA.Naked -> FFI.functionAttributeKindNaked
@@ -109,6 +110,7 @@ instance Monad m => EncodeM m A.FA.FunctionAttribute (Ptr FFI.FunctionAttrBuilde
       A.FA.JumpTable -> FFI.functionAttributeKindJumpTable
       A.FA.NoDuplicate -> FFI.functionAttributeKindNoDuplicate
       A.FA.SanitizeAddress -> FFI.functionAttributeKindSanitizeAddress
+      A.FA.SanitizeHWAddress -> FFI.functionAttributeKindSanitizeHWAddress
       A.FA.SanitizeThread -> FFI.functionAttributeKindSanitizeThread
       A.FA.SanitizeMemory -> FFI.functionAttributeKindSanitizeMemory
       A.FA.SafeStack -> FFI.functionAttributeKindSafeStack
@@ -181,6 +183,7 @@ instance DecodeM DecodeAST A.FA.FunctionAttribute FFI.FunctionAttribute where
            [functionAttributeKindP|StackProtect|] -> return A.FA.StackProtect
            [functionAttributeKindP|StackProtectReq|] -> return A.FA.StackProtectReq
            [functionAttributeKindP|StackProtectStrong|] -> return A.FA.StackProtectStrong
+           [functionAttributeKindP|StrictFP|] -> return A.FA.StrictFP
            [functionAttributeKindP|NoRedZone|] -> return A.FA.NoRedZone
            [functionAttributeKindP|NoImplicitFloat|] -> return A.FA.NoImplicitFloat
            [functionAttributeKindP|Naked|] -> return A.FA.Naked
@@ -195,6 +198,7 @@ instance DecodeM DecodeAST A.FA.FunctionAttribute FFI.FunctionAttribute where
            [functionAttributeKindP|JumpTable|] -> return A.FA.JumpTable
            [functionAttributeKindP|NoDuplicate|] -> return A.FA.NoDuplicate
            [functionAttributeKindP|SanitizeAddress|] -> return A.FA.SanitizeAddress
+           [functionAttributeKindP|SanitizeHWAddress|] -> return A.FA.SanitizeHWAddress
            [functionAttributeKindP|SanitizeThread|] -> return A.FA.SanitizeThread
            [functionAttributeKindP|SanitizeMemory|] -> return A.FA.SanitizeMemory
            [functionAttributeKindP|ArgMemOnly|] -> return A.FA.ArgMemOnly

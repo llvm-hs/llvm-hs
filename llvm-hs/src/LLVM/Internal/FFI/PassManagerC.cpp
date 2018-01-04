@@ -9,6 +9,7 @@
 #include "llvm/Transforms/IPO/PassManagerBuilder.h"
 #include "llvm/Transforms/Vectorize.h"
 #include "llvm/Transforms/Instrumentation.h"
+#include "llvm/Transforms/Instrumentation/BoundsChecking.h"
 #include "llvm/CodeGen/Passes.h"
 #include "llvm-c/Target.h"
 #include "llvm-c/Transforms/PassManagerBuilder.h"
@@ -159,7 +160,7 @@ void LLVM_Hs_AddThreadSanitizerPass(
 }
 
 void LLVM_Hs_AddBoundsCheckingPass(LLVMPassManagerRef PM) {
-	unwrap(PM)->add(createBoundsCheckingPass());
+	unwrap(PM)->add(createBoundsCheckingLegacyPass());
 }
 
 void LLVM_Hs_AddLoopVectorizePass(

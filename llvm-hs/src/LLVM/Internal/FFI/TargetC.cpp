@@ -163,11 +163,11 @@ static DebuggerKind unwrap(LLVM_Hs_DebuggerKind x) {
     switch (x) {
 #define ENUM_CASE(x)                                                           \
     case LLVM_Hs_DebuggerKind_##x:                                             \
-      return DebuggerKind::x;
-      LLVM_HS_FOR_EACH_DEBUGGER_KIND(ENUM_CASE)
+        return DebuggerKind::x;
+        LLVM_HS_FOR_EACH_DEBUGGER_KIND(ENUM_CASE)
 #undef ENUM_CASE
     default:
-      return DebuggerKind(0);
+        return DebuggerKind(0);
     }
 }
 
@@ -270,8 +270,8 @@ void LLVM_Hs_SetTargetOptionFlag(TargetOptions *to, LLVM_Hs_TargetOptionFlag f,
     }
 }
 
-void LLVM_Hs_SetMCTargetOptionFlag(MCTargetOptions *to, LLVM_Hs_MCTargetOptionFlag f,
-                                   unsigned v) {
+void LLVM_Hs_SetMCTargetOptionFlag(MCTargetOptions *to,
+                                   LLVM_Hs_MCTargetOptionFlag f, unsigned v) {
     switch (f) {
 #define ENUM_CASE(op)                                                          \
     case LLVM_Hs_MCTargetOptionFlag_##op:                                      \
@@ -494,11 +494,10 @@ void LLVM_Hs_InitializeAllTargets() {
     // None of the other components are bound yet
 }
 
-LLVMTargetMachineRef
-LLVM_Hs_CreateTargetMachine(LLVMTargetRef T, const char *Triple,
-                            const char *CPU, const char *Features,
-                            TargetOptions *TO, LLVMRelocMode Reloc,
-                            LLVMCodeModel CodeModel, LLVMCodeGenOptLevel Level) {
+LLVMTargetMachineRef LLVM_Hs_CreateTargetMachine(
+    LLVMTargetRef T, const char *Triple, const char *CPU, const char *Features,
+    TargetOptions *TO, LLVMRelocMode Reloc, LLVMCodeModel CodeModel,
+    LLVMCodeGenOptLevel Level) {
     Optional<Reloc::Model> RM;
     switch (Reloc) {
     case LLVMRelocStatic:
@@ -514,7 +513,8 @@ LLVM_Hs_CreateTargetMachine(LLVMTargetRef T, const char *Triple,
         break;
     }
 
-    CodeModel::Model CM = unwrap(CodeModel);
+    bool JIT;
+    Optional<CodeModel::Model> CM = unwrap(CodeModel, JIT);
 
     CodeGenOpt::Level OL;
     switch (Level) {
@@ -532,8 +532,8 @@ LLVM_Hs_CreateTargetMachine(LLVMTargetRef T, const char *Triple,
         break;
     }
 
-    return wrap(
-        unwrap(T)->createTargetMachine(Triple, CPU, Features, *TO, RM, CM, OL));
+    return wrap(unwrap(T)->createTargetMachine(Triple, CPU, Features, *TO, RM,
+                                               CM, OL, JIT));
 }
 
 TargetOptions *LLVM_Hs_TargetMachineOptions(LLVMTargetMachineRef TM) {

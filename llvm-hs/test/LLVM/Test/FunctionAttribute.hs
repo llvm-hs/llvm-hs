@@ -39,6 +39,7 @@ instance Arbitrary FunctionAttribute where
     , return StackProtect
     , return StackProtectReq
     , return StackProtectStrong
+    , return StrictFP
     , return NoRedZone
     , return NoImplicitFloat
     , return Naked
@@ -53,6 +54,7 @@ instance Arbitrary FunctionAttribute where
     , return JumpTable
     , return NoDuplicate
     , return SanitizeAddress
+    , return SanitizeHWAddress
     , return SanitizeThread
     , return SanitizeMemory
     , StringAttribute <$> (B.pack <$> arbitrary) <*> (B.pack <$> arbitrary)

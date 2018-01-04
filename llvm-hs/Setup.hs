@@ -36,7 +36,7 @@ mkFlagName = FlagName
 #endif
 
 llvmVersion :: Version
-llvmVersion = mkVersion [5,0]
+llvmVersion = mkVersion [6,0]
 
 llvmConfigNames :: [String]
 llvmConfigNames = [
@@ -88,21 +88,23 @@ addLLVMToLdLibraryPath confFlags = do
 -- | These flags are not relevant for us and dropping them allows
 -- linking against LLVM build with Clang using GCC
 ignoredCxxFlags :: [String]
-ignoredCxxFlags =
-  ["-Wcovered-switch-default", "-fcolor-diagnostics"] ++ map ("-D" ++) uncheckedHsFFIDefines
+ignoredCxxFlags = ["-fcolor-diagnostics"] ++ map ("-D" ++) uncheckedHsFFIDefines
 
 ignoredCFlags :: [String]
-ignoredCFlags = ["-Wcovered-switch-default", "-Wdelete-non-virtual-dtor", "-fcolor-diagnostics"]
+ignoredCFlags = ["-fcolor-diagnostics"]
 
 -- | Header directories are added separately to configExtraIncludeDirs
 isIncludeFlag :: String -> Bool
 isIncludeFlag flag = "-I" `isPrefixOf` flag
 
+isWarningFlag :: String -> Bool
+isWarningFlag flag = "-W" `isPrefixOf` flag
+
 isIgnoredCFlag :: String -> Bool
-isIgnoredCFlag flag = flag `elem` ignoredCFlags || isIncludeFlag flag
+isIgnoredCFlag flag = flag `elem` ignoredCFlags || isIncludeFlag flag || isWarningFlag flag
 
 isIgnoredCxxFlag :: String -> Bool
-isIgnoredCxxFlag flag = flag `elem` ignoredCxxFlags || isIncludeFlag flag
+isIgnoredCxxFlag flag = flag `elem` ignoredCxxFlags || isIncludeFlag flag || isWarningFlag flag
 
 main :: IO ()
 main = do

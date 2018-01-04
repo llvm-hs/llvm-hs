@@ -4,6 +4,7 @@ module LLVM.Test.Instructions where
 
 import Test.Tasty
 import Test.Tasty.HUnit
+import Test.Tasty.QuickCheck (Arbitrary(..), (===), ioProperty, oneof, testProperty)
 
 import LLVM.Test.Support
 
@@ -33,6 +34,9 @@ import qualified LLVM.AST.Attribute as A
 import qualified LLVM.AST.Global as G
 import qualified LLVM.AST.Constant as C
 import qualified LLVM.AST.RMWOperation as RMWOp
+
+import LLVM.Internal.Coding (decodeM, encodeM)
+import qualified LLVM.Internal.FFI.LLVMCTypes as FFI
 
 tests = testGroup "Instructions" [
   testGroup "regular" [
@@ -102,7 +106,7 @@ tests = testGroup "Instructions" [
            "add nuw i32 %0, %0"),
           ("fadd",
            FAdd {
-             fastMathFlags = NoFastMathFlags,
+             fastMathFlags = noFastMathFlags,
              operand0 = a 1,
              operand1 = a 1,
              metadata = [] 
@@ -119,7 +123,7 @@ tests = testGroup "Instructions" [
            "sub i32 %0, %0"),
           ("fsub",
            FSub {
-             fastMathFlags = NoFastMathFlags,
+             fastMathFlags = noFastMathFlags,
              operand0 = a 1,
              operand1 = a 1,
              metadata = [] 
@@ -136,7 +140,7 @@ tests = testGroup "Instructions" [
            "mul i32 %0, %0"),
           ("fmul",
            FMul {
-             fastMathFlags = NoFastMathFlags,
+             fastMathFlags = noFastMathFlags,
              operand0 = a 1,
              operand1 = a 1,
              metadata = [] 
@@ -168,7 +172,7 @@ tests = testGroup "Instructions" [
            "sdiv i32 %0, %0"),
           ("fdiv",
            FDiv {
-             fastMathFlags = NoFastMathFlags,
+             fastMathFlags = noFastMathFlags,
              operand0 = a 1,
              operand1 = a 1,
              metadata = [] 
@@ -190,7 +194,7 @@ tests = testGroup "Instructions" [
            "srem i32 %0, %0"),
           ("frem",
            FRem {
-             fastMathFlags = NoFastMathFlags,
+             fastMathFlags = noFastMathFlags,
              operand0 = a 1,
              operand1 = a 1,
              metadata = [] 
@@ -198,7 +202,15 @@ tests = testGroup "Instructions" [
            "frem float %1, %1"),
           ("frem fast",
            FRem {
-             fastMathFlags = UnsafeAlgebra,
+             fastMathFlags = FastMathFlags {
+                 allowReassoc = True,
+                 noNaNs = True,
+                 noInfs = True,
+                 noSignedZeros = True,
+                 allowReciprocal = True,
+                 allowContract = True,
+                 approxFunc = True
+             },
              operand0 = a 1,
              operand1 = a 1,
              metadata = [] 
@@ -1236,5 +1248,26 @@ tests = testGroup "Instructions" [
        \}\n"
      )
     ]
-   ]
+   ],
+
+  testGroup "fast-math flags" [
+    testProperty "roundtrip" $ \flags ->
+     ioProperty $ withContext $ \ctx -> do
+       encodedFlags <- encodeM flags :: IO FFI.FastMathFlags
+       decodedFlags <- decodeM encodedFlags :: IO FastMathFlags
+       pure (decodedFlags === flags)
+  ]
  ]
+
+instance Arbitrary FastMathFlags where
+  arbitrary = oneof
+    [ pure noFastMathFlags
+    , FastMathFlags <$>
+       arbitrary <*>
+       arbitrary <*>
+       arbitrary <*>
+       arbitrary <*>
+       arbitrary <*>
+       arbitrary <*>
+       arbitrary
+    ]
