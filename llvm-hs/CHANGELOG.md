@@ -1,3 +1,7 @@
+## 5.1.3 (2018-01-06)
+
+* Add bindings to `loadLibraryPermamently` and `getSymbolAddressInProcess`.
+
 ## 5.1.2 (2017-12-19)
 
 * Reupload of 5.1.1 since [Hackage broke](https://github.com/haskell/hackage-server/issues/643) during the original upload.

@@ -1,3 +1,10 @@
+## 5.1.2 (2018-01-06)
+
+* Fixes and enhancements to the IRBuilder
+  * `sdiv` and `udiv` no longer default to exact.
+  * Fix type of global references.
+  * Add more instructions.
+
 ## 5.1.1 (2017-12-16)
 
 * Add a completely new API for building modules in a monadic style similar to the IRBuilder provided by LLVM’s C++ API. The modules can be found in `LLVM.IRBuilder`. An example can be found in the readme and in the test suite.
