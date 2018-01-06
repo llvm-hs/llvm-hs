@@ -102,7 +102,7 @@ tests =
                     JITSymbol mainFn _ <- findSymbol compileLayer mainSymbol True
                     result <- mkMain (castPtrToFunPtr (wordPtrToPtr mainFn))
                     result @?= 42
-                    assert (readIORef passmanagerSuccessful),
+                    readIORef passmanagerSuccessful @? "passmanager failed",
 
     testCase "lazy compilation" $ do
       withTestModule $ \mod ->

@@ -18,6 +18,7 @@ data FunctionAttribute
     | StackProtect
     | StackProtectReq
     | StackProtectStrong
+    | StrictFP
     | NoRedZone
     | NoImplicitFloat
     | Naked
@@ -32,6 +33,7 @@ data FunctionAttribute
     | JumpTable
     | NoDuplicate
     | SanitizeAddress
+    | SanitizeHWAddress
     | SanitizeThread
     | SanitizeMemory
     | Speculatable

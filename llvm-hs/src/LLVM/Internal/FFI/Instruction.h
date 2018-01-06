@@ -37,12 +37,13 @@ LLVM_HS_FOR_EACH_SYNCRONIZATION_SCOPE(ENUM_CASE)
 
 /* The last parameter to the macro indicates whether the set<param> function takes a boolean argument or not */
 #define LLVM_HS_FOR_EACH_FAST_MATH_FLAG(macro) \
-	macro(UnsafeAlgebra, unsafeAlgebra, F)								\
+	macro(AllowReassoc, allowReassoc, F)								\
 	macro(NoNaNs, noNaNs, F)                                              \
 	macro(NoInfs, noInfs, F)                                              \
 	macro(NoSignedZeros, noSignedZeros, F)								\
 	macro(AllowReciprocal, allowReciprocal, F)                            \
-    macro(AllowContract, allowContract, T)
+    macro(AllowContract, allowContract, T) \
+    macro(ApproxFunc, approxFunc, F)
 
 typedef enum {
 #define ENUM_CASE(x,l,takesArg) LLVM ## x ## Bit,

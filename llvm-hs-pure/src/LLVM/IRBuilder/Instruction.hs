@@ -19,19 +19,19 @@ import qualified LLVM.AST.FloatingPointPredicate as FP
 import LLVM.IRBuilder.Monad
 
 fadd :: MonadIRBuilder m => Operand -> Operand -> m Operand
-fadd a b = emitInstr (typeOf a) $ FAdd NoFastMathFlags a b []
+fadd a b = emitInstr (typeOf a) $ FAdd noFastMathFlags a b []
 
 fmul :: MonadIRBuilder m => Operand -> Operand -> m Operand
-fmul a b = emitInstr (typeOf a) $ FMul NoFastMathFlags a b []
+fmul a b = emitInstr (typeOf a) $ FMul noFastMathFlags a b []
 
 fsub :: MonadIRBuilder m => Operand -> Operand -> m Operand
-fsub a b = emitInstr (typeOf a) $ FSub NoFastMathFlags a b []
+fsub a b = emitInstr (typeOf a) $ FSub noFastMathFlags a b []
 
 fdiv :: MonadIRBuilder m => Operand -> Operand -> m Operand
-fdiv a b = emitInstr (typeOf a) $ FDiv NoFastMathFlags a b []
+fdiv a b = emitInstr (typeOf a) $ FDiv noFastMathFlags a b []
 
 frem :: MonadIRBuilder m => Operand -> Operand -> m Operand
-frem a b = emitInstr (typeOf a) $ FRem NoFastMathFlags a b []
+frem a b = emitInstr (typeOf a) $ FRem noFastMathFlags a b []
 
 add :: MonadIRBuilder m => Operand -> Operand -> m Operand
 add a b = emitInstr (typeOf a) $ Add False False a b []

@@ -7,7 +7,7 @@ import Control.Exception
 import Control.Monad.AnyCont
 import Control.Monad.IO.Class
 import Data.Bits
-import Data.ByteString (ByteString, packCString, useAsCString)
+import Data.ByteString (packCString, useAsCString)
 import Data.IORef
 import Foreign.C.String
 import Foreign.Ptr

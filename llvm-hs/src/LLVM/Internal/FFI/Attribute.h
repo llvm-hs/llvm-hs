@@ -46,6 +46,7 @@
 	macro(SExt,T,T,F)                                 \
 	macro(SafeStack,F,F,T)                            \
 	macro(SanitizeAddress,F,F,T)                      \
+    macro(SanitizeHWAddress,F,F,T)                    \
 	macro(SanitizeMemory,F,F,T)                       \
 	macro(SanitizeThread,F,F,T)                       \
     macro(Speculatable,F,F,T)                         \
@@ -53,6 +54,7 @@
 	macro(StackProtect,F,F,T)                         \
 	macro(StackProtectReq,F,F,T)                      \
 	macro(StackProtectStrong,F,F,T)                   \
+    macro(StrictFP,F,F,T)                             \
 	macro(StructRet,T,F,F)                            \
 	macro(SwiftError,T,F,F)                           \
 	macro(SwiftSelf,T,F,F)                            \

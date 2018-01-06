@@ -52,7 +52,7 @@ main =
         }
       it "builds the example" $ do
         let f10 = ConstantOperand (C.Float (F.Double 10))
-            fadd a b = FAdd { operand0 = a, operand1 = b, fastMathFlags = NoFastMathFlags, metadata = [] }
+            fadd a b = FAdd { operand0 = a, operand1 = b, fastMathFlags = noFastMathFlags, metadata = [] }
             add a b = Add { operand0 = a, operand1 = b, nsw = False, nuw = False, metadata = [] }
         example `shouldBe`
           defaultModule {

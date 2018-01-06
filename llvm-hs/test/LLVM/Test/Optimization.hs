@@ -177,7 +177,7 @@ tests = testGroup "Optimization" [
     testCase "SLPVectorization" $ do
       let
         fadd op0 op1 =
-          FAdd { fastMathFlags = NoFastMathFlags, operand0 = op0, operand1 = op1, metadata = [] }
+          FAdd { fastMathFlags = noFastMathFlags, operand0 = op0, operand1 = op1, metadata = [] }
         doubleVec = VectorType 2 double
         constInt i = ConstantOperand (C.Int {C.integerBits = 32, C.integerValue = i})
         undef = ConstantOperand (C.Undef doubleVec)

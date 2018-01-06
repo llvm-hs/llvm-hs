@@ -1,3 +1,18 @@
+## 6.0.0 (unreleased)
+
+* Support for LLVM 6.0
+  * Add `StrictFP` and `SanitizeHWAddress` function attributes.
+  * Remove `UnsafeAlgebra` constructor from `FastMathFlags`.
+  * Add `allowReassoc`, `allowContract` and `approxFunc` fields to `FastMathFlags`.
+  * Remove `NoFastMathFlags` constructor since it is equivalent to
+    setting all fields in the `FastMathFlags` record to
+    `False`. Existing uses of `NoFastMathFlags` can be replaced by the
+    `noFastMathFlags` value.
+* Fixes and enhancements to the IRBuilder
+  * `sdiv` and `udiv` no longer default to exact.
+  * Fix type of global references.
+  * Add more instructions.
+
 ## 5.1.1 (2017-12-16)
 
 * Add a completely new API for building modules in a monadic style similar to the IRBuilder provided by LLVM’s C++ API. The modules can be found in `LLVM.IRBuilder`. An example can be found in the readme and in the test suite.

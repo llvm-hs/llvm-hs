@@ -85,15 +85,28 @@ data Terminator
 
 -- | <http://llvm.org/docs/LangRef.html#fast-math-flags>
 data FastMathFlags 
-  = NoFastMathFlags
-  | UnsafeAlgebra
-  | FastMathFlags {
+  = FastMathFlags {
+      allowReassoc :: Bool,
       noNaNs :: Bool,
       noInfs :: Bool,
       noSignedZeros :: Bool,
-      allowReciprocal :: Bool
+      allowReciprocal :: Bool,
+      allowContract :: Bool,
+      approxFunc :: Bool
     }
   deriving (Eq, Ord, Read, Show, Data, Typeable, Generic)
+
+noFastMathFlags :: FastMathFlags
+noFastMathFlags =
+  FastMathFlags {
+    allowReassoc = False,
+    noNaNs = False,
+    noInfs = False,
+    noSignedZeros = False,
+    allowReciprocal = False,
+    allowContract = False,
+    approxFunc = False
+  }
 
 -- | <http://llvm.org/docs/LangRef.html#atomic-memory-ordering-constraints>
 -- <http://llvm.org/docs/Atomics.html>
