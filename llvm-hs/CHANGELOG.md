@@ -1,6 +1,9 @@
 ## 6.0.0 (unreleased)
 
 * Support for LLVM 6.0, take a look at the changelog of llvm-hs-pure for details.
+
+## 5.1.3 (2018-01-06)
+
 * Add bindings to `loadLibraryPermamently` and `getSymbolAddressInProcess`.
 
 ## 5.1.2 (2017-12-19)

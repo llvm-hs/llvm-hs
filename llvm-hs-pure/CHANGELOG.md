@@ -8,10 +8,14 @@
     setting all fields in the `FastMathFlags` record to
     `False`. Existing uses of `NoFastMathFlags` can be replaced by the
     `noFastMathFlags` value.
+
+## 5.1.2 (2018-01-06)
+
 * Fixes and enhancements to the IRBuilder
   * `sdiv` and `udiv` no longer default to exact.
   * Fix type of global references.
   * Add more instructions.
+
 
 ## 5.1.1 (2017-12-16)
 
