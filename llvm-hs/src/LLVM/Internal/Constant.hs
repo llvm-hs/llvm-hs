@@ -102,7 +102,7 @@ instance EncodeM EncodeAST A.Constant (Ptr FFI.Constant) where
       if ty /= ty'
         then throwM
                (EncodeException
-                  ("The serialized GlobalReference has type " ++ show ty' ++ " but should have type " ++ show ty))
+                  ("The serialized GlobalReference has type " ++ show ty ++ " but should have type " ++ show ty'))
         else return ref
     A.C.BlockAddress f b -> do
       f' <- referGlobal f
