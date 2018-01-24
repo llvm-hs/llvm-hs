@@ -35,6 +35,11 @@ mkFlagName :: String -> FlagName
 mkFlagName = FlagName
 #endif
 
+#if !(MIN_VERSION_Cabal(2,1,0))
+lookupFlagAssignment :: FlagName -> FlagAssignment -> Maybe Bool
+lookupFlagAssignment = lookup
+#endif
+
 llvmVersion :: Version
 llvmVersion = mkVersion [5,0]
 
@@ -125,7 +130,7 @@ main = do
       [llvmVersion] <- liftM lines $ llvmConfig ["--version"]
       let getLibs = liftM (map (fromJust . stripPrefix "-l") . words) . llvmConfig
           flags    = configConfigurationsFlags confFlags
-          linkFlag = case lookup (mkFlagName "shared-llvm") flags of
+          linkFlag = case lookupFlagAssignment (mkFlagName "shared-llvm") flags of
                        Nothing     -> "--link-shared"
                        Just shared -> if shared then "--link-shared" else "--link-static"
       libs       <- getLibs ["--libs", linkFlag]

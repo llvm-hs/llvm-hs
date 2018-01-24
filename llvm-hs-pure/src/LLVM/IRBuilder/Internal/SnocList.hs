@@ -1,12 +1,23 @@
+{-# LANGUAGE CPP #-}
 module LLVM.IRBuilder.Internal.SnocList where
 
+#if MIN_VERSION_base(4,11,0)
 import LLVM.Prelude
+#else
+import Data.Semigroup (Semigroup(..))
+import LLVM.Prelude hiding ((<>))
+#endif
 
 newtype SnocList a = SnocList { unSnocList :: [a] }
   deriving (Eq, Show)
 
+instance Semigroup (SnocList a) where
+  SnocList xs <> SnocList ys = SnocList $ ys ++ xs
+
 instance Monoid (SnocList a) where
-  mappend (SnocList xs) (SnocList ys) = SnocList $ ys ++ xs
+#if !(MIN_VERSION_base(4,11,0))
+  mappend = (<>)
+#endif
   mempty = SnocList []
 
 snoc :: SnocList a -> a -> SnocList a
