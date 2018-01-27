@@ -64,7 +64,7 @@ instance EncodeM EncodeAST A.Constant (Ptr FFI.Constant) where
       t <- encodeM (A.IntegerType bits)
       words <- encodeM [
         fromIntegral ((v `shiftR` (w*64)) .&. 0xffffffffffffffff) :: Word64
-        | w <- [0 .. ((fromIntegral bits-1) `div` 64)] 
+        | w <- [0 .. ((fromIntegral bits-1) `div` 64)]
        ]
       liftIO $ FFI.constantIntOfArbitraryPrecision t words
     A.C.Float { A.C.floatValue = v } -> do
@@ -102,7 +102,7 @@ instance EncodeM EncodeAST A.Constant (Ptr FFI.Constant) where
       if ty /= ty'
         then throwM
                (EncodeException
-                  ("The serialized GlobalReference has type " ++ show ty ++ " but should have type " ++ show ty'))
+                  ("The serialized GlobalReference " ++ show n  ++ " has type " ++ show ty ++ " but should have type " ++ show ty'))
         else return ref
     A.C.BlockAddress f b -> do
       f' <- referGlobal f
@@ -163,11 +163,11 @@ instance DecodeM DecodeAST A.Constant (Ptr FFI.Constant) where
     t <- decodeM ft
     valueSubclassId <- liftIO $ FFI.getValueSubclassId v
     nOps <- liftIO $ FFI.getNumOperands u
-    let globalRef = return A.C.GlobalReference 
+    let globalRef = return A.C.GlobalReference
                     `ap` (return t)
                     `ap` (getGlobalName =<< liftIO (FFI.isAGlobalValue v))
         op = decodeM <=< liftIO . FFI.getConstantOperand c
-        getConstantOperands = mapM op [0..nOps-1] 
+        getConstantOperands = mapM op [0..nOps-1]
         getConstantData = do
           let nElements =
                 case t of
@@ -210,8 +210,8 @@ instance DecodeM DecodeAST A.Constant (Ptr FFI.Constant) where
       [valueSubclassIdP|ConstantPointerNull|] -> return $ A.C.Null t
       [valueSubclassIdP|ConstantAggregateZero|] -> return $ A.C.Null t
       [valueSubclassIdP|UndefValue|] -> return $ A.C.Undef t
-      [valueSubclassIdP|BlockAddress|] -> 
-            return A.C.BlockAddress 
+      [valueSubclassIdP|BlockAddress|] ->
+            return A.C.BlockAddress
                `ap` (getGlobalName =<< do liftIO $ FFI.isAGlobalValue =<< FFI.getBlockAddressFunction c)
                `ap` (getLocalName =<< do liftIO $ FFI.getBlockAddressBlock c)
       [valueSubclassIdP|ConstantStruct|] -> do
@@ -219,11 +219,11 @@ instance DecodeM DecodeAST A.Constant (Ptr FFI.Constant) where
                `ap` (return $ case t of A.NamedTypeReference n -> Just n; _ -> Nothing)
                `ap` (decodeM =<< liftIO (FFI.isPackedStruct ft))
                `ap` getConstantOperands
-      [valueSubclassIdP|ConstantDataArray|] -> 
+      [valueSubclassIdP|ConstantDataArray|] ->
             return A.C.Array `ap` (return $ A.elementType t) `ap` getConstantData
-      [valueSubclassIdP|ConstantArray|] -> 
+      [valueSubclassIdP|ConstantArray|] ->
             return A.C.Array `ap` (return $ A.elementType t) `ap` getConstantOperands
-      [valueSubclassIdP|ConstantDataVector|] -> 
+      [valueSubclassIdP|ConstantDataVector|] ->
             return A.C.Vector `ap` getConstantData
       [valueSubclassIdP|ConstantVector|] ->
             A.C.Vector <$> getConstantOperands
@@ -277,5 +277,5 @@ instance DecodeM DecodeAST A.Constant (Ptr FFI.Constant) where
       _ -> error $ "unhandled constant valueSubclassId: " ++ show valueSubclassId
 
 
-  
-  
+
+
