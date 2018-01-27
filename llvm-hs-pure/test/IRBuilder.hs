@@ -12,8 +12,9 @@ import qualified LLVM.AST.Constant as C
 import qualified LLVM.AST.Float as F
 import           LLVM.AST.Global (basicBlocks, name, parameters, returnType)
 import qualified LLVM.AST.Type as AST
+import qualified LLVM.AST.CallingConvention as CC
 import           Test.Hspec hiding (example)
-
+import qualified LLVM.AST.Instruction as I (function)
 import           LLVM.IRBuilder
 
 main :: IO ()
@@ -50,6 +51,8 @@ main =
               }
             ]
         }
+      it "calls constant globals" $ do
+        callWorksWithConstantGlobals
       it "builds the example" $ do
         let f10 = ConstantOperand (C.Float (F.Double 10))
             fadd a b = FAdd { operand0 = a, operand1 = b, fastMathFlags = noFastMathFlags, metadata = [] }
@@ -164,6 +167,43 @@ main =
               ]
           }
 
+callWorksWithConstantGlobals = do
+  funcCall `shouldBe` defaultModule
+    { moduleName = "exampleModule"
+    , moduleDefinitions =
+      [ GlobalDefinition functionDefaults {
+          returnType = AST.ptr AST.i8,
+          name = Name "malloc",
+          parameters = ([Parameter (IntegerType {typeBits = 64}) (Name "") []],False),
+          basicBlocks = []
+        }
+      , GlobalDefinition functionDefaults {
+          returnType = VoidType,
+          name = Name "omg",
+          parameters = ([],False),
+          basicBlocks = [
+            BasicBlock (UnName 1) [
+              UnName 0 := Call { tailCallKind = Nothing
+                , I.function = Right (
+                  ConstantOperand (
+                    C.GlobalReference
+                      (AST.ptr $ FunctionType {resultType = AST.ptr $ IntegerType {typeBits = 8}, argumentTypes = [IntegerType {typeBits = 64}], isVarArg = False})
+                      (Name "malloc")
+                    )
+                  )
+                , callingConvention = CC.C
+                , returnAttributes = []
+                , arguments = [(ConstantOperand (C.Int {C.integerBits = 64, C.integerValue = 10}),[])]
+                , functionAttributes = []
+                , metadata = []
+                }
+              ]
+              (Do (Unreachable {metadata' = []}))
+          ]
+        }
+      ]
+    }
+
 simple :: Module
 simple = buildModule "exampleModule" $ mdo
 
@@ -231,6 +271,19 @@ example = mkModule $ execModuleBuilder emptyModuleBuilder $ mdo
   where
     mkModule ds = defaultModule { moduleName = "exampleModule", moduleDefinitions = ds }
     cons = ConstantOperand
+
+funcCall :: Module
+funcCall = mkModule $ execModuleBuilder emptyModuleBuilder $ mdo
+  extern "malloc" [AST.i64] (AST.ptr AST.i8)
+
+  let mallocTy = AST.ptr $ AST.FunctionType (AST.ptr AST.i8) [AST.i64] False
+
+  function "omg" [] (AST.void) $ \_ -> do
+    size <- int64 10
+    call (ConstantOperand $ C.GlobalReference mallocTy "malloc") [(size, [])]
+    unreachable
+  where
+  mkModule ds = defaultModule { moduleName = "exampleModule", moduleDefinitions = ds }
 
 c1 :: Operand
 c1 = ConstantOperand $ C.Float (F.Double 10)

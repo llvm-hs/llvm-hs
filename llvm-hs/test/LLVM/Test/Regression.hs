@@ -119,7 +119,7 @@ tests =
     , testCase
         "no implicit casts"
         (example2 `shouldThrowEncodeException`
-         "The serialized GlobalReference has type FunctionType {resultType = VoidType, argumentTypes = [], isVarArg = False} but should have type PointerType {pointerReferent = FunctionType {resultType = VoidType, argumentTypes = [], isVarArg = False}, pointerAddrSpace = AddrSpace 0}")
+         "The serialized GlobalReference Name \"test\" has type FunctionType {resultType = VoidType, argumentTypes = [], isVarArg = False} but should have type PointerType {pointerReferent = FunctionType {resultType = VoidType, argumentTypes = [], isVarArg = False}, pointerAddrSpace = AddrSpace 0}")
     , testCase
         "null constants must have pointer type"
         (example3 `shouldThrowEncodeException`

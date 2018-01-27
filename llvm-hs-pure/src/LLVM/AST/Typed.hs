@@ -42,7 +42,7 @@ instance Typed C.Constant where
                                   (x:_) -> typeOf x
   typeOf (C.Undef t)     = t
   typeOf (C.BlockAddress {..})   = ptr i8
-  typeOf (C.GlobalReference t _) = ptr t
+  typeOf (C.GlobalReference t _) = t
   typeOf (C.Add {..})     = typeOf operand0
   typeOf (C.FAdd {..})    = typeOf operand0
   typeOf (C.FDiv {..})    = typeOf operand0
