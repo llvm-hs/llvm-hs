@@ -122,7 +122,10 @@ instance EncodeM EncodeAST A.Constant (Ptr FFI.Constant) where
       Context context <- gets encodeStateContext
       liftIO $ FFI.getConstTokenNone context
     o -> $(do
-      let constExprInfo =  ID.outerJoin ID.astConstantRecs (ID.innerJoin ID.astInstructionRecs ID.instructionDefs)
+      let -- This is a mapping from constructor names to the constructor of the constant
+          -- and the constructor and the definition of the instruction.
+          constExprInfo :: Map.Map String (Maybe TH.Con, Maybe (TH.Con, ID.InstructionDef))
+          constExprInfo =  ID.outerJoin ID.astConstantRecs (ID.innerJoin ID.astInstructionRecs ID.instructionDefs)
       TH.caseE [| o |] $
         map (\p -> TH.match p (TH.normalB [|inconsistentCases "Constant" o|]) [])
             [[p|A.C.Int{}|],
@@ -131,26 +134,62 @@ instance EncodeM EncodeAST A.Constant (Ptr FFI.Constant) where
              [p|A.C.BlockAddress{}|],
              [p|A.C.GlobalReference{}|],
              [p|A.C.TokenNone{}|]] ++
-        (do (name, (Just (TH.RecC n fs), instrInfo)) <- Map.toList constExprInfo
-            let fns = [ TH.mkName . TH.nameBase $ fn | (fn, _, _) <- fs ]
+        (do (name, (Just (TH.RecC n fields), instrInfo)) <- Map.toList constExprInfo
+            let fieldNames = [ TH.mkName . TH.nameBase $ fn | (fn, _, _) <- fields ]
                 coreCall n = TH.dyn $ "FFI.constant" ++ n
-                buildBody c = [ TH.bindS (TH.varP fn) [| encodeM $(TH.varE fn) |] | fn <- fns ]
-                              ++ [ TH.noBindS [| liftIO $(foldl TH.appE c (map TH.varE fns)) |] ]
-                hasFlags = any (== ''Bool) [ h | (_, _, TH.ConT h) <- fs ]
+                -- Addition validations that are run during encoding. A common usage of
+                -- this is to check if certain types are allowed. The record fields are in scope
+                -- when the validations are run.
+                validations = case name of
+                  "Null" ->
+                    [ TH.noBindS
+                        [| case $(TH.dyn "constantType") of
+                             A.PointerType {} -> pure ()
+                             _ ->
+                               throwM
+                                 (EncodeException
+                                    ("Null pointer constant must have pointer type but has type " <>
+                                     show $(TH.dyn "constantType") <> "."))
+                        |]
+                    ]
+                  "AggregateZero" ->
+                    [ TH.noBindS $
+                        [| case $(TH.dyn "constantType") of
+                             A.ArrayType {} -> pure ()
+                             A.StructureType {} -> pure ()
+                             A.VectorType {} -> pure ()
+                             _ ->
+                               throwM
+                                 (EncodeException
+                                    ("Aggregate zero constant must have struct, array or vector type but has type " <>
+                                     show $(TH.dyn "constantType") <> "."))
+                        |]
+                    ]
+                  _ -> []
+                buildBody c =
+                  validations ++
+                  [ TH.bindS (TH.varP fn) [| encodeM $(TH.varE fn) |] | fn <- fieldNames ] ++
+                  [ TH.noBindS [| liftIO $(foldl TH.appE c (map TH.varE fieldNames)) |] ]
+                hasFlags = ''Bool `elem` [ h | (_, _, TH.ConT h) <- fields ]
             core <- case instrInfo of
               Just (_, iDef) -> do
                 let opcode = TH.dataToExpQ (const Nothing) (ID.cppOpcode iDef)
                 case ID.instructionKind iDef of
-                  ID.Binary | hasFlags -> return $ coreCall name
-                            | True -> return [| $(coreCall "BinaryOperator") $(opcode) |]
+                  ID.Binary
+                    | hasFlags -> return $ coreCall name
+                    | otherwise -> return [| $(coreCall "BinaryOperator") $(opcode) |]
                   ID.Cast -> return [| $(coreCall "Cast") $(opcode) |]
                   _ -> return $ coreCall name
               Nothing ->
-                if (name `elem` ["Vector", "Null", "Array", "Undef"])
-                  then return $ coreCall name
-                  else []
+                case name of
+                  "Array" -> pure (TH.varE 'FFI.constantArray)
+                  "AggregateZero" -> pure (TH.varE 'FFI.constantNull)
+                  "Null" -> pure (TH.varE 'FFI.constantNull)
+                  "Undef" -> pure (TH.varE 'FFI.constantUndef)
+                  "Vector" -> pure (TH.varE 'FFI.constantVector)
+                  _ -> [] -- We have already handled these values
             return $ TH.match
-              (TH.recP n [(fn,) <$> (TH.varP . TH.mkName . TH.nameBase $ fn) | (fn, _, _) <- fs])
+              (TH.recP n [(fn,) <$> (TH.varP . TH.mkName . TH.nameBase $ fn) | (fn, _, _) <- fields])
               (TH.normalB (TH.doE (buildBody core)))
               [])
      )
@@ -208,7 +247,7 @@ instance DecodeM DecodeAST A.Constant (Ptr FFI.Constant) where
             A.PPC_FP128FP -> A.F.PPC_FP128 <$> peekByteOff (castPtr ws) 8 <*> peekByteOff (castPtr ws) 0
           )
       [valueSubclassIdP|ConstantPointerNull|] -> return $ A.C.Null t
-      [valueSubclassIdP|ConstantAggregateZero|] -> return $ A.C.Null t
+      [valueSubclassIdP|ConstantAggregateZero|] -> return $ A.C.AggregateZero t
       [valueSubclassIdP|UndefValue|] -> return $ A.C.Undef t
       [valueSubclassIdP|BlockAddress|] -> 
             return A.C.BlockAddress 

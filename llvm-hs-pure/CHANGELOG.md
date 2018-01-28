@@ -8,6 +8,10 @@
     setting all fields in the `FastMathFlags` record to
     `False`. Existing uses of `NoFastMathFlags` can be replaced by the
     `noFastMathFlags` value.
+* Add `AggregateZero` for zero-initializing structs, arrays and vectors. Previously `Null`
+  was used for null pointers as  well as zero-inializing aggregates. The new behavior reflects
+  LLVM’s internal representation and the C++-API. Existing uses of `Null` on non-pointer types
+  must be changed to `AggregateZero`.
 
 ## 5.1.2 (2018-01-06)
 

@@ -1,6 +1,11 @@
 ## 6.0.0 (unreleased)
 
 * Support for LLVM 6.0, take a look at the changelog of llvm-hs-pure for details.
+* Add `AggregateZero` for zero-initializing structs, arrays and vectors. Previously `Null`
+  was used for null pointers as  well as zero-inializing aggregates. The new behavior reflects
+  LLVM’s internal representation and the C++-API.
+* Enforce that `Null` is only used on pointer types. Existing uses of `Null` on arrays, structs and
+  vector must be changed to the newly introduced `AggregateZero`.
 
 ## 5.1.3 (2018-01-06)
 
