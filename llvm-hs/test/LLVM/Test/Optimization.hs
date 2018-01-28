@@ -246,7 +246,7 @@ tests = testGroup "Optimization" [
                 G.name = Name "a",
                 G.linkage = L.Common,
                 G.type' = A.T.ArrayType 2048 i32,
-                G.initializer = Just (C.Null (A.T.ArrayType 2048 i32))
+                G.initializer = Just (C.AggregateZero (A.T.ArrayType 2048 i32))
                },
               GlobalDefinition $ functionDefaults {
                 G.returnType = A.T.void,

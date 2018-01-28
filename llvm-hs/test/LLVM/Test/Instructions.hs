@@ -513,7 +513,7 @@ tests = testGroup "Instructions" [
             [Catch (C.Null (ptr i8))],
             "\n          catch i8* null"),
            ("filter",
-            [Filter (C.Null (ArrayType 1 (ptr i8)))],
+            [Filter (C.AggregateZero (ArrayType 1 (ptr i8)))],
             "\n          filter [1 x i8*] zeroinitializer")
           ],
           (cpn, cp, cps) <- [ ("-cleanup", True, "\n          cleanup"), ("", False, "") ],

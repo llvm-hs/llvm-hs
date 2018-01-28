@@ -8,7 +8,7 @@ import           Test.Tasty.HUnit
 
 import qualified LLVM.AST as AST
 import           LLVM.AST hiding (Module)
-import           LLVM.AST.Constant
+import qualified LLVM.AST.Constant as C
 import           LLVM.AST.Global
 import           LLVM.AST.Type
 
@@ -34,7 +34,7 @@ example1 =
                     Store
                       False
                       (LocalReference (ptr i32) (UnName 0))
-                      (ConstantOperand (Int 32 42))
+                      (ConstantOperand (C.Int 32 42))
                       Nothing
                       0
                       []
@@ -65,10 +65,34 @@ example2 =
                          (ptr $ ptr $ FunctionType void [] False)
                          (UnName 0))
                       (ConstantOperand $
-                       GlobalReference (FunctionType void [] False) "test")
+                       C.GlobalReference (FunctionType void [] False) "test")
                       Nothing
                       0
                       []
+                  ]
+                  (Do $ Ret Nothing [])
+              ]
+          }
+      ]
+  }
+
+example3 :: AST.Module
+example3 =
+  defaultModule
+  { moduleDefinitions =
+      [ GlobalDefinition
+          functionDefaults
+          { name = "test"
+          , returnType = void
+          , basicBlocks =
+              [ BasicBlock
+                  "entry"
+                  [ UnName 0 := GetElementPtr {
+                      inBounds = False,
+                      address = ConstantOperand (C.Null i32),
+                      indices = [ ConstantOperand (C.Int 32 0) ],
+                      metadata = []
+                    }
                   ]
                   (Do $ Ret Nothing [])
               ]
@@ -96,4 +120,8 @@ tests =
         "no implicit casts"
         (example2 `shouldThrowEncodeException`
          "The serialized GlobalReference has type FunctionType {resultType = VoidType, argumentTypes = [], isVarArg = False} but should have type PointerType {pointerReferent = FunctionType {resultType = VoidType, argumentTypes = [], isVarArg = False}, pointerAddrSpace = AddrSpace 0}")
+    , testCase
+        "null constants must have pointer type"
+        (example3 `shouldThrowEncodeException`
+          "Null pointer constant must have pointer type but has type IntegerType {typeBits = 32}.")
     ]
