@@ -177,4 +177,6 @@ getAttributeGroupID p = do
       let r = A.A.GroupID (fromIntegral (length ids))
       modify $ \s -> s { functionAttributeListIDs = (p,r) : functionAttributeListIDs s }
       return r
-    Just (_, id') -> return id'
+    Just (_, id') -> do
+      liftIO (FFI.disposeAttributeSet p)
+      return id'
