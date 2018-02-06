@@ -291,6 +291,10 @@ LLVMLambdaResolverRef LLVM_Hs_createLambdaResolver(
         createLambdaResolver(dylibResolverFun, externalResolverFun));
 }
 
+void LLVM_Hs_disposeLambdaResolver(LLVMLambdaResolverRef resolver) {
+    delete resolver;
+}
+
 static JITSymbolFlags unwrap(LLVMJITSymbolFlags f) {
     JITSymbolFlags flags = JITSymbolFlags::None;
 #define ENUM_CASE(x)                                                           \

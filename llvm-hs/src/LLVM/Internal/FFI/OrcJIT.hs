@@ -35,6 +35,9 @@ foreign import ccall safe "LLVM_Hs_createLambdaResolver" createLambdaResolver ::
   FunPtr SymbolResolverFn ->
   IO (Ptr LambdaResolver)
 
+foreign import ccall safe "LLVM_Hs_disposeLambdaResolver" disposeLambdaResolver ::
+  Ptr LambdaResolver -> IO ()
+
 foreign import ccall safe "LLVM_Hs_createObjectLinkingLayer" createObjectLinkingLayer ::
   IO (Ptr ObjectLinkingLayer)
 
