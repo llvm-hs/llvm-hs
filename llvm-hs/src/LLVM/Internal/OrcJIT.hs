@@ -108,7 +108,7 @@ instance MonadIO m =>
   encodeM (SymbolResolver dylib external) = return $ \cleanups -> do
     dylib' <- allocFunPtr cleanups (encodeM dylib)
     external' <- allocFunPtr cleanups (encodeM external)
-    FFI.createLambdaResolver dylib' external'
+    allocWithCleanup cleanups (FFI.createLambdaResolver dylib' external') FFI.disposeLambdaResolver
 
 instance MonadIO m => EncodeM m SymbolResolverFn (FunPtr FFI.SymbolResolverFn) where
   encodeM callback =
@@ -117,12 +117,16 @@ instance MonadIO m => EncodeM m SymbolResolverFn (FunPtr FFI.SymbolResolverFn) w
          setSymbol <- encodeM =<< callback =<< decodeM symbol
          setSymbol result)
 
--- | allocate a function pointer and register it for cleanup
+-- | Allocate the resource and register it for cleanup.
+allocWithCleanup :: IORef [IO ()] -> IO a -> (a -> IO ()) -> IO a
+allocWithCleanup cleanups alloc free = mask $ \restore -> do
+  a <- restore alloc
+  modifyIORef cleanups (free a :)
+  pure a
+
+-- | allocate a function pointer and register it for cleanup.
 allocFunPtr :: IORef [IO ()] -> IO (FunPtr a) -> IO (FunPtr a)
-allocFunPtr cleanups alloc = mask $ \restore -> do
-  funPtr <- restore alloc
-  modifyIORef cleanups (freeHaskellFunPtr funPtr :)
-  pure funPtr
+allocFunPtr cleanups alloc = allocWithCleanup cleanups alloc freeHaskellFunPtr
 
 -- | Dispose of a 'LinkingLayer'.
 disposeLinkingLayer :: LinkingLayer l => l -> IO ()
