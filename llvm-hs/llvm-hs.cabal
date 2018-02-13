@@ -255,7 +255,7 @@ test-suite test
     mtl >= 2.1,
     transformers >= 0.3.0.0,
     temporary >= 1.2 && < 1.3,
-    pretty-show >= 1.6 && < 1.7
+    pretty-show >= 1.6 && < 1.8
   hs-source-dirs: test
   extensions:
     TupleSections
