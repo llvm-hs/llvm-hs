@@ -55,9 +55,9 @@ install:
  - unzip ninja-linux.zip -d $HOME/bin
  # - curl http://releases.llvm.org/${LLVM_VER}/llvm-${LLVM_VER}.src.tar.xz | tar -xJf - -C $HOME
  # - rsync -ac $HOME/llvm-${LLVM_VER}.src/ $HOME/llvm-src-${LLVM_VER}
- - curl -L https://github.com/llvm-mirror/llvm/archive/f1286127b73c0d81ced8595af62e78ed703ced8b.zip -o out.zip
+ - curl -L https://github.com/llvm-mirror/llvm/archive/72d068a93fe1cd266b091afb9d257b27a18e9be1.zip -o out.zip
  - unzip -q out.zip -d $HOME
- - rsync -ac $HOME/llvm-f1286127b73c0d81ced8595af62e78ed703ced8b/ $HOME/llvm-src-${LLVM_VER}
+ - rsync -ac $HOME/llvm-72d068a93fe1cd266b091afb9d257b27a18e9be1/ $HOME/llvm-src-${LLVM_VER}
  - cd $HOME/llvm-src-${LLVM_VER}
  - mkdir -p build && cd build
  - cmake -DCMAKE_BUILD_TYPE=Release -DCMAKE_INSTALL_PREFIX=$HOME/llvm-build-${LLVM_VER} -DLLVM_PARALLEL_LINK_JOBS=1 -DLLVM_TARGETS_TO_BUILD=X86 -DLLVM_BUILD_LLVM_DYLIB=True -DLLVM_LINK_LLVM_DYLIB=True -GNinja ..
