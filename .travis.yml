@@ -31,8 +31,10 @@ matrix:
       addons: {apt: {packages: [ghc-ppa-tools,cabal-install-head,ghc-7.10.3,gcc-5,g++-5], sources: [hvr-ghc,ubuntu-toolchain-r-test]}}
     - compiler: "ghc-8.0.2"
       addons: {apt: {packages: [ghc-ppa-tools,cabal-install-head,ghc-8.0.2,gcc-5,g++-5], sources: [hvr-ghc,ubuntu-toolchain-r-test]}}
-    - compiler: "ghc-8.2.1"
-      addons: {apt: {packages: [ghc-ppa-tools,cabal-install-head,ghc-8.2.1,gcc-5,g++-5], sources: [hvr-ghc,ubuntu-toolchain-r-test]}}
+    - compiler: "ghc-8.2.2"
+      addons: {apt: {packages: [ghc-ppa-tools,cabal-install-head,ghc-8.2.2,gcc-5,g++-5], sources: [hvr-ghc,ubuntu-toolchain-r-test]}}
+    - compiler: "ghc-8.4.1"
+      addons: {apt: {packages: [ghc-ppa-tools,cabal-install-head,ghc-8.4.1,gcc-5,g++-5], sources: [hvr-ghc,ubuntu-toolchain-r-test]}}
 
 before_install:
 # Prune path, see https://github.com/travis-ci/travis-ci/issues/5326
