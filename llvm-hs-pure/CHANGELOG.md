@@ -1,4 +1,4 @@
-## 6.0.0 (unreleased)
+## 6.0.0 (2018-03-06)
 
 * Support for LLVM 6.0
   * Add `StrictFP` and `SanitizeHWAddress` function attributes.

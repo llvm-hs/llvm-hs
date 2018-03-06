@@ -1,4 +1,4 @@
-## 6.0.0 (unreleased)
+## 6.0.0 (2018-03-06)
 
 * Support for LLVM 6.0, take a look at the changelog of llvm-hs-pure for details.
 * Add `AggregateZero` for zero-initializing structs, arrays and vectors. Previously `Null`
