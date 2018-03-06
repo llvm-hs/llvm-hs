@@ -1,4 +1,4 @@
-resolver: lts-9.1
+resolver: lts-10.8
 
 packages:
 - 'llvm-hs'
