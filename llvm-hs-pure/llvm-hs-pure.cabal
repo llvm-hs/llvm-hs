@@ -124,7 +124,7 @@ test-suite test-irbuilder
   hs-source-dirs:
       test
   build-depends:
-      base >=4.8 && <4.11
+      base >=4.8
     , bytestring
     , containers
     , hspec
