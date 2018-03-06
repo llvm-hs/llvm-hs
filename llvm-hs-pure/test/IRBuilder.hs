@@ -53,6 +53,8 @@ main =
         }
       it "calls constant globals" $ do
         callWorksWithConstantGlobals
+      it "supports recursive function calls" $ do
+        recursiveFunctionCalls
       it "builds the example" $ do
         let f10 = ConstantOperand (C.Float (F.Double 10))
             fadd a b = FAdd { operand0 = a, operand1 = b, fastMathFlags = noFastMathFlags, metadata = [] }
@@ -166,6 +168,41 @@ main =
                 }
               ]
           }
+
+recursiveFunctionCalls :: Expectation
+recursiveFunctionCalls = do
+  m `shouldBe` defaultModule
+    { moduleName = "exampleModule"
+    , moduleDefinitions =
+      [ GlobalDefinition functionDefaults
+          { returnType = AST.i32
+          , name = Name "f"
+          , parameters = ([Parameter AST.i32 "a" []], False)
+          , basicBlocks =
+              [ BasicBlock (Name "entry")
+                 [ UnName 0 := Call
+                    { tailCallKind = Nothing
+                    , callingConvention = CC.C
+                    , returnAttributes = []
+                    , I.function =
+                        Right (ConstantOperand (C.GlobalReference (AST.ptr (FunctionType AST.i32 [AST.i32] False)) (Name "f")))
+                    , arguments = [(LocalReference (IntegerType {typeBits = 32}) (Name "a"),[])]
+                    , functionAttributes = []
+                    , metadata = []
+                    }
+                 ]
+                 (Do (Ret (Just (LocalReference AST.i32 (UnName 0))) []))
+              ]
+          }
+      ]
+    }
+  where
+    m = buildModule "exampleModule" $ mdo
+      f <- function "f" [(AST.i32, "a")] AST.i32 $ \[a] -> mdo
+        entry <- block `named` "entry"; do
+          c <- call f [(a, [])]
+          ret c
+      pure ()
 
 callWorksWithConstantGlobals = do
   funcCall `shouldBe` defaultModule

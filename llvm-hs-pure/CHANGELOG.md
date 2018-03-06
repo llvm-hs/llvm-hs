@@ -12,6 +12,7 @@
   was used for null pointers as  well as zero-inializing aggregates. The new behavior reflects
   LLVM’s internal representation and the C++-API. Existing uses of `Null` on non-pointer types
   must be changed to `AggregateZero`.
+* Fix recursive function calls in the `IRBuilder` API.
 
 ## 5.1.2 (2018-01-06)
 

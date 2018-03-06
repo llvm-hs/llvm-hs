@@ -23,8 +23,8 @@ import Control.Monad.Writer.Strict as Strict
 import Control.Monad.Reader
 import Control.Monad.RWS.Lazy as Lazy
 import Control.Monad.RWS.Strict as Strict
-import qualified Control.Monad.State.Lazy as Lazy
-import Control.Monad.State.Strict
+import qualified Control.Monad.State.Strict as Strict
+import Control.Monad.State.Lazy
 import Control.Monad.List
 import Control.Monad.Trans.Maybe
 import Control.Monad.Trans.Identity
@@ -195,6 +195,6 @@ instance MonadModuleBuilder m => MonadModuleBuilder (ReaderT r m)
 instance (MonadModuleBuilder m, Monoid w) => MonadModuleBuilder (Strict.RWST r w s m)
 instance (MonadModuleBuilder m, Monoid w) => MonadModuleBuilder (Lazy.RWST r w s m)
 instance MonadModuleBuilder m => MonadModuleBuilder (StateT s m)
-instance MonadModuleBuilder m => MonadModuleBuilder (Lazy.StateT s m)
+instance MonadModuleBuilder m => MonadModuleBuilder (Strict.StateT s m)
 instance (Monoid w, MonadModuleBuilder m) => MonadModuleBuilder (Strict.WriterT w m)
 instance (Monoid w, MonadModuleBuilder m) => MonadModuleBuilder (Lazy.WriterT w m)
