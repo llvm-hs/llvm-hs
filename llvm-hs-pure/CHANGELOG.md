@@ -1,3 +1,11 @@
+## unreleased
+
+* IRBuilder: Ensure that automatically generated block labels are
+  assigned smaller identifiers than the instructions following
+  them. This is only important when you use
+  `llvm-hs-pretty`. `llvm-hs` does not care about the order of
+  identifiers assigned to unnamed values.
+
 ## 6.0.0 (2018-03-06)
 
 * Support for LLVM 6.0

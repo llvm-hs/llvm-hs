@@ -219,8 +219,8 @@ callWorksWithConstantGlobals = do
           name = Name "omg",
           parameters = ([],False),
           basicBlocks = [
-            BasicBlock (UnName 1) [
-              UnName 0 := Call { tailCallKind = Nothing
+            BasicBlock (UnName 0) [
+              UnName 1 := Call { tailCallKind = Nothing
                 , I.function = Right (
                   ConstantOperand (
                     C.GlobalReference

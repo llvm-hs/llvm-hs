@@ -111,6 +111,20 @@ execIRBuilderT s m = snd <$> runIRBuilderT s m
 -- * Low-level functionality
 -------------------------------------------------------------------------------
 
+-- | If no partial block exists, create a new block with a fresh label.
+--
+-- This is useful if you want to ensure that the label for the block
+-- is assigned before another label which is not possible with
+-- `modifyBlock`.
+ensureBlock :: MonadIRBuilder m => m ()
+ensureBlock = do
+  mbb <- liftIRState $ gets builderBlock
+  case mbb of
+    Nothing -> do
+      nm <- freshUnName
+      liftIRState $ modify $ \s -> s { builderBlock = Just $! emptyPartialBlock nm }
+    Just _ -> pure ()
+
 modifyBlock
   :: MonadIRBuilder m
   => (PartialBlock -> PartialBlock)
@@ -155,6 +169,8 @@ emitInstr
   -> Instruction
   -> m Operand
 emitInstr retty instr = do
+  -- Ensure that the fresh identifier for the block is assigned before the identifier for the instruction.
+  ensureBlock
   nm <- fresh
   modifyBlock $ \bb -> bb
     { partialBlockInstrs = partialBlockInstrs bb `snoc` (nm := instr)
