@@ -75,7 +75,7 @@ install:
  - sed -i.bak 's/^jobs:/-- jobs:/' ${HOME}/.cabal/config
  - rm -fv cabal.project.local
  - rm -rf .ghc.environment.*
- - cabal new-configure --with-gcc $GCC --ghc-options "-pgmc=${GCC}" --enable-tests --allow-newer=hashable:base --allow-newer=integer-logarithms:base
+ - cabal new-configure --with-gcc $GCC --ghc-options "-pgmc=${GCC}" --enable-tests
  - cabal new-build -w ${HC} --dep -j2 all
 
 script:
