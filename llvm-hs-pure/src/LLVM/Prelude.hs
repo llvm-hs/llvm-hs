@@ -1,3 +1,4 @@
+{-# LANGUAGE CPP #-}
 -- | This module is presents a prelude mostly like the post-Applicative-Monad world of
 -- base >= 4.8 / ghc >= 7.10, even on earlier versions. It's intended as an internal library
 -- for llvm-hs-pure and llvm-hs; it's exposed only to be shared between the two.
@@ -18,7 +19,9 @@ module LLVM.Prelude (
     leftBiasedZip,
     findM,
     ifM,
+#if !(MIN_VERSION_base(4,11,0))
     (<>)
+#endif
     ) where
 
 import Prelude hiding (
