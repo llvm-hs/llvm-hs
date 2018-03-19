@@ -5,6 +5,8 @@
   them. This is only important when you use
   `llvm-hs-pretty`. `llvm-hs` does not care about the order of
   identifiers assigned to unnamed values.
+* IRBuilder: add `currentBlock` which returns name of the currently
+  active block.
 
 ## 6.0.0 (2018-03-06)
 

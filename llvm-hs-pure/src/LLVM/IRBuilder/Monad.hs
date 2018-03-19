@@ -246,6 +246,18 @@ named ir name = do
   liftIRState $ modify $ \s -> s { builderNameSuggestion = before }
   return result
 
+-- | Get the name of the currently active block.
+--
+-- This function will throw an error if there is no active block. The
+-- only situation in which this can occur is if it is called before
+-- any call to `block` and before emitting any instructions.
+currentBlock :: MonadIRBuilder m => m Name
+currentBlock = liftIRState $ do
+  name <- gets (fmap partialBlockName . builderBlock)
+  case name of
+    Just n -> pure n
+    Nothing -> error "Called currentBlock when no block was active"
+
 -------------------------------------------------------------------------------
 -- mtl instances
 -------------------------------------------------------------------------------
