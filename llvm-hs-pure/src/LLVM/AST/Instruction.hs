@@ -19,7 +19,7 @@ import Data.List.NonEmpty
 
 -- | <http://llvm.org/docs/LangRef.html#metadata-nodes-and-metadata-strings>
 -- Metadata can be attached to an instruction
-type InstructionMetadata = [(ShortByteString, MetadataNode)]
+type InstructionMetadata = [(ShortByteString, MDRef MDNode)]
 
 -- | <http://llvm.org/docs/LangRef.html#terminators>
 data Terminator 

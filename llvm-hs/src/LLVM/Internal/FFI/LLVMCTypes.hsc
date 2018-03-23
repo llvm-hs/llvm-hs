@@ -1,5 +1,6 @@
 {-# LANGUAGE
-  GeneralizedNewtypeDeriving
+  GeneralizedNewtypeDeriving,
+  PatternSynonyms
   #-}
 -- | Define types which correspond cleanly with some simple types on the C/C++ side.
 -- Encapsulate hsc macro weirdness here, supporting higher-level tricks elsewhere.
@@ -28,6 +29,7 @@ import LLVM.Prelude
 #include "LLVM/Internal/FFI/Analysis.h"
 #include "LLVM/Internal/FFI/LibFunc.h"
 #include "LLVM/Internal/FFI/OrcJIT.h"
+#include "LLVM/Internal/FFI/Metadata.h"
 
 import Language.Haskell.TH.Quote
 
@@ -56,6 +58,37 @@ define hsc_inject(l, typ, cons, hprefix, recmac) { \
              " }\n"); \
 }
 }
+
+#{
+define hsc_patsyn(l, typ, cons, hprefix, recmac) { \
+  struct { const char *s; unsigned n; } *p, list[] = { LLVM_HS_FOR_EACH_ ## l(recmac) }; \
+  for(p = list; p < list + sizeof(list)/sizeof(list[0]); ++p) { \
+    hsc_printf("pattern " #hprefix "%s :: " #typ "\n", p->s); \
+    hsc_printf("pattern " #hprefix "%s =  " #cons " %u\n", p->s, p->n); \
+  } \
+}
+}
+
+#define DW_OP_Rec(n) { #n, LLVM_Hs_DwOp_##n },
+#{patsyn DW_OP, Word64, , DwOp_, DW_OP_Rec}
+
+newtype Encoding = Encoding CUInt
+  deriving (Data, Show)
+
+#define DW_ATE_Rec(n) { #n, LLVM_Hs_DwAtE_##n },
+#{patsyn DW_ATE, Encoding, Encoding, DwAtE_, DW_ATE_Rec}
+
+newtype DwTag = DwTag Word16
+  deriving (Data, Show)
+
+#define DW_TAG_Rec(n) { #n, LLVM_Hs_DwTag_##n },
+#{patsyn DW_TAG, DwTag, DwTag, DwTag_, DW_TAG_Rec}
+
+newtype DwVirtuality = DwVirtuality Word8
+  deriving (Data, Show)
+
+#define DW_VIRTUALITY_Rec(n) { #n, LLVM_Hs_DwVirtuality_##n },
+#{patsyn DW_VIRTUALITY, DwVirtuality, DwVirtuality, DwVirtuality_, DW_VIRTUALITY_Rec}
 
 deriving instance Data CUInt
 
@@ -114,6 +147,11 @@ newtype FCmpPredicate = FCmpPredicate CUInt
 
 newtype MDKindID = MDKindID CUInt
   deriving (Storable)
+
+newtype MDSubclassID = MDSubclassID CUInt
+  deriving (Eq, Read, Show, Typeable, Data, Generic)
+#define MDSID_Rec(n) { #n, n ## Kind },
+#{inject MDNODE_SUBCLASS, MDSubclassID, MDSubclassID, mdSubclassId, MDSID_Rec}
 
 newtype FastMathFlags = FastMathFlags CUInt
   deriving (Eq, Ord, Show, Typeable, Data, Num, Bits, Generic)
@@ -304,3 +342,24 @@ newtype JITSymbolFlags = JITSymbolFlags CUInt
   deriving (Eq, Read, Show, Bits, Typeable, Data, Num, Storable, Generic)
 #define SF_Rec(n) { #n, LLVMJITSymbolFlag ## n },
 #{inject JIT_SYMBOL_FLAG, JITSymbolFlags, JITSymbolFlags, jitSymbolFlags, SF_Rec}
+
+newtype ChecksumKind = ChecksumKind CUInt
+  deriving (Data, Show)
+
+newtype Macinfo = Macinfo CUInt
+  deriving (Data, Show)
+
+pattern DW_Macinfo_Define :: Macinfo
+pattern DW_Macinfo_Define = Macinfo 0x01
+pattern DW_Macinfo_Undef :: Macinfo
+pattern DW_Macinfo_Undef = Macinfo 0x02
+
+newtype DebugEmissionKind = DebugEmissionKind CUInt
+  deriving (Data, Show)
+
+pattern NoDebug :: DebugEmissionKind
+pattern NoDebug = DebugEmissionKind 0
+pattern FullDebug :: DebugEmissionKind
+pattern FullDebug = DebugEmissionKind 1
+pattern LineTablesOnly :: DebugEmissionKind
+pattern LineTablesOnly = DebugEmissionKind 2

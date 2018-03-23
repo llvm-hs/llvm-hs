@@ -1,5 +1,5 @@
 name: llvm-hs-pure
-version: 6.0.0
+version: 6.1.0
 license: BSD3
 license-file: LICENSE
 author: Anthony Cowley, Stephen Diehl, Moritz Kiefer <moritz.kiefer@purelyfunctional.org>, Benjamin S. Scarlet
@@ -16,7 +16,7 @@ description:
   llvm-hs-pure is a set of pure Haskell types and functions for interacting with LLVM <http://llvm.org/>.
   It includes an ADT to represent LLVM IR (<http://llvm.org/docs/LangRef.html>). The llvm-hs package
   builds on this one with FFI bindings to LLVM, but llvm-hs-pure does not require LLVM to be available.
-tested-with: GHC == 7.10.3, GHC == 8.0.2, GHC == 8.2.1
+tested-with: GHC == 8.0.2, GHC == 8.2.2, GHC == 8.4.1
 extra-source-files: CHANGELOG.md
 
 source-repository head
@@ -24,20 +24,10 @@ source-repository head
   location: git://github.com/llvm-hs/llvm-hs.git
   branch: llvm-5
 
-flag semigroups
-  description: Add semigroups to build-depends for Data.List.NonEmpty. This will be selected automatically by cabal.
-  default: False
-
 library
   ghc-options: -Wall
-  if flag(semigroups)
-    build-depends:
-      base >= 4.8 && < 4.9,
-      semigroups >= 0.18 && < 0.19
-  else
-    build-depends:
-      base >= 4.9 && < 5
   build-depends:
+    base >= 4.9 && < 5,
     attoparsec >= 0.13,
     bytestring >= 0.10 && < 0.11,
     fail,
@@ -93,14 +83,8 @@ library
 
 test-suite test
   type: exitcode-stdio-1.0
-  if flag(semigroups)
-    build-depends:
-      base >= 4.8 && < 4.9,
-      semigroups >= 0.18 && < 0.19
-  else
-    build-depends:
-      base >= 4.9 && < 5
   build-depends:
+    base >= 4.9 && < 5,
     tasty >= 0.11,
     tasty-hunit >= 0.9,
     tasty-quickcheck >= 0.8,

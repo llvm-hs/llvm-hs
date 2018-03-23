@@ -7,7 +7,7 @@ import Test.Tasty
 import Test.Tasty.HUnit
 
 import LLVM
-import LLVM.AST
+import LLVM.AST hiding (DIFlag(..))
 import LLVM.AST.CallingConvention (CallingConvention(C))
 import LLVM.AST.Constant (Constant (Int, GlobalReference))
 import LLVM.AST.FunctionAttribute

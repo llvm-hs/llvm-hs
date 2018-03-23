@@ -16,9 +16,10 @@ import Control.Monad.IO.Class
 
 import Foreign.C
 import Foreign.Ptr
-import Foreign.Storable
-import Foreign.Marshal.Alloc
-import Foreign.Marshal.Array
+import Foreign.Storable (Storable)
+import qualified Foreign.Storable
+import qualified Foreign.Marshal.Alloc
+import qualified Foreign.Marshal.Array
 
 import qualified LLVM.Internal.FFI.LLVMCTypes as FFI
 
@@ -97,14 +98,11 @@ instance Monad m => EncodeM m (Maybe Word) (FFI.NothingAsMinusOne Word) where
 
 instance Monad m => EncodeM m (Maybe Word32) (CUInt, FFI.LLVMBool) where
   encodeM (Just a) = liftM2 (,) (encodeM a) (encodeM True)
-  encodeM Nothing = return (0,) `ap` (encodeM False)
+  encodeM Nothing = (0,) <$> encodeM False
 
-instance Monad m => DecodeM m (Maybe Word32) (CUInt, FFI.LLVMBool) where
-  decodeM (a, isJust) = do
-    isJust' <- decodeM isJust
-    if isJust'
-       then liftM Just (decodeM a)
-       else return Nothing
+instance Monad m => EncodeM m (Maybe Word32) (Word32, FFI.LLVMBool) where
+  encodeM (Just a) = (a,) <$> encodeM True
+  encodeM Nothing = (0,) <$> encodeM False
 
 instance Monad m => EncodeM m Word CUInt where
   encodeM = return . fromIntegral
@@ -138,3 +136,18 @@ instance Monad m => EncodeM m Word64 Word64 where
 
 instance Monad m => DecodeM m Word64 Word64 where
   decodeM = return
+
+decodeOptional :: (DecodeM m b a, Storable a, MonadAnyCont IO m, MonadIO m) => (Ptr a -> IO FFI.LLVMBool) -> m (Maybe b)
+decodeOptional f = do
+  ptr <- alloca
+  isJust <- decodeM =<< liftIO (f ptr)
+  if isJust
+    then Just <$> (decodeM =<< peek ptr)
+    else pure Nothing
+
+decodeArray :: (DecodeM m b' b, MonadIO m) => (a -> IO CUInt) -> (a -> CUInt -> IO b) -> a -> m [b']
+decodeArray numElems getElem a = do
+  n <- liftIO (numElems a)
+  if n == 0
+    then pure []
+    else traverse (decodeM <=< liftIO . getElem a) [0 .. n - 1]

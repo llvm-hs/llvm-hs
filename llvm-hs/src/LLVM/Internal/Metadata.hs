@@ -23,6 +23,8 @@ import LLVM.Internal.EncodeAST
 import LLVM.Internal.DecodeAST
 import LLVM.Internal.Value ()
 
+import Foreign.C
+
 instance EncodeM EncodeAST ShortByteString FFI.MDKindID where
   encodeM s = do
     Context c <- gets encodeStateContext
@@ -33,7 +35,7 @@ getMetadataKindNames :: Context -> DecodeAST ()
 getMetadataKindNames (Context c) = scopeAnyCont $ do
   let g n = do
         ps <- allocaArray n
-        ls <- allocaArray n 
+        ls <- allocaArray n
         n' <- liftIO $ FFI.getMDKindNames c ps ls n
         if n' > n
          then g n'
@@ -49,8 +51,14 @@ instance DecodeM DecodeAST ShortByteString FFI.MDKindID where
   decodeM (FFI.MDKindID k) = gets $ (Array.! (fromIntegral k)) . metadataKinds
 
 instance DecodeM DecodeAST ShortByteString (Ptr FFI.MDString) where
-  decodeM p = do
-    np <- alloca
-    s <- liftIO $ FFI.getMDString p np
-    n <- peek np
-    decodeM (s, n)
+  -- LLVM appears to use null pts to indicate empty byte string fields
+  -- including literal empty strings
+  decodeM = getByteStringFromFFI FFI.getMDStringValue
+
+getByteStringFromFFI :: (Ptr a -> Ptr CUInt -> IO CString) -> Ptr a -> DecodeAST ShortByteString
+getByteStringFromFFI _ p | nullPtr == p = return mempty
+getByteStringFromFFI f p = do
+  np <- alloca
+  s <- liftIO $ f p np
+  n <- peek np
+  decodeM (s, n)
