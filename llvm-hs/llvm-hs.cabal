@@ -9,7 +9,7 @@ homepage: http://github.com/llvm-hs/llvm-hs/
 bug-reports: http://github.com/llvm-hs/llvm-hs/issues
 build-type: Custom
 stability: experimental
-cabal-version: >= 1.8
+cabal-version: >= 1.24
 category: Compilers/Interpreters, Code Generation
 synopsis: General purpose LLVM bindings
 description:
@@ -57,6 +57,7 @@ custom-setup
                , containers
 
 library
+  default-language: Haskell2010
   build-tools: hsc2hs, llvm-config
   ghc-options: -Wall -fno-warn-name-shadowing -fno-warn-orphans
 
@@ -73,7 +74,7 @@ library
     array >= 0.4.0.0,
     llvm-hs-pure == 6.1.*
   hs-source-dirs: src
-  extensions:
+  default-extensions:
     NoImplicitPrelude
     TupleSections
     DeriveDataTypeable
@@ -228,6 +229,7 @@ library
     cc-options: -g
 
 test-suite test
+  default-language: Haskell2010
   type: exitcode-stdio-1.0
   build-depends:
     base >= 4.9 && < 5,
@@ -244,7 +246,7 @@ test-suite test
     temporary >= 1.2 && < 1.3,
     pretty-show >= 1.6 && < 1.8
   hs-source-dirs: test
-  extensions:
+  default-extensions:
     TupleSections
     FlexibleInstances
     FlexibleContexts

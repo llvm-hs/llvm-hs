@@ -9,7 +9,7 @@ homepage: http://github.com/llvm-hs/llvm-hs/
 bug-reports: http://github.com/llvm-hs/llvm-hs/issues
 build-type: Simple
 stability: experimental
-cabal-version: >= 1.8
+cabal-version: >= 1.24
 category: Compilers/Interpreters, Code Generation
 synopsis: Pure Haskell LLVM functionality (no FFI).
 description:
@@ -25,6 +25,7 @@ source-repository head
   branch: llvm-5
 
 library
+  default-language: Haskell2010
   ghc-options: -Wall
   build-depends:
     base >= 4.9 && < 5,
@@ -37,7 +38,7 @@ library
     containers >= 0.4.2.1,
     unordered-containers >= 0.2
   hs-source-dirs: src
-  extensions:
+  default-extensions:
     NoImplicitPrelude
     TupleSections
     DeriveDataTypeable
@@ -82,6 +83,7 @@ library
     LLVM.Prelude
 
 test-suite test
+  default-language: Haskell2010
   type: exitcode-stdio-1.0
   build-depends:
     base >= 4.9 && < 5,
@@ -93,7 +95,7 @@ test-suite test
     containers >= 0.4.2.1,
     mtl >= 2.1
   hs-source-dirs: test
-  extensions:
+  default-extensions:
     TupleSections
     FlexibleInstances
     FlexibleContexts

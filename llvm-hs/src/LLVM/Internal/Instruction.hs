@@ -350,10 +350,10 @@ $(do
                           -- We need to convert nClauses to a signed
                           -- value before subtracting
                           forM [0..fromIntegral nClauses - (1 :: Int)] $ \j -> do
-                          v <- liftIO $ FFI.getClause i (fromIntegral j)
-                          c <- decodeM v
-                          t <- typeOf v
-                          return $ case t of { A.ArrayType _ _ -> A.Filter; _ -> A.Catch} $ c |])
+                            v <- liftIO $ FFI.getClause i (fromIntegral j)
+                            c <- decodeM v
+                            t <- typeOf v
+                            return $ case t of { A.ArrayType _ _ -> A.Filter; _ -> A.Catch} $ c |])
                 "functionAttributes" -> (["attrs"], [| return $ functionAttributes $(TH.dyn "attrs") |])
                 "type'" -> ([], [| return t |])
                 "incomingValues" ->
