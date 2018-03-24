@@ -1,28 +1,27 @@
 {-# LANGUAGE OverloadedStrings #-}
 {-# LANGUAGE RecursiveDo #-}
-module Main
-  ( main
+module LLVM.Test.IRBuilder
+  ( tests
   ) where
 
-import           Data.Monoid
-import qualified Data.Text.Lazy as T
-import qualified Data.Text.Lazy.IO as T
+import           Test.Tasty
+import           Test.Tasty.HUnit
+
 import           LLVM.AST hiding (function)
 import qualified LLVM.AST.Constant as C
 import qualified LLVM.AST.Float as F
 import           LLVM.AST.Global (basicBlocks, name, parameters, returnType)
 import qualified LLVM.AST.Type as AST
 import qualified LLVM.AST.CallingConvention as CC
-import           Test.Hspec hiding (example)
 import qualified LLVM.AST.Instruction as I (function)
 import           LLVM.IRBuilder
 
-main :: IO ()
-main =
-  hspec $ do
-    describe "module builder" $ do
-      it "builds the simple module" $
-        simple `shouldBe`
+tests :: TestTree
+tests =
+  testGroup "IRBuilder" [
+    testGroup "module builder"
+      [ testCase "builds the simple module" $
+        simple @?=
         defaultModule {
           moduleName = "exampleModule",
           moduleDefinitions =
@@ -51,15 +50,13 @@ main =
               }
             ]
         }
-      it "calls constant globals" $ do
-        callWorksWithConstantGlobals
-      it "supports recursive function calls" $ do
-        recursiveFunctionCalls
-      it "builds the example" $ do
+      , testCase "calls constant globals" callWorksWithConstantGlobals
+      , testCase "supports recursive function calls" recursiveFunctionCalls
+      , testCase "builds the example" $ do
         let f10 = ConstantOperand (C.Float (F.Double 10))
             fadd a b = FAdd { operand0 = a, operand1 = b, fastMathFlags = noFastMathFlags, metadata = [] }
             add a b = Add { operand0 = a, operand1 = b, nsw = False, nuw = False, metadata = [] }
-        example `shouldBe`
+        example @?=
           defaultModule {
             moduleName = "exampleModule",
             moduleDefinitions =
@@ -168,10 +165,12 @@ main =
                 }
               ]
           }
+      ]
+  ]
 
-recursiveFunctionCalls :: Expectation
+recursiveFunctionCalls :: Assertion
 recursiveFunctionCalls = do
-  m `shouldBe` defaultModule
+  m @?= defaultModule
     { moduleName = "exampleModule"
     , moduleDefinitions =
       [ GlobalDefinition functionDefaults
@@ -204,8 +203,9 @@ recursiveFunctionCalls = do
           ret c
       pure ()
 
+callWorksWithConstantGlobals :: Assertion
 callWorksWithConstantGlobals = do
-  funcCall `shouldBe` defaultModule
+  funcCall @?= defaultModule
     { moduleName = "exampleModule"
     , moduleDefinitions =
       [ GlobalDefinition functionDefaults {
