@@ -116,20 +116,5 @@ test-suite test
   main-is: Test.hs
   other-modules:
     LLVM.Test.DataLayout
+    LLVM.Test.IRBuilder
     LLVM.Test.Tests
-
-test-suite test-irbuilder
-  type: exitcode-stdio-1.0
-  main-is: IRBuilder.hs
-  hs-source-dirs:
-      test
-  build-depends:
-      base >=4.8
-    , bytestring
-    , containers
-    , hspec
-    , llvm-hs-pure
-    , mtl
-    , text
-    , transformers
-    , unordered-containers
