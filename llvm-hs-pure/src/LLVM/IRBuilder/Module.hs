@@ -7,6 +7,7 @@
 {-# LANGUAGE GeneralizedNewtypeDeriving #-}
 {-# LANGUAGE MultiParamTypeClasses #-}
 {-# LANGUAGE UndecidableInstances #-} -- For MonadState s (IRBuilderT m) instance
+{-# LANGUAGE CPP #-}
 
 module LLVM.IRBuilder.Module where
 
@@ -27,7 +28,9 @@ import qualified Control.Monad.State.Strict as Strict
 import Control.Monad.State.Lazy
 import Control.Monad.List
 import Control.Monad.Trans.Maybe
+#if !(MIN_VERSION_mtl(2,2,2))
 import Control.Monad.Trans.Identity
+#endif
 
 import Data.Bifunctor
 import Data.ByteString.Short as BS
