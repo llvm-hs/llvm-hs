@@ -1,5 +1,5 @@
 name: llvm-hs
-version: 6.0.0
+version: 6.1.0
 license: BSD3
 license-file: LICENSE
 author: Anthony Cowley, Stephen Diehl, Moritz Kiefer <moritz.kiefer@purelyfunctional.org>, Benjamin S. Scarlet
@@ -35,7 +35,7 @@ extra-source-files:
   src/LLVM/Internal/FFI/Target.hpp
   src/LLVM/Internal/FFI/Type.h
   src/LLVM/Internal/FFI/Value.h
-tested-with: GHC == 7.10.3, GHC == 8.0.2, GHC == 8.2.1
+tested-with: GHC == 8.0.2, GHC == 8.2.2, GHC == 8.4.1
 extra-source-files: CHANGELOG.md
 
 source-repository head
@@ -51,10 +51,6 @@ flag debug
   description: compile C(++) shims with debug info for ease of troubleshooting
   default: False
 
-flag semigroups
-  description: Add semigroups to build-depends for Data.List.NonEmpty. This will be selected automatically by cabal.
-  default: False
-
 custom-setup
   setup-depends: base
                , Cabal
@@ -63,14 +59,9 @@ custom-setup
 library
   build-tools: hsc2hs, llvm-config
   ghc-options: -Wall -fno-warn-name-shadowing -fno-warn-orphans
-  if flag(semigroups)
-    build-depends:
-      base >= 4.8 && < 4.9,
-      semigroups >= 0.18 && < 0.19
-  else
-    build-depends:
-      base >= 4.9 && < 5
+
   build-depends:
+    base >= 4.9 && < 5,
     attoparsec >= 0.13,
     exceptions >= 0.8,
     utf8-string >= 0.3.7,
@@ -80,7 +71,7 @@ library
     template-haskell >= 2.5.0.0,
     containers >= 0.4.2.1,
     array >= 0.4.0.0,
-    llvm-hs-pure == 6.0.*
+    llvm-hs-pure == 6.1.*
   hs-source-dirs: src
   extensions:
     NoImplicitPrelude
@@ -236,14 +227,8 @@ library
 
 test-suite test
   type: exitcode-stdio-1.0
-  if flag(semigroups)
-    build-depends:
-      base >= 4.8 && < 4.9,
-      semigroups >= 0.18 && < 0.19
-  else
-    build-depends:
-      base >= 4.9 && < 5
   build-depends:
+    base >= 4.9 && < 5,
     bytestring >= 0.10 && < 0.11,
     tasty >= 0.11,
     tasty-hunit >= 0.9,

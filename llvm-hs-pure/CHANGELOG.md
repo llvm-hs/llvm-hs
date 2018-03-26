@@ -1,4 +1,4 @@
-## unreleased
+## 6.1.0 (unreleased)
 
 * IRBuilder: Ensure that automatically generated block labels are
   assigned smaller identifiers than the instructions following
@@ -7,6 +7,11 @@
   identifiers assigned to unnamed values.
 * IRBuilder: add `currentBlock` which returns name of the currently
   active block.
+* Remove the `MetadataNodeReference` constructor. References to
+  metadata nodes are now encoded using the polymorphic `MDRef` type.
+* Add debug metadata to the AST in `LLVM.AST.Operand`. Thanks to
+  @xldenis who started that effort!
+* Drop support for GHC 7.10.
 
 ## 6.0.0 (2018-03-06)
 

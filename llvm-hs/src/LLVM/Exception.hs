@@ -17,6 +17,14 @@ data EncodeException =
 
 instance Exception EncodeException
 
+-- | Indicates an error during the translation of LLVM’s internal representation
+-- to the AST provided 'llvm-hs-pure'.
+data DecodeException =
+  DecodeException !String
+  deriving (Show, Eq, Ord, Typeable)
+
+instance Exception DecodeException
+
 -- | Indicates an error during the parsing of a module. This is used
 -- for errors encountered when parsing LLVM’s human readable assembly
 -- format and when parsing the binary bitcode format.

@@ -1,3 +1,11 @@
+## 6.1.0 (unreleased)
+
+* Remove the `MetadataNodeReference` constructor. References to
+  metadata nodes are now encoded using the polymorphic `MDRef` type.
+* Add support for encoding and decoding debug metadata. Thanks to
+  @xldenis who started that effort!
+* Drop support for GHC 7.10.
+
 ## 6.0.0 (2018-03-06)
 
 * Support for LLVM 6.0, take a look at the changelog of llvm-hs-pure for details.

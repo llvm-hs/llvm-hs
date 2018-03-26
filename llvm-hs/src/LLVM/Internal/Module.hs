@@ -41,7 +41,7 @@ import qualified LLVM.Internal.FFI.Target as FFI
 import qualified LLVM.Internal.FFI.Value as FFI
 
 import LLVM.Internal.Attribute
-import LLVM.Internal.BasicBlock  
+import LLVM.Internal.BasicBlock
 import LLVM.Internal.Coding
 import LLVM.Internal.Context
 import LLVM.Internal.DecodeAST
@@ -272,19 +272,19 @@ withModuleFromAST context@(Context c) (A.Module moduleId sourceFileName dataLayo
      liftIO $ FFI.setCOMDATSelectionKind cd csk
      defineCOMDAT n cd
      return . return . return . return . return $ ()
-     
-   A.MetadataNodeDefinition i os -> return . return $ do
+
+   A.MetadataNodeDefinition i md -> return . return $ do
      t <- liftIO $ FFI.createTemporaryMDNodeInContext context
      defineMDNode i t
      return $ do
-       n <- encodeM (A.MetadataNode os)
+       n <- encodeM md
        liftIO $ FFI.metadataReplaceAllUsesWith (FFI.upCast t) (FFI.upCast n)
        defineMDNode i n
        return $ return ()
 
    A.NamedMetadataDefinition n ids -> return . return . return . return $ do
      n <- encodeM n
-     ids <- encodeM (map A.MetadataNodeReference ids)
+     ids <- encodeM (map A.MDRef ids :: [A.MDRef A.MDNode])
      nm <- liftIO $ FFI.getOrAddNamedMetadata ffiMod n
      liftIO $ FFI.namedMetadataAddOperands nm ids
      return ()
@@ -482,8 +482,8 @@ decodeNamedMetadataDefinitions mod = do
       A.NamedMetadataDefinition
         <$> (decodeM $ FFI.getNamedMetadataName nm)
         <*> fmap
-              (map (\(A.MetadataNodeReference mid) -> mid))
-              (decodeM (n, os))
+              (map (\(A.MDRef mid) -> mid))
+              (decodeM (n, os) :: DecodeAST [A.MDRef A.MDNode])
 
 -- | Get an LLVM.AST.'LLVM.AST.Module' from a LLVM.'Module' - i.e.
 -- raise C++ objects into an Haskell AST.

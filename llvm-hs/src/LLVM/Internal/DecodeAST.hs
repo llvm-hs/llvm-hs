@@ -8,6 +8,7 @@ module LLVM.Internal.DecodeAST where
 
 import LLVM.Prelude
 
+import Control.Monad.Catch
 import Control.Monad.State
 import Control.Monad.AnyCont
 
@@ -72,6 +73,7 @@ newtype DecodeAST a = DecodeAST { unDecodeAST :: AnyContT (StateT DecodeState IO
     Monad,
     MonadIO,
     MonadState DecodeState,
+    MonadThrow,
     MonadAnyCont IO,
     ScopeAnyCont
   )

@@ -12,9 +12,14 @@ module LLVM.AST (
   UnnamedAddr(..),
   Parameter(..),
   BasicBlock(..),
+  Operand(..),
+  CallableOperand,
+  Metadata(..),
+  MetadataNodeID(..),
+  MDRef(..),
+  MDNode(..),
   module LLVM.AST.Instruction,
   module LLVM.AST.Name,
-  module LLVM.AST.Operand,
   module LLVM.AST.Type
   ) where
 
@@ -23,7 +28,7 @@ import LLVM.Prelude
 import LLVM.AST.Name
 import LLVM.AST.Type (Type(..), FloatingPointType(..))
 import LLVM.AST.Global
-import LLVM.AST.Operand
+import LLVM.AST.Operand hiding (Module)
 import LLVM.AST.Instruction
 import LLVM.AST.DataLayout
 import qualified LLVM.AST.Attribute as A
@@ -33,7 +38,7 @@ import qualified LLVM.AST.COMDAT as COMDAT
 data Definition
   = GlobalDefinition Global
   | TypeDefinition Name (Maybe Type)
-  | MetadataNodeDefinition MetadataNodeID [Maybe Metadata]
+  | MetadataNodeDefinition MetadataNodeID MDNode
   | NamedMetadataDefinition ShortByteString [MetadataNodeID]
   | ModuleInlineAssembly ByteString
   | FunctionAttributes A.GroupID [A.FunctionAttribute]

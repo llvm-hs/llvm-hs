@@ -164,12 +164,9 @@ instance DecodeM DecodeAST A.FA.FunctionAttribute FFI.FunctionAttribute where
          case enum of
            [functionAttributeKindP|AllocSize|] -> do
              x <- alloca
-             y <- alloca
-             isJust <- liftIO $ FFI.attributeGetAllocSizeArgs a x y
+             y <- decodeOptional (FFI.attributeGetAllocSizeArgs a x)
              x' <- decodeM =<< peek x
-             y' <- peek y
-             yM <- decodeM (y', isJust)
-             return (A.FA.AllocSize x' yM)
+             return (A.FA.AllocSize x' y)
            [functionAttributeKindP|NoReturn|] -> return A.FA.NoReturn
            [functionAttributeKindP|NoUnwind|] -> return A.FA.NoUnwind
            [functionAttributeKindP|ReadNone|] -> return A.FA.ReadNone
