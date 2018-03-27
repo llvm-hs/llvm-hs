@@ -16,7 +16,7 @@ import qualified LLVM.Internal.FFI.DataLayout as FFI
 import qualified LLVM.Internal.FFI.OrcJIT as FFI
 import qualified LLVM.Internal.FFI.OrcJIT.CompileLayer as FFI
 import LLVM.Internal.Module hiding (getDataLayout)
-import LLVM.Internal.OrcJIT
+import LLVM.Internal.OrcJIT hiding (LinkingLayer(..))
 
 -- | There are two main types of operations provided by instances of 'CompileLayer'.
 --
