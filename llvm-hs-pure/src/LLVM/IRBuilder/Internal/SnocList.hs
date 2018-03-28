@@ -1,12 +1,7 @@
 {-# LANGUAGE CPP #-}
 module LLVM.IRBuilder.Internal.SnocList where
 
-#if MIN_VERSION_base(4,11,0)
 import LLVM.Prelude
-#else
-import Data.Semigroup (Semigroup(..))
-import LLVM.Prelude hiding ((<>))
-#endif
 
 newtype SnocList a = SnocList { unSnocList :: [a] }
   deriving (Eq, Show)
