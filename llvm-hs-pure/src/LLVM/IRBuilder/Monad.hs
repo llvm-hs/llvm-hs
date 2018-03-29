@@ -16,11 +16,12 @@ import Control.Monad.Except
 import Control.Monad.Fail
 import qualified Control.Monad.Fail as Fail
 import Control.Monad.Identity
-import Control.Monad.Writer.Lazy as Lazy
-import Control.Monad.Writer.Strict as Strict
+import qualified Control.Monad.Writer.Lazy as Lazy
+import qualified Control.Monad.Writer.Strict as Strict
+import Control.Monad.Writer (MonadWriter)
 import Control.Monad.Reader
-import Control.Monad.RWS.Lazy as Lazy
-import Control.Monad.RWS.Strict as Strict
+import qualified Control.Monad.RWS.Lazy as Lazy
+import qualified Control.Monad.RWS.Strict as Strict
 import qualified Control.Monad.State.Lazy as Lazy
 import Control.Monad.State.Strict
 import Control.Monad.List

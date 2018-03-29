@@ -1,6 +1,6 @@
-{-# LANGUAGE CPP #-}
 -- | This module is presents a prelude mostly like the post-Applicative-Monad world of
--- base >= 4.8 / ghc >= 7.10, even on earlier versions. It's intended as an internal library
+-- base >= 4.8 / ghc >= 7.10, as well as the post-Semigroup-Monoid world of
+-- base >= 4.11 / ghc >= 8.4, even on earlier versions. It's intended as an internal library
 -- for llvm-hs-pure and llvm-hs; it's exposed only to be shared between the two.
 module LLVM.Prelude (
     module Prelude,
@@ -10,6 +10,7 @@ module LLVM.Prelude (
     module Data.Word,
     module Data.Functor,
     module Data.Foldable,
+    module Data.Semigroup,
     module Data.Traversable,
     module Control.Applicative,
     module Control.Monad,
@@ -18,10 +19,7 @@ module LLVM.Prelude (
     fromMaybe,
     leftBiasedZip,
     findM,
-    ifM,
-#if !(MIN_VERSION_base(4,11,0))
-    (<>)
-#endif
+    ifM
     ) where
 
 import Prelude hiding (
@@ -37,10 +35,10 @@ import Data.Data (Data, Typeable)
 import GHC.Generics (Generic)
 import Data.Int
 import Data.Maybe (fromMaybe)
-import Data.Monoid ((<>))
 import Data.Word
 import Data.Functor
 import Data.Foldable
+import Data.Semigroup (Semigroup((<>)))
 import Data.Traversable
 import Control.Applicative
 import Control.Monad hiding (
