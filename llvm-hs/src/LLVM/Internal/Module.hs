@@ -318,6 +318,7 @@ withModuleFromAST context@(Context c) (A.Module moduleId sourceFileName dataLayo
            setSection g' (A.G.section g)
            setCOMDAT g' (A.G.comdat g)
            setAlignment g' (A.G.alignment g)
+           setMetadata (FFI.upCast g') (A.G.metadata g)
            return (FFI.upCast g')
        (a@A.G.GlobalAlias { A.G.name = n }) -> do
          typ <- encodeM (A.G.type' a)
@@ -331,7 +332,7 @@ withModuleFromAST context@(Context c) (A.Module moduleId sourceFileName dataLayo
            setThreadLocalMode a' (A.G.threadLocalMode a)
            (liftIO . FFI.setAliasee a') =<< encodeM (A.G.aliasee a)
            return (FFI.upCast a')
-       (A.Function _ _ _ cc rAttrs resultType fName (args, isVarArgs) attrs _ _ _ gc prefix blocks personality) -> do
+       (A.Function _ _ _ cc rAttrs resultType fName (args, isVarArgs) attrs _ _ _ gc prefix blocks personality metadata) -> do
          typ <- encodeM $ A.FunctionType resultType [t | A.Parameter t _ _ <- args] isVarArgs
          f <- liftIO . withName fName $ \fName -> FFI.addFunction ffiMod fName typ
          defineGlobal fName f
@@ -367,6 +368,7 @@ withModuleFromAST context@(Context c) (A.Module moduleId sourceFileName dataLayo
            sequence_ finishInstrs
            locals <- gets $ Map.toList . encodeStateLocals
            forM_ [ n | (n, ForwardValue _) <- locals ] $ \n -> undefinedReference "local" n
+           setMetadata (FFI.upCast f) metadata
            return (FFI.upCast f)
      return $ do
        g' <- eg'
@@ -404,6 +406,7 @@ decodeGlobalVariables mod = do
         <*> getSection g
         <*> getCOMDATName g
         <*> getAlignment g
+        <*> getMetadata (FFI.upCast g)
 
 -- This returns a nested DecodeAST to allow interleaving of different
 -- decoding steps. Take a look at the call site in moduleAST for more
@@ -425,6 +428,21 @@ decodeGlobalAliases mod = do
         <*> return t
         <*> return as
         <*> (decodeM =<< (liftIO $ FFI.getAliasee a))
+
+getMetadata :: Ptr FFI.GlobalObject -> DecodeAST [(ShortByteString, A.MDRef A.MDNode)]
+getMetadata o = scopeAnyCont $ do
+  n <- liftIO (FFI.getNumMetadata o)
+  ks <- allocaArray n
+  ps <- allocaArray n
+  liftIO (FFI.getAllMetadata o ks ps)
+  zip <$> decodeM (n, ks) <*> decodeM (n, ps)
+
+setMetadata :: Ptr FFI.GlobalObject -> [(ShortByteString, A.MDRef A.MDNode)] -> EncodeAST ()
+setMetadata o md =
+  forM_ md $ \(kindName, node) -> do
+    kindID <- encodeM kindName
+    node <- encodeM node
+    liftIO (FFI.setMetadata o kindID node)
 
 -- This returns a nested DecodeAST to allow interleaving of different
 -- decoding steps. Take a look at the call site in moduleAST for more
@@ -469,6 +487,7 @@ decodeFunctions mod = do
           <*> getPrefixData f
           <*> decodeBlocks
           <*> getPersonalityFn f
+          <*> getMetadata (FFI.upCast f)
 
 decodeNamedMetadataDefinitions :: Ptr FFI.Module -> DecodeAST [A.Definition]
 decodeNamedMetadataDefinitions mod = do

@@ -14,6 +14,7 @@ import qualified LLVM.AST.DLL as DLL
 import qualified LLVM.AST.CallingConvention as CC
 import qualified LLVM.AST.ThreadLocalStorage as TLS
 import qualified LLVM.AST.Attribute as A
+import LLVM.AST.Operand (MDRef, MDNode)
 
 -- | <http://llvm.org/doxygen/classllvm_1_1GlobalValue.html>
 data Global
@@ -31,7 +32,8 @@ data Global
         initializer :: Maybe Constant,
         section :: Maybe ShortByteString,
         comdat :: Maybe ShortByteString,
-        alignment :: Word32
+        alignment :: Word32,
+        metadata :: [(ShortByteString, MDRef MDNode)]
       }
     -- | <http://llvm.org/docs/LangRef.html#aliases>
     | GlobalAlias {
@@ -62,7 +64,8 @@ data Global
         garbageCollectorName :: Maybe ShortByteString,
         prefix :: Maybe Constant,
         basicBlocks :: [BasicBlock],
-        personalityFunction :: Maybe Constant
+        personalityFunction :: Maybe Constant,
+        metadata :: [(ShortByteString, MDRef MDNode)]
       }
   deriving (Eq, Read, Show, Typeable, Data, Generic)
 
@@ -95,7 +98,8 @@ globalVariableDefaults =
   initializer = Nothing,
   section = Nothing,
   comdat = Nothing,
-  alignment = 0
+  alignment = 0,
+  metadata = []
   }
 
 -- | helper for making 'GlobalAlias's
@@ -132,5 +136,6 @@ functionDefaults =
     garbageCollectorName = Nothing,
     prefix = Nothing,
     basicBlocks = [],
-    personalityFunction = Nothing
+    personalityFunction = Nothing,
+    metadata = []
   }

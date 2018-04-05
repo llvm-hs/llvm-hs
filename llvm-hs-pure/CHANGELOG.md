@@ -12,6 +12,7 @@
 * Add debug metadata to the AST in `LLVM.AST.Operand`. Thanks to
   @xldenis who started that effort!
 * Drop support for GHC 7.10.
+* Add `metadata` field to `GlobalVariable` and `Function`.
 
 ## 6.0.0 (2018-03-06)
 

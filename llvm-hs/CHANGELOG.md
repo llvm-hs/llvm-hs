@@ -5,6 +5,7 @@
 * Add support for encoding and decoding debug metadata. Thanks to
   @xldenis who started that effort!
 * Drop support for GHC 7.10.
+* Support decoding/encoding of metadata in `GlobalVariable` and `Function`.
 
 ## 6.0.0 (2018-03-06)
 

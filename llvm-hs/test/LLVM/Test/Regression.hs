@@ -9,7 +9,7 @@ import           Test.Tasty.HUnit
 import qualified LLVM.AST as AST
 import           LLVM.AST hiding (Module)
 import qualified LLVM.AST.Constant as C
-import           LLVM.AST.Global
+import           LLVM.AST.Global hiding (metadata)
 import           LLVM.AST.Type
 
 import           LLVM.Context
