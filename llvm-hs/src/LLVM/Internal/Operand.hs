@@ -931,6 +931,7 @@ instance DecodeM DecodeAST A.DILocation (Ptr FFI.DILocation) where
     pure (A.Location line col scope)
 
 instance (MonadIO m, MonadState EncodeState m, MonadAnyCont IO m, EncodeM m a (Ptr a'), FFI.DescendentOf FFI.Metadata a') => EncodeM m [a] (FFI.TupleArray a') where
+  encodeM [] = pure (FFI.TupleArray nullPtr)
   encodeM els = do
     (numEls, elsPtr) <- encodeM els
     Context c <- gets encodeStateContext
