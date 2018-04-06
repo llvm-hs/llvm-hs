@@ -388,6 +388,14 @@ instance EncodeM EncodeAST A.DIFile (Ptr FFI.DIFile) where
     Context c <- gets encodeStateContext
     liftIO (FFI.getDIFile c filename directory checksumKind checksum)
 
+instance EncodeM EncodeAST (Maybe A.Encoding) FFI.Encoding where
+  encodeM Nothing = pure (FFI.Encoding 0)
+  encodeM (Just e) = encodeM e
+
+instance DecodeM DecodeAST (Maybe A.Encoding) FFI.Encoding where
+  decodeM (FFI.Encoding 0) = pure Nothing
+  decodeM e = Just <$> decodeM e
+
 genCodingInstance [t|A.Encoding|] ''FFI.Encoding
   [ (FFI.DwAtE_address, A.AddressEncoding)
   , (FFI.DwAtE_boolean, A.BooleanEncoding)
@@ -931,6 +939,7 @@ instance DecodeM DecodeAST A.DILocation (Ptr FFI.DILocation) where
     pure (A.Location line col scope)
 
 instance (MonadIO m, MonadState EncodeState m, MonadAnyCont IO m, EncodeM m a (Ptr a'), FFI.DescendentOf FFI.Metadata a') => EncodeM m [a] (FFI.TupleArray a') where
+  encodeM [] = pure (FFI.TupleArray nullPtr)
   encodeM els = do
     (numEls, elsPtr) <- encodeM els
     Context c <- gets encodeStateContext

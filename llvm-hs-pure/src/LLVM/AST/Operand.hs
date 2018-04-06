@@ -312,7 +312,7 @@ data DIBasicType = BasicType
   { typeName :: ShortByteString
   , sizeInBits :: Word64
   , alignInBits :: Word32
-  , typeEncoding :: Encoding
+  , typeEncoding :: Maybe Encoding
   , typeTag :: BasicTypeTag
   } deriving (Eq, Ord, Read, Show, Typeable, Data, Generic)
 

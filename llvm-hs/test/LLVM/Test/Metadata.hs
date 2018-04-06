@@ -1,3 +1,4 @@
+{-# LANGUAGE DuplicateRecordFields #-}
 {-# LANGUAGE OverloadedStrings #-}
 module LLVM.Test.Metadata where
 
@@ -43,6 +44,7 @@ tests = testGroup "Metadata"
   , namedMetadata
   , nullMetadata
   , cyclicMetadata
+  , globalObjectMetadata
   , roundtripDIBasicType
   , roundtripDIDerivedType
   , roundtripDISubroutineType
@@ -778,4 +780,165 @@ cyclicMetadata = testGroup "cyclic" [
       strCheck ast s
    ]
 
-
+globalObjectMetadata = testGroup "Metadata on GlobalObject" $
+  [ testCase "metadata on functions" $ do
+      let ast = Module "<string>" "<string>" Nothing Nothing
+                  [ GlobalDefinition
+                      functionDefaults
+                        { G.name = "main"
+                        , G.returnType = A.T.void
+                        , basicBlocks = [ BasicBlock (UnName 0) [] (Do (Ret Nothing [])) ]
+                        , G.metadata = [("dbg", MDRef (MetadataNodeID 0))]
+                        }
+                  , NamedMetadataDefinition "llvm.module.flags" [MetadataNodeID 1]
+                  , NamedMetadataDefinition "llvm.dbg.cu" [MetadataNodeID 2]
+                  , MetadataNodeDefinition (MetadataNodeID 0) $
+                    DINode .DIScope .DILocalScope . DISubprogram $
+                    Subprogram
+                      { scope = Nothing
+                      , name = "main"
+                      , linkageName = ""
+                      , file = Nothing
+                      , line = 0
+                      , type' = Nothing
+                      , localToUnit = False
+                      , definition = True
+                      , scopeLine = 0
+                      , containingType = Nothing
+                      , virtuality = NoVirtuality
+                      , virtualityIndex = 0
+                      , thisAdjustment = 0
+                      , flags = []
+                      , optimized = False
+                      , unit = Just (MDRef (MetadataNodeID 2))
+                      , O.templateParams = []
+                      , declaration = Nothing
+                      , variables = []
+                      , thrownTypes = []
+                      }
+                  , MetadataNodeDefinition (MetadataNodeID 1)
+                    (MDTuple [ Just (MDValue (ConstantOperand (C.Int 32 2)))
+                             , Just (MDString "Debug Info Version")
+                             , Just (MDValue (ConstantOperand (C.Int 32 3)))
+                             ])
+                  , MetadataNodeDefinition (MetadataNodeID 2) $
+                    DINode . DIScope . DICompileUnit $
+                    CompileUnit
+                      { language = 12
+                      , file = MDRef (MetadataNodeID 3)
+                      , producer = "clang version 6.0.0 (tags/RELEASE_600/final)"
+                      , optimized = True
+                      , flags = ""
+                      , runtimeVersion = 0
+                      , splitDebugFileName = ""
+                      , emissionKind = FullDebug
+                      , enums = []
+                      , retainedTypes = []
+                      , globals = []
+                      , imports = []
+                      , macros = []
+                      , dWOId = 0
+                      , splitDebugInlining = True
+                      , debugInfoForProfiling = False
+                      , gnuPubnames = False
+                      }
+                  , MetadataNodeDefinition (MetadataNodeID 3) $
+                    DINode . DIScope . DIFile $
+                    O.File "main.c" "/" "" None
+                  ]
+          s =
+            "; ModuleID = '<string>'\n\
+            \source_filename = \"<string>\"\n\
+            \\n\
+            \define void @main() !dbg !3 {\n\
+            \  ret void\n\
+            \}\n\
+            \\n\
+            \!llvm.module.flags = !{!0}\n\
+            \!llvm.dbg.cu = !{!1}\n\
+            \\n\
+            \!0 = !{i32 2, !\"Debug Info Version\", i32 3}\n\
+            \!1 = distinct !DICompileUnit(language: DW_LANG_C99, file: !2, producer: \"clang version 6.0.0 (tags/RELEASE_600/final)\", isOptimized: true, runtimeVersion: 0, emissionKind: FullDebug)\n\
+            \!2 = !DIFile(filename: \"main.c\", directory: \"/\")\n\
+            \!3 = distinct !DISubprogram(name: \"main\", scope: null, isLocal: false, isDefinition: true, isOptimized: false, unit: !1)\n"
+      strCheck ast s,
+   testCase "metadata on global variables" $ do
+      let ast = Module "<string>" "<string>" Nothing Nothing
+                  [ GlobalDefinition
+                      globalVariableDefaults
+                        { G.name = "g"
+                        , G.type' = A.T.i32
+                        , G.linkage = L.Common
+                        , G.alignment = 4
+                        , G.initializer = Just (C.Int 32 0)
+                        , G.metadata = [("dbg", MDRef (MetadataNodeID 0))]
+                        }
+                  , NamedMetadataDefinition "llvm.module.flags" [MetadataNodeID 1]
+                  , NamedMetadataDefinition "llvm.dbg.cu" [MetadataNodeID 2]
+                  , MetadataNodeDefinition (MetadataNodeID 0) $
+                    DIGlobalVariableExpression $ GlobalVariableExpression (MDRef (MetadataNodeID 3)) (MDRef (MetadataNodeID 4))
+                  , MetadataNodeDefinition (MetadataNodeID 1)
+                    (MDTuple [ Just (MDValue (ConstantOperand (C.Int 32 2)))
+                             , Just (MDString "Debug Info Version")
+                             , Just (MDValue (ConstantOperand (C.Int 32 3)))
+                             ])
+                  , MetadataNodeDefinition (MetadataNodeID 2) $
+                    DINode . DIScope . DICompileUnit $
+                    CompileUnit
+                      { language = 12
+                      , file = MDRef (MetadataNodeID 5)
+                      , producer = "clang version 6.0.0 (tags/RELEASE_600/final)"
+                      , optimized = True
+                      , flags = ""
+                      , runtimeVersion = 0
+                      , splitDebugFileName = ""
+                      , emissionKind = FullDebug
+                      , enums = []
+                      , retainedTypes = []
+                      , globals = []
+                      , imports = []
+                      , macros = []
+                      , dWOId = 0
+                      , splitDebugInlining = True
+                      , debugInfoForProfiling = False
+                      , gnuPubnames = False
+                      }
+                  , MetadataNodeDefinition (MetadataNodeID 3) $
+                    DINode . DIVariable . DIGlobalVariable $
+                    GlobalVariable
+                      { name = "g"
+                      , scope = Nothing
+                      , file = Nothing
+                      , line = 0
+                      , type' = Just (MDRef (MetadataNodeID 6))
+                      , linkageName = ""
+                      , local = False
+                      , definition = True
+                      , staticDataMemberDeclaration = Nothing
+                      , alignInBits = 0
+                      }
+                  , MetadataNodeDefinition (MetadataNodeID 4) (DIExpression (Expression []))
+                  , MetadataNodeDefinition (MetadataNodeID 5) $
+                    DINode . DIScope . DIFile $
+                    O.File "main.c" "/" "" None
+                  , MetadataNodeDefinition (MetadataNodeID 6) $
+                    DINode . DIScope . DIType . DIBasicType $
+                    BasicType "" 0 0 Nothing BaseType
+                  ]
+          s =
+            "; ModuleID = '<string>'\n\
+            \source_filename = \"<string>\"\n\
+            \\n\
+            \@g = common global i32 0, align 4, !dbg !0\n\
+            \\n\
+            \!llvm.module.flags = !{!3}\n\
+            \!llvm.dbg.cu = !{!4}\n\
+            \\n\
+            \!0 = !DIGlobalVariableExpression(var: !1, expr: !DIExpression())\n\
+            \!1 = !DIGlobalVariable(name: \"g\", scope: null, type: !2, isLocal: false, isDefinition: true)\n\
+            \!2 = !DIBasicType()\n\
+            \!3 = !{i32 2, !\"Debug Info Version\", i32 3}\n\
+            \!4 = distinct !DICompileUnit(language: DW_LANG_C99, file: !5, producer: \"clang version 6.0.0 (tags/RELEASE_600/final)\", isOptimized: true, runtimeVersion: 0, emissionKind: FullDebug)\n\
+            \!5 = !DIFile(filename: \"main.c\", directory: \"/\")\n"
+      strCheck ast s
+  ]

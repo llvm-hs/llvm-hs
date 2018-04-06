@@ -2,6 +2,7 @@
 #include "llvm/IR/Comdat.h"
 #include "llvm/IR/GlobalValue.h"
 #include "llvm/IR/GlobalObject.h"
+#include "llvm/IR/Metadata.h"
 #include "llvm-c/Core.h"
 #include "LLVM/Internal/FFI/GlobalValue.h"
 
@@ -82,6 +83,25 @@ LLVMThreadLocalMode LLVM_Hs_GetThreadLocalMode(LLVMValueRef globalVal) {
 
 void LLVM_Hs_SetThreadLocalMode(LLVMValueRef globalVal, LLVMThreadLocalMode mode) {
     unwrap<GlobalValue>(globalVal)->setThreadLocalMode(GlobalValue::ThreadLocalMode(mode));
+}
+
+unsigned LLVM_Hs_GlobalObject_GetNumMetadata(GlobalObject* obj) {
+    SmallVector<std::pair<unsigned, MDNode *>, 4> mds;
+    obj->getAllMetadata(mds);
+    return mds.size();
+}
+
+void LLVM_Hs_GlobalObject_GetAllMetadata(GlobalObject* obj, unsigned *kinds, LLVMMetadataRef *nodes) {
+    SmallVector<std::pair<unsigned, MDNode*>, 4> mds;
+    obj->getAllMetadata(mds);
+    for (unsigned i = 0; i < mds.size(); ++i) {
+        kinds[i] = mds[i].first;
+        nodes[i] = wrap(mds[i].second);
+    }
+}
+
+void LLVM_Hs_GlobalObject_SetMetadata(GlobalObject* obj, unsigned kind, MDNode* node) {
+    obj->setMetadata(kind, node);
 }
 
 }

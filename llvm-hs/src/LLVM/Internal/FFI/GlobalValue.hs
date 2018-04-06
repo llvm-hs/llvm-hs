@@ -76,4 +76,11 @@ foreign import ccall unsafe "LLVM_Hs_GetThreadLocalMode" getThreadLocalMode ::
 foreign import ccall unsafe "LLVM_Hs_SetThreadLocalMode" setThreadLocalMode ::
   Ptr GlobalValue -> ThreadLocalMode -> IO ()
 
+foreign import ccall unsafe "LLVM_Hs_GlobalObject_GetNumMetadata" getNumMetadata ::
+  Ptr GlobalObject -> IO CUInt
 
+foreign import ccall unsafe "LLVM_Hs_GlobalObject_GetAllMetadata" getAllMetadata ::
+  Ptr GlobalObject -> Ptr MDKindID -> Ptr (Ptr MDNode) -> IO ()
+
+foreign import ccall unsafe "LLVM_Hs_GlobalObject_SetMetadata" setMetadata ::
+  Ptr GlobalObject -> MDKindID -> Ptr MDNode -> IO ()

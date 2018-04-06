@@ -511,11 +511,19 @@ DISubprogram *LLVM_Hs_Get_DISubprogram(
     DICompileUnit *unit, Metadata *templateParams, DISubprogram *declaration,
     Metadata *variables, Metadata *thrownTypes) {
     LLVMContext &c = *unwrap(ctx);
-    return DISubprogram::get(
-        c, scope, name, linkageName, file,
-        line, type, isLocal, isDefinition, scopeLine, containingType,
-        virtuality, virtualIndex, thisAdjustment, flags, isOptimized, unit,
-        templateParams, declaration, variables, thrownTypes);
+    if (isDefinition) {
+        return DISubprogram::getDistinct(
+          c, scope, name, linkageName, file,
+          line, type, isLocal, isDefinition, scopeLine, containingType,
+          virtuality, virtualIndex, thisAdjustment, flags, isOptimized, unit,
+          templateParams, declaration, variables, thrownTypes);
+    } else {
+        return DISubprogram::get(
+          c, scope, name, linkageName, file,
+          line, type, isLocal, isDefinition, scopeLine, containingType,
+          virtuality, virtualIndex, thisAdjustment, flags, isOptimized, unit,
+          templateParams, declaration, variables, thrownTypes);
+    }
 }
 
 // DIExpression
