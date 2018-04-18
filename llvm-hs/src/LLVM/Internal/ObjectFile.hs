@@ -16,7 +16,7 @@ disposeObjectFile :: ObjectFile -> IO ()
 disposeObjectFile (ObjectFile obj) = FFI.disposeObjectFile obj
 
 -- | Create a object file which can later be linked with the
--- 'LLVM.OrcJIT.LinkingLayer'.
+-- 'LLVM.Internal.OrcJIT.LinkingLayer'.
 --
 -- Note that the file at `path` should already be a compiled object file i.e a
 -- `.o` file. This does *not* compile source files.

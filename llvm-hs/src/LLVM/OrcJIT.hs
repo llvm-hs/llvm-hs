@@ -53,6 +53,7 @@ module LLVM.OrcJIT (
 
 import LLVM.Internal.OrcJIT
 import LLVM.Internal.OrcJIT.CompileLayer
+import LLVM.Internal.OrcJIT.LinkingLayer
 import LLVM.Internal.OrcJIT.CompileOnDemandLayer
 import LLVM.Internal.OrcJIT.IRCompileLayer
 import LLVM.Internal.OrcJIT.IRTransformLayer

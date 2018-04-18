@@ -9,23 +9,13 @@ import Foreign.Ptr
 
 import LLVM.Internal.FFI.DataLayout
 import LLVM.Internal.FFI.LLVMCTypes
-import LLVM.Internal.FFI.PtrHierarchy
-import LLVM.Internal.FFI.ObjectFile
 
 data JITSymbol
 data LambdaResolver
 
-data LinkingLayer
-
-data ObjectLinkingLayer
-
-instance ChildOf LinkingLayer ObjectLinkingLayer
-
 newtype TargetAddress = TargetAddress Word64
 
 type SymbolResolverFn = CString -> Ptr JITSymbol -> IO ()
-
-newtype ObjectHandle = ObjectHandle Word
 
 foreign import ccall "wrapper" wrapSymbolResolverFn ::
   SymbolResolverFn -> IO (FunPtr SymbolResolverFn)
@@ -40,19 +30,6 @@ foreign import ccall safe "LLVM_Hs_createLambdaResolver" createLambdaResolver ::
 
 foreign import ccall safe "LLVM_Hs_disposeLambdaResolver" disposeLambdaResolver ::
   Ptr LambdaResolver -> IO ()
-
-foreign import ccall safe "LLVM_Hs_createObjectLinkingLayer" createObjectLinkingLayer ::
-  IO (Ptr ObjectLinkingLayer)
-
-foreign import ccall safe "LLVM_Hs_LinkingLayer_dispose" disposeLinkingLayer ::
-  Ptr LinkingLayer -> IO ()
-
-foreign import ccall safe "LLVM_Hs_LinkingLayer_addObject" addObjectFile ::
-  Ptr LinkingLayer ->
-  Ptr ObjectFile ->
-  Ptr LambdaResolver ->
-  Ptr (OwnerTransfered CString) ->
-  IO ObjectHandle
 
 foreign import ccall safe "LLVM_Hs_JITSymbol_getAddress" getAddress ::
   Ptr JITSymbol -> Ptr (OwnerTransfered CString) -> IO TargetAddress
