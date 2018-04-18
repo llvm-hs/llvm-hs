@@ -10,7 +10,7 @@ import Data.IORef
 import Foreign.Ptr
 
 import LLVM.Internal.Coding
-import LLVM.Internal.OrcJIT hiding (ObjectLinkingLayer(..))
+import LLVM.Internal.OrcJIT
 import LLVM.Internal.OrcJIT.CompileLayer
 import LLVM.Internal.Target
 import qualified LLVM.Internal.FFI.DataLayout as FFI

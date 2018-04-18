@@ -12,8 +12,9 @@ import qualified LLVM.Internal.FFI.DataLayout as FFI
 import qualified LLVM.Internal.FFI.OrcJIT.CompileLayer as FFI
 import qualified LLVM.Internal.FFI.OrcJIT.IRCompileLayer as FFI
 import qualified LLVM.Internal.FFI.PtrHierarchy as FFI
-import LLVM.Internal.OrcJIT hiding (ObjectLinkingLayer(..))
+import LLVM.Internal.OrcJIT
 import LLVM.Internal.OrcJIT.CompileLayer
+import LLVM.Internal.OrcJIT.LinkingLayer (LinkingLayer(..), getLinkingLayer)
 import LLVM.Internal.Target
 
 -- | 'IRCompileLayer' compiles modules immediately when they are

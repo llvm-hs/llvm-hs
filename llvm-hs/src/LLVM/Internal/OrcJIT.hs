@@ -13,12 +13,10 @@ import Foreign.C.String
 import Foreign.Ptr
 
 import LLVM.Internal.Coding
-import LLVM.Internal.ObjectFile
 import LLVM.Internal.Target
 import qualified LLVM.Internal.FFI.DataLayout as FFI
 import qualified LLVM.Internal.FFI.LLVMCTypes as FFI
 import qualified LLVM.Internal.FFI.OrcJIT as FFI
-import qualified LLVM.Internal.FFI.PtrHierarchy as FFI
 import qualified LLVM.Internal.FFI.Target as FFI
 
 -- | A mangled symbol which can be used in 'findSymbol'. This can be
@@ -61,22 +59,6 @@ data SymbolResolver =
     -- 'externalResolver' is used as a fallback to find external symbols.
     externalResolver :: !SymbolResolverFn
   }
-
--- | After a 'CompileLayer' has compiled the modules to object code,
--- it passes the resulting object files to a 'LinkingLayer'.
-class LinkingLayer l where
-  getLinkingLayer :: l -> Ptr FFI.LinkingLayer
-  getCleanups :: l -> IORef [IO ()]
-
--- | Bare bones implementation of a 'LinkingLayer'.
-data ObjectLinkingLayer = ObjectLinkingLayer {
-   linkingLayer :: !(Ptr FFI.ObjectLinkingLayer),
-   cleanupActions :: !(IORef [IO ()])
-  }
-
-instance LinkingLayer ObjectLinkingLayer where
-  getLinkingLayer (ObjectLinkingLayer ptr _) = FFI.upCast ptr
-  getCleanups = cleanupActions
 
 instance Monad m => EncodeM m JITSymbolFlags FFI.JITSymbolFlags where
   encodeM f = return $ foldr1 (.|.) [
@@ -130,27 +112,9 @@ allocWithCleanup cleanups alloc free = mask $ \restore -> do
   modifyIORef cleanups (free a :)
   pure a
 
--- | allocate a function pointer and register it for cleanup.
+-- | Allocate a function pointer and register it for cleanup.
 allocFunPtr :: IORef [IO ()] -> IO (FunPtr a) -> IO (FunPtr a)
 allocFunPtr cleanups alloc = allocWithCleanup cleanups alloc freeHaskellFunPtr
-
--- | Dispose of a 'LinkingLayer'.
-disposeLinkingLayer :: LinkingLayer l => l -> IO ()
-disposeLinkingLayer l = do
-  FFI.disposeLinkingLayer (getLinkingLayer l)
-  sequence_ =<< readIORef (getCleanups l)
-
--- | Create a new 'ObjectLinkingLayer'. This should be disposed using
--- 'disposeLinkingLayer' when it is no longer needed.
-newObjectLinkingLayer :: IO ObjectLinkingLayer
-newObjectLinkingLayer = do
-  linkingLayer <- FFI.createObjectLinkingLayer
-  cleanups <- liftIO (newIORef [])
-  return $ ObjectLinkingLayer linkingLayer cleanups
-
--- | 'bracket'-style wrapper around 'newObjectLinkingLayer' and 'disposeLinkingLayer'.
-withObjectLinkingLayer :: (ObjectLinkingLayer -> IO a) -> IO a
-withObjectLinkingLayer = bracket newObjectLinkingLayer disposeLinkingLayer
 
 createRegisteredDataLayout :: (MonadAnyCont IO m) => TargetMachine -> IORef [IO ()] -> m (Ptr FFI.DataLayout)
 createRegisteredDataLayout (TargetMachine tm) cleanups =
@@ -159,18 +123,3 @@ createRegisteredDataLayout (TargetMachine tm) cleanups =
         modifyIORef' cleanups (FFI.disposeDataLayout dl :)
         pure dl
   in anyContToM $ bracketOnError createDataLayout FFI.disposeDataLayout
-
--- | Add an object file to the 'LinkingLayer'. The 'SymbolResolver' is used
--- to resolve external symbols in the module.
-addObjectFile :: LinkingLayer l => l -> ObjectFile -> SymbolResolver
-              -> IO FFI.ObjectHandle
-addObjectFile linkingLayer (ObjectFile obj) resolver = flip runAnyContT return $ do
-  resolverAct <- encodeM resolver
-  resolver'   <- liftIO $ resolverAct (getCleanups linkingLayer)
-  errMsg <- alloca
-  liftIO $
-    FFI.addObjectFile
-      (getLinkingLayer linkingLayer)
-      obj
-      resolver'
-      errMsg

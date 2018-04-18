@@ -3,7 +3,7 @@ module LLVM.Internal.FFI.OrcJIT.IRCompileLayer where
 
 import LLVM.Prelude
 
-import LLVM.Internal.FFI.OrcJIT
+import LLVM.Internal.FFI.OrcJIT.LinkingLayer
 import LLVM.Internal.FFI.OrcJIT.CompileLayer
 import LLVM.Internal.FFI.PtrHierarchy
 import LLVM.Internal.FFI.Target
