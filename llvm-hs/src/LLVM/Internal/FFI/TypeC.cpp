@@ -8,10 +8,13 @@ using namespace llvm;
 
 extern "C" {
 
-LLVMTypeRef LLVM_Hs_StructCreateNamed(LLVMContextRef C, const char *Name) {
+LLVMTypeRef LLVM_Hs_StructCreateNamed(LLVMContextRef C, const char *Name, char** renamedName) {
     if (Name) {
-        return wrap(StructType::create(*unwrap(C), Name));
+        auto t = StructType::create(*unwrap(C), Name);
+        *renamedName = strdup(t->getName().str().c_str());
+        return wrap(t);
     } else {
+        *renamedName = nullptr;
         return wrap(StructType::create(*unwrap(C)));
     }
 }

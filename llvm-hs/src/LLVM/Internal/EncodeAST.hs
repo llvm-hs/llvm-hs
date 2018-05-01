@@ -48,6 +48,7 @@ data EncodeState = EncodeState {
       encodeStateBlocks :: Map A.Name (Ptr FFI.BasicBlock),
       encodeStateMDNodes :: Map A.MetadataNodeID (Ptr FFI.MDNode),
       encodeStateNamedTypes :: Map A.Name (Ptr FFI.Type),
+      encodeStateRenamedTypes :: Map A.Name ShortByteString,
       encodeStateAttributeGroups :: Map A.A.GroupID FFI.FunctionAttributeSet,
       encodeStateCOMDATs :: Map ShortByteString (Ptr FFI.COMDAT)
     }
@@ -69,8 +70,11 @@ lookupNamedType n = do
   t <- gets $ Map.lookup n . encodeStateNamedTypes
   maybe (throwM . EncodeException $ "reference to undefined type: " ++ show n) return t
 
-defineType :: A.Name -> Ptr FFI.Type -> EncodeAST ()
-defineType n t = modify $ \s -> s { encodeStateNamedTypes = Map.insert n t (encodeStateNamedTypes s) }
+defineType :: A.Name -> Maybe ShortByteString -> Ptr FFI.Type -> EncodeAST ()
+defineType n n' t = do
+  modify $ \s -> s { encodeStateNamedTypes = Map.insert n t (encodeStateNamedTypes s) }
+  for_ n' $ \renamedName ->
+    modify $ \s -> s { encodeStateRenamedTypes = Map.insert n renamedName (encodeStateRenamedTypes s) }
 
 runEncodeAST :: Context -> EncodeAST a -> IO a
 runEncodeAST context@(Context ctx) (EncodeAST a) =
@@ -84,6 +88,7 @@ runEncodeAST context@(Context ctx) (EncodeAST a) =
               encodeStateBlocks = Map.empty,
               encodeStateMDNodes = Map.empty,
               encodeStateNamedTypes = Map.empty,
+              encodeStateRenamedTypes = Map.empty,
               encodeStateAttributeGroups = Map.empty,
               encodeStateCOMDATs = Map.empty
             }

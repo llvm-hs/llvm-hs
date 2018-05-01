@@ -98,7 +98,7 @@ newtype LLVMBool = LLVMBool CUInt
 -- this value needs to be freed after it has been processed. Usually
 -- this is done automatically in the 'DecodeM' instance.
 newtype OwnerTransfered a = OwnerTransfered a
-  deriving (Storable)
+  deriving (Eq, Storable)
 
 newtype NothingAsMinusOne h = NothingAsMinusOne CInt
   deriving (Storable)

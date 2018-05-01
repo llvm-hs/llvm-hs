@@ -608,6 +608,37 @@ tests = testGroup "Module" [
             Module "<string>" "<string>" Nothing Nothing
               [TypeDefinition (UnName 0) (Just VoidType)]
       t <- try $ withModuleFromAST context badAST $ \_ -> return ()
-      t @?= Left (EncodeException "A type definition requires a structure type but got: VoidType")
+      t @?= Left (EncodeException "A type definition requires a structure type but got: VoidType"),
+    testCase "renamed type definitions" $ do
+      let modStr1 = unlines
+            [ "%struct = type { %struct* }"
+            , "define void @f(%struct*) {"
+            , "  ret void"
+            , "}"
+            ]
+          modAST1 = Module "<string>" "<string>" Nothing Nothing
+            [
+            ]
+          modStr2 = unlines
+            [ "%struct = type { %struct* }"
+            , "declare void @f(%struct*)"
+            , "define void @main() {"
+            , "  call void @f(%struct* zeroinitializer)"
+            , "  ret void"
+            , "}"
+            ]
+      ast1 <- withContext $ \ctx -> withModuleFromLLVMAssembly ctx modStr1 moduleAST
+      ast2 <- withContext $ \ctx -> withModuleFromLLVMAssembly ctx modStr2 moduleAST
+      (ast1', ast2') <- withContext $ \ctx ->
+        withModuleFromAST ctx ast1 $ \mod1 ->
+        withModuleFromAST ctx ast2 $ \mod2 ->
+          (,) <$> moduleAST mod1 <*> moduleAST mod2
+      withContext $ \ctx -> do
+        ast1'' <- withModuleFromLLVMAssembly ctx modStr1 moduleAST
+        ast2'' <- withModuleFromLLVMAssembly ctx modStr2 moduleAST
+        -- Verify that LLVM’s automatic renaming does not produce an error
+        -- and that the ASTs produced by llvm-hs and LLVM itself are the same.
+        ast1' @?= ast1''
+        ast2' @?= ast2''
    ]
  ]

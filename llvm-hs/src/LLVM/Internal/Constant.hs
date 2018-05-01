@@ -47,7 +47,7 @@ import LLVM.Internal.DecodeAST
 import LLVM.Internal.EncodeAST
 import LLVM.Internal.FloatingPointPredicate ()
 import LLVM.Internal.IntegerPredicate ()
-import LLVM.Internal.Type ()
+import LLVM.Internal.Type (renameType)
 import LLVM.Internal.Value
 
 allocaWords :: forall a m . (Storable a, MonadAnyCont IO m, Monad m, MonadIO m) => Word32 -> m (Ptr a)
@@ -99,7 +99,8 @@ instance EncodeM EncodeAST A.Constant (Ptr FFI.Constant) where
     A.C.GlobalReference ty n -> do
       ref <- FFI.upCast <$> referGlobal n
       ty' <- (liftIO . runDecodeAST . typeOf) ref
-      if ty /= ty'
+      renamedTy <- renameType ty
+      if renamedTy /= ty'
         then throwM
                (EncodeException
                   ("The serialized GlobalReference " ++ show n  ++ " has type " ++ show ty ++ " but should have type " ++ show ty'))
