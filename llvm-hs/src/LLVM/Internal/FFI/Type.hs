@@ -78,7 +78,7 @@ structTypeInContext :: Ptr Context -> (CUInt, Ptr (Ptr Type)) -> LLVMBool -> IO 
 structTypeInContext ctx (n, ts) p = structTypeInContext' ctx ts n p
 
 foreign import ccall unsafe "LLVM_Hs_StructCreateNamed" structCreateNamed ::
-  Ptr Context -> CString -> IO (Ptr Type)
+  Ptr Context -> CString -> Ptr (OwnerTransfered CString) -> IO (Ptr Type)
 
 foreign import ccall unsafe "LLVMGetStructName" getStructName ::
   Ptr Type -> IO CString

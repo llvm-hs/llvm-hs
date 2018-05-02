@@ -259,8 +259,8 @@ withModuleFromAST context@(Context c) (A.Module moduleId sourceFileName dataLayo
       sequencePhases l = (l >>= (sequence >=> sequence >=> sequence >=> sequence)) >> (return ())
   sequencePhases $ forM definitions $ \d -> case d of
    A.TypeDefinition n t -> do
-     t' <- createNamedType n
-     defineType n t'
+     (t', n') <- createNamedType n
+     defineType n n' t'
      return $ do
        traverse_ (setNamedType t') t
        return . return . return . return $ ()

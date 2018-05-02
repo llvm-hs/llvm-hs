@@ -10,6 +10,7 @@ import Control.Monad.AnyCont
 import Control.Monad.Catch
 import Control.Monad.State
 
+import qualified Data.Map as Map
 import qualified Data.Set as Set
 
 import Foreign.Ptr
@@ -148,12 +149,40 @@ instance DecodeM DecodeAST A.Type (Ptr FFI.Type) where
       [typeKindP|Token|] -> return A.TokenType
       _ -> error $ "unhandled type kind " ++ show k
 
-createNamedType :: A.Name -> EncodeAST (Ptr FFI.Type)
+createNamedType :: A.Name -> EncodeAST (Ptr FFI.Type, Maybe ShortByteString)
 createNamedType n = do
   Context c <- gets encodeStateContext
   n <- case n of { A.Name n -> encodeM n; _ -> return nullPtr }
-  liftIO $ FFI.structCreateNamed c n
+  renamedName <- alloca
+  t <- liftIO $ FFI.structCreateNamed c n renamedName
+  p <- peek renamedName
+  if p == FFI.OwnerTransfered nullPtr
+    then pure (t, Nothing)
+    else do
+      n' <- decodeM p
+      pure (t, Just n')
 
+renameType :: A.Type -> EncodeAST A.Type
+renameType A.VoidType = pure A.VoidType
+renameType t@(A.IntegerType _) = pure t
+renameType (A.PointerType r a) = fmap (\r' -> A.PointerType r' a) (renameType r)
+renameType t@(A.FloatingPointType _) = pure t
+renameType (A.FunctionType r as varArg) =
+  liftA2
+    (\r' as' -> A.FunctionType r' as' varArg)
+    (renameType r)
+    (traverse renameType as)
+renameType (A.VectorType n t) = A.VectorType n <$> renameType t
+renameType (A.StructureType packed ts) = A.StructureType packed <$> traverse renameType ts
+renameType (A.ArrayType n t) = A.ArrayType n <$> renameType t
+renameType t@(A.NamedTypeReference n) = do
+  renamedTypes <- gets encodeStateRenamedTypes
+  case Map.lookup n renamedTypes of
+    Just n' -> pure (A.NamedTypeReference (A.Name n'))
+    Nothing -> pure t
+renameType A.MetadataType = pure A.MetadataType
+renameType A.LabelType = pure A.LabelType
+renameType A.TokenType = pure A.TokenType
 
 setNamedType :: Ptr FFI.Type -> A.Type -> EncodeAST ()
 setNamedType t (A.StructureType packed ets) = do
