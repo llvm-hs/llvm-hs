@@ -9,7 +9,7 @@ homepage: http://github.com/llvm-hs/llvm-hs/
 bug-reports: http://github.com/llvm-hs/llvm-hs/issues
 build-type: Simple
 stability: experimental
-cabal-version: >= 1.24
+cabal-version: 1.24
 category: Compilers/Interpreters, Code Generation
 synopsis: Pure Haskell LLVM functionality (no FFI).
 description:
