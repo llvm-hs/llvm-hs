@@ -1,4 +1,4 @@
-## 6.1.0 (unreleased)
+## 6.1.0 (2018-05-05)
 
 * Remove the `MetadataNodeReference` constructor. References to
   metadata nodes are now encoded using the polymorphic `MDRef` type.
@@ -6,6 +6,9 @@
   @xldenis who started that effort!
 * Drop support for GHC 7.10.
 * Support decoding/encoding of metadata in `GlobalVariable` and `Function`.
+* Fix check that the type of `GlobalReference` is correct in the
+  presence of automatic renamings due to name collisions.
+* Extract LinkingLayer into a separate module.
 
 ## 6.0.0 (2018-03-06)
 

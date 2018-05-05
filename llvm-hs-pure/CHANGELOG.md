@@ -1,4 +1,4 @@
-## 6.1.0 (unreleased)
+## 6.1.0 (2018-05-05)
 
 * IRBuilder: Ensure that automatically generated block labels are
   assigned smaller identifiers than the instructions following
