@@ -205,7 +205,6 @@ data DISubrange =
 
 -- | <https://llvm.org/doxygen/classllvm_1_1DIScope.html>
 data DIScope
--- | https://llvm.org/docs/LangRef.html#dicompileunit
   = DICompileUnit DICompileUnit
   | DIFile DIFile
   | DILocalScope DILocalScope
