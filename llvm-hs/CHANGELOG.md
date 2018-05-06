@@ -1,6 +1,6 @@
 ## 6.1.1 (2018-05-06)
 
-* Fix the source distribution by adding `LLVM/Internal/FFI/Metadata.h` to `extra-source-files`.
+* Fix the source distribution by adding missing files to extra-source-files.
 
 ## 6.1.0 (2018-05-05)
 
