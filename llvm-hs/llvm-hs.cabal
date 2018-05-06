@@ -1,5 +1,5 @@
 name: llvm-hs
-version: 6.1.0
+version: 6.1.1
 license: BSD3
 license-file: LICENSE
 author: Anthony Cowley, Stephen Diehl, Moritz Kiefer <moritz.kiefer@purelyfunctional.org>, Benjamin S. Scarlet
@@ -29,6 +29,7 @@ extra-source-files:
   src/LLVM/Internal/FFI/InlineAssembly.h
   src/LLVM/Internal/FFI/Instruction.h
   src/LLVM/Internal/FFI/LibFunc.h
+  src/LLVM/Internal/FFI/Metadata.h
   src/LLVM/Internal/FFI/OrcJIT.h
   src/LLVM/Internal/FFI/SMDiagnostic.h
   src/LLVM/Internal/FFI/Target.h
