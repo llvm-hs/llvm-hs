@@ -147,7 +147,7 @@ function label argtys retty body = do
 extern
   :: MonadModuleBuilder m
   => Name   -- ^ Definition name
-  -> [Type] -- ^ Parametere types
+  -> [Type] -- ^ Parameter types
   -> Type   -- ^ Type
   -> m Operand
 extern nm argtys retty = do
