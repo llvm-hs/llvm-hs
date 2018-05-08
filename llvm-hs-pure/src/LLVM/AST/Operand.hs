@@ -214,7 +214,7 @@ data DIScope
   deriving (Eq, Ord, Read, Show, Typeable, Data, Generic)
 
 data DIModule = Module
-  { scope :: MDRef DIScope
+  { scope :: Maybe (MDRef DIScope)
   , name :: ShortByteString
   , configurationMacros :: ShortByteString
   , includePath :: ShortByteString
@@ -223,7 +223,7 @@ data DIModule = Module
 
 data DINamespace = Namespace
   { name :: ShortByteString
-  , scope :: MDRef DIScope
+  , scope :: Maybe (MDRef DIScope)
   , exportSymbols :: Bool
   } deriving (Eq, Ord, Read, Show, Typeable, Data, Generic)
 

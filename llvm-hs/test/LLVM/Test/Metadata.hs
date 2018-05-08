@@ -612,6 +612,7 @@ roundtripDINamespace = testProperty "rountrip DINamespace" $ \diFile ->
       let mod = defaultModule
             { moduleDefinitions =
                 [ NamedMetadataDefinition "dummy" [namespaceID]
+                , NamedMetadataDefinition "dummy2" [fileID]
                 , MetadataNodeDefinition namespaceID (DINode (DIScope (DINamespace diNamespace)))
                 , MetadataNodeDefinition fileID (DINode (DIScope (DIFile diFile)))
                 ]
@@ -622,7 +623,7 @@ roundtripDINamespace = testProperty "rountrip DINamespace" $ \diFile ->
         fileID = MetadataNodeID 1
 
 genDINamespace :: MDRef DIScope -> Gen DINamespace
-genDINamespace scope = Namespace <$> arbitrarySbs <*> pure scope <*> arbitrary
+genDINamespace scope = Namespace <$> arbitrarySbs <*> QC.elements [Nothing, Just scope] <*> arbitrary
 
 diFlagName :: TestTree
 diFlagName =
