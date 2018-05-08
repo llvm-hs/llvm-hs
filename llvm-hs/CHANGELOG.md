@@ -1,3 +1,11 @@
+## 6.2.0 (unreleased)
+
+* Remove field prefixes from `DIDerivedType`, `DIBasicType` and
+  `DISubroutineType` to make the API consistent with the other debug
+  metadata types.
+* Change the type of the scope fields in `DIModule` and `DINamespace`
+  to `Maybe (MDRef DIScope)` to reflect that they can be optional.
+
 ## 6.1.1 (2018-05-06)
 
 * Fix the source distribution by adding missing files to extra-source-files.

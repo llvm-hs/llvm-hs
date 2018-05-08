@@ -1,5 +1,5 @@
 name: llvm-hs
-version: 6.1.1
+version: 6.2.0
 license: BSD3
 license-file: LICENSE
 author: Anthony Cowley, Stephen Diehl, Moritz Kiefer <moritz.kiefer@purelyfunctional.org>, Benjamin S. Scarlet
@@ -75,7 +75,7 @@ library
     template-haskell >= 2.5.0.0,
     containers >= 0.4.2.1,
     array >= 0.4.0.0,
-    llvm-hs-pure == 6.1.*
+    llvm-hs-pure == 6.2.*
   hs-source-dirs: src
   default-extensions:
     NoImplicitPrelude
