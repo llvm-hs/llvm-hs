@@ -1,4 +1,4 @@
-## 6.2.0 (unreleased)
+## 6.2.0 (2018-05-08)
 
 * Remove field prefixes from `DIDerivedType`, `DIBasicType` and
   `DISubroutineType` to make the API consistent with the other debug
