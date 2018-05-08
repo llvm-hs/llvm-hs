@@ -542,19 +542,19 @@ instance DecodeM DecodeAST A.DIBasicType (Ptr FFI.DIBasicType) where
 
 instance EncodeM EncodeAST A.DIBasicType (Ptr FFI.DIBasicType) where
   encodeM A.BasicType {..} = do
-    tag <- encodeM typeTag
-    typeName <- encodeM typeName
-    typeEncoding <- encodeM typeEncoding
+    tag <- encodeM tag
+    name <- encodeM name
+    encoding <- encodeM encoding
     Context c <- gets encodeStateContext
-    liftIO (FFI.getDIBasicType c tag typeName sizeInBits alignInBits typeEncoding)
+    liftIO (FFI.getDIBasicType c tag name sizeInBits alignInBits encoding)
 
 
 instance EncodeM EncodeAST A.DISubroutineType (Ptr FFI.DISubroutineType) where
   encodeM A.SubroutineType {..} = do
-    flags <- encodeM typeFlags
-    types <- encodeM typeTypeArray
+    flags <- encodeM flags
+    types <- encodeM typeArray
     Context c <- gets encodeStateContext
-    liftIO (FFI.getDISubroutineType c flags typeCC types)
+    liftIO (FFI.getDISubroutineType c flags cc types)
 
 instance DecodeM DecodeAST A.DISubroutineType (Ptr FFI.DISubroutineType) where
   decodeM p = do
@@ -562,9 +562,9 @@ instance DecodeM DecodeAST A.DISubroutineType (Ptr FFI.DISubroutineType) where
     cc <-  liftIO (FFI.getSubroutineCC p)
     arr <- decodeM =<< liftIO (FFI.getSubroutineTypeArray p)
     pure A.SubroutineType
-      { A.typeFlags = flags
-      , A.typeCC = cc
-      , A.typeTypeArray = arr
+      { A.flags = flags
+      , A.cc = cc
+      , A.typeArray = arr
       }
 
 instance EncodeM EncodeAST A.DIDerivedType (Ptr FFI.DIDerivedType) where

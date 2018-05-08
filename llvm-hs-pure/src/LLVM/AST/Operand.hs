@@ -308,18 +308,18 @@ data DIType
 
 -- | <https://llvm.org/docs/LangRef.html#dibasictype>
 data DIBasicType = BasicType
-  { typeName :: ShortByteString
+  { name :: ShortByteString
   , sizeInBits :: Word64
   , alignInBits :: Word32
-  , typeEncoding :: Maybe Encoding
-  , typeTag :: BasicTypeTag
+  , encoding :: Maybe Encoding
+  , tag :: BasicTypeTag
   } deriving (Eq, Ord, Read, Show, Typeable, Data, Generic)
 
 -- | <https://llvm.org/docs/LangRef.html#disubroutinetype>
 data DISubroutineType = SubroutineType
-  { typeFlags :: [DIFlag]
-  , typeCC :: Word8
-  , typeTypeArray :: [Maybe (MDRef DIType)]
+  { flags :: [DIFlag]
+  , cc :: Word8
+  , typeArray :: [Maybe (MDRef DIType)]
   -- ^ The first element is the return type, the following are the
   -- operand types. `Nothing` corresponds to @void@.
   } deriving (Eq, Ord, Read, Show, Typeable, Data, Generic)
