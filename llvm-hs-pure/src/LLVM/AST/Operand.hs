@@ -342,17 +342,17 @@ data DerivedTypeTag
 -- | <https://llvm.org/docs/LangRef.html#diderivedtype>
 data DIDerivedType =
   DerivedType
-    { derivedTag :: DerivedTypeTag
-    , derivedName :: ShortByteString
-    , derivedFile :: Maybe (MDRef DIFile)
-    , derivedLine :: Word32
-    , derivedScope :: Maybe (MDRef DIScope)
-    , derivedBaseType :: MDRef DIType
+    { tag :: DerivedTypeTag
+    , name :: ShortByteString
+    , file :: Maybe (MDRef DIFile)
+    , line :: Word32
+    , scope :: Maybe (MDRef DIScope)
+    , baseType :: MDRef DIType
     , sizeInBits :: Word64
     , alignInBits :: Word32
-    , derivedOffsetInBits :: Word64
-    , derivedAddressSpace :: Maybe Word32
-    , derivedFlags :: [DIFlag]
+    , offsetInBits :: Word64
+    , addressSpace :: Maybe Word32
+    , flags :: [DIFlag]
     } deriving (Eq, Ord, Read, Show, Typeable, Data, Generic)
 
 -- | <https://llvm.org/docs/LangRef.html#dicompositetype>

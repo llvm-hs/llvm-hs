@@ -569,16 +569,16 @@ instance DecodeM DecodeAST A.DISubroutineType (Ptr FFI.DISubroutineType) where
 
 instance EncodeM EncodeAST A.DIDerivedType (Ptr FFI.DIDerivedType) where
   encodeM A.DerivedType {..} = do
-    tag <- encodeM derivedTag
-    name <- encodeM derivedName
-    file <- encodeM derivedFile
-    line <- encodeM derivedLine
-    scope <- encodeM derivedScope
-    type' <- encodeM derivedBaseType
-    (addrSpace, addrSpacePresent) <- encodeM derivedAddressSpace
-    flags <- encodeM derivedFlags
+    tag <- encodeM tag
+    name <- encodeM name
+    file <- encodeM file
+    line <- encodeM line
+    scope <- encodeM scope
+    type' <- encodeM baseType
+    (addrSpace, addrSpacePresent) <- encodeM addressSpace
+    flags <- encodeM flags
     Context c <- gets encodeStateContext
-    FFI.upCast <$> liftIO (FFI.getDIDerivedType c tag name file line scope type' sizeInBits alignInBits derivedOffsetInBits addrSpace addrSpacePresent flags)
+    FFI.upCast <$> liftIO (FFI.getDIDerivedType c tag name file line scope type' sizeInBits alignInBits offsetInBits addrSpace addrSpacePresent flags)
 
 instance DecodeM DecodeAST A.DIDerivedType (Ptr FFI.DIDerivedType) where
   decodeM diTy = do
@@ -595,17 +595,17 @@ instance DecodeM DecodeAST A.DIDerivedType (Ptr FFI.DIDerivedType) where
     flags <- decodeM =<< liftIO (FFI.getTypeFlags diTy')
     addressSpace <- decodeOptional (FFI.getDerivedAddressSpace diTy')
     pure A.DerivedType
-      { A.derivedTag = tag
-      , A.derivedName = name
-      , A.derivedFile = file
-      , A.derivedLine = line
-      , A.derivedScope = scope
-      , A.derivedBaseType = ty
+      { A.tag = tag
+      , A.name = name
+      , A.file = file
+      , A.line = line
+      , A.scope = scope
+      , A.baseType = ty
       , A.sizeInBits = size
       , A.alignInBits = align
-      , A.derivedOffsetInBits = offset
-      , A.derivedAddressSpace = addressSpace
-      , A.derivedFlags = flags
+      , A.offsetInBits = offset
+      , A.addressSpace = addressSpace
+      , A.flags = flags
       }
 
 genCodingInstance [t|A.DerivedTypeTag|] ''FFI.DwTag
