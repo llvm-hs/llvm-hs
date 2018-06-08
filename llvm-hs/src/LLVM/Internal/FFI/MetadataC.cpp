@@ -536,7 +536,7 @@ unsigned LLVM_Hs_DIExpression_GetNumElements(DIExpression* e) {
     return e->getNumElements();
 }
 
-unsigned LLVM_Hs_DIExpression_GetElement(DIExpression* e, unsigned i) {
+uint64_t LLVM_Hs_DIExpression_GetElement(DIExpression* e, unsigned i) {
     return e->getElement(i);
 }
 
