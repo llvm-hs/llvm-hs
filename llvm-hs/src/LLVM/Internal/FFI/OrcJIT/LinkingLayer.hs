@@ -30,3 +30,16 @@ foreign import ccall safe "LLVM_Hs_LinkingLayer_addObject" addObjectFile ::
   Ptr LambdaResolver ->
   Ptr (OwnerTransfered CString) ->
   IO ObjectHandle
+
+foreign import ccall safe "LLVM_Hs_LinkingLayer_findSymbol" findSymbol ::
+  Ptr LinkingLayer ->
+  CString ->
+  LLVMBool ->
+  IO (Ptr JITSymbol)
+
+foreign import ccall safe "LLVM_Hs_LinkingLayer_findSymbolIn" findSymbolIn ::
+  Ptr LinkingLayer ->
+  ObjectHandle ->
+  CString ->
+  LLVMBool ->
+  IO (Ptr JITSymbol)

@@ -7,8 +7,6 @@ module LLVM.OrcJIT (
     removeModule,
     withModule,
     -- ** Search for symbols
-    findSymbol,
-    findSymbolIn,
     JITSymbol(..),
     JITSymbolFlags(..),
     SymbolResolver(..),

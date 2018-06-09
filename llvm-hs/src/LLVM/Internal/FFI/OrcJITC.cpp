@@ -301,6 +301,21 @@ void LLVM_Hs_LinkingLayer_dispose(LinkingLayer *linkingLayer) {
 
 void LLVM_Hs_disposeJITSymbol(LLVMJITSymbolRef symbol) { delete symbol; }
 
+LLVMJITSymbolRef LLVM_Hs_LinkingLayer_findSymbol(LinkingLayer *linkingLayer,
+                                     StringRef name,
+                                     LLVMBool exportedSymbolsOnly) {
+  JITSymbol symbol = linkingLayer->findSymbol(name, exportedSymbolsOnly);
+  return new JITSymbol(std::move(symbol));
+}
+
+LLVMJITSymbolRef LLVM_Hs_LinkingLayer_findSymbolIn(LinkingLayer *linkingLayer,
+                                                   LLVMObjectHandle handle,
+                                                   const char *name,
+                                                   LLVMBool exportedSymbolsOnly) {
+  JITSymbol symbol = linkingLayer->findSymbolIn(handle, name, exportedSymbolsOnly);
+  return new JITSymbol(std::move(symbol));
+}
+
 LLVMLambdaResolverRef LLVM_Hs_createLambdaResolver(
     void (*dylibResolver)(const char *, LLVMJITSymbolRef),
     void (*externalResolver)(const char *, LLVMJITSymbolRef)) {
