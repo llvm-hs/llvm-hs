@@ -302,7 +302,7 @@ void LLVM_Hs_LinkingLayer_dispose(LinkingLayer *linkingLayer) {
 void LLVM_Hs_disposeJITSymbol(LLVMJITSymbolRef symbol) { delete symbol; }
 
 LLVMJITSymbolRef LLVM_Hs_LinkingLayer_findSymbol(LinkingLayer *linkingLayer,
-                                     StringRef name,
+                                     const char *name,
                                      LLVMBool exportedSymbolsOnly) {
   JITSymbol symbol = linkingLayer->findSymbol(name, exportedSymbolsOnly);
   return new JITSymbol(std::move(symbol));
