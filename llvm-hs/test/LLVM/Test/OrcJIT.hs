@@ -136,8 +136,7 @@ tests =
                 mod
                 (SymbolResolver (resolver testFunc compileLayer) nullResolver) $
                 \moduleHandle -> do
-                  mainSymbol <- mangleSymbol compileLayer "main"
-                  JITSymbol mainFn _ <- LL.findSymbol linkingLayer mainSymbol True
+                  JITSymbol mainFn _ <- LL.findSymbol linkingLayer "main" True
                   result <- mkMain (castPtrToFunPtr (wordPtrToPtr mainFn))
                   result @?= 42
   ]

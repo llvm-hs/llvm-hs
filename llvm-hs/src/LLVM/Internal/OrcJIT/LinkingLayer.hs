@@ -11,6 +11,7 @@ import Foreign.Ptr
 import LLVM.Internal.OrcJIT
 import LLVM.Internal.Coding
 import LLVM.Internal.ObjectFile
+import qualified LLVM.Internal.FFI.ShortByteString as SBS
 import qualified LLVM.Internal.FFI.PtrHierarchy as FFI
 import qualified LLVM.Internal.FFI.OrcJIT as FFI
 import qualified LLVM.Internal.FFI.OrcJIT.LinkingLayer as FFI
@@ -67,21 +68,23 @@ withObjectLinkingLayer = bracket newObjectLinkingLayer disposeLinkingLayer
 -- | @'findSymbol' layer symbol exportedSymbolsOnly@ searches for
 -- @symbol@ in all modules added to @layer@. If @exportedSymbolsOnly@
 -- is 'True' only exported symbols are searched.
-findSymbol :: LinkingLayer l => l -> MangledSymbol -> Bool -> IO JITSymbol
-findSymbol linkingLayer symbol exportedSymbolsOnly = flip runAnyContT return $ do
-  symbol' <- encodeM symbol
-  exportedSymbolsOnly' <- encodeM exportedSymbolsOnly
-  symbol <- anyContToM $ bracket
-    (FFI.findSymbol (getLinkingLayer linkingLayer) symbol' exportedSymbolsOnly') FFI.disposeSymbol
-  decodeM symbol
+findSymbol :: LinkingLayer l => l -> ShortByteString -> Bool -> IO JITSymbol
+findSymbol linkingLayer symbol exportedSymbolsOnly =
+  SBS.useAsCString symbol $ \symbol' ->
+    flip runAnyContT return $ do
+      exportedSymbolsOnly' <- encodeM exportedSymbolsOnly
+      symbol <- anyContToM $ bracket
+        (FFI.findSymbol (getLinkingLayer linkingLayer) symbol' exportedSymbolsOnly') FFI.disposeSymbol
+      decodeM symbol
 
 -- | @'findSymbolIn' layer handle symbol exportedSymbolsOnly@ searches for
 -- @symbol@ in the context of the module represented by @handle@. If
 -- @exportedSymbolsOnly@ is 'True' only exported symbols are searched.
-findSymbolIn :: LinkingLayer l => l -> FFI.ObjectHandle -> MangledSymbol -> Bool -> IO JITSymbol
-findSymbolIn linkingLayer handle symbol exportedSymbolsOnly = flip runAnyContT return $ do
-  symbol' <- encodeM symbol
-  exportedSymbolsOnly' <- encodeM exportedSymbolsOnly
-  symbol <- anyContToM $ bracket
-    (FFI.findSymbolIn (getLinkingLayer linkingLayer) handle symbol' exportedSymbolsOnly') FFI.disposeSymbol
-  decodeM symbol
+findSymbolIn :: LinkingLayer l => l -> FFI.ObjectHandle -> ShortByteString -> Bool -> IO JITSymbol
+findSymbolIn linkingLayer handle symbol exportedSymbolsOnly =
+  SBS.useAsCString symbol $ \symbol' ->
+    flip runAnyContT return $ do
+      exportedSymbolsOnly' <- encodeM exportedSymbolsOnly
+      symbol <- anyContToM $ bracket
+        (FFI.findSymbolIn (getLinkingLayer linkingLayer) handle symbol' exportedSymbolsOnly') FFI.disposeSymbol
+      decodeM symbol
