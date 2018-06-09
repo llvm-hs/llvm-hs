@@ -30,12 +30,23 @@ instance EncodeM (AnyContT IO) MangledSymbol CString where
 instance MonadIO m => DecodeM m MangledSymbol CString where
   decodeM str = liftIO $ MangledSymbol <$> packCString str
 
+-- | Contrary to the C++ interface, we do not store the HasError flag
+-- here. Instead decoding a JITSymbol produces a sumtype based on
+-- whether that flag is set or not.
 data JITSymbolFlags =
   JITSymbolFlags {
-    jitSymbolWeak :: !Bool, -- ^ Is this a weak symbol?
-    jitSymbolExported :: !Bool -- ^ Is this symbol exported?
+    jitSymbolWeak :: !Bool -- ^ Is this a weak symbol?
+  , jitSymbolCommon :: !Bool -- ^ Is this a common symbol?
+  , jitSymbolAbsolute :: !Bool
+    -- ^ Is this an absolute symbol? This will cause LLVM to use
+    -- absolute relocations for the symbol even in position
+    -- independent code.
+  , jitSymbolExported :: !Bool -- ^ Is this symbol exported?
   }
   deriving (Show, Eq, Ord)
+
+defaultJITSymbolFlags :: JITSymbolFlags
+defaultJITSymbolFlags = JITSymbolFlags False False False False
 
 data JITSymbol =
   JITSymbol {
@@ -46,7 +57,10 @@ data JITSymbol =
   }
   deriving (Show, Eq, Ord)
 
-type SymbolResolverFn = MangledSymbol -> IO JITSymbol
+data JITSymbolError = JITSymbolError ShortByteString
+  deriving (Show, Eq)
+
+type SymbolResolverFn = MangledSymbol -> IO (Either JITSymbolError JITSymbol)
 
 -- | Specifies how external symbols in a module added to a
 -- 'CompielLayer' should be resolved.
@@ -67,6 +81,8 @@ instance Monad m => EncodeM m JITSymbolFlags FFI.JITSymbolFlags where
          else 0
     | (a,b) <- [
           (jitSymbolWeak, FFI.jitSymbolFlagsWeak),
+          (jitSymbolCommon, FFI.jitSymbolFlagsCommon),
+          (jitSymbolAbsolute, FFI.jitSymbolFlagsAbsolute),
           (jitSymbolExported, FFI.jitSymbolFlagsExported)
         ]
     ]
@@ -75,21 +91,30 @@ instance Monad m => DecodeM m JITSymbolFlags FFI.JITSymbolFlags where
   decodeM f =
     return $ JITSymbolFlags {
       jitSymbolWeak = FFI.jitSymbolFlagsWeak .&. f /= 0,
+      jitSymbolCommon = FFI.jitSymbolFlagsCommon .&. f /= 0,
+      jitSymbolAbsolute = FFI.jitSymbolFlagsAbsolute .&. f /= 0,
       jitSymbolExported = FFI.jitSymbolFlagsExported .&. f /= 0
     }
 
-instance MonadIO m => EncodeM m JITSymbol (Ptr FFI.JITSymbol -> IO ()) where
-  encodeM (JITSymbol addr flags) = return $ \jitSymbol -> do
+instance MonadIO m => EncodeM m (Either JITSymbolError JITSymbol) (Ptr FFI.JITSymbol -> IO ()) where
+  encodeM (Left (JITSymbolError _)) = return $ \jitSymbol ->
+    FFI.setJITSymbol jitSymbol (FFI.TargetAddress 0) FFI.jitSymbolFlagsHasError
+  encodeM (Right (JITSymbol addr flags)) = return $ \jitSymbol -> do
     flags' <- encodeM flags
     FFI.setJITSymbol jitSymbol (FFI.TargetAddress (fromIntegral addr)) flags'
 
-instance (MonadIO m, MonadAnyCont IO m) => DecodeM m JITSymbol (Ptr FFI.JITSymbol) where
+instance (MonadIO m, MonadAnyCont IO m) => DecodeM m (Either JITSymbolError JITSymbol) (Ptr FFI.JITSymbol) where
   decodeM jitSymbol = do
     errMsg <- alloca
     FFI.TargetAddress addr <- liftIO $ FFI.getAddress jitSymbol errMsg
-    -- TODO read error message and throw exception
-    flags <- liftIO $ decodeM =<< FFI.getFlags jitSymbol
-    return (JITSymbol (fromIntegral addr) flags)
+    rawFlags <- liftIO (FFI.getFlags jitSymbol)
+    if addr == 0 || (rawFlags .&. FFI.jitSymbolFlagsHasError /= 0)
+      then do
+        errMsg <- decodeM =<< liftIO (FFI.getErrorMsg jitSymbol)
+        pure (Left (JITSymbolError errMsg))
+      else do
+        flags <- decodeM rawFlags
+        pure (Right (JITSymbol (fromIntegral addr) flags))
 
 instance MonadIO m =>
   EncodeM m SymbolResolver (IORef [IO ()] -> IO (Ptr FFI.LambdaResolver)) where

@@ -10,7 +10,9 @@ module LLVM.OrcJIT (
     findSymbol,
     findSymbolIn,
     JITSymbol(..),
+    JITSymbolError(..),
     JITSymbolFlags(..),
+    defaultJITSymbolFlags,
     SymbolResolver(..),
     -- ** Symbol mangling
     MangledSymbol,

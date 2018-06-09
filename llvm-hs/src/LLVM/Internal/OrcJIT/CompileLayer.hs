@@ -43,7 +43,7 @@ mangleSymbol compileLayer symbol = flip runAnyContT return $ do
 -- | @'findSymbol' layer symbol exportedSymbolsOnly@ searches for
 -- @symbol@ in all modules added to @layer@. If @exportedSymbolsOnly@
 -- is 'True' only exported symbols are searched.
-findSymbol :: CompileLayer l => l -> MangledSymbol -> Bool -> IO JITSymbol
+findSymbol :: CompileLayer l => l -> MangledSymbol -> Bool -> IO (Either JITSymbolError JITSymbol)
 findSymbol compileLayer symbol exportedSymbolsOnly = flip runAnyContT return $ do
   symbol' <- encodeM symbol
   exportedSymbolsOnly' <- encodeM exportedSymbolsOnly
@@ -54,7 +54,7 @@ findSymbol compileLayer symbol exportedSymbolsOnly = flip runAnyContT return $ d
 -- | @'findSymbolIn' layer handle symbol exportedSymbolsOnly@ searches for
 -- @symbol@ in the context of the module represented by @handle@. If
 -- @exportedSymbolsOnly@ is 'True' only exported symbols are searched.
-findSymbolIn :: CompileLayer l => l -> FFI.ModuleHandle -> MangledSymbol -> Bool -> IO JITSymbol
+findSymbolIn :: CompileLayer l => l -> FFI.ModuleHandle -> MangledSymbol -> Bool -> IO (Either JITSymbolError JITSymbol)
 findSymbolIn compileLayer handle symbol exportedSymbolsOnly = flip runAnyContT return $ do
   symbol' <- encodeM symbol
   exportedSymbolsOnly' <- encodeM exportedSymbolsOnly
