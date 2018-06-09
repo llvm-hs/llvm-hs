@@ -1,3 +1,13 @@
+## unreleased
+
+* `findSymbol` and `findSymbolIn` now return `Either JITSymbolError
+  JITSymbol` if the JIT symbol has the error flag set or the address
+  is 0. (This is consistent with how LLVM treats JIT symbols).
+* The return type of `SymbolResolverFn` has been changed to `Either
+  JITSymbolError JITSymbol`. It is fine to return a 0 address in
+  `Right` so existing resolvers can be adapted by wrapping the result
+  in `Right`.
+
 ## 6.2.0 (2018-05-08)
 
 * Remove field prefixes from `DIDerivedType`, `DIBasicType` and

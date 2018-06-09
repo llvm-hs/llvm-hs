@@ -37,6 +37,9 @@ foreign import ccall safe "LLVM_Hs_JITSymbol_getAddress" getAddress ::
 foreign import ccall safe "LLVM_Hs_JITSymbol_getFlags" getFlags ::
   Ptr JITSymbol -> IO JITSymbolFlags
 
+foreign import ccall safe "LLVM_Hs_JITSymbol_getErrorMsg" getErrorMsg ::
+  Ptr JITSymbol -> IO (OwnerTransfered CString)
+
 foreign import ccall safe "LLVM_Hs_setJITSymbol" setJITSymbol ::
   Ptr JITSymbol -> TargetAddress -> JITSymbolFlags -> IO ()
 

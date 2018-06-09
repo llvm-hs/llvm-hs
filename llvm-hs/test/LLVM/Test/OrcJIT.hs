@@ -45,15 +45,15 @@ foreign import ccall "wrapper"
 foreign import ccall "dynamic"
   mkMain :: FunPtr (IO Word32) -> IO Word32
 
-nullResolver :: MangledSymbol -> IO JITSymbol
-nullResolver s = putStrLn "nullresolver" >> return (JITSymbol 0 (JITSymbolFlags False False))
+nullResolver :: MangledSymbol -> IO (Either JITSymbolError JITSymbol)
+nullResolver s = putStrLn "nullresolver" >> return (Left (JITSymbolError "unknown symbol"))
 
-resolver :: CompileLayer l => MangledSymbol -> l -> MangledSymbol -> IO JITSymbol
+resolver :: CompileLayer l => MangledSymbol -> l -> MangledSymbol -> IO (Either JITSymbolError JITSymbol)
 resolver testFunc compileLayer symbol
   | symbol == testFunc = do
       funPtr <- wrapTestFunc myTestFuncImpl
       let addr = ptrToWordPtr (castFunPtrToPtr funPtr)
-      return (JITSymbol addr (JITSymbolFlags False True))
+      return (Right (JITSymbol addr defaultJITSymbolFlags))
   | otherwise = findSymbol compileLayer symbol True
 
 moduleTransform :: IORef Bool -> Ptr FFI.Module -> IO (Ptr FFI.Module)
@@ -78,12 +78,15 @@ tests =
                 (SymbolResolver (resolver testFunc compileLayer) nullResolver) $
                 \moduleHandle -> do
                   mainSymbol <- mangleSymbol compileLayer "main"
-                  JITSymbol mainFn _ <- findSymbol compileLayer mainSymbol True
+                  Right (JITSymbol mainFn _) <- findSymbol compileLayer mainSymbol True
                   result <- mkMain (castPtrToFunPtr (wordPtrToPtr mainFn))
                   result @?= 42
-                  JITSymbol mainFn _ <- findSymbolIn compileLayer moduleHandle mainSymbol True
+                  Right (JITSymbol mainFn _) <- findSymbolIn compileLayer moduleHandle mainSymbol True
                   result <- mkMain (castPtrToFunPtr (wordPtrToPtr mainFn))
-                  result @?= 42,
+                  result @?= 42
+                  unknownSymbol <- mangleSymbol compileLayer "unknownSymbol"
+                  unknownSymbolRes <- findSymbol compileLayer unknownSymbol True
+                  unknownSymbolRes @?= Left (JITSymbolError mempty),
 
     testCase "IRTransformLayer" $ do
       passmanagerSuccessful <- newIORef False
@@ -99,7 +102,7 @@ tests =
                   (SymbolResolver (resolver testFunc compileLayer) nullResolver) $
                   \moduleHandle -> do
                     mainSymbol <- mangleSymbol compileLayer "main"
-                    JITSymbol mainFn _ <- findSymbol compileLayer mainSymbol True
+                    Right (JITSymbol mainFn _) <- findSymbol compileLayer mainSymbol True
                     result <- mkMain (castPtrToFunPtr (wordPtrToPtr mainFn))
                     result @?= 42
                     readIORef passmanagerSuccessful @? "passmanager failed",
@@ -120,7 +123,7 @@ tests =
                       (SymbolResolver (resolver testFunc compileLayer) nullResolver) $
                       \moduleHandle -> do
                         mainSymbol <- mangleSymbol compileLayer "main"
-                        JITSymbol mainFn _ <- findSymbol compileLayer mainSymbol True
+                        Right (JITSymbol mainFn _) <- findSymbol compileLayer mainSymbol True
                         result <- mkMain (castPtrToFunPtr (wordPtrToPtr mainFn))
                         result @?= 42
   ]
