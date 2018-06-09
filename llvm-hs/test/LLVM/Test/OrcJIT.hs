@@ -14,6 +14,7 @@ import Data.Word
 import Foreign.Ptr
 
 import LLVM.Internal.PassManager
+import LLVM.Internal.ObjectFile (createObjectFile)
 import qualified LLVM.Internal.FFI.PassManager as FFI
 import LLVM.Context
 import LLVM.Module
@@ -126,17 +127,11 @@ tests =
                         result @?= 42,
 
     testCase "linking layer" $ do
-      withTestModule $ \mod ->
-        withHostTargetMachine $ \tm ->
-          withObjectLinkingLayer $ \linkingLayer ->
-            withIRCompileLayer linkingLayer tm $ \compileLayer -> do
-              testFunc <- mangleSymbol compileLayer "testFunc"
-              withModule
-                compileLayer
-                mod
-                (SymbolResolver (resolver testFunc compileLayer) nullResolver) $
-                \moduleHandle -> do
-                  JITSymbol mainFn _ <- LL.findSymbol linkingLayer "main" True
-                  result <- mkMain (castPtrToFunPtr (wordPtrToPtr mainFn))
-                  result @?= 42
+      withObjectLinkingLayer $ \linkingLayer -> do
+        objFile <- createObjectFile "wow.o"
+        let resl = SymbolResolver nullResolver nullResolver
+        objectHandle <- addObjectFile linkingLayer objFile resl
+        JITSymbol mainFn _ <- LL.findSymbolIn linkingLayer objectHandle "main" True
+        result <- mkMain (castPtrToFunPtr (wordPtrToPtr mainFn))
+        result @?= 42
   ]
