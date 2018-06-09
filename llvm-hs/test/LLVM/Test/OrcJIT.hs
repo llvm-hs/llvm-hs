@@ -13,10 +13,8 @@ import Data.IORef
 import Data.Word
 import Foreign.Ptr
 import System.Process (callProcess)
-import System.Posix.IO (createFile, closeFd, fdWrite)
-import System.Posix.Files (ownerWriteMode)
-import System.Directory (removeFile)
-import Control.Exception (bracket)
+import System.IO.Temp (withSystemTempFile)
+import System.IO
 
 import LLVM.Internal.PassManager
 import LLVM.Internal.ObjectFile (createObjectFile)
@@ -38,12 +36,6 @@ testModule =
   \define i32 @main(i32, i8**) {\n\
   \  %3 = call i32 @testFunc()\n\
   \  ret i32 %3\n\
-  \}\n"
-
-testCSource :: String
-testCSource =
-  "int main() {\n\
-  \return 38;\n\
   \}\n"
 
 withTestModule :: (Module -> IO a) -> IO a
@@ -142,33 +134,21 @@ tests =
 
     testCase "finding symbols in linking layer" $ do
       withObjectLinkingLayer $ \linkingLayer -> do
-        withTmpFile "tmp.c" testCSource $ \inputPath ->
-          withEmptyTmpFile "tmp.o" $ \outputPath -> do
-            callProcess "gcc" ["-c", inputPath, "-o", outputPath]
-            objFile <- createObjectFile outputPath
-            let resl = SymbolResolver nullResolver nullResolver
+        let inputPath = "./test/main_return_38.c"
+        withSystemTempFile "main.o" $ \outputPath _ -> do
+          callProcess "gcc" ["-c", inputPath, "-o", outputPath]
+          objFile <- createObjectFile outputPath
+          let resl = SymbolResolver nullResolver nullResolver
 
-            objectHandle <- addObjectFile linkingLayer objFile resl
+          objectHandle <- addObjectFile linkingLayer objFile resl
 
-            -- Find main symbol by looking into global linking context
-            Right (JITSymbol mainFn _) <- LL.findSymbol linkingLayer "main" True
-            result <- mkMain (castPtrToFunPtr (wordPtrToPtr mainFn))
-            result @?= 38
+          -- Find main symbol by looking into global linking context
+          JITSymbol mainFn _ <- LL.findSymbol linkingLayer "main" True
+          result <- mkMain (castPtrToFunPtr (wordPtrToPtr mainFn))
+          result @?= 38
 
-            -- Find main symbol by specificly using object handle for given object file
-            Right (JITSymbol mainFn _) <- LL.findSymbolIn linkingLayer objectHandle "main" True
-            result <- mkMain (castPtrToFunPtr (wordPtrToPtr mainFn))
-            result @?= 38
-      ]
-
-withEmptyTmpFile :: String -> (String -> IO a) -> IO a
-withEmptyTmpFile path f = do
-  fd <- createFile path ownerWriteMode
-  f path <* closeFd fd <* removeFile path
-
-withTmpFile :: String -> String -> (String -> IO a) -> IO a
-withTmpFile path content f = do
-  fd <- createFile path ownerWriteMode
-  _ <- fdWrite fd content
-  f path <* closeFd fd <* removeFile path
-
+          -- Find main symbol by specificly using object handle for given object file
+          JITSymbol mainFn _ <- LL.findSymbolIn linkingLayer objectHandle "main" True
+          result <- mkMain (castPtrToFunPtr (wordPtrToPtr mainFn))
+          result @?= 38
+    ]

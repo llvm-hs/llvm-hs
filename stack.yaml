@@ -8,6 +8,3 @@ flags:
     shared-llvm: true
 
 extra-package-dbs: []
-extra-deps:
-  - 'process-1.6.3.0'
-  - 'directory-1.3.2.2'
