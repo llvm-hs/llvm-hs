@@ -21,7 +21,27 @@ module LLVM.AST (
   module LLVM.AST.Instruction,
   module LLVM.AST.Name,
   module LLVM.AST.Type
+  -- * Overview
+  -- $overview
+
+  -- * Constructing the AST for an LLVM module
+  -- $moduleconstruction
   ) where
+
+{- $overview
+
+@llvm-hs-pure@ defines the Haskell AST for representing an LLVM
+`Module`. For interacting with the LLVM C/C++ libraries and an
+overview of the various libraries in the @llvm-hs@ ecosystem, take a
+look at the docs in the @LLVM@ module in @llvm-hs@.
+
+In addition to constructing the LLVM AST manually, there is also a
+monadic IRBuilder interface in `LLVM.IRBuilder`. The IRBuilder will
+take care of generating fresh names automatically and generally
+reduces the verbosity of using the AST directly. Using
+@RecursiveDo/mdo@, it is also capable of handling forward references
+automatically.
+-}
 
 import LLVM.Prelude
 
