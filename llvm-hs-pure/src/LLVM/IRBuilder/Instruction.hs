@@ -143,7 +143,12 @@ insertElement :: MonadIRBuilder m => Operand -> Operand -> Operand -> m Operand
 insertElement v e i = emitInstr (typeOf v) $ InsertElement v e i []
 
 shuffleVector :: MonadIRBuilder m => Operand -> Operand -> C.Constant -> m Operand
-shuffleVector a b m = emitInstr (typeOf a) $ ShuffleVector a b m []
+shuffleVector a b m = emitInstr retType $ ShuffleVector a b m []
+  where retType =
+          case (typeOf a, typeOf m) of
+            (VectorType _ elemTyp, VectorType maskLength _) -> VectorType maskLength elemTyp
+            _ -> error "shuffleVector: Expected two vectors and a vector mask"
+
 
 extractValue :: MonadIRBuilder m => Operand -> [Word32] -> m Operand
 extractValue a i = emitInstr (extractValueType i (typeOf a)) $ ExtractValue a i []

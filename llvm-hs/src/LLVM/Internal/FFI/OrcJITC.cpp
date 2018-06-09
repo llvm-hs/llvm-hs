@@ -22,6 +22,9 @@
 using namespace llvm;
 using namespace orc;
 
+#define SYMBOL_CASE(x) static_assert((unsigned)LLVMJITSymbolFlag ## x == (unsigned) llvm::JITSymbolFlags::FlagNames::x, "JITSymbolFlag values should agree");
+LLVM_HS_FOR_EACH_JIT_SYMBOL_FLAG(SYMBOL_CASE)
+
 typedef unsigned LLVMModuleHandle;
 typedef unsigned LLVMObjectHandle;
 typedef llvm::orc::LambdaResolver<
@@ -370,6 +373,14 @@ JITTargetAddress LLVM_Hs_JITSymbol_getAddress(LLVMJITSymbolRef symbol,
 
 LLVMJITSymbolFlags LLVM_Hs_JITSymbol_getFlags(LLVMJITSymbolRef symbol) {
     return wrap(symbol->getFlags());
+}
+
+const char* LLVM_Hs_JITSymbol_getErrorMsg(LLVMJITSymbolRef symbol) {
+    if (!symbol) {
+        Error err = symbol->takeError();
+        return strdup(toString(std::move(err)).c_str());
+    }
+    return strdup("");
 }
 
 void LLVM_Hs_setJITSymbol(LLVMJITSymbolRef symbol, JITTargetAddress addr,
