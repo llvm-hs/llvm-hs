@@ -12,6 +12,11 @@ import Data.Foldable
 import Data.IORef
 import Data.Word
 import Foreign.Ptr
+import System.Process (callProcess)
+import System.Posix.IO (createFile, closeFd, fdWrite)
+import System.Posix.Files (ownerWriteMode)
+import System.Directory (removeFile)
+import Control.Exception (bracket)
 
 import LLVM.Internal.PassManager
 import LLVM.Internal.ObjectFile (createObjectFile)
@@ -33,6 +38,12 @@ testModule =
   \define i32 @main(i32, i8**) {\n\
   \  %3 = call i32 @testFunc()\n\
   \  ret i32 %3\n\
+  \}\n"
+
+testCSource :: String
+testCSource =
+  "int main() {\n\
+  \return 38;\n\
   \}\n"
 
 withTestModule :: (Module -> IO a) -> IO a
@@ -128,10 +139,33 @@ tests =
 
     testCase "linking layer" $ do
       withObjectLinkingLayer $ \linkingLayer -> do
-        objFile <- createObjectFile "wow.o"
-        let resl = SymbolResolver nullResolver nullResolver
-        objectHandle <- addObjectFile linkingLayer objFile resl
-        JITSymbol mainFn _ <- LL.findSymbolIn linkingLayer objectHandle "main" True
-        result <- mkMain (castPtrToFunPtr (wordPtrToPtr mainFn))
-        result @?= 42
-  ]
+        withTmpFile "tmp.c" testCSource $ \inputPath ->
+          withEmptyTmpFile "tmp.o" $ \outputPath -> do
+            callProcess "gcc" ["-c", inputPath, "-o", outputPath]
+            objFile <- createObjectFile outputPath
+            let resl = SymbolResolver nullResolver nullResolver
+
+            objectHandle <- addObjectFile linkingLayer objFile resl
+
+            -- Find main symbol by looking into global linking context
+            JITSymbol mainFn _ <- LL.findSymbol linkingLayer "main" True
+            result <- mkMain (castPtrToFunPtr (wordPtrToPtr mainFn))
+            result @?= 38
+
+            -- Find main symbol by specificly using object handle for given object file
+            JITSymbol mainFn _ <- LL.findSymbolIn linkingLayer objectHandle "main" True
+            result <- mkMain (castPtrToFunPtr (wordPtrToPtr mainFn))
+            result @?= 38
+      ]
+
+withEmptyTmpFile :: String -> (String -> IO a) -> IO a
+withEmptyTmpFile path f = do
+  fd <- createFile path ownerWriteMode
+  f path <* closeFd fd <* removeFile path
+
+withTmpFile :: String -> String -> (String -> IO a) -> IO a
+withTmpFile path content f = do
+  fd <- createFile path ownerWriteMode
+  _ <- fdWrite fd content
+  f path <* closeFd fd <* removeFile path
+
