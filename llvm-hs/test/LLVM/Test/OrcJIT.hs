@@ -12,14 +12,19 @@ import Data.Foldable
 import Data.IORef
 import Data.Word
 import Foreign.Ptr
+import System.Process (callProcess)
+import System.IO.Temp (withSystemTempFile)
+import System.IO
 
 import LLVM.Internal.PassManager
+import LLVM.Internal.ObjectFile (createObjectFile)
 import qualified LLVM.Internal.FFI.PassManager as FFI
 import LLVM.Context
 import LLVM.Module
 import qualified LLVM.Internal.FFI.Module as FFI
 import LLVM.OrcJIT
-import LLVM.Internal.OrcJIT.CompileLayer
+import qualified LLVM.Internal.OrcJIT.CompileLayer as CL
+import qualified LLVM.Internal.OrcJIT.LinkingLayer as LL
 import LLVM.Target
 
 testModule :: ByteString
@@ -54,7 +59,7 @@ resolver testFunc compileLayer symbol
       funPtr <- wrapTestFunc myTestFuncImpl
       let addr = ptrToWordPtr (castFunPtrToPtr funPtr)
       return (Right (JITSymbol addr defaultJITSymbolFlags))
-  | otherwise = findSymbol compileLayer symbol True
+  | otherwise = CL.findSymbol compileLayer symbol True
 
 moduleTransform :: IORef Bool -> Ptr FFI.Module -> IO (Ptr FFI.Module)
 moduleTransform passmanagerSuccessful modulePtr = do
@@ -78,14 +83,14 @@ tests =
                 (SymbolResolver (resolver testFunc compileLayer) nullResolver) $
                 \moduleHandle -> do
                   mainSymbol <- mangleSymbol compileLayer "main"
-                  Right (JITSymbol mainFn _) <- findSymbol compileLayer mainSymbol True
+                  Right (JITSymbol mainFn _) <- CL.findSymbol compileLayer mainSymbol True
                   result <- mkMain (castPtrToFunPtr (wordPtrToPtr mainFn))
                   result @?= 42
-                  Right (JITSymbol mainFn _) <- findSymbolIn compileLayer moduleHandle mainSymbol True
+                  Right (JITSymbol mainFn _) <- CL.findSymbolIn compileLayer moduleHandle mainSymbol True
                   result <- mkMain (castPtrToFunPtr (wordPtrToPtr mainFn))
                   result @?= 42
                   unknownSymbol <- mangleSymbol compileLayer "unknownSymbol"
-                  unknownSymbolRes <- findSymbol compileLayer unknownSymbol True
+                  unknownSymbolRes <- CL.findSymbol compileLayer unknownSymbol True
                   unknownSymbolRes @?= Left (JITSymbolError mempty),
 
     testCase "IRTransformLayer" $ do
@@ -102,7 +107,7 @@ tests =
                   (SymbolResolver (resolver testFunc compileLayer) nullResolver) $
                   \moduleHandle -> do
                     mainSymbol <- mangleSymbol compileLayer "main"
-                    Right (JITSymbol mainFn _) <- findSymbol compileLayer mainSymbol True
+                    Right (JITSymbol mainFn _) <- CL.findSymbol compileLayer mainSymbol True
                     result <- mkMain (castPtrToFunPtr (wordPtrToPtr mainFn))
                     result @?= 42
                     readIORef passmanagerSuccessful @? "passmanager failed",
@@ -123,7 +128,27 @@ tests =
                       (SymbolResolver (resolver testFunc compileLayer) nullResolver) $
                       \moduleHandle -> do
                         mainSymbol <- mangleSymbol compileLayer "main"
-                        Right (JITSymbol mainFn _) <- findSymbol compileLayer mainSymbol True
+                        Right (JITSymbol mainFn _) <- CL.findSymbol compileLayer mainSymbol True
                         result <- mkMain (castPtrToFunPtr (wordPtrToPtr mainFn))
-                        result @?= 42
-  ]
+                        result @?= 42,
+
+    testCase "finding symbols in linking layer" $ do
+      withObjectLinkingLayer $ \linkingLayer -> do
+        let inputPath = "./test/main_return_38.c"
+        withSystemTempFile "main.o" $ \outputPath _ -> do
+          callProcess "gcc" ["-c", inputPath, "-o", outputPath]
+          objFile <- createObjectFile outputPath
+          let resl = SymbolResolver nullResolver nullResolver
+
+          objectHandle <- addObjectFile linkingLayer objFile resl
+
+          -- Find main symbol by looking into global linking context
+          Right (JITSymbol mainFn _) <- LL.findSymbol linkingLayer "main" True
+          result <- mkMain (castPtrToFunPtr (wordPtrToPtr mainFn))
+          result @?= 38
+
+          -- Find main symbol by specificly using object handle for given object file
+          Right (JITSymbol mainFn _) <- LL.findSymbolIn linkingLayer objectHandle "main" True
+          result <- mkMain (castPtrToFunPtr (wordPtrToPtr mainFn))
+          result @?= 38
+    ]
