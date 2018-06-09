@@ -90,7 +90,7 @@ tests =
                   result <- mkMain (castPtrToFunPtr (wordPtrToPtr mainFn))
                   result @?= 42
                   unknownSymbol <- mangleSymbol compileLayer "unknownSymbol"
-                  unknownSymbolRes <- findSymbol compileLayer unknownSymbol True
+                  unknownSymbolRes <- CL.findSymbol compileLayer unknownSymbol True
                   unknownSymbolRes @?= Left (JITSymbolError mempty),
 
     testCase "IRTransformLayer" $ do
@@ -143,12 +143,12 @@ tests =
           objectHandle <- addObjectFile linkingLayer objFile resl
 
           -- Find main symbol by looking into global linking context
-          JITSymbol mainFn _ <- LL.findSymbol linkingLayer "main" True
+          Right (JITSymbol mainFn _) <- LL.findSymbol linkingLayer "main" True
           result <- mkMain (castPtrToFunPtr (wordPtrToPtr mainFn))
           result @?= 38
 
           -- Find main symbol by specificly using object handle for given object file
-          JITSymbol mainFn _ <- LL.findSymbolIn linkingLayer objectHandle "main" True
+          Right (JITSymbol mainFn _) <- LL.findSymbolIn linkingLayer objectHandle "main" True
           result <- mkMain (castPtrToFunPtr (wordPtrToPtr mainFn))
           result @?= 38
     ]

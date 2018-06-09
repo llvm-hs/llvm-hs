@@ -68,7 +68,7 @@ withObjectLinkingLayer = bracket newObjectLinkingLayer disposeLinkingLayer
 -- | @'findSymbol' layer symbol exportedSymbolsOnly@ searches for
 -- @symbol@ in all modules added to @layer@. If @exportedSymbolsOnly@
 -- is 'True' only exported symbols are searched.
-findSymbol :: LinkingLayer l => l -> ShortByteString -> Bool -> IO JITSymbol
+findSymbol :: LinkingLayer l => l -> ShortByteString -> Bool -> IO (Either JITSymbolError JITSymbol)
 findSymbol linkingLayer symbol exportedSymbolsOnly =
   SBS.useAsCString symbol $ \symbol' ->
     flip runAnyContT return $ do
@@ -80,7 +80,7 @@ findSymbol linkingLayer symbol exportedSymbolsOnly =
 -- | @'findSymbolIn' layer handle symbol exportedSymbolsOnly@ searches for
 -- @symbol@ in the context of the module represented by @handle@. If
 -- @exportedSymbolsOnly@ is 'True' only exported symbols are searched.
-findSymbolIn :: LinkingLayer l => l -> FFI.ObjectHandle -> ShortByteString -> Bool -> IO JITSymbol
+findSymbolIn :: LinkingLayer l => l -> FFI.ObjectHandle -> ShortByteString -> Bool -> IO (Either JITSymbolError JITSymbol)
 findSymbolIn linkingLayer handle symbol exportedSymbolsOnly =
   SBS.useAsCString symbol $ \symbol' ->
     flip runAnyContT return $ do
