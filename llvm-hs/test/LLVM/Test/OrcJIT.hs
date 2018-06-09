@@ -67,21 +67,24 @@ moduleTransform passmanagerSuccessful modulePtr = do
 tests :: TestTree
 tests =
   testGroup "OrcJit" [
-  --   testCase "linking layer" $ do
-  --     withTestModule $ \mod ->
-  --       withHostTargetMachine $ \tm ->
-  --         withObjectLinkingLayer $ \linkingLayer ->
-  --           withIRCompileLayer linkingLayer tm $ \compileLayer -> do
-  --             testFunc <- mangleSymbol compileLayer "testFunc"
-  --             withModule
-  --               compileLayer
-  --               mod
-  --               (SymbolResolver (resolver testFunc compileLayer) nullResolver) $
-  --               \moduleHandle -> do
-  --                 mainSymbol <- mangleSymbol compileLayer "main"
-  --                 JITSymbol mainFn _ <- CL.findSymbol compileLayer mainSymbol True
-  --                 result <- mkMain (castPtrToFunPtr (wordPtrToPtr mainFn))
-  --                 result @?= 42,
+    testCase "eager compilation" $ do
+      withTestModule $ \mod ->
+        withHostTargetMachine $ \tm ->
+          withObjectLinkingLayer $ \linkingLayer ->
+            withIRCompileLayer linkingLayer tm $ \compileLayer -> do
+              testFunc <- mangleSymbol compileLayer "testFunc"
+              withModule
+                compileLayer
+                mod
+                (SymbolResolver (resolver testFunc compileLayer) nullResolver) $
+                \moduleHandle -> do
+                  mainSymbol <- mangleSymbol compileLayer "main"
+                  JITSymbol mainFn _ <- CL.findSymbol compileLayer mainSymbol True
+                  result <- mkMain (castPtrToFunPtr (wordPtrToPtr mainFn))
+                  result @?= 42
+                  JITSymbol mainFn _ <- CL.findSymbolIn compileLayer moduleHandle mainSymbol True
+                  result <- mkMain (castPtrToFunPtr (wordPtrToPtr mainFn))
+                  result @?= 42,
 
     testCase "IRTransformLayer" $ do
       passmanagerSuccessful <- newIORef False
@@ -122,7 +125,7 @@ tests =
                         result <- mkMain (castPtrToFunPtr (wordPtrToPtr mainFn))
                         result @?= 42,
 
-    testCase "eager compilation" $ do
+    testCase "linking layer" $ do
       withTestModule $ \mod ->
         withHostTargetMachine $ \tm ->
           withObjectLinkingLayer $ \linkingLayer ->
@@ -134,10 +137,7 @@ tests =
                 (SymbolResolver (resolver testFunc compileLayer) nullResolver) $
                 \moduleHandle -> do
                   mainSymbol <- mangleSymbol compileLayer "main"
-                  JITSymbol mainFn _ <- CL.findSymbol compileLayer mainSymbol True
-                  result <- mkMain (castPtrToFunPtr (wordPtrToPtr mainFn))
-                  result @?= 42
-                  JITSymbol mainFn _ <- CL.findSymbolIn compileLayer moduleHandle mainSymbol True
+                  JITSymbol mainFn _ <- LL.findSymbol linkingLayer mainSymbol True
                   result <- mkMain (castPtrToFunPtr (wordPtrToPtr mainFn))
                   result @?= 42
   ]
