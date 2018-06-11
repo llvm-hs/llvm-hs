@@ -83,7 +83,7 @@ $(do
       _ -> []
 
     let ats = map typeMapping (fieldTypes List.\\ [TH.ConT ''A.InstructionMetadata, TH.ConT ''A.FastMathFlags])
-        cName = (if hasFlags fieldTypes then "LLVM_Hs_" else "LLVM") ++ "Build" ++ a
+        cName = "LLVM_Hs_Build" ++ a
     rt <- case k of
             ID.Binary -> [[t| BinaryOperator |]]
             ID.Cast -> [[t| Instruction |]]
@@ -106,10 +106,10 @@ foreign import ccall unsafe "LLVM_Hs_BuildStore" buildStore' ::
 buildStore :: Ptr Builder -> LLVMBool -> Ptr Value -> Ptr Value -> (SynchronizationScope, MemoryOrdering) -> CUInt -> CString -> IO (Ptr Instruction)
 buildStore builder vol a' v' (ss, mo) al s = buildStore' builder vol a' v' mo ss al s
 
-foreign import ccall unsafe "LLVMBuildGEP" buildGetElementPtr' ::
+foreign import ccall unsafe "LLVM_Hs_BuildGEP" buildGetElementPtr' ::
   Ptr Builder -> Ptr Value -> Ptr (Ptr Value) -> CUInt -> CString -> IO (Ptr Instruction)
 
-foreign import ccall unsafe "LLVMBuildInBoundsGEP" buildInBoundsGetElementPtr' ::
+foreign import ccall unsafe "LLVM_Hs_BuildInBoundsGEP" buildInBoundsGetElementPtr' ::
   Ptr Builder -> Ptr Value -> Ptr (Ptr Value) -> CUInt -> CString -> IO (Ptr Instruction)
 
 buildGetElementPtr :: Ptr Builder -> LLVMBool -> Ptr Value -> (CUInt, Ptr (Ptr Value)) -> CString -> IO (Ptr Instruction)
@@ -135,7 +135,7 @@ foreign import ccall unsafe "LLVM_Hs_BuildAtomicRMW" buildAtomicRMW' ::
 buildAtomicRMW :: Ptr Builder -> LLVMBool -> RMWOperation -> Ptr Value -> Ptr Value -> (SynchronizationScope, MemoryOrdering) -> CString -> IO (Ptr Instruction)
 buildAtomicRMW builder vol rmwOp a v (ss, mo) s = buildAtomicRMW' builder vol rmwOp a v mo ss s
 
-foreign import ccall unsafe "LLVMBuildICmp" buildICmp ::
+foreign import ccall unsafe "LLVM_Hs_BuildICmp" buildICmp ::
   Ptr Builder -> ICmpPredicate -> Ptr Value -> Ptr Value -> CString -> IO (Ptr Instruction)
 
 foreign import ccall unsafe "LLVMBuildFCmp" buildFCmp ::
@@ -147,19 +147,19 @@ foreign import ccall unsafe "LLVMBuildPhi" buildPhi ::
 foreign import ccall unsafe "LLVMBuildCall" buildCall ::
   Ptr Builder -> Ptr Value -> Ptr (Ptr Value) -> CUInt -> CString -> IO (Ptr Instruction)
 
-foreign import ccall unsafe "LLVMBuildSelect" buildSelect ::
+foreign import ccall unsafe "LLVM_Hs_BuildSelect" buildSelect ::
   Ptr Builder -> Ptr Value -> Ptr Value -> Ptr Value -> CString -> IO (Ptr Instruction)
 
 foreign import ccall unsafe "LLVMBuildVAArg" buildVAArg ::
   Ptr Builder -> Ptr Value -> Ptr Type -> CString -> IO (Ptr Instruction)
 
-foreign import ccall unsafe "LLVMBuildExtractElement" buildExtractElement ::
+foreign import ccall unsafe "LLVM_Hs_BuildExtractElement" buildExtractElement ::
   Ptr Builder -> Ptr Value -> Ptr Value -> CString -> IO (Ptr Instruction)
 
-foreign import ccall unsafe "LLVMBuildInsertElement" buildInsertElement ::
+foreign import ccall unsafe "LLVM_Hs_BuildInsertElement" buildInsertElement ::
   Ptr Builder -> Ptr Value -> Ptr Value -> Ptr Value -> CString -> IO (Ptr Instruction)
 
-foreign import ccall unsafe "LLVMBuildShuffleVector" buildShuffleVector ::
+foreign import ccall unsafe "LLVM_Hs_BuildShuffleVector" buildShuffleVector ::
   Ptr Builder -> Ptr Value -> Ptr Value -> Ptr Constant -> CString -> IO (Ptr Instruction)
 
 foreign import ccall unsafe "LLVM_Hs_BuildExtractValue" buildExtractValue ::

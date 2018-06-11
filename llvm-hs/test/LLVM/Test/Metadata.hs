@@ -19,6 +19,7 @@ import Data.Maybe (catMaybes)
 import Foreign.Ptr
 import Text.Show.Pretty (pPrint)
 
+import qualified LLVM.AST.IntegerPredicate as IP
 import LLVM.AST as A hiding (GlobalVariable, PointerType)
 import LLVM.AST.Operand hiding (Module)
 import qualified LLVM.AST.Operand as O
@@ -44,6 +45,7 @@ tests = testGroup "Metadata"
   , namedMetadata
   , nullMetadata
   , cyclicMetadata
+  , metadataConstantFolding
   , globalObjectMetadata
   , roundtripDIBasicType
   , roundtripDIDerivedType
@@ -780,6 +782,46 @@ cyclicMetadata = testGroup "cyclic" [
               \!0 = !{void ()* @foo}\n"
       strCheck ast s
    ]
+
+metadataConstantFolding = testGroup "constant folding" [
+    testCase "metadata on instructions that can be constant folded" $
+      let ast = Module "<string>" "<string>" Nothing Nothing
+            [ GlobalDefinition functionDefaults
+                { name = "f"
+                , parameters = ([Parameter i32 "x" []] , False)
+                , returnType = i32
+                , basicBlocks =
+                    [ BasicBlock "if"
+                        [UnName 0 := ICmp IP.EQ (ConstantOperand (C.Int 32 0)) (ConstantOperand (C.Int 32 0))
+                           [("foobar", MDRef (MetadataNodeID 0))]
+                        ]
+                        (Do (CondBr (LocalReference i1 (UnName 0)) "if.true" "if.false" []))
+                    , BasicBlock "if.true" []
+                        (Do (Ret (Just (ConstantOperand (C.Int 32 0))) []))
+                    , BasicBlock "if.false" []
+                        (Do (Ret (Just (ConstantOperand (C.Int 32 0))) []))
+                    ]
+                }
+            , MetadataNodeDefinition (MetadataNodeID 0) (MDTuple [])
+            ]
+          s = "; ModuleID = '<string>'\n\
+              \source_filename = \"<string>\"\n\
+              \\n\
+              \define i32 @f(i32 %x) {\n\
+              \if:\n\
+              \  %0 = icmp eq i32 0, 0, !foobar !0\n\
+              \  br i1 %0, label %if.true, label %if.false\n\
+              \\n\
+              \if.true:                                          ; preds = %if\n\
+              \  ret i32 0\n\
+              \\n\
+              \if.false:                                         ; preds = %if\n\
+              \  ret i32 0\n\
+              \}\n\
+              \\n\
+              \!0 = !{}\n"
+      in strCheck ast s
+    ]
 
 globalObjectMetadata = testGroup "Metadata on GlobalObject" $
   [ testCase "metadata on functions" $ do
