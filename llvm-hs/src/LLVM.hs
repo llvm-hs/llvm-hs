@@ -11,7 +11,7 @@ module LLVM (
   -- * Overview of the @llvm-hs@ library ecosystem
   -- $ecosystem
 
-  -- * Constructing the C++ representation on an LLVM module
+  -- * Constructing the C++ representation of an LLVM module
   -- $moduleconstruction
 
   -- * #objectcode# Generating object code
