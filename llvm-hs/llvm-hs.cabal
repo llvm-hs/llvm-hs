@@ -191,6 +191,8 @@ library
     LLVM.Linking
     LLVM.Module
     LLVM.OrcJIT
+    LLVM.OrcJIT.CompileLayer
+    LLVM.OrcJIT.LinkingLayer
     LLVM.PassManager
     LLVM.Relocation
     LLVM.Target
