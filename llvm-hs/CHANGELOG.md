@@ -14,6 +14,11 @@
 * Fix use-after-free in `createObjectFile`.
 * Add `withObjectFile` wrapper for `createObjectFile` and
   `disposeObjectFile`.
+* Add API for looking up symbols in the `LinkingLayer`.
+* Add `LLVM.OrcJIT.CompileLayer` and `LLVM.OrcJIT.LinkingLayer`
+  modules that reexport the internal modules. The
+  `findSymbol/findSymbolIn` methods that have previously been exported
+  from `LLVM.OrcJIT` can now be found in `LLVM.OrcJIT.CompileLayer`.
 
 ## 6.2.0 (2018-05-08)
 
