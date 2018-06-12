@@ -17,7 +17,7 @@ import System.IO.Temp (withSystemTempFile)
 import System.IO
 
 import LLVM.Internal.PassManager
-import LLVM.Internal.ObjectFile (createObjectFile)
+import LLVM.Internal.ObjectFile (withObjectFile)
 import qualified LLVM.Internal.FFI.PassManager as FFI
 import LLVM.Context
 import LLVM.Module
@@ -137,18 +137,15 @@ tests =
         let inputPath = "./test/main_return_38.c"
         withSystemTempFile "main.o" $ \outputPath _ -> do
           callProcess "gcc" ["-c", inputPath, "-o", outputPath]
-          objFile <- createObjectFile outputPath
-          let resl = SymbolResolver nullResolver nullResolver
-
-          objectHandle <- addObjectFile linkingLayer objFile resl
-
-          -- Find main symbol by looking into global linking context
-          Right (JITSymbol mainFn _) <- LL.findSymbol linkingLayer "main" True
-          result <- mkMain (castPtrToFunPtr (wordPtrToPtr mainFn))
-          result @?= 38
-
-          -- Find main symbol by specificly using object handle for given object file
-          Right (JITSymbol mainFn _) <- LL.findSymbolIn linkingLayer objectHandle "main" True
-          result <- mkMain (castPtrToFunPtr (wordPtrToPtr mainFn))
-          result @?= 38
+          withObjectFile outputPath $ \objFile -> do
+            let resl = SymbolResolver nullResolver nullResolver
+            objectHandle <- addObjectFile linkingLayer objFile resl
+            -- Find main symbol by looking into global linking context
+            Right (JITSymbol mainFn _) <- LL.findSymbol linkingLayer "main" True
+            result <- mkMain (castPtrToFunPtr (wordPtrToPtr mainFn))
+            result @?= 38
+            -- Find main symbol by specificly using object handle for given object file
+            Right (JITSymbol mainFn _) <- LL.findSymbolIn linkingLayer objectHandle "main" True
+            result <- mkMain (castPtrToFunPtr (wordPtrToPtr mainFn))
+            result @?= 38
     ]

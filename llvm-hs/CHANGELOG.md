@@ -11,6 +11,9 @@
   encoding. This caused problems since the API available on a Constant
   is not the same as the one on an Instruction (e.g., we cannot set
   metadata on a Constant).
+* Fix use-after-free in `createObjectFile`.
+* Add `withObjectFile` wrapper for `createObjectFile` and
+  `disposeObjectFile`.
 
 ## 6.2.0 (2018-05-08)
 
