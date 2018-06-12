@@ -1,3 +1,7 @@
+## unreleased
+
+* Fix type of `shuffleVector` in the IRBuilder API.
+
 ## 6.2.0 (2018-05-08)
 
 * Remove field prefixes from `DIDerivedType`, `DIBasicType` and
