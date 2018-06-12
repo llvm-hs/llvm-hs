@@ -7,6 +7,10 @@
   JITSymbolError JITSymbol`. It is fine to return a 0 address in
   `Right` so existing resolvers can be adapted by wrapping the result
   in `Right`.
+* Fixed a bug where instructions were constant-folded during
+  encoding. This caused problems since the API available on a Constant
+  is not the same as the one on an Instruction (e.g., we cannot set
+  metadata on a Constant).
 
 ## 6.2.0 (2018-05-08)
 

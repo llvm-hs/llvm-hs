@@ -624,11 +624,12 @@ tests = testGroup "Instructions" [
         mStr = "; ModuleID = '<string>'\n\
                \source_filename = \"<string>\"\n\
                \\n\
-               \@0 = constant i32 42\n\
+               \@fortytwo = constant i32 42\n\
                \\n\
-               \define i32 @1() {\n\
-               \  %1 = load i32, i32* @0, align 1\n\
-               \  ret i32 %1\n\
+               \define i32 @0() {\n\
+               \  %1 = getelementptr inbounds i32, i32* @fortytwo, i32 0\n\
+               \  %2 = load i32, i32* %1, align 1\n\
+               \  ret i32 %2\n\
                \}\n"
     s <- withContext $ \context -> withModuleFromAST context mAST moduleLLVMAssembly
     s @?= mStr,
