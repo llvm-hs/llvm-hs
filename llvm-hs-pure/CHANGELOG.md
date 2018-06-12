@@ -1,4 +1,4 @@
-## unreleased
+## 6.2.1 (2018-06-12)
 
 * Fix type of `shuffleVector` in the IRBuilder API.
 

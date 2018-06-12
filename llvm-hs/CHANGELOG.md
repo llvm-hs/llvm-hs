@@ -1,4 +1,4 @@
-## unreleased
+## 6.3.0 (2018-06-12)
 
 * `findSymbol` and `findSymbolIn` now return `Either JITSymbolError
   JITSymbol` if the JIT symbol has the error flag set or the address
