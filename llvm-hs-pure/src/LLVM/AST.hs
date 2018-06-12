@@ -28,6 +28,17 @@ module LLVM.AST (
   -- $moduleconstruction
   ) where
 
+import LLVM.Prelude
+
+import LLVM.AST.Name
+import LLVM.AST.Type (Type(..), FloatingPointType(..))
+import LLVM.AST.Global
+import LLVM.AST.Operand hiding (Module)
+import LLVM.AST.Instruction
+import LLVM.AST.DataLayout
+import qualified LLVM.AST.Attribute as A
+import qualified LLVM.AST.COMDAT as COMDAT
+
 {- $overview
 
 @llvm-hs-pure@ defines the Haskell AST for representing an LLVM
@@ -42,17 +53,6 @@ reduces the verbosity of using the AST directly. Using
 @RecursiveDo/mdo@, it is also capable of handling forward references
 automatically.
 -}
-
-import LLVM.Prelude
-
-import LLVM.AST.Name
-import LLVM.AST.Type (Type(..), FloatingPointType(..))
-import LLVM.AST.Global
-import LLVM.AST.Operand hiding (Module)
-import LLVM.AST.Instruction
-import LLVM.AST.DataLayout
-import qualified LLVM.AST.Attribute as A
-import qualified LLVM.AST.COMDAT as COMDAT
 
 -- | Any thing which can be at the top level of a 'Module'
 data Definition
