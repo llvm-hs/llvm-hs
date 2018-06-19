@@ -1,3 +1,9 @@
+## unreleased
+
+* Throw an `EncodeException` if a local variable is defined multiple
+  times. This is consistent with `llc` which also forbids reusing
+  variable names.
+
 ## 6.3.0 (2018-06-12)
 
 * `findSymbol` and `findSymbolIn` now return `Either JITSymbolError
