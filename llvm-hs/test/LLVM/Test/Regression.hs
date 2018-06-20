@@ -100,6 +100,82 @@ example3 =
       ]
   }
 
+duplicateDefinitions :: AST.Module
+duplicateDefinitions =
+  defaultModule
+    { moduleName = "clashingModule"
+    , moduleDefinitions =
+        [ GlobalDefinition
+            functionDefaults
+              { name = "clashy"
+              , returnType = i64
+              , basicBlocks =
+                  [ BasicBlock
+                      "entry"
+                      [ mkName "c" :=
+                        Add
+                          False
+                          False
+                          (ConstantOperand (C.Int 64 1))
+                          (ConstantOperand (C.Int 64 2))
+                          []
+                      ]
+                      (Do (Br "next" []))
+                  , BasicBlock
+                      "next"
+                      [ mkName "c" :=
+                        Phi i64 [(LocalReference i64 "c", "entry")] []
+                      ]
+                      (Do (Ret (Just (LocalReference i64 "c")) []))
+                  ]
+              }
+        ]
+    }
+
+reuseAcrossFunctions :: AST.Module
+reuseAcrossFunctions =
+  defaultModule
+    { moduleName = "<string>"
+    , moduleDefinitions =
+        [ GlobalDefinition
+            functionDefaults
+              { name = "f"
+              , returnType = i64
+              , basicBlocks =
+                  [ BasicBlock
+                      "entry"
+                      [ "c" :=
+                        Add
+                          False
+                          False
+                          (ConstantOperand (C.Int 64 1))
+                          (ConstantOperand (C.Int 64 2))
+                          []
+                      ]
+                      (Do (Ret (Just (LocalReference i64 "c")) []))
+                  ]
+              }
+        , GlobalDefinition
+            functionDefaults
+              { name = "g"
+              , returnType = i64
+              , basicBlocks =
+                  [ BasicBlock
+                      "entry"
+                      [ "c" :=
+                        Add
+                          False
+                          False
+                          (ConstantOperand (C.Int 64 1))
+                          (ConstantOperand (C.Int 64 2))
+                          []
+                      ]
+                      (Do (Ret (Just (LocalReference i64 "c")) []))
+                  ]
+              }
+        ]
+    }
+
 shouldThrowEncodeException :: AST.Module -> String -> IO ()
 shouldThrowEncodeException ast errMsg = do
   result <- try $ withContext $ \context -> do
@@ -107,6 +183,11 @@ shouldThrowEncodeException ast errMsg = do
   case result of
     Left (EncodeException actualErrMsg) -> actualErrMsg @?= errMsg
     Right _ -> assertFailure ("Expected serialization to fail with: \"" ++ errMsg ++ "\"")
+
+shouldNotThrow :: AST.Module -> IO ()
+shouldNotThrow ast = do
+  withContext $ \context -> do
+    withModuleFromAST context ast (\_ -> return ())
 
 tests :: TestTree
 tests =
@@ -124,4 +205,11 @@ tests =
         "null constants must have pointer type"
         (example3 `shouldThrowEncodeException`
           "Null pointer constant must have pointer type but has type IntegerType {typeBits = 32}.")
+    , testCase
+        "Duplicate definitions are not allowed"
+        (duplicateDefinitions `shouldThrowEncodeException`
+          "Duplicate definition of local variable: Name \"c\".")
+    , testCase
+        "Reusing variable names across functions is allowed"
+        (shouldNotThrow reuseAcrossFunctions)
     ]

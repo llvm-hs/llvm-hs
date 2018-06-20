@@ -122,6 +122,7 @@ defineLocal n v' = do
   def <- gets $ Map.lookup n . encodeStateLocals
   case def of
     Just (ForwardValue dummy) -> liftIO $ FFI.replaceAllUsesWith dummy v
+    Just _ -> throwM (EncodeException ("Duplicate definition of local variable: " <> show n <> "."))
     _ -> return ()
   modify $ \b -> b { encodeStateLocals = Map.insert n (DefinedValue v) (encodeStateLocals b) }
 
