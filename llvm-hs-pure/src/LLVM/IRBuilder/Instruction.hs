@@ -4,6 +4,8 @@ module LLVM.IRBuilder.Instruction where
 
 import Prelude hiding (and, or, pred)
 
+import Control.Monad.State (gets)
+import qualified Data.Map.Lazy as Map
 import Data.Word
 
 import LLVM.AST hiding (args, dests)
@@ -17,6 +19,7 @@ import qualified LLVM.AST.IntegerPredicate as IP
 import qualified LLVM.AST.FloatingPointPredicate as FP
 
 import LLVM.IRBuilder.Monad
+import LLVM.IRBuilder.Module
 
 fadd :: MonadIRBuilder m => Operand -> Operand -> m Operand
 fadd a b = emitInstr (typeOf a) $ FAdd noFastMathFlags a b []
@@ -82,18 +85,25 @@ load a align = emitInstr retty $ Load False a Nothing align []
 store :: MonadIRBuilder m => Operand -> Word32 -> Operand -> m ()
 store addr align val = emitInstrVoid $ Store False addr val Nothing align []
 
-gep :: MonadIRBuilder m => Operand -> [Operand] -> m Operand
-gep addr is = emitInstr (gepType (typeOf addr) is) (GetElementPtr False addr is [])
+gep :: (MonadIRBuilder m, MonadModuleBuilder m) => Operand -> [Operand] -> m Operand
+gep addr is = do
+  ty <- gepType (typeOf addr) is
+  emitInstr ty (GetElementPtr False addr is [])
   where
     -- TODO: Perhaps use the function from llvm-hs-pretty (https://github.com/llvm-hs/llvm-hs-pretty/blob/master/src/LLVM/Typed.hs)
-    gepType :: Type -> [Operand] -> Type
-    gepType ty [] = ptr ty
+    gepType :: MonadModuleBuilder m => Type -> [Operand] -> m Type
+    gepType ty [] = pure (ptr ty)
     gepType (PointerType ty _) (_:is') = gepType ty is'
     gepType (StructureType _ elTys) (ConstantOperand (C.Int 32 val):is') =
       gepType (elTys !! fromIntegral val) is'
     gepType (StructureType _ _) (i:_) = error $ "gep: Indices into structures should be 32-bit constants. " ++ show i
     gepType (VectorType _ elTy) (_:is') = gepType elTy is'
     gepType (ArrayType _ elTy) (_:is') = gepType elTy is'
+    gepType (NamedTypeReference nm) is' = do
+      mayTy <- liftModuleState (gets (Map.lookup nm . builderTypeDefs))
+      case mayTy of
+        Nothing -> error $ "gep: Couldn’t resolve typedef for: " ++ show nm
+        Just ty -> gepType ty is'
     gepType t (_:_) = error $ "gep: Can't index into a " ++ show t
 
 trunc :: MonadIRBuilder m => Operand -> Type -> m Operand

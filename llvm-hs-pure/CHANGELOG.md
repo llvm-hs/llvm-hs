@@ -1,3 +1,14 @@
+## unreleased
+
+* Track type definitions in `MonadModuleBuilder`. This allows us to
+  automatically resolve `NamedTypeReference`s in `gep` instructions.
+  Note that type definitions must be defined before they are used
+  (i.e. `MonadFix` will not behave correctly here).
+* Change the type of `gep` in the `IRBuilder` API to require a
+  `MonadModuleBuilder` constraint.
+* Change the type of `typedef` in the `IRBuilder` API to return a
+  `NamedTypeReference` to the newly defined type.
+
 ## 6.2.1 (2018-06-12)
 
 * Fix type of `shuffleVector` in the IRBuilder API.
