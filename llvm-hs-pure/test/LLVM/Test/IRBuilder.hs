@@ -52,6 +52,7 @@ tests =
         }
       , testCase "calls constant globals" callWorksWithConstantGlobals
       , testCase "supports recursive function calls" recursiveFunctionCalls
+      , testCase "resolves typefes" resolvesTypeDefs
       , testCase "builds the example" $ do
         let f10 = ConstantOperand (C.Float (F.Double 10))
             fadd a b = FAdd { operand0 = a, operand1 = b, fastMathFlags = noFastMathFlags, metadata = [] }
@@ -240,6 +241,64 @@ callWorksWithConstantGlobals = do
         }
       ]
     }
+
+resolvesTypeDefs :: Assertion
+resolvesTypeDefs = do
+  buildModule "<string>" builder @?= ast
+  where builder = mdo
+          pairTy <- typedef "pair" (Just (StructureType False [AST.i32, AST.i32]))
+          function "f" [(AST.ptr pairTy, "ptr"), (AST.i32, "x"), (AST.i32, "y")] AST.void $ \[ptr, x, y] -> do
+            xPtr <- gep ptr [ConstantOperand (C.Int 32 0), ConstantOperand (C.Int 32 0)]
+            yPtr <- gep ptr [ConstantOperand (C.Int 32 0), ConstantOperand (C.Int 32 1)]
+            store xPtr 0 x
+            store yPtr 0 y
+          pure ()
+        ast = defaultModule
+          { moduleName = "<string>"
+          , moduleDefinitions =
+            [ TypeDefinition "pair" (Just (StructureType False [AST.i32, AST.i32]))
+            , GlobalDefinition functionDefaults
+              { name = "f"
+              , parameters = ( [ Parameter (AST.ptr (NamedTypeReference "pair")) "ptr" []
+                               , Parameter AST.i32 "x" []
+                               , Parameter AST.i32 "y" []]
+                             , False)
+              , returnType = AST.void
+              , basicBlocks =
+                [ BasicBlock (UnName 0)
+                  [ UnName 1 := GetElementPtr
+                      { inBounds = False
+                      , address = LocalReference (AST.ptr (NamedTypeReference "pair")) "ptr"
+                      , indices = [ConstantOperand (C.Int 32 0), ConstantOperand (C.Int 32 0)]
+                      , metadata = []
+                      }
+                  , UnName 2 := GetElementPtr
+                      { inBounds = False
+                      , address = LocalReference (AST.ptr (NamedTypeReference "pair")) "ptr"
+                      , indices = [ConstantOperand (C.Int 32 0), ConstantOperand (C.Int 32 1)]
+                      , metadata = []
+                      }
+                  , Do $ Store
+                      { volatile = False
+                      , address = LocalReference (AST.ptr AST.i32) (UnName 1)
+                      , value = LocalReference AST.i32 "x"
+                      , maybeAtomicity = Nothing
+                      , alignment = 0
+                      , metadata = []
+                      }
+                  , Do $ Store
+                      { volatile = False
+                      , address = LocalReference (AST.ptr AST.i32) (UnName 2)
+                      , value = LocalReference AST.i32 "y"
+                      , maybeAtomicity = Nothing
+                      , alignment = 0
+                      , metadata = []
+                      }
+                  ]
+                  (Do (Ret Nothing []))
+                ]
+              }
+            ]}
 
 simple :: Module
 simple = buildModule "exampleModule" $ mdo

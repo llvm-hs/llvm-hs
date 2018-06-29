@@ -36,6 +36,9 @@ import Data.Bifunctor
 import Data.ByteString.Short as BS
 import Data.Char
 import Data.Data
+import Data.Foldable
+import Data.Map.Lazy (Map)
+import qualified Data.Map.Lazy as Map
 import Data.String
 
 import GHC.Generics(Generic)
@@ -58,13 +61,15 @@ newtype ModuleBuilderT m a = ModuleBuilderT { unModuleBuilderT :: StateT ModuleB
 instance MonadFail m => MonadFail (ModuleBuilderT m) where
   fail str = ModuleBuilderT (StateT $ \_ -> Fail.fail str)
 
-newtype ModuleBuilderState = ModuleBuilderState
+data ModuleBuilderState = ModuleBuilderState
   { builderDefs :: SnocList Definition
+  , builderTypeDefs :: Map Name Type
   }
 
 emptyModuleBuilder :: ModuleBuilderState
 emptyModuleBuilder = ModuleBuilderState
   { builderDefs = mempty
+  , builderTypeDefs = mempty
   }
 
 type ModuleBuilder = ModuleBuilderT Identity
@@ -80,6 +85,8 @@ class Monad m => MonadModuleBuilder m where
 
 instance Monad m => MonadModuleBuilder (ModuleBuilderT m) where
   liftModuleState (StateT s) = ModuleBuilderT $ StateT $ pure . runIdentity . s
+
+
 
 -- | Evaluate 'ModuleBuilder' to a result and a list of definitions
 runModuleBuilder :: ModuleBuilderState -> ModuleBuilder a -> (a, [Definition])
@@ -165,10 +172,12 @@ typedef
   :: MonadModuleBuilder m
   => Name
   -> Maybe Type
-  -> m ()
+  -> m Type
 typedef nm ty = do
   emitDefn $ TypeDefinition nm ty
-  pure ()
+  for_ ty $ \ty' ->
+    liftModuleState (modify (\s -> s { builderTypeDefs = Map.insert nm ty' (builderTypeDefs s) }))
+  pure (NamedTypeReference nm)
 
 -- | Convenience function for module construction
 buildModule :: ShortByteString -> ModuleBuilder a -> Module
@@ -201,3 +210,4 @@ instance MonadModuleBuilder m => MonadModuleBuilder (StateT s m)
 instance MonadModuleBuilder m => MonadModuleBuilder (Strict.StateT s m)
 instance (Monoid w, MonadModuleBuilder m) => MonadModuleBuilder (Strict.WriterT w m)
 instance (Monoid w, MonadModuleBuilder m) => MonadModuleBuilder (Lazy.WriterT w m)
+instance MonadModuleBuilder m => MonadModuleBuilder (IRBuilderT m)
