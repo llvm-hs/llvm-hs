@@ -167,6 +167,21 @@ extern nm argtys retty = do
   let funty = ptr $ FunctionType retty argtys False
   pure $ ConstantOperand $ C.GlobalReference funty nm
 
+-- | A global variable definition
+global
+  :: MonadModuleBuilder m
+  => Name -- ^ Variable name
+  -> Type -- ^ Type
+  -> m Operand
+global nm ty = do
+  emitDefn $ GlobalDefinition globalVariableDefaults
+    { name                  = nm
+    , LLVM.AST.Global.type' = ty
+    , linkage               = Weak
+    , initializer           = Just $ C.Int 0 0
+    }
+  pure $ ConstantOperand $ C.GlobalReference (ptr ty) nm
+
 -- | A named type definition
 typedef
   :: MonadModuleBuilder m
