@@ -170,15 +170,16 @@ extern nm argtys retty = do
 -- | A global variable definition
 global
   :: MonadModuleBuilder m
-  => Name -- ^ Variable name
-  -> Type -- ^ Type
+  => Name       -- ^ Variable name
+  -> Type       -- ^ Type
+  -> C.Constant -- ^ Initializer
   -> m Operand
-global nm ty = do
+global nm ty initVal = do
   emitDefn $ GlobalDefinition globalVariableDefaults
     { name                  = nm
     , LLVM.AST.Global.type' = ty
     , linkage               = Weak
-    , initializer           = Just $ C.Int 0 0
+    , initializer           = Just initVal
     }
   pure $ ConstantOperand $ C.GlobalReference (ptr ty) nm
 

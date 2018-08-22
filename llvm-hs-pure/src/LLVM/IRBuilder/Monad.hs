@@ -270,7 +270,7 @@ hasTerminator = do
   current <- liftIRState $ gets builderBlock
   case current of
     Nothing    -> error "Called hasTerminator when no block was active"
-    Just block -> case partialBlockTerm block of
+    Just blk -> case partialBlockTerm blk of
       Nothing  -> return False
       Just _   -> return True
 
