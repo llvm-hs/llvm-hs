@@ -202,7 +202,7 @@ global nm ty initVal = do
   pure $ ConstantOperand $ C.GlobalReference (ptr ty) nm
 
 -- | Creates a series of instructions to generate a pointer to a string
--- constant. Useful for making format strings to pass to `printf`, for example
+-- constant. Useful for making format strings to pass to @printf@, for example
 globalStringPtr
   :: MonadModuleBuilder m
   => String -- ^ The string to generate
