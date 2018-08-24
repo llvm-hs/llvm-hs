@@ -196,7 +196,7 @@ global nm ty initVal = do
   emitDefn $ GlobalDefinition globalVariableDefaults
     { name                  = nm
     , LLVM.AST.Global.type' = ty
-    , linkage               = Weak
+    , linkage               = Common
     , initializer           = Just initVal
     }
   pure $ ConstantOperand $ C.GlobalReference (ptr ty) nm
