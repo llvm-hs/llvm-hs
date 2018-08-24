@@ -267,5 +267,5 @@ instance MonadModuleBuilder m => MonadModuleBuilder (StateT s m)
 instance MonadModuleBuilder m => MonadModuleBuilder (Strict.StateT s m)
 instance (Monoid w, MonadModuleBuilder m) => MonadModuleBuilder (Strict.WriterT w m)
 
--- Not an mtl instance, but necessary in order for @globalStringPtr to compile
+-- Not an mtl instance, but necessary in order for @globalStringPtr@ to compile
 instance MonadModuleBuilder m => MonadModuleBuilder (IRBuilderT m)
