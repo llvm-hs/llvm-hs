@@ -264,7 +264,7 @@ currentBlock = liftIRState $ do
 
 -- | Find out if the currently active block has a terminator.
 --
--- This function will fail under the same condition as @currentBlock
+-- This function will fail under the same condition as @currentBlock@
 hasTerminator :: MonadIRBuilder m => m Bool
 hasTerminator = do
   current <- liftIRState $ gets builderBlock
