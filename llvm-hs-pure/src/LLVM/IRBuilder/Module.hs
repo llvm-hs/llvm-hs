@@ -168,6 +168,23 @@ extern nm argtys retty = do
   let funty = ptr $ FunctionType retty argtys False
   pure $ ConstantOperand $ C.GlobalReference funty nm
 
+-- | An external variadic argument function definition
+externVarArgs 
+  :: MonadModuleBuilder m
+  => Name   -- ^ Definition name
+  -> [Type] -- ^ Parameter types
+  -> Type   -- ^ Type
+  -> m Operand
+externVarArgs nm argtys retty = do
+  emitDefn $ GlobalDefinition functionDefaults
+    { name        = nm
+    , linkage     = External
+    , parameters  = ([Parameter ty (mkName "") [] | ty <- argtys], True)
+    , returnType  = retty
+    }
+  let funty = ptr $ FunctionType retty argtys True
+  pure $ ConstantOperand $ C.GlobalReference funty nm
+
 -- | A global variable definition
 global
   :: MonadModuleBuilder m
