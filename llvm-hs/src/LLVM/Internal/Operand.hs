@@ -182,25 +182,37 @@ instance DecodeM DecodeAST A.DINode (Ptr FFI.DINode) where
 instance EncodeM EncodeAST A.DISubrange (Ptr FFI.DISubrange) where
   encodeM (A.Subrange {..}) = do
     Context c <- gets encodeStateContext
-    liftIO (FFI.getDISubrange c count lowerBound)
+    case count of
+      A.DICountConstant i -> liftIO (FFI.getDISubrangeConstantCount c i lowerBound)
+      A.DICountVariable v -> do
+        v' <- encodeM v
+        liftIO (FFI.getDISubrangeVariableCount c v' lowerBound)
 
 instance DecodeM DecodeAST A.DISubrange (Ptr FFI.DISubrange) where
   decodeM r = do
-    count <- liftIO (FFI.getDISubrangeCount r)
     lowerBound <- liftIO (FFI.getDISubrangeLowerBound r)
-    pure (A.Subrange count lowerBound)
+    hasConstantCount <- decodeM =<< liftIO (FFI.getDISubrangeHasConstantCount r)
+    if hasConstantCount
+      then do
+        count <- liftIO (FFI.getDISubrangeCountConstant r)
+        pure (A.Subrange (A.DICountConstant count) lowerBound)
+      else do
+        count <- decodeM =<< liftIO (FFI.getDISubrangeCountVariable r)
+        pure (A.Subrange (A.DICountVariable count) lowerBound)
 
 instance EncodeM EncodeAST A.DIEnumerator (Ptr FFI.DIEnumerator) where
   encodeM (A.Enumerator {..}) = do
     name <- encodeM name
+    isUnsigned <- encodeM isUnsigned
     Context c <- gets encodeStateContext
-    liftIO (FFI.getDIEnumerator c value name)
+    liftIO (FFI.getDIEnumerator c value isUnsigned name)
 
 instance DecodeM DecodeAST A.DIEnumerator (Ptr FFI.DIEnumerator) where
   decodeM e = do
     value <- liftIO (FFI.getDIEnumeratorValue e)
+    isUnsigned <- decodeM =<< liftIO (FFI.getDIEnumeratorIsUnsigned e)
     name <- decodeM =<< liftIO (FFI.getDIEnumeratorName e)
-    pure (A.Enumerator value name)
+    pure (A.Enumerator value isUnsigned name)
 
 instance EncodeM EncodeAST A.DINode (Ptr FFI.DINode) where
   encodeM (A.DISubrange r) = do
@@ -375,18 +387,24 @@ instance DecodeM DecodeAST A.DIFile (Ptr FFI.DIFile) where
   decodeM diF = do
     fname <- decodeM =<< liftIO (FFI.getFileFilename diF)
     dir   <- decodeM =<< liftIO (FFI.getFileDirectory diF)
-    cksum <- decodeM =<< liftIO (FFI.getFileChecksum diF)
-    csk   <- decodeM =<< liftIO (FFI.getFileChecksumKind diF)
-    return $ A.File fname dir cksum csk
+    mayChecksum <- decodeM =<< liftIO (FFI.getFileChecksumValue diF)
+    case mayChecksum of
+      Nothing -> pure (A.File fname dir Nothing)
+      Just checksum -> do
+        csk <- decodeM =<< liftIO (FFI.getFileChecksumKind diF)
+        pure (A.File fname dir (Just (A.ChecksumInfo csk checksum)))
 
 instance EncodeM EncodeAST A.DIFile (Ptr FFI.DIFile) where
-  encodeM (A.File {A.filename, A.directory, A.checksum, A.checksumKind}) = do
+  encodeM (A.File {..}) = do
     filename <- encodeM filename
     directory <- encodeM directory
-    checksum <- encodeM checksum
-    checksumKind <- encodeM checksumKind
     Context c <- gets encodeStateContext
-    liftIO (FFI.getDIFile c filename directory checksumKind checksum)
+    case checksum of
+      Nothing -> liftIO (FFI.getDIFile c filename directory (FFI.ChecksumKind 0) nullPtr)
+      Just (A.ChecksumInfo {..}) -> do
+        checksumValue <- encodeM checksumValue
+        checksumKind <- encodeM checksumKind
+        liftIO (FFI.getDIFile c filename directory checksumKind checksumValue)
 
 instance EncodeM EncodeAST (Maybe A.Encoding) FFI.Encoding where
   encodeM Nothing = pure (FFI.Encoding 0)
@@ -407,8 +425,7 @@ genCodingInstance [t|A.Encoding|] ''FFI.Encoding
   ]
 
 genCodingInstance [t|A.ChecksumKind|] ''FFI.ChecksumKind
-  [ (FFI.ChecksumKind 0, A.None)
-  , (FFI.ChecksumKind 1, A.MD5)
+  [ (FFI.ChecksumKind 1, A.MD5)
   , (FFI.ChecksumKind 2, A.SHA1)
   ]
 
@@ -769,7 +786,7 @@ instance DecodeM DecodeAST A.DISubprogram (Ptr FFI.DISubprogram) where
     containingType <- decodeM =<< liftIO (FFI.getDISubprogramContainingType p)
     unit <- decodeM =<< liftIO (FFI.getDISubprogramUnit p)
     templateParams <- decodeM =<< liftIO (FFI.getDISubprogramTemplateParams p)
-    variables <- decodeM =<< liftIO (FFI.getDISubprogramVariables p)
+    retainedNodes <- decodeM =<< liftIO (FFI.getDISubprogramRetainedNodes p)
     thrownTypes <- decodeM =<< liftIO (FFI.getDISubprogramThrownTypes p)
     decl <- decodeM =<< liftIO (FFI.getDISubprogramDeclaration p)
     pure A.Subprogram
@@ -789,7 +806,7 @@ instance DecodeM DecodeAST A.DISubprogram (Ptr FFI.DISubprogram) where
       , A.unit = unit
       , A.templateParams = templateParams
       , A.declaration = decl
-      , A.variables = variables
+      , A.retainedNodes = retainedNodes
       , A.thrownTypes = thrownTypes
       , A.localToUnit = localToUnit
       , A.thisAdjustment = thisAdjustment
@@ -814,7 +831,7 @@ instance EncodeM EncodeAST A.DISubprogram (Ptr FFI.DISubprogram) where
     unit <- encodeM unit
     templateParams <- encodeM templateParams
     declaration <- encodeM declaration
-    variables <- encodeM variables
+    retainedNodes <- encodeM retainedNodes
     thrownTypes <- encodeM thrownTypes
     Context c <- gets encodeStateContext
     FFI.upCast <$> liftIO
@@ -825,7 +842,7 @@ instance EncodeM EncodeAST A.DISubprogram (Ptr FFI.DISubprogram) where
         containingType virtuality virtualityIndex
         thisAdjustment flags optimized
         unit templateParams declaration
-        variables thrownTypes)
+        retainedNodes thrownTypes)
 
 instance DecodeM DecodeAST A.DILocalScope (Ptr FFI.DILocalScope) where
   decodeM ls = do

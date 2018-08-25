@@ -12,11 +12,11 @@
 #include "llvm/IR/DataLayout.h"
 #include "llvm/IR/LegacyPassManager.h"
 #include "llvm/IR/Module.h"
-#include "llvm/Support/CodeGenCWrappers.h"
 #include "llvm/Support/FormattedStream.h"
 #include "llvm/Support/Host.h"
 #include "llvm/Support/TargetRegistry.h"
 #include "llvm/Support/TargetSelect.h"
+#include "llvm/Target/CodeGenCWrappers.h"
 #include "llvm/Target/TargetMachine.h"
 
 using namespace llvm;
@@ -568,7 +568,7 @@ LLVMBool LLVM_Hs_TargetMachineEmit(LLVMTargetMachineRef T, LLVMModuleRef M,
         ft = TargetMachine::CGFT_ObjectFile;
         break;
     }
-    if (TM->addPassesToEmitFile(pass, *OS, ft)) {
+    if (TM->addPassesToEmitFile(pass, *OS, nullptr, ft)) {
         error = "TargetMachine can't emit a file of this type";
         *ErrorMessage = strdup(error.c_str());
         return true;

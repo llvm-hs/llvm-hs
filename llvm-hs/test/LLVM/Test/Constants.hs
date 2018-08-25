@@ -80,8 +80,8 @@ tests = testGroup "Constants" [
     ), (
       "x86_fp80",
       x86_fp80,
-      C.Float (F.X86_FP80 0x0004 0x0003000200010000),
-      "global x86_fp80 0xK00040003000200010000"
+      C.Float (F.X86_FP80 0x0004 0x8003000200010000),
+      "global x86_fp80 0xK00048003000200010000"
 {- don't know how to test this - LLVM's handling of this weird type is even weirder
     ), (
       "ppc_fp128",

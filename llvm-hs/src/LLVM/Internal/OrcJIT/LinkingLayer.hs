@@ -28,19 +28,15 @@ disposeLinkingLayer l = do
   FFI.disposeLinkingLayer (getLinkingLayer l)
   sequence_ =<< readIORef (getCleanups l)
 
--- | Add an object file to the 'LinkingLayer'. The 'SymbolResolver' is used
--- to resolve external symbols in the module.
-addObjectFile :: LinkingLayer l => l -> ObjectFile -> SymbolResolver
-              -> IO FFI.ObjectHandle
-addObjectFile linkingLayer (ObjectFile obj) resolver = flip runAnyContT return $ do
-  resolverAct <- encodeM resolver
-  resolver'   <- liftIO $ resolverAct (getCleanups linkingLayer)
+-- | Add an object file to the 'LinkingLayer'.
+addObjectFile :: LinkingLayer l => l -> FFI.ModuleKey -> ObjectFile -> IO ()
+addObjectFile linkingLayer k (ObjectFile obj) = flip runAnyContT return $ do
   errMsg <- alloca
   liftIO $
     FFI.addObjectFile
       (getLinkingLayer linkingLayer)
+      k
       obj
-      resolver'
       errMsg
 
 -- | Bare bones implementation of a 'LinkingLayer'.
@@ -55,15 +51,16 @@ instance LinkingLayer ObjectLinkingLayer where
 
 -- | Create a new 'ObjectLinkingLayer'. This should be disposed using
 -- 'disposeLinkingLayer' when it is no longer needed.
-newObjectLinkingLayer :: IO ObjectLinkingLayer
-newObjectLinkingLayer = do
-  linkingLayer <- FFI.createObjectLinkingLayer
+newObjectLinkingLayer :: ExecutionSession -> (FFI.ModuleKey -> IO (Ptr FFI.SymbolResolver)) -> IO ObjectLinkingLayer
+newObjectLinkingLayer (ExecutionSession es) getResolver = do
   cleanups <- liftIO (newIORef [])
+  getResolver' <- allocFunPtr cleanups (FFI.wrapGetSymbolResolver getResolver)
+  linkingLayer <- FFI.createObjectLinkingLayer es getResolver'
   return $ ObjectLinkingLayer linkingLayer cleanups
 
 -- | 'bracket'-style wrapper around 'newObjectLinkingLayer' and 'disposeLinkingLayer'.
-withObjectLinkingLayer :: (ObjectLinkingLayer -> IO a) -> IO a
-withObjectLinkingLayer = bracket newObjectLinkingLayer disposeLinkingLayer
+withObjectLinkingLayer :: ExecutionSession -> (FFI.ModuleKey -> IO (Ptr FFI.SymbolResolver)) -> (ObjectLinkingLayer -> IO a) -> IO a
+withObjectLinkingLayer es resolver = bracket (newObjectLinkingLayer es resolver) disposeLinkingLayer
 
 -- | @'findSymbol' layer symbol exportedSymbolsOnly@ searches for
 -- @symbol@ in all modules added to @layer@. If @exportedSymbolsOnly@
@@ -80,7 +77,7 @@ findSymbol linkingLayer symbol exportedSymbolsOnly =
 -- | @'findSymbolIn' layer handle symbol exportedSymbolsOnly@ searches for
 -- @symbol@ in the context of the module represented by @handle@. If
 -- @exportedSymbolsOnly@ is 'True' only exported symbols are searched.
-findSymbolIn :: LinkingLayer l => l -> FFI.ObjectHandle -> ShortByteString -> Bool -> IO (Either JITSymbolError JITSymbol)
+findSymbolIn :: LinkingLayer l => l -> FFI.ModuleKey -> ShortByteString -> Bool -> IO (Either JITSymbolError JITSymbol)
 findSymbolIn linkingLayer handle symbol exportedSymbolsOnly =
   SBS.useAsCString symbol $ \symbol' ->
     flip runAnyContT return $ do

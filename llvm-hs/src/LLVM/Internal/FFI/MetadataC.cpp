@@ -195,13 +195,17 @@ DINode::DIFlags LLVM_Hs_DITypeGetFlags(DIType *md) {
 
 // DIEnumerator
 
-DIEnumerator* LLVM_Hs_Get_DIEnumerator(LLVMContextRef cxt, int64_t value, MDString* name) {
+DIEnumerator* LLVM_Hs_Get_DIEnumerator(LLVMContextRef cxt, int64_t value, LLVMBool isUnsigned, MDString* name) {
     LLVMContext& c = *unwrap(cxt);
-    return DIEnumerator::get(c, value, name);
+    return DIEnumerator::get(c, value, isUnsigned, name);
 }
 
 int64_t LLVM_Hs_DIEnumerator_GetValue(DIEnumerator* md) {
     return md->getValue();
+}
+
+LLVMBool LLVM_Hs_DIEnumerator_GetIsUnsigned(DIEnumerator* md) {
+    return md->isUnsigned();
 }
 
 MDString* LLVM_Hs_DIEnumerator_GetName(DIEnumerator* md) {
@@ -217,11 +221,19 @@ MDString* LLVM_Hs_DIFileGetDirectory(DIFile *di) {
 }
 
 MDString* LLVM_Hs_DIFileGetChecksum(DIFile *di) {
-    return di->getRawChecksum();
+    auto checksumInfo = di->getRawChecksum();
+    if (checksumInfo.hasValue()) {
+        return checksumInfo->Value;
+    }
+    return nullptr;
 }
 
 llvm::DIFile::ChecksumKind LLVM_Hs_DIFileGetChecksumKind(DIFile *di) {
-    return di->getChecksumKind();
+    auto checksumInfo = di->getRawChecksum();
+    if (checksumInfo.hasValue()) {
+        return checksumInfo->Kind;
+    }
+    return static_cast<llvm::DIFile::ChecksumKind>(0);
 }
 
 // DIScope
@@ -293,16 +305,32 @@ DIDerivedType* LLVM_Hs_Get_DIDerivedType(LLVMContextRef ctx, uint16_t tag, MDStr
 
 DIFile* LLVM_Hs_Get_DIFile(LLVMContextRef ctx, MDString* filename, MDString* directory, unsigned checksumKind, MDString* checksum) {
     LLVMContext& c = *unwrap(ctx);
-    return DIFile::get(c, filename, directory, static_cast<DIFile::ChecksumKind>(checksumKind), checksum);
+    if (!checksum) {
+        return DIFile::get(c, filename, directory);
+    }
+    return DIFile::get(c, filename, directory, DIFile::ChecksumInfo<MDString*>(static_cast<llvm::DIFile::ChecksumKind>(checksumKind), checksum));
 }
 
-DISubrange* LLVM_Hs_Get_DISubrange(LLVMContextRef ctx, int64_t count, int64_t lowerBound) {
+DISubrange* LLVM_Hs_Get_DISubrangeConstantCount(LLVMContextRef ctx, int64_t count, int64_t lowerBound) {
     return DISubrange::get(*unwrap(ctx), count, lowerBound);
 }
 
-int64_t LLVM_Hs_DISubrange_GetCount(DISubrange* range) {
-    return range->getCount();
+DISubrange* LLVM_Hs_Get_DISubrangeVariableCount(LLVMContextRef ctx, DIVariable* count, int64_t lowerBound) {
+    return DISubrange::get(*unwrap(ctx), count, lowerBound);
 }
+
+LLVMBool LLVM_Hs_DISubrange_HasConstantCount(DISubrange* range) {
+    return range->getCount().is<ConstantInt*>();
+}
+
+int64_t LLVM_Hs_DISubrange_GetConstantCount(DISubrange* range) {
+    return range->getCount().dyn_cast<ConstantInt*>()->getSExtValue();
+}
+
+DIVariable* LLVM_Hs_DISubrange_GetVariableCount(DISubrange* range) {
+    return range->getCount().dyn_cast<DIVariable*>();
+}
+
 
 int64_t LLVM_Hs_DISubrange_GetLowerBound(DISubrange* range) {
     return range->getLowerBound();
@@ -490,8 +518,8 @@ MDTuple* LLVM_Hs_DISubprogram_GetTemplateParams(DISubprogram* p) {
     return cast_or_null<MDTuple>(p->getRawTemplateParams());
 }
 
-MDTuple* LLVM_Hs_DISubprogram_GetVariables(DISubprogram* p) {
-    return cast_or_null<MDTuple>(p->getRawVariables());
+MDTuple* LLVM_Hs_DISubprogram_GetRetainedNodes(DISubprogram* p) {
+    return cast_or_null<MDTuple>(p->getRawRetainedNodes());
 }
 
 MDTuple* LLVM_Hs_DISubprogram_GetThrownTypes(DISubprogram* p) {

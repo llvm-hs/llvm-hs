@@ -28,6 +28,7 @@
 	macro(NoAlias,T,T,F)                              \
 	macro(NoBuiltin,F,F,T)                            \
 	macro(NoCapture,T,F,F)                            \
+    macro(NoCfCheck,F,F,T)                            \
 	macro(NoDuplicate,F,F,T)                          \
 	macro(NoImplicitFloat,F,F,T)                      \
 	macro(NoInline,F,F,T)                             \
@@ -37,6 +38,7 @@
 	macro(NoUnwind,F,F,T)                             \
 	macro(NonLazyBind,F,F,T)                          \
 	macro(NonNull,T,T,F)                              \
+    macro(OptForFuzzing,F,F,T)                        \
 	macro(OptimizeForSize,F,F,T)                      \
 	macro(OptimizeNone,F,F,T)                         \
 	macro(ReadNone,T,F,T)                             \
@@ -49,6 +51,7 @@
     macro(SanitizeHWAddress,F,F,T)                    \
 	macro(SanitizeMemory,F,F,T)                       \
 	macro(SanitizeThread,F,F,T)                       \
+    macro(ShadowCallStack,F,F,T)                      \
     macro(Speculatable,F,F,T)                         \
 	macro(StackAlignment,F,F,T)                       \
 	macro(StackProtect,F,F,T)                         \

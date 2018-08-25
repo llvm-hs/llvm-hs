@@ -41,7 +41,7 @@ lookupFlagAssignment = lookup
 #endif
 
 llvmVersion :: Version
-llvmVersion = mkVersion [6,0]
+llvmVersion = mkVersion [7,0]
 
 llvmConfigNames :: [String]
 llvmConfigNames = [

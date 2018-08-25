@@ -142,7 +142,7 @@ setThreadLocalMode :: FFI.DescendentOf FFI.GlobalValue v => Ptr v -> Maybe A.TLS
 setThreadLocalMode g m = liftIO . FFI.setThreadLocalMode (FFI.upCast g) =<< encodeM m
 
 genCodingInstance [t| Maybe A.G.UnnamedAddr |] ''FFI.UnnamedAddr [
-  (FFI.unnamedAddrNone, Nothing),
+  (FFI.unnamedAddrNo, Nothing),
   (FFI.unnamedAddrLocal, Just A.G.LocalAddr),
   (FFI.unnamedAddrGlobal, Just A.G.GlobalAddr)
  ]

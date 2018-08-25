@@ -16,20 +16,18 @@ data LinkingLayer
 data ObjectLinkingLayer
 instance ChildOf LinkingLayer ObjectLinkingLayer
 
-newtype ObjectHandle = ObjectHandle Word
-
 foreign import ccall safe "LLVM_Hs_createObjectLinkingLayer" createObjectLinkingLayer ::
-  IO (Ptr ObjectLinkingLayer)
+  Ptr ExecutionSession -> FunPtr (ModuleKey -> IO (Ptr SymbolResolver)) -> IO (Ptr ObjectLinkingLayer)
 
 foreign import ccall safe "LLVM_Hs_LinkingLayer_dispose" disposeLinkingLayer ::
   Ptr LinkingLayer -> IO ()
 
 foreign import ccall safe "LLVM_Hs_LinkingLayer_addObject" addObjectFile ::
   Ptr LinkingLayer ->
+  ModuleKey ->
   Ptr ObjectFile ->
-  Ptr LambdaResolver ->
   Ptr (OwnerTransfered CString) ->
-  IO ObjectHandle
+  IO ()
 
 foreign import ccall safe "LLVM_Hs_LinkingLayer_findSymbol" findSymbol ::
   Ptr LinkingLayer ->
@@ -39,7 +37,7 @@ foreign import ccall safe "LLVM_Hs_LinkingLayer_findSymbol" findSymbol ::
 
 foreign import ccall safe "LLVM_Hs_LinkingLayer_findSymbolIn" findSymbolIn ::
   Ptr LinkingLayer ->
-  ObjectHandle ->
+  ModuleKey ->
   CString ->
   LLVMBool ->
   IO (Ptr JITSymbol)

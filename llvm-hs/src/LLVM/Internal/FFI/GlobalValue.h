@@ -45,14 +45,7 @@ LLVM_HS_FOR_EACH_COMDAT_SELECTION_KIND(ENUM_CASE)
 	macro(LocalExecTLSModel)
 
 #define LLVM_HS_FOR_EACH_UNNAMED_ADDR(macro) \
-	macro(None)                                   \
-	macro(Local)                                  \
+	macro(No)                                \
+	macro(Local)                             \
 	macro(Global)
-
-typedef enum {
-#define ENUM_CASE(x) LLVMUnnamedAddr ## x,
-LLVM_HS_FOR_EACH_UNNAMED_ADDR(ENUM_CASE)
-#undef ENUM_CASE
-} LLVMUnnamedAddr;
-
 #endif

@@ -22,16 +22,16 @@
 using namespace llvm;
 using namespace orc;
 
-#define SYMBOL_CASE(x) static_assert((unsigned)LLVMJITSymbolFlag ## x == (unsigned) llvm::JITSymbolFlags::FlagNames::x, "JITSymbolFlag values should agree");
+static_assert(std::is_same<VModuleKey, uint64_t>::value,
+              "VModuleKey should be uint64_t");
+
+#define SYMBOL_CASE(x)                                                         \
+    static_assert((unsigned)LLVMJITSymbolFlag##x ==                            \
+                      (unsigned)llvm::JITSymbolFlags::FlagNames::x,            \
+                  "JITSymbolFlag values should agree");
 LLVM_HS_FOR_EACH_JIT_SYMBOL_FLAG(SYMBOL_CASE)
 
-typedef unsigned LLVMModuleHandle;
-typedef unsigned LLVMObjectHandle;
-typedef llvm::orc::LambdaResolver<
-    std::function<JITSymbol(const std::string &name)>,
-    std::function<JITSymbol(const std::string &name)>>
-    LLVMLambdaResolver;
-typedef std::shared_ptr<LLVMLambdaResolver> *LLVMLambdaResolverRef;
+typedef std::shared_ptr<SymbolResolver> *LLVMSymbolResolverRef;
 
 // We want to allow users to choose themselves which layers they want to use.
 // However, the LLVM API requires that this is selected statically via template
@@ -39,84 +39,48 @@ typedef std::shared_ptr<LLVMLambdaResolver> *LLVMLambdaResolverRef;
 // creating an LinkingLayer and a CompileLayer class which use virtual dispatch
 // to select the concrete layer.
 
-template <typename T> class HandleSet {
-  public:
-    unsigned insert(T t) {
-        unsigned handle = handles.insert({nextFree, t}).first->first;
-        ++nextFree;
-        return handle;
-    }
-    T &lookup(unsigned i) { return handles.at(i); }
-
-    void remove(unsigned i) { handles.erase(i); }
-
-  private:
-    std::unordered_map<unsigned, T> handles;
-    unsigned nextFree = 0;
-};
-
 class LinkingLayer {
   public:
+    using ObjectPtr = std::unique_ptr<MemoryBuffer>;
     virtual ~LinkingLayer(){};
-    typedef unsigned ObjHandleT;
-    virtual Expected<ObjHandleT>
-    addObject(std::shared_ptr<object::OwningBinary<object::ObjectFile>> object,
-              std::shared_ptr<JITSymbolResolver> resolver) = 0;
-    virtual Error removeObject(ObjHandleT H) = 0;
+    virtual Error addObject(VModuleKey k, ObjectPtr objBuffer) = 0;
+    virtual Error removeObject(VModuleKey k) = 0;
     virtual JITSymbol findSymbol(StringRef name, bool exportedSymbolsOnly) = 0;
-    virtual JITSymbol findSymbolIn(ObjHandleT h, StringRef name,
+    virtual JITSymbol findSymbolIn(VModuleKey k, StringRef name,
                                    bool exportedSymbolsOnly) = 0;
-    virtual void emitAndFinalize(ObjHandleT h) = 0;
+    virtual Error emitAndFinalize(VModuleKey k) = 0;
 };
 
 template <typename T> class LinkingLayerT : public LinkingLayer {
   public:
     LinkingLayerT(T data_) : data(std::move(data_)) {}
-    Expected<ObjHandleT>
-    addObject(std::shared_ptr<object::OwningBinary<object::ObjectFile>> object,
-              std::shared_ptr<JITSymbolResolver> resolver) override {
-        if (auto handleOrErr =
-                data.addObject(std::move(object), std::move(resolver))) {
-            return handles.insert(*handleOrErr);
-        } else {
-            return handleOrErr.takeError();
-        }
+    Error addObject(VModuleKey k, ObjectPtr objBuffer) override {
+        return data.addObject(k, std::move(objBuffer));
     }
-    Error removeObject(ObjHandleT h) override {
-        if (auto err = data.removeObject(handles.lookup(h))) {
-            return err;
-        } else {
-            handles.remove(h);
-            return err;
-        }
-    }
+    Error removeObject(VModuleKey k) override { return data.removeObject(k); }
     JITSymbol findSymbol(StringRef name, bool exportedSymbolsOnly) override {
         return data.findSymbol(name, exportedSymbolsOnly);
     }
-    JITSymbol findSymbolIn(ObjHandleT h, StringRef name,
+    JITSymbol findSymbolIn(VModuleKey k, StringRef name,
                            bool exportedSymbolsOnly) override {
-        return data.findSymbolIn(handles.lookup(h), name, exportedSymbolsOnly);
+        return data.findSymbolIn(k, name, exportedSymbolsOnly);
     }
-    void emitAndFinalize(ObjHandleT h) override {
-        data.emitAndFinalize(handles.lookup(h));
+    Error emitAndFinalize(VModuleKey k) override {
+        return data.emitAndFinalize(k);
     }
 
   private:
     T data;
-    HandleSet<typename T::ObjHandleT> handles;
 };
 
 class CompileLayer {
   public:
-    typedef LLVMModuleHandle ModuleHandleT;
     virtual ~CompileLayer(){};
     virtual JITSymbol findSymbol(StringRef Name, bool ExportedSymbolsOnly) = 0;
-    virtual JITSymbol findSymbolIn(ModuleHandleT H, StringRef Name,
+    virtual JITSymbol findSymbolIn(VModuleKey K, StringRef Name,
                                    bool ExportedSymbolsOnly) = 0;
-    virtual Expected<ModuleHandleT>
-    addModule(std::shared_ptr<Module> Modules,
-              std::shared_ptr<JITSymbolResolver> Resolver) = 0;
-    virtual Error removeModule(ModuleHandleT H) = 0;
+    virtual Error addModule(VModuleKey K, std::unique_ptr<Module> Module) = 0;
+    virtual Error removeModule(VModuleKey K) = 0;
 };
 
 template <typename T> class CompileLayerT : public CompileLayer {
@@ -126,29 +90,17 @@ template <typename T> class CompileLayerT : public CompileLayer {
     JITSymbol findSymbol(StringRef Name, bool ExportedSymbolsOnly) override {
         return data.findSymbol(Name, ExportedSymbolsOnly);
     }
-    JITSymbol findSymbolIn(ModuleHandleT H, StringRef Name,
+    JITSymbol findSymbolIn(VModuleKey K, StringRef Name,
                            bool ExportedSymbolsOnly) override {
-        return data.findSymbolIn(handles.lookup(H), Name, ExportedSymbolsOnly);
+        return data.findSymbolIn(K, Name, ExportedSymbolsOnly);
     }
-    Expected<ModuleHandleT>
-    addModule(std::shared_ptr<Module> Module,
-              std::shared_ptr<JITSymbolResolver> Resolver) override {
-        if (auto handleOrErr =
-                data.addModule(std::move(Module), std::move(Resolver))) {
-            return handles.insert(*handleOrErr);
-        } else {
-            return handleOrErr.takeError();
-        }
+    Error addModule(VModuleKey K, std::unique_ptr<Module> Module) override {
+        return data.addModule(K, std::move(Module));
     }
-    Error removeModule(ModuleHandleT H) override {
-        auto handle = handles.lookup(H);
-        handles.remove(H);
-        return data.removeModule(handle);
-    }
+    Error removeModule(VModuleKey K) override { return data.removeModule(K); }
 
   private:
     T data;
-    HandleSet<typename T::ModuleHandleT> handles;
 };
 
 typedef llvm::orc::CompileOnDemandLayer<CompileLayer> LLVMCompileOnDemandLayer;
@@ -156,7 +108,7 @@ typedef LLVMCompileOnDemandLayer *LLVMCompileOnDemandLayerRef;
 
 typedef llvm::orc::IRTransformLayer<
     CompileLayer,
-    std::function<std::shared_ptr<Module>(std::shared_ptr<Module>)>>
+    std::function<std::unique_ptr<Module>(std::unique_ptr<Module>)>>
     LLVMIRTransformLayer;
 
 typedef llvm::orc::JITCompileCallbackManager *LLVMJITCompileCallbackManagerRef;
@@ -205,6 +157,20 @@ static LLVMJITSymbolFlags wrap(JITSymbolFlags f) {
 
 extern "C" {
 
+ExecutionSession *LLVM_Hs_createExecutionSession() {
+    return new ExecutionSession();
+}
+
+void LLVM_Hs_disposeExecutionSession(ExecutionSession *es) { delete es; }
+
+VModuleKey LLVM_Hs_allocateVModule(ExecutionSession *es) {
+    return es->allocateVModule();
+}
+
+void LLVM_Hs_releaseVModule(ExecutionSession *es, VModuleKey k) {
+    es->releaseVModule(k);
+}
+
 /* Constructor functions for the different compile layers */
 
 CompileLayer *LLVM_Hs_createIRCompileLayer(LinkingLayer *linkingLayer,
@@ -216,13 +182,24 @@ CompileLayer *LLVM_Hs_createIRCompileLayer(LinkingLayer *linkingLayer,
 }
 
 CompileLayer *LLVM_Hs_createCompileOnDemandLayer(
-    CompileLayer *compileLayer,
+    ExecutionSession *es, CompileLayer *compileLayer,
+    LLVMSymbolResolverRef (*getSymbolResolver)(VModuleKey k),
+    void (*setSymbolResolver)(VModuleKey k, LLVMSymbolResolverRef r),
     void (*partitioningFtor)(llvm::Function *, std::set<llvm::Function *> *set),
     LLVMJITCompileCallbackManagerRef callbackManager,
     LLVMIndirectStubsManagerBuilderRef stubsManager,
     LLVMBool cloneStubsIntoPartitions) {
+    std::function<std::shared_ptr<SymbolResolver>(VModuleKey)>
+        getSymbolResolverFn =
+            [getSymbolResolver](VModuleKey k) { return *getSymbolResolver(k); };
+    std::function<void(VModuleKey, std::shared_ptr<SymbolResolver>)>
+        setSymbolResolverFn =
+            [setSymbolResolver](VModuleKey k,
+                                std::shared_ptr<SymbolResolver> r) {
+                setSymbolResolver(k, new std::shared_ptr<SymbolResolver>(r));
+            };
     return new CompileLayerT<LLVMCompileOnDemandLayer>(
-        *compileLayer,
+        *es, *compileLayer, getSymbolResolverFn, setSymbolResolverFn,
         [partitioningFtor](llvm::Function &f) -> std::set<llvm::Function *> {
             std::set<llvm::Function *> result;
             partitioningFtor(&f, &result);
@@ -234,9 +211,9 @@ CompileLayer *LLVM_Hs_createCompileOnDemandLayer(
 
 CompileLayer *LLVM_Hs_createIRTransformLayer(CompileLayer *compileLayer,
                                              Module *(*transform)(Module *)) {
-    std::function<std::shared_ptr<Module>(std::shared_ptr<Module>)> transform_ =
-        [transform](std::shared_ptr<Module> module) {
-            return std::shared_ptr<Module>(transform(module.get()));
+    std::function<std::unique_ptr<Module>(std::unique_ptr<Module>)> transform_ =
+        [transform](std::unique_ptr<Module> module) {
+            return std::unique_ptr<Module>(transform(module.release()));
         };
     return new CompileLayerT<LLVMIRTransformLayer>(*compileLayer, transform_);
 }
@@ -255,48 +232,46 @@ LLVMJITSymbolRef LLVM_Hs_CompileLayer_findSymbol(CompileLayer *compileLayer,
 }
 
 LLVMJITSymbolRef
-LLVM_Hs_CompileLayer_findSymbolIn(CompileLayer *compileLayer,
-                                  LLVMModuleHandle handle, const char *name,
+LLVM_Hs_CompileLayer_findSymbolIn(CompileLayer *compileLayer, VModuleKey k,
+                                  const char *name,
                                   LLVMBool exportedSymbolsOnly) {
-    JITSymbol symbol =
-        compileLayer->findSymbolIn(handle, name, exportedSymbolsOnly);
+    JITSymbol symbol = compileLayer->findSymbolIn(k, name, exportedSymbolsOnly);
     return new JITSymbol(std::move(symbol));
 }
 
-LLVMModuleHandle LLVM_Hs_CompileLayer_addModule(CompileLayer *compileLayer,
-                                                LLVMTargetDataRef dataLayout,
-                                                LLVMModuleRef module,
-                                                LLVMLambdaResolverRef resolver,
-                                                char **errorMessage) {
-    std::shared_ptr<Module> mod{unwrap(module), [](Module *) {}};
+void LLVM_Hs_CompileLayer_addModule(CompileLayer *compileLayer,
+                                    LLVMTargetDataRef dataLayout, VModuleKey k,
+                                    LLVMModuleRef module, char **errorMessage) {
+    std::unique_ptr<Module> mod{unwrap(module)};
     if (mod->getDataLayout().isDefault()) {
         mod->setDataLayout(*unwrap(dataLayout));
     }
-    if (auto handleOrErr = compileLayer->addModule(std::move(mod), *resolver)) {
-        *errorMessage = nullptr;
-        return *handleOrErr;
-    } else {
-        std::string errString = toString(handleOrErr.takeError());
+    if (auto err = compileLayer->addModule(k, std::move(mod))) {
+        std::string errString = toString(std::move(err));
         *errorMessage = strdup(errString.c_str());
-        return 0;
     }
+    *errorMessage = nullptr;
 }
 
 void LLVM_Hs_CompileLayer_removeModule(CompileLayer *compileLayer,
-                                       LLVMModuleHandle moduleSetHandle) {
-    if (compileLayer->removeModule(moduleSetHandle)) {
+                                       VModuleKey k) {
+    if (compileLayer->removeModule(k)) {
         // TODO handle failure
     }
 }
 
 /* Constructor functions for the different object layers */
 
-LinkingLayer *LLVM_Hs_createObjectLinkingLayer() {
-    return new LinkingLayerT<RTDyldObjectLinkingLayer>(RTDyldObjectLinkingLayer(
-        []() { return std::make_shared<SectionMemoryManager>(); }));
+LinkingLayer *LLVM_Hs_createObjectLinkingLayer(
+    ExecutionSession *es, LLVMSymbolResolverRef (*symbolResolver)(VModuleKey)) {
+    return new LinkingLayerT<RTDyldObjectLinkingLayer>(
+        RTDyldObjectLinkingLayer(*es, [symbolResolver](VModuleKey k) {
+            return RTDyldObjectLinkingLayer::Resources{
+                std::make_shared<SectionMemoryManager>(), *symbolResolver(k)};
+        }));
 }
 
-/* Fuctions that work on all object layers */
+// /* Fuctions that work on all object layers */
 
 void LLVM_Hs_LinkingLayer_dispose(LinkingLayer *linkingLayer) {
     delete linkingLayer;
@@ -305,57 +280,50 @@ void LLVM_Hs_LinkingLayer_dispose(LinkingLayer *linkingLayer) {
 void LLVM_Hs_disposeJITSymbol(LLVMJITSymbolRef symbol) { delete symbol; }
 
 LLVMJITSymbolRef LLVM_Hs_LinkingLayer_findSymbol(LinkingLayer *linkingLayer,
-                                     const char *name,
-                                     LLVMBool exportedSymbolsOnly) {
-  JITSymbol symbol = linkingLayer->findSymbol(name, exportedSymbolsOnly);
-  return new JITSymbol(std::move(symbol));
+                                                 const char *name,
+                                                 LLVMBool exportedSymbolsOnly) {
+    JITSymbol symbol = linkingLayer->findSymbol(name, exportedSymbolsOnly);
+    return new JITSymbol(std::move(symbol));
 }
 
-LLVMJITSymbolRef LLVM_Hs_LinkingLayer_findSymbolIn(LinkingLayer *linkingLayer,
-                                                   LLVMObjectHandle handle,
-                                                   const char *name,
-                                                   LLVMBool exportedSymbolsOnly) {
-  JITSymbol symbol = linkingLayer->findSymbolIn(handle, name, exportedSymbolsOnly);
-  return new JITSymbol(std::move(symbol));
+LLVMJITSymbolRef
+LLVM_Hs_LinkingLayer_findSymbolIn(LinkingLayer *linkingLayer, VModuleKey k,
+                                  const char *name,
+                                  LLVMBool exportedSymbolsOnly) {
+    JITSymbol symbol = linkingLayer->findSymbolIn(k, name, exportedSymbolsOnly);
+    return new JITSymbol(std::move(symbol));
 }
 
-LLVMLambdaResolverRef LLVM_Hs_createLambdaResolver(
-    void (*dylibResolver)(const char *, LLVMJITSymbolRef),
-    void (*externalResolver)(const char *, LLVMJITSymbolRef)) {
-    std::function<JITSymbol(const std::string &name)> dylibResolverFun =
-        [dylibResolver](const std::string &name) -> JITSymbol {
+LLVMSymbolResolverRef LLVM_Hs_createLambdaResolver(
+    ExecutionSession *es,
+    void (*rawResolverFn)(const char *, LLVMJITSymbolRef)) {
+    std::function<JITSymbol(const std::string &name)> resolverFn =
+        [rawResolverFn](const std::string &name) -> JITSymbol {
         JITSymbol symbol(nullptr);
-        dylibResolver(name.c_str(), &symbol);
+        rawResolverFn(name.c_str(), &symbol);
         return symbol;
     };
-    std::function<JITSymbol(const std::string &name)> externalResolverFun =
-        [externalResolver](const std::string &name) -> JITSymbol {
-        JITSymbol symbol(nullptr);
-        externalResolver(name.c_str(), &symbol);
-        return symbol;
-    };
-    return new std::shared_ptr<LLVMLambdaResolver>(
-        createLambdaResolver(dylibResolverFun, externalResolverFun));
+    return new std::shared_ptr<SymbolResolver>(
+        createLegacyLookupResolver(*es, resolverFn, [](Error err) {
+            cantFail(std::move(err), "lookupFlags failed");
+        }));
 }
 
-void LLVM_Hs_disposeLambdaResolver(LLVMLambdaResolverRef resolver) {
+void LLVM_Hs_disposeSymbolResolver(LLVMSymbolResolverRef resolver) {
     delete resolver;
 }
 
-LLVMObjectHandle LLVM_Hs_LinkingLayer_addObject(LinkingLayer *linkLayer,
-                                                LLVMObjectFileRef objRef,
-                                                LLVMLambdaResolverRef resolver,
-                                                char **errorMessage) {
+void LLVM_Hs_LinkingLayer_addObject(LinkingLayer *linkLayer, VModuleKey k,
+                                    LLVMObjectFileRef objRef,
+                                    char **errorMessage) {
 
-    std::shared_ptr<object::OwningBinary<object::ObjectFile>> obj{
-        unwrap(objRef), [](object::OwningBinary<object::ObjectFile> *) {}};
-    if (auto handleOrErr = linkLayer->addObject(std::move(obj), *resolver)) {
-        *errorMessage = nullptr;
-        return *handleOrErr;
-    } else {
-        std::string errString = toString(handleOrErr.takeError());
-        *errorMessage = strdup(errString.c_str());
-        return 0;
+    std::unique_ptr<MemoryBuffer> objBuffer =
+        unwrap(objRef)->takeBinary().second;
+    *errorMessage = nullptr;
+    if (auto err = linkLayer->addObject(k, std::move(objBuffer))) {
+        std::string error = toString(std::move(err));
+        *errorMessage = strdup(error.c_str());
+        return;
     }
 }
 
@@ -375,7 +343,7 @@ LLVMJITSymbolFlags LLVM_Hs_JITSymbol_getFlags(LLVMJITSymbolRef symbol) {
     return wrap(symbol->getFlags());
 }
 
-const char* LLVM_Hs_JITSymbol_getErrorMsg(LLVMJITSymbolRef symbol) {
+const char *LLVM_Hs_JITSymbol_getErrorMsg(LLVMJITSymbolRef symbol) {
     if (!symbol) {
         Error err = symbol->takeError();
         return strdup(toString(std::move(err)).c_str());
@@ -399,13 +367,12 @@ void LLVM_Hs_disposeMangledSymbol(char *mangledSymbol) {
     delete[] mangledSymbol;
 }
 
-LLVMJITCompileCallbackManagerRef
-LLVM_Hs_createLocalCompileCallbackManager(const char *triple,
-                                          JITTargetAddress errorHandler) {
+LLVMJITCompileCallbackManagerRef LLVM_Hs_createLocalCompileCallbackManager(
+    ExecutionSession *es, const char *triple, JITTargetAddress errorHandler) {
     // We copy the string so that it can be freed on the Haskell side.
     std::string tripleStr(triple);
     return llvm::orc::createLocalCompileCallbackManager(
-               Triple(std::move(tripleStr)), errorHandler)
+               Triple(std::move(tripleStr)), *es, errorHandler)
         .release();
 }
 

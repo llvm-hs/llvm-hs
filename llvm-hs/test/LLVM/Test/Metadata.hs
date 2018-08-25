@@ -84,8 +84,12 @@ instance Arbitrary Encoding where
       , UnsignedCharEncoding
       ]
 
-instance Arbitrary ChecksumKind where
-  arbitrary = QC.elements [None, MD5, SHA1]
+instance Arbitrary ChecksumInfo where
+  arbitrary =
+    oneof
+      [ ChecksumInfo MD5 . BSS.pack <$> QC.vector 32
+      , ChecksumInfo SHA1 . BSS.pack <$> QC.vector 40
+      ]
 
 instance Arbitrary BasicTypeTag where
   arbitrary = QC.elements [BaseType, UnspecifiedType]
@@ -244,13 +248,17 @@ roundtripDIUnionType = testProperty "roundtrip DIUnionType" $
 
 instance Arbitrary DIFile where
   arbitrary =
-    O.File <$> arbitrarySbs <*> arbitrarySbs <*> arbitrarySbs <*> arbitrary
+    O.File <$> arbitrarySbs <*> arbitrarySbs <*> arbitrary
 
 instance Arbitrary DISubrange where
   arbitrary = Subrange <$> arbitrary <*> arbitrary
 
+instance Arbitrary DICount where
+  -- TODO Include DICountVariable
+  arbitrary = DICountConstant <$> arbitrary
+
 instance Arbitrary DIEnumerator where
-  arbitrary = Enumerator <$> arbitrary <*> arbitrarySbs
+  arbitrary = Enumerator <$> arbitrary <*> arbitrary <*> arbitrarySbs
 
 instance Arbitrary DINode where
   arbitrary =
@@ -856,7 +864,7 @@ globalObjectMetadata = testGroup "Metadata on GlobalObject" $
                       , unit = Just (MDRef (MetadataNodeID 2))
                       , O.templateParams = []
                       , declaration = Nothing
-                      , variables = []
+                      , retainedNodes = []
                       , thrownTypes = []
                       }
                   , MetadataNodeDefinition (MetadataNodeID 1)
@@ -887,7 +895,7 @@ globalObjectMetadata = testGroup "Metadata on GlobalObject" $
                       }
                   , MetadataNodeDefinition (MetadataNodeID 3) $
                     DINode . DIScope . DIFile $
-                    O.File "main.c" "/" "" None
+                    O.File "main.c" "/" Nothing
                   ]
           s =
             "; ModuleID = '<string>'\n\
@@ -963,7 +971,7 @@ globalObjectMetadata = testGroup "Metadata on GlobalObject" $
                   , MetadataNodeDefinition (MetadataNodeID 4) (DIExpression (Expression []))
                   , MetadataNodeDefinition (MetadataNodeID 5) $
                     DINode . DIScope . DIFile $
-                    O.File "main.c" "/" "" None
+                    O.File "main.c" "/" Nothing
                   , MetadataNodeDefinition (MetadataNodeID 6) $
                     DINode . DIScope . DIType . DIBasicType $
                     BasicType "" 0 0 Nothing BaseType

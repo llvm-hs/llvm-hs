@@ -45,32 +45,6 @@ void LLVM_Hs_SetCOMDATSelectionKind(Comdat &comdat, unsigned csk) {
   comdat.setSelectionKind(Comdat::SelectionKind(csk));
 }
 
-static LLVMUnnamedAddr unwrap(GlobalValue::UnnamedAddr a) {
-    switch (a) {
-#define ENUM_CASE(x) case GlobalValue::UnnamedAddr::x: return LLVMUnnamedAddr ## x;
-LLVM_HS_FOR_EACH_UNNAMED_ADDR(ENUM_CASE)
-#undef ENUM_CASE
-    default: return LLVMUnnamedAddrNone;
-    }
-}
-
-static GlobalValue::UnnamedAddr wrap(LLVMUnnamedAddr a) {
-    switch (a) {
-#define ENUM_CASE(x) case LLVMUnnamedAddr ## x: return GlobalValue::UnnamedAddr::x;
-LLVM_HS_FOR_EACH_UNNAMED_ADDR(ENUM_CASE)
-#undef ENUM_CASE
-    default: return GlobalValue::UnnamedAddr::None;
-    }
-}
-
-LLVMUnnamedAddr LLVM_Hs_GetUnnamedAddr(LLVMValueRef globalVal) {
-    return unwrap(unwrap<GlobalValue>(globalVal)->getUnnamedAddr());
-}
-
-void LLVM_Hs_SetUnnamedAddr(LLVMValueRef globalVal, LLVMUnnamedAddr attr) {
-    unwrap<GlobalValue>(globalVal)->setUnnamedAddr(wrap(attr));
-}
-
 #define ENUM_CASE(n)                                                           \
     static_assert(unsigned(GlobalValue::n) == unsigned(LLVM##n),               \
                   "TLS Model Enum mismatch");

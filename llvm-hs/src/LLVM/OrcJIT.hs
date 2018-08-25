@@ -2,7 +2,7 @@ module LLVM.OrcJIT (
     -- * CompileLayer
     CompileLayer,
     -- ** Add/remove modules
-    ModuleHandle,
+    ModuleKey,
     addModule,
     removeModule,
     withModule,
@@ -12,9 +12,18 @@ module LLVM.OrcJIT (
     JITSymbolFlags(..),
     defaultJITSymbolFlags,
     SymbolResolver(..),
+    withSymbolResolver,
     -- ** Symbol mangling
     MangledSymbol,
     mangleSymbol,
+    -- ** ExecutionSession
+    ExecutionSession,
+    createExecutionSession,
+    disposeExecutionSession,
+    withExecutionSession,
+    allocateModuleKey,
+    releaseModuleKey,
+    withModuleKey,
     -- ** IRCompileLayer
     IRCompileLayer,
     newIRCompileLayer,

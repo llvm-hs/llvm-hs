@@ -30,6 +30,8 @@ instance EncodeM (AnyContT IO) MangledSymbol CString where
 instance MonadIO m => DecodeM m MangledSymbol CString where
   decodeM str = liftIO $ MangledSymbol <$> packCString str
 
+newtype ExecutionSession = ExecutionSession (Ptr FFI.ExecutionSession)
+
 -- | Contrary to the C++ interface, we do not store the HasError flag
 -- here. Instead decoding a JITSymbol produces a sumtype based on
 -- whether that flag is set or not.
@@ -60,19 +62,21 @@ data JITSymbol =
 data JITSymbolError = JITSymbolError ShortByteString
   deriving (Show, Eq)
 
-type SymbolResolverFn = MangledSymbol -> IO (Either JITSymbolError JITSymbol)
-
 -- | Specifies how external symbols in a module added to a
--- 'CompielLayer' should be resolved.
-data SymbolResolver =
-  SymbolResolver {
-    -- | This is used to find symbols in the same logical dynamic
-    -- library as the module referencing them.
-    dylibResolver :: !SymbolResolverFn,
-    -- | When 'dylibResolver' fails to resolve a symbol,
-    -- 'externalResolver' is used as a fallback to find external symbols.
-    externalResolver :: !SymbolResolverFn
-  }
+-- 'CompileLayer' should be resolved.
+newtype SymbolResolver =
+  SymbolResolver (MangledSymbol -> IO (Either JITSymbolError JITSymbol))
+
+-- | Create a `FFI.SymbolResolver` that can be used with the JIT.
+withSymbolResolver :: ExecutionSession -> SymbolResolver -> (Ptr FFI.SymbolResolver -> IO a) -> IO a
+withSymbolResolver (ExecutionSession es) (SymbolResolver resolverFn) f =
+  bracket (FFI.wrapSymbolResolverFn resolverFn') freeHaskellFunPtr $ \resolverPtr ->
+    bracket (FFI.createLambdaResolver es resolverPtr) FFI.disposeSymbolResolver $ \resolver ->
+      f resolver
+  where
+    resolverFn' symbol result = do
+      setSymbol <- encodeM =<< resolverFn =<< decodeM symbol
+      setSymbol result
 
 instance Monad m => EncodeM m JITSymbolFlags FFI.JITSymbolFlags where
   encodeM f = return $ foldr1 (.|.) [
@@ -117,13 +121,12 @@ instance (MonadIO m, MonadAnyCont IO m) => DecodeM m (Either JITSymbolError JITS
         pure (Right (JITSymbol (fromIntegral addr) flags))
 
 instance MonadIO m =>
-  EncodeM m SymbolResolver (IORef [IO ()] -> IO (Ptr FFI.LambdaResolver)) where
-  encodeM (SymbolResolver dylib external) = return $ \cleanups -> do
-    dylib' <- allocFunPtr cleanups (encodeM dylib)
-    external' <- allocFunPtr cleanups (encodeM external)
-    allocWithCleanup cleanups (FFI.createLambdaResolver dylib' external') FFI.disposeLambdaResolver
+  EncodeM m SymbolResolver (IORef [IO ()] -> Ptr FFI.ExecutionSession -> IO (Ptr FFI.SymbolResolver)) where
+  encodeM (SymbolResolver resolverFn) = return $ \cleanups es -> do
+    resolverFn' <- allocFunPtr cleanups (encodeM resolverFn)
+    allocWithCleanup cleanups (FFI.createLambdaResolver es resolverFn') FFI.disposeSymbolResolver
 
-instance MonadIO m => EncodeM m SymbolResolverFn (FunPtr FFI.SymbolResolverFn) where
+instance MonadIO m => EncodeM m (MangledSymbol -> IO (Either JITSymbolError JITSymbol)) (FunPtr FFI.SymbolResolverFn) where
   encodeM callback =
     liftIO $ FFI.wrapSymbolResolverFn
       (\symbol result -> do
@@ -148,3 +151,31 @@ createRegisteredDataLayout (TargetMachine tm) cleanups =
         modifyIORef' cleanups (FFI.disposeDataLayout dl :)
         pure dl
   in anyContToM $ bracketOnError createDataLayout FFI.disposeDataLayout
+
+-- | Create a new `ExecutionSession`.
+createExecutionSession :: IO ExecutionSession
+createExecutionSession = ExecutionSession <$> FFI.createExecutionSession
+
+-- | Dispose of an `ExecutionSession`. This should be called when the
+-- `ExecutionSession` is not needed anymore.
+disposeExecutionSession :: ExecutionSession -> IO ()
+disposeExecutionSession (ExecutionSession es) = FFI.disposeExecutionSession es
+
+-- | `bracket`-style wrapper around `createExecutionSession` and
+-- `disposeExecutionSession`.
+withExecutionSession :: (ExecutionSession -> IO a) -> IO a
+withExecutionSession = bracket createExecutionSession disposeExecutionSession
+
+-- | Allocate a module key for a new module to add to the JIT.
+allocateModuleKey :: ExecutionSession -> IO FFI.ModuleKey
+allocateModuleKey (ExecutionSession es) = FFI.allocateVModule es
+
+-- | Return a module key to the `ExecutionSession` so that it can be
+-- re-used.
+releaseModuleKey :: ExecutionSession -> FFI.ModuleKey -> IO ()
+releaseModuleKey (ExecutionSession es) k = FFI.releaseVModule es k
+
+-- | `bracket`-style wrapper around `allocateModuleKey` and
+-- `releaseModuleKey`.
+withModuleKey :: ExecutionSession -> (FFI.ModuleKey -> IO a) -> IO a
+withModuleKey es = bracket (allocateModuleKey es) (releaseModuleKey es)

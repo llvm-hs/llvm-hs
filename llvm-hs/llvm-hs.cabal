@@ -1,5 +1,5 @@
 name: llvm-hs
-version: 6.3.0
+version: 7.0.0
 license: BSD3
 license-file: LICENSE
 author: Anthony Cowley, Stephen Diehl, Moritz Kiefer <moritz.kiefer@purelyfunctional.org>, Benjamin S. Scarlet
@@ -45,7 +45,7 @@ extra-source-files: CHANGELOG.md
 source-repository head
   type: git
   location: git://github.com/llvm-hs/llvm-hs.git
-  branch: llvm-4
+  branch: llvm-7
 
 flag shared-llvm
   description: link against llvm shared rather than static library
@@ -76,7 +76,7 @@ library
     template-haskell >= 2.5.0.0,
     containers >= 0.4.2.1,
     array >= 0.4.0.0,
-    llvm-hs-pure == 6.2.*
+    llvm-hs-pure == 7.0.*
   hs-source-dirs: src
   default-extensions:
     NoImplicitPrelude

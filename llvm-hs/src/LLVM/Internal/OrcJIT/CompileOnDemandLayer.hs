@@ -101,13 +101,14 @@ withIndirectStubsManagerBuilder triple =
 -- When the callback manager is no longer needed, it should be freed
 -- using 'disposeJITCompileCallbackManager'.
 newJITCompileCallbackManager ::
+  ExecutionSession ->
   ShortByteString {- ^ target triple -} ->
   Maybe (IO ()) {- ^ called on compilation errors -} ->
   IO JITCompileCallbackManager
-newJITCompileCallbackManager triple errorHandler = flip runAnyContT return $ do
+newJITCompileCallbackManager (ExecutionSession es) triple errorHandler = flip runAnyContT return $ do
   triple' <- encodeM triple
   (errorHandler', cleanup) <- encodeM errorHandler
-  callbackMgr <- liftIO (FFI.createLocalCompileCallbackManager triple' errorHandler')
+  callbackMgr <- liftIO (FFI.createLocalCompileCallbackManager es triple' errorHandler')
   return (CallbackMgr callbackMgr cleanup)
 
 -- | Dispose of a 'JITCompileCallbackManager'.
@@ -117,13 +118,14 @@ disposeJITCompileCallbackManager (CallbackMgr mgr cleanup) =
 
 -- | Execute a computation using a new 'JITCompileCallbackManager'.
 withJITCompileCallbackManager ::
+  ExecutionSession ->
   ShortByteString {- ^ target triple -} ->
   Maybe (IO ()) {- ^ called on compilation errors -} ->
   (JITCompileCallbackManager -> IO a) ->
   IO a
-withJITCompileCallbackManager triple errorHandler =
+withJITCompileCallbackManager es triple errorHandler =
   bracket
-    (newJITCompileCallbackManager triple errorHandler)
+    (newJITCompileCallbackManager es triple errorHandler)
     disposeJITCompileCallbackManager
 
 -- | Create a new 'CompileOnDemandLayer'. The partitioning function
@@ -132,24 +134,32 @@ withJITCompileCallbackManager triple errorHandler =
 --
 -- When the layer is no longer needed, it should be disposed using 'disposeCompileLayer'.
 newCompileOnDemandLayer :: CompileLayer l =>
+  ExecutionSession ->
   l ->
   TargetMachine ->
+  (ModuleKey -> IO (Ptr FFI.SymbolResolver)) ->
+  (ModuleKey -> Ptr FFI.SymbolResolver -> IO ()) ->
   (Ptr FFI.Function -> IO [Ptr FFI.Function]) {- ^ partitioning function -} ->
   JITCompileCallbackManager ->
   IndirectStubsManagerBuilder ->
   Bool {- ^ clone stubs into partitions -} ->
   IO (CompileOnDemandLayer l)
-newCompileOnDemandLayer baseLayer tm partition (CallbackMgr callbackMgr _) (StubsMgr stubsMgr) cloneStubs =
+newCompileOnDemandLayer (ExecutionSession es) baseLayer tm getSymbolResolver setSymbolResolver partition (CallbackMgr callbackMgr _) (StubsMgr stubsMgr) cloneStubs =
   flip runAnyContT return $ do
     cleanups <- liftIO (newIORef [])
     dl <- createRegisteredDataLayout tm cleanups
+    getSymbolResolver' <- liftIO (allocFunPtr cleanups (FFI.wrapGetSymbolResolver getSymbolResolver))
+    setSymbolResolver' <- liftIO (allocFunPtr cleanups (FFI.wrapSetSymbolResolver setSymbolResolver))
     partitionAct <- encodeM partition
     partition' <- liftIO $ partitionAct cleanups
     cloneStubs' <- encodeM cloneStubs
     cl <-
       liftIO
         (FFI.createCompileOnDemandLayer
+           es
            (getCompileLayer baseLayer)
+           getSymbolResolver'
+           setSymbolResolver'
            partition'
            callbackMgr
            stubsMgr
@@ -159,15 +169,18 @@ newCompileOnDemandLayer baseLayer tm partition (CallbackMgr callbackMgr _) (Stub
 -- | 'bracket'-style wrapper around 'newCompileOnDemandLayer' and 'disposeCompileLayer'.
 withCompileOnDemandLayer ::
   CompileLayer l =>
+  ExecutionSession ->
   l ->
   TargetMachine ->
+  (ModuleKey -> IO (Ptr FFI.SymbolResolver)) ->
+  (ModuleKey -> Ptr FFI.SymbolResolver -> IO ()) ->
   (Ptr FFI.Function -> IO [Ptr FFI.Function]) {- ^ partitioning function -} ->
   JITCompileCallbackManager ->
   IndirectStubsManagerBuilder ->
   Bool {- ^ clone stubs into partitions -} ->
   (CompileOnDemandLayer l -> IO a) ->
   IO a
-withCompileOnDemandLayer l tm partition callbackMgr stubsMgr cloneStubs =
+withCompileOnDemandLayer es l tm getSymbolResolver setSymbolResolver partition callbackMgr stubsMgr cloneStubs =
   bracket
-    (newCompileOnDemandLayer l tm partition callbackMgr stubsMgr cloneStubs)
+    (newCompileOnDemandLayer es l tm getSymbolResolver setSymbolResolver partition callbackMgr stubsMgr cloneStubs)
     disposeCompileLayer
