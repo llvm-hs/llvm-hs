@@ -195,12 +195,17 @@ data DIImportedEntity = ImportedEntity
 
 -- | <https://llvm.org/docs/LangRef.html#dienumerator>
 data DIEnumerator =
-  Enumerator { value :: Int64, name :: ShortByteString }
+  Enumerator { value :: Int64, isUnsigned :: Bool, name :: ShortByteString }
   deriving (Eq, Ord, Read, Show, Typeable, Data, Generic)
 
 -- | <https://llvm.org/docs/LangRef.html#disubrange>
 data DISubrange =
-  Subrange { count :: Int64, lowerBound :: Int64 }
+  Subrange { count :: DICount, lowerBound :: Int64 }
+  deriving (Eq, Ord, Read, Show, Typeable, Data, Generic)
+
+data DICount
+  = DICountConstant Int64
+  | DICountVariable (MDRef DIVariable)
   deriving (Eq, Ord, Read, Show, Typeable, Data, Generic)
 
 -- | <https://llvm.org/doxygen/classllvm_1_1DIScope.html>
@@ -255,11 +260,15 @@ data DICompileUnit = CompileUnit
 data DIFile = File
   { filename :: ShortByteString
   , directory :: ShortByteString
-  , checksum :: ShortByteString
-  , checksumKind :: ChecksumKind
+  , checksum :: Maybe ChecksumInfo
   } deriving (Eq, Ord, Read, Show, Typeable, Data, Generic)
 
-data ChecksumKind = None | MD5 | SHA1
+data ChecksumInfo = ChecksumInfo
+  { checksumKind :: ChecksumKind
+  , checksumValue :: ShortByteString
+  } deriving (Eq, Ord, Read, Show, Typeable, Data, Generic)
+
+data ChecksumKind = MD5 | SHA1
   deriving (Eq, Ord, Read, Show, Typeable, Data, Generic)
 
 -- | <https://llvm.org/doxygen/classllvm_1_1DILocalScope.html>
@@ -288,7 +297,7 @@ data DISubprogram = Subprogram
   , unit :: Maybe (MDRef DICompileUnit)
   , templateParams :: [MDRef DITemplateParameter]
   , declaration :: Maybe (MDRef DISubprogram)
-  , variables :: [MDRef DILocalVariable]
+  , retainedNodes :: [MDRef DILocalVariable]
   , thrownTypes :: [MDRef DIType]
   } deriving (Eq, Ord, Read, Show, Typeable, Data, Generic)
 

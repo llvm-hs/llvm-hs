@@ -13,25 +13,22 @@ import Foreign.Ptr
 
 data CompileLayer
 
--- | Abstract type representing a module in a 'LLVM.OrcJIT.CompileLayer'.
-newtype ModuleHandle = ModuleHandle Word
-
 foreign import ccall safe "LLVM_Hs_CompileLayer_dispose" disposeCompileLayer ::
   Ptr CompileLayer -> IO ()
 
 foreign import ccall safe "LLVM_Hs_CompileLayer_addModule" addModule ::
   Ptr CompileLayer ->
   Ptr DataLayout ->
+  ModuleKey ->
   Ptr Module ->
-  Ptr LambdaResolver ->
   Ptr (OwnerTransfered CString) ->
-  IO ModuleHandle
+  IO ()
 
 foreign import ccall safe "LLVM_Hs_CompileLayer_removeModule" removeModule ::
-  Ptr CompileLayer -> ModuleHandle -> IO ()
+  Ptr CompileLayer -> ModuleKey -> IO ()
 
 foreign import ccall safe "LLVM_Hs_CompileLayer_findSymbol" findSymbol ::
   Ptr CompileLayer -> CString -> LLVMBool -> IO (Ptr JITSymbol)
 
 foreign import ccall safe "LLVM_Hs_CompileLayer_findSymbolIn" findSymbolIn ::
-  Ptr CompileLayer -> ModuleHandle -> CString -> LLVMBool -> IO (Ptr JITSymbol)
+  Ptr CompileLayer -> ModuleKey -> CString -> LLVMBool -> IO (Ptr JITSymbol)

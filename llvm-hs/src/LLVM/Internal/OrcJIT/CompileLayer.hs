@@ -1,6 +1,6 @@
 module LLVM.Internal.OrcJIT.CompileLayer
   ( module LLVM.Internal.OrcJIT.CompileLayer
-  , FFI.ModuleHandle
+  , FFI.ModuleKey
   ) where
 
 import LLVM.Prelude
@@ -54,7 +54,7 @@ findSymbol compileLayer symbol exportedSymbolsOnly = flip runAnyContT return $ d
 -- | @'findSymbolIn' layer handle symbol exportedSymbolsOnly@ searches for
 -- @symbol@ in the context of the module represented by @handle@. If
 -- @exportedSymbolsOnly@ is 'True' only exported symbols are searched.
-findSymbolIn :: CompileLayer l => l -> FFI.ModuleHandle -> MangledSymbol -> Bool -> IO (Either JITSymbolError JITSymbol)
+findSymbolIn :: CompileLayer l => l -> FFI.ModuleKey -> MangledSymbol -> Bool -> IO (Either JITSymbolError JITSymbol)
 findSymbolIn compileLayer handle symbol exportedSymbolsOnly = flip runAnyContT return $ do
   symbol' <- encodeM symbol
   exportedSymbolsOnly' <- encodeM exportedSymbolsOnly
@@ -67,10 +67,8 @@ findSymbolIn compileLayer handle symbol exportedSymbolsOnly = flip runAnyContT r
 --
 -- /Note:/ This function consumes the module passed to it and it must
 -- not be used after calling this method.
-addModule :: CompileLayer l => l -> Module -> SymbolResolver -> IO FFI.ModuleHandle
-addModule compileLayer mod resolver = flip runAnyContT return $ do
-  resolverAct <- encodeM resolver
-  resolver' <- liftIO $ resolverAct (getCleanups compileLayer)
+addModule :: CompileLayer l => l -> FFI.ModuleKey -> Module -> IO ()
+addModule compileLayer k mod = flip runAnyContT return $ do
   mod' <- liftIO $ readModule mod
   liftIO $ deleteModule mod
   errMsg <- alloca
@@ -78,12 +76,12 @@ addModule compileLayer mod resolver = flip runAnyContT return $ do
     FFI.addModule
       (getCompileLayer compileLayer)
       (getDataLayout compileLayer)
+      k
       mod'
-      resolver'
       errMsg
 
 -- | Remove a previously added module.
-removeModule :: CompileLayer l => l -> FFI.ModuleHandle -> IO ()
+removeModule :: CompileLayer l => l -> FFI.ModuleKey -> IO ()
 removeModule compileLayer handle =
   FFI.removeModule (getCompileLayer compileLayer) handle
 
@@ -91,11 +89,11 @@ removeModule compileLayer handle =
 --
 -- /Note:/ This function consumes the module passed to it and it must
 -- not be used after calling this method.
-withModule :: CompileLayer l => l -> Module -> SymbolResolver -> (FFI.ModuleHandle -> IO a) -> IO a
-withModule compileLayer mod resolver =
-  bracket
-    (addModule compileLayer mod resolver)
-    (removeModule compileLayer)
+withModule :: CompileLayer l => l -> FFI.ModuleKey -> Module -> IO a -> IO a
+withModule compileLayer k mod =
+  bracket_
+    (addModule compileLayer k mod)
+    (removeModule compileLayer k)
 
 -- | Dispose of a 'CompileLayer'. This should called when the
 -- 'CompileLayer' is not needed anymore.

@@ -120,10 +120,13 @@ namedMetadataAddOperands nm (n, vs) = namedMetadataAddOperands' nm vs n
 -- DIEnumerator
 
 foreign import ccall unsafe "LLVM_Hs_Get_DIEnumerator" getDIEnumerator ::
-  Ptr Context -> Int64 -> Ptr MDString -> IO (Ptr DIEnumerator)
+  Ptr Context -> Int64 -> LLVMBool -> Ptr MDString -> IO (Ptr DIEnumerator)
 
 foreign import ccall unsafe "LLVM_Hs_DIEnumerator_GetValue" getDIEnumeratorValue ::
   Ptr DIEnumerator -> IO Int64
+
+foreign import ccall unsafe "LLVM_Hs_DIEnumerator_GetIsUnsigned" getDIEnumeratorIsUnsigned ::
+  Ptr DIEnumerator -> IO LLVMBool
 
 foreign import ccall unsafe "LLVM_Hs_DIEnumerator_GetName" getDIEnumeratorName ::
   Ptr DIEnumerator -> IO (Ptr MDString)
@@ -135,7 +138,7 @@ foreign import ccall unsafe "LLVM_Hs_DIFileGetFilename" getFileFilename ::
 foreign import ccall unsafe "LLVM_Hs_DIFileGetDirectory" getFileDirectory ::
   Ptr DIFile -> IO (Ptr MDString)
 
-foreign import ccall unsafe "LLVM_Hs_DIFileGetChecksum" getFileChecksum ::
+foreign import ccall unsafe "LLVM_Hs_DIFileGetChecksum" getFileChecksumValue ::
   Ptr DIFile -> IO (Ptr MDString)
 
 foreign import ccall unsafe "LLVM_Hs_DIFileGetChecksumKind" getFileChecksumKind ::
@@ -282,10 +285,19 @@ foreign import ccall unsafe "LLVM_Hs_Get_DIFile" getDIFile ::
   Ptr Context -> Ptr MDString -> Ptr MDString -> ChecksumKind -> Ptr MDString -> IO (Ptr DIFile)
 
 -- DISubrange
-foreign import ccall unsafe "LLVM_Hs_Get_DISubrange" getDISubrange ::
+foreign import ccall unsafe "LLVM_Hs_Get_DISubrangeConstantCount" getDISubrangeConstantCount ::
   Ptr Context -> Int64 -> Int64 -> IO (Ptr DISubrange)
 
-foreign import ccall unsafe "LLVM_Hs_DISubrange_GetCount" getDISubrangeCount ::
+foreign import ccall unsafe "LLVM_Hs_Get_DISubrangeVariableCount" getDISubrangeVariableCount ::
+  Ptr Context -> Ptr DIVariable -> Int64 -> IO (Ptr DISubrange)
+
+foreign import ccall unsafe "LLVM_Hs_DISubrange_HasConstantCount" getDISubrangeHasConstantCount ::
+  Ptr DISubrange -> IO LLVMBool
+
+foreign import ccall unsafe "LLVM_Hs_DISubrange_GetVariableCount" getDISubrangeCountVariable ::
+  Ptr DISubrange -> IO (Ptr DIVariable)
+
+foreign import ccall unsafe "LLVM_Hs_DISubrange_GetConstantCount" getDISubrangeCountConstant ::
   Ptr DISubrange -> IO Int64
 
 foreign import ccall unsafe "LLVM_Hs_DISubrange_GetLowerBound" getDISubrangeLowerBound ::
@@ -335,7 +347,7 @@ foreign import ccall unsafe "LLVM_Hs_DISubprogram_GetUnit" getDISubprogramUnit :
 foreign import ccall unsafe "LLVM_Hs_DISubprogram_GetTemplateParams" getDISubprogramTemplateParams ::
   Ptr DISubprogram -> IO (TupleArray DITemplateParameter)
 
-foreign import ccall unsafe "LLVM_Hs_DISubprogram_GetVariables" getDISubprogramVariables ::
+foreign import ccall unsafe "LLVM_Hs_DISubprogram_GetRetainedNodes" getDISubprogramRetainedNodes ::
   Ptr DISubprogram -> IO (TupleArray DILocalVariable)
 
 foreign import ccall unsafe "LLVM_Hs_DISubprogram_GetThrownTypes" getDISubprogramThrownTypes ::

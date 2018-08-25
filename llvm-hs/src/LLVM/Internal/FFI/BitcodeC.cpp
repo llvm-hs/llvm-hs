@@ -27,7 +27,7 @@ LLVMModuleRef LLVM_Hs_ParseBitcode(
 }
 
 void LLVM_Hs_WriteBitcode(LLVMModuleRef m, raw_ostream &os) {
-	WriteBitcodeToFile(unwrap(m), os);
+	WriteBitcodeToFile(*unwrap(m), os);
 }
 
 }

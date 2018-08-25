@@ -1,4 +1,4 @@
-## unreleased
+## 7.0.0 (2018-09-28)
 
 * Track type definitions in `MonadModuleBuilder`. This allows us to
   automatically resolve `NamedTypeReference`s in `gep` instructions.
@@ -8,6 +8,12 @@
   `MonadModuleBuilder` constraint.
 * Change the type of `typedef` in the `IRBuilder` API to return a
   `NamedTypeReference` to the newly defined type.
+* Update for LLVM 7.0:
+  * Add `isUnsigned` field to `DIEnumerator`.
+  * Change `DISubrange` to use the new `DICount` type instead of an `Int64`.
+  * Merge `checksum` and `checksumKind` fields of `DIFile` into a
+    `checksum` field of type `Maybe ChecksumInfo`.
+  * Rename the `variables` field of `DISubprogram` to `retainedNodes`.
 
 ## 6.2.1 (2018-06-12)
 

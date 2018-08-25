@@ -165,7 +165,7 @@ newtype MemoryOrdering = MemoryOrdering CUInt
 
 newtype UnnamedAddr = UnnamedAddr CUInt
   deriving (Eq, Show, Typeable, Data, Generic)
-#define UA_Rec(n) { #n, LLVMUnnamedAddr ## n },
+#define UA_Rec(n) { #n, LLVM ## n ## UnnamedAddr },
 #{inject UNNAMED_ADDR, UnnamedAddr, UnnamedAddr, unnamedAddr, UA_Rec}
 
 newtype SynchronizationScope = SynchronizationScope CUInt

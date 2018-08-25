@@ -2,21 +2,25 @@ let
   default_nixpkgs = (import <nixpkgs> {}).fetchFromGitHub {
     owner = "NixOS";
     repo = "nixpkgs";
-    rev = "68cc97d306d3187c142cfb2378852f28d47bc098";
-    sha256 = "07zxbk4g4d51hf7dhsj6h7jy5c2iccm2lwaashj36inkhh9lrqa3";
+    rev = "5acbe81573523cf3e64d37b03539d7083459ac42";
+    sha256 = "0w0i88cdff89spzplhx546cdm5ijyka6q57f67569gk9xk84dcy4";
   };
 in
 
-{ nixpkgs ? default_nixpkgs }:
-
+{ nixpkgs ? <nixpkgs>
+, compiler ? "ghc843" }:
 let
-
   hsOverlay = self: super: {
-    haskellPackages = super.haskellPackages.override {
-      overrides = self': super': {
-        llvm-hs-pure = super'.callPackage ./llvm-hs-pure {};
-        llvm-hs = super'.callPackage ./llvm-hs {
-          llvm-config = self.llvm_4;
+    llvm_7 = super.llvm_7.override { debugVersion = true; };
+    haskell = super.haskell // {
+      packages = super.haskell.packages // {
+        "${compiler}" = super.haskell.packages."${compiler}".override {
+          overrides = haskellSelf: haskellSuper: {
+            llvm-hs = haskellSuper.callCabal2nix "llvm-hs" ./llvm-hs { llvm-config = self.llvm_7; };
+            llvm-hs-pure = haskellSuper.callCabal2nix "llvm-hs-pure" ./llvm-hs-pure {};
+            hpack = haskellSuper.callHackage "hpack" "0.29.6" {};
+            cabal2nix = super.callHackage "cabal2nix" "2.10.1" {};
+          };
         };
       };
     };
@@ -24,43 +28,8 @@ let
 
   orig_pkgs = import nixpkgs {};
   pkgs = import orig_pkgs.path { overlays = [ hsOverlay ]; };
-
-  env =
-    let
-      # Check that a package is not part of llvm-hs.
-      notLlvmHs = p:
-        p.pname or "" != "llvm-hs-pure" && p.pname or "" != "llvm-hs"
-      ;
-      # Determine if a package is a Haskell package or not.  Stolen from:
-      # <nixpkgs/pkgs/development/haskell-modules/generic-builder.nix>
-      isHaskellPkg = x: (x ? pname) && (x ? version) && (x ? env);
-      isSystemPkg = x: !isHaskellPkg x;
-
-      allDependencies =
-        let inherit (pkgs.haskellPackages) llvm-hs-pure llvm-hs; in
-        builtins.concatLists [
-          llvm-hs-pure.nativeBuildInputs
-          llvm-hs-pure.propagatedNativeBuildInputs
-          llvm-hs.nativeBuildInputs
-          llvm-hs.propagatedNativeBuildInputs
-        ]
-      ;
-      haskellDependencies = builtins.filter (x: isHaskellPkg x && notLlvmHs x)
-        allDependencies
-      ;
-      systemDependencies = builtins.filter isSystemPkg allDependencies;
-
-      ghc = pkgs.haskellPackages.ghcWithPackages
-        (ps: with ps; [ cabal-install ] ++ haskellDependencies)
-      ;
-    in
-    pkgs.stdenv.mkDerivation {
-      name = "llvm-hs-env";
-      buildInputs = [ ghc ] ++ systemDependencies;
-      shellHook = "eval $(egrep ^export ${ghc}/bin/ghc)";
-    }
-  ;
-
 in
-
-env
+pkgs.haskell.packages."${compiler}".shellFor {
+  packages = pkgs: with pkgs; [llvm-hs llvm-hs-pure];
+  nativeBuildInputs = with pkgs; [ llvm_7 gdb lldb ];
+}

@@ -1,8 +1,18 @@
-## unreleased
+## 7.0.0 (2018-09-28)
 
 * Throw an `EncodeException` if a local variable is defined multiple
   times. This is consistent with `llc` which also forbids reusing
   variable names.
+* Update for LLVM 7.0:
+  * The ORC JIT API has been changed to reflect the changes in LLVM
+    itself. The test suite should give you a good idea of how to adapt
+    your code but here is a summary:
+    * There is now a separate `ExecutionSession` that tracks module handles.
+    * `SymbolResolver` only has a single resolver function.
+    * Creating an `ObjectLinkingLayer` requires a way to get the
+      symbol resolver for a module.
+    * Creating a `CompileOnDemandLayer` requires a way to set and get
+      the symbol resolver for a module.
 
 ## 6.3.0 (2018-06-12)
 

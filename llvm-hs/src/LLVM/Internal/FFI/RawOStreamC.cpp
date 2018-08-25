@@ -4,9 +4,6 @@
 #include "llvm/Support/raw_ostream.h"
 
 using namespace llvm;
-using sys::fs::F_None;
-using sys::fs::F_Excl;
-using sys::fs::F_Text;
 
 extern "C" {
 
@@ -16,7 +13,9 @@ LLVM_Hs_WithFileRawPWriteStream(const char *filename, LLVMBool excl,
                                 void (&callback)(raw_pwrite_stream &ostream)) {
     std::error_code e;
     raw_fd_ostream os(filename, e,
-                      (excl ? F_Excl : F_None) | (text ? F_Text : F_None));
+                      excl ? sys::fs::CD_CreateNew : sys::fs::CD_OpenAlways,
+                      sys::fs::FA_Write,
+                      text ? sys::fs::OF_Text : sys::fs::OF_None);
     if (e) {
         *error = strdup(e.message().c_str());
         return false;
