@@ -196,7 +196,7 @@ global nm ty initVal = do
   emitDefn $ GlobalDefinition globalVariableDefaults
     { name                  = nm
     , LLVM.AST.Global.type' = ty
-    , linkage               = Common
+    , linkage               = External
     , initializer           = Just initVal
     }
   pure $ ConstantOperand $ C.GlobalReference (ptr ty) nm
@@ -205,8 +205,8 @@ global nm ty initVal = do
 -- constant. Useful for making format strings to pass to @printf@, for example
 globalStringPtr
   :: MonadModuleBuilder m
-  => String -- ^ The string to generate
-  -> Name   -- ^ The name by which to refer to it
+  => String       -- ^ The string to generate
+  -> Name         -- ^ Variable name of the pointer
   -> m Operand
 globalStringPtr str nm = do
   let asciiVals = map (fromIntegral . ord) str
@@ -217,7 +217,7 @@ globalStringPtr str nm = do
   emitDefn $ GlobalDefinition globalVariableDefaults
     { name                  = nm
     , LLVM.AST.Global.type' = LLVM.AST.Typed.typeOf charArray
-    , linkage               = Private
+    , linkage               = External
     , isConstant            = True
     , initializer           = Just charArray
     , unnamedAddr           = Just GlobalAddr
