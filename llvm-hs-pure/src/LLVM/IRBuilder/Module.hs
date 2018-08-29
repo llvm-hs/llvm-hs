@@ -47,6 +47,7 @@ import LLVM.AST hiding (function)
 import LLVM.AST.Global
 import LLVM.AST.Linkage
 import LLVM.AST.Type (ptr)
+import qualified LLVM.AST.Typed
 import qualified LLVM.AST.Constant as C
 
 import LLVM.IRBuilder.Internal.SnocList
@@ -167,6 +168,62 @@ extern nm argtys retty = do
   let funty = ptr $ FunctionType retty argtys False
   pure $ ConstantOperand $ C.GlobalReference funty nm
 
+-- | An external variadic argument function definition
+externVarArgs 
+  :: MonadModuleBuilder m
+  => Name   -- ^ Definition name
+  -> [Type] -- ^ Parameter types
+  -> Type   -- ^ Type
+  -> m Operand
+externVarArgs nm argtys retty = do
+  emitDefn $ GlobalDefinition functionDefaults
+    { name        = nm
+    , linkage     = External
+    , parameters  = ([Parameter ty (mkName "") [] | ty <- argtys], True)
+    , returnType  = retty
+    }
+  let funty = ptr $ FunctionType retty argtys True
+  pure $ ConstantOperand $ C.GlobalReference funty nm
+
+-- | A global variable definition
+global
+  :: MonadModuleBuilder m
+  => Name       -- ^ Variable name
+  -> Type       -- ^ Type
+  -> C.Constant -- ^ Initializer
+  -> m Operand
+global nm ty initVal = do
+  emitDefn $ GlobalDefinition globalVariableDefaults
+    { name                  = nm
+    , LLVM.AST.Global.type' = ty
+    , linkage               = External
+    , initializer           = Just initVal
+    }
+  pure $ ConstantOperand $ C.GlobalReference (ptr ty) nm
+
+-- | Creates a series of instructions to generate a pointer to a string
+-- constant. Useful for making format strings to pass to @printf@, for example
+globalStringPtr
+  :: MonadModuleBuilder m
+  => String       -- ^ The string to generate
+  -> Name         -- ^ Variable name of the pointer
+  -> m Operand
+globalStringPtr str nm = do
+  let asciiVals = map (fromIntegral . ord) str
+      llvmVals  = map (C.Int 8) (asciiVals ++ [0]) -- append null terminator
+      char      = IntegerType 8
+      charStar  = ptr char
+      charArray = C.Array char llvmVals
+  emitDefn $ GlobalDefinition globalVariableDefaults
+    { name                  = nm
+    , LLVM.AST.Global.type' = LLVM.AST.Typed.typeOf charArray
+    , linkage               = External
+    , isConstant            = True
+    , initializer           = Just charArray
+    , unnamedAddr           = Just GlobalAddr
+    }
+  pure $ ConstantOperand $ C.BitCast (C.GlobalReference charStar nm) charStar
+
 -- | A named type definition
 typedef
   :: MonadModuleBuilder m
@@ -209,5 +266,6 @@ instance (MonadModuleBuilder m, Monoid w) => MonadModuleBuilder (Lazy.RWST r w s
 instance MonadModuleBuilder m => MonadModuleBuilder (StateT s m)
 instance MonadModuleBuilder m => MonadModuleBuilder (Strict.StateT s m)
 instance (Monoid w, MonadModuleBuilder m) => MonadModuleBuilder (Strict.WriterT w m)
-instance (Monoid w, MonadModuleBuilder m) => MonadModuleBuilder (Lazy.WriterT w m)
+
+-- Not an mtl instance, but necessary in order for @globalStringPtr@ to compile
 instance MonadModuleBuilder m => MonadModuleBuilder (IRBuilderT m)
