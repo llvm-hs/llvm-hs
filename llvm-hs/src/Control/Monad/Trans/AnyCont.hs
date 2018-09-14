@@ -6,7 +6,8 @@ module Control.Monad.Trans.AnyCont where
 import LLVM.Prelude
 
 import Control.Monad.Catch
-import Control.Monad.Cont
+import Control.Monad.Cont as Cont
+import Control.Monad.Fail as Fail
 
 newtype AnyContT m a = AnyContT { unAnyContT :: forall r . ContT r m a }
 
@@ -20,8 +21,11 @@ instance Applicative (AnyContT m) where
 instance Monad m => Monad (AnyContT m) where
   AnyContT f >>= k = AnyContT $ f >>= unAnyContT . k
   return a = AnyContT $ return a
-  fail s = AnyContT (ContT (\_ -> fail s))
-  
+  fail s = AnyContT (ContT (\_ -> Cont.fail s))
+
+instance MonadFail m => MonadFail (AnyContT m) where
+  fail s = AnyContT (ContT (\_ -> Fail.fail s))
+
 instance MonadIO m => MonadIO (AnyContT m) where
   liftIO = lift . liftIO
 
@@ -33,6 +37,7 @@ instance MonadThrow m => MonadThrow (AnyContT m) where
 
 runAnyContT :: AnyContT m a -> (forall r . (a -> m r) -> m r)
 runAnyContT = runContT . unAnyContT
+
 anyContT :: (forall r . (a -> m r) -> m r) -> AnyContT m a
 anyContT f = AnyContT (ContT f)
 
