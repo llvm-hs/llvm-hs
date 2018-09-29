@@ -43,11 +43,15 @@ lookupFlagAssignment = lookup
 llvmVersion :: Version
 llvmVersion = mkVersion [7,0]
 
+-- Ordered by decreasing specificty so we will prefer llvm-config-7.0
+-- over llvm-config-7 over llvm-config.
 llvmConfigNames :: [String]
-llvmConfigNames = [
-  "llvm-config-" ++ (intercalate "." . map show . versionNumbers $ llvmVersion),
-  "llvm-config"
- ]
+llvmConfigNames = reverse versionedConfigs ++ ["llvm-config"]
+  where
+    versionedConfigs =
+      map
+        (\vs -> "llvm-config-" ++ intercalate "." (map show vs))
+        (tail (inits (versionNumbers llvmVersion)))
 
 findJustBy :: Monad m => (a -> m (Maybe b)) -> [a] -> m (Maybe b)
 findJustBy f (x:xs) = do

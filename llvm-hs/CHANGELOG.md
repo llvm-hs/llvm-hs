@@ -1,3 +1,8 @@
+## 7.0.1 (2018-09-29)
+
+* Support llvm-config executables named `llvm-config-7` in addition to
+  `llvm-config-7.0` and `llvm-config`.
+
 ## 7.0.0 (2018-09-28)
 
 * Throw an `EncodeException` if a local variable is defined multiple
