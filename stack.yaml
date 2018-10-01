@@ -7,4 +7,7 @@ flags:
   llvm-hs:
     shared-llvm: true
 
+extra-deps:
+- pretty-show-1.7
+
 extra-package-dbs: []
