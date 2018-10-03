@@ -116,9 +116,12 @@ getLocalName v' = do
   let v = FFI.upCast v'
   getValueName v localVarNum $ do
                     nm <- gets localVarNum
-                    Just n <- gets localNameCounter
-                    modify $ \s -> s { localNameCounter = Just (1 + n), localVarNum = Map.insert v n nm }
-                    return n
+                    mn <- gets localNameCounter
+                    case mn of
+                      Just n -> do
+                        modify $ \s -> s { localNameCounter = Just (1 + n), localVarNum = Map.insert v n nm }
+                        return n
+                      Nothing -> error "No local name"
 
 getGlobalName :: FFI.DescendentOf FFI.GlobalValue v => Ptr v -> DecodeAST A.Name
 getGlobalName v' = do
