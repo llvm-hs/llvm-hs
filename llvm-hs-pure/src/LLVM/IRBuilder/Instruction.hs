@@ -54,6 +54,9 @@ sdiv a b = emitInstr (typeOf a) $ SDiv False a b []
 urem :: MonadIRBuilder m => Operand -> Operand -> m Operand
 urem a b = emitInstr (typeOf a) $ URem a b []
 
+srem :: MonadIRBuilder m => Operand -> Operand -> m Operand
+srem a b = emitInstr (typeOf a) $ SRem a b []
+
 shl :: MonadIRBuilder m => Operand -> Operand -> m Operand
 shl a b = emitInstr (typeOf a) $ Shl False False a b []
 
