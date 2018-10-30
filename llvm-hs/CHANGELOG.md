@@ -1,3 +1,10 @@
+## 7.0.2 (unreleased)
+
+* It is now possible to define multiple variables with an empty name
+  without causing a name collision. Variables with an empty name
+  cannot be referenced. This fixes an issue caused by using
+  IRBuilder’s `extern` helper.
+
 ## 7.0.1 (2018-09-29)
 
 * Support llvm-config executables named `llvm-config-7` in addition to

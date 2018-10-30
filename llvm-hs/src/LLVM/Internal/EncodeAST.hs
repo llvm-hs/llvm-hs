@@ -119,12 +119,16 @@ phase p = do
 defineLocal :: FFI.DescendentOf FFI.Value v => A.Name -> Ptr v -> EncodeAST ()
 defineLocal n v' = do
   let v = FFI.upCast v'
-  def <- gets $ Map.lookup n . encodeStateLocals
-  case def of
-    Just (ForwardValue dummy) -> liftIO $ FFI.replaceAllUsesWith dummy v
-    Just _ -> throwM (EncodeException ("Duplicate definition of local variable: " <> show n <> "."))
-    _ -> return ()
-  modify $ \b -> b { encodeStateLocals = Map.insert n (DefinedValue v) (encodeStateLocals b) }
+  case n of
+    A.Name s
+      | ShortByteString.null s -> pure ()
+    _ -> do
+      def <- gets $ Map.lookup n . encodeStateLocals
+      case def of
+        Just (ForwardValue dummy) -> liftIO $ FFI.replaceAllUsesWith dummy v
+        Just _ -> throwM (EncodeException ("Duplicate definition of local variable: " <> show n <> "."))
+        _ -> return ()
+      modify $ \b -> b { encodeStateLocals = Map.insert n (DefinedValue v) (encodeStateLocals b) }
 
 defineGlobal :: FFI.DescendentOf FFI.GlobalValue v => A.Name -> Ptr v -> EncodeAST ()
 defineGlobal n v = modify $ \b -> b { encodeStateGlobals =  Map.insert n (FFI.upCast v) (encodeStateGlobals b) }

@@ -11,6 +11,7 @@ import           LLVM.AST hiding (Module)
 import qualified LLVM.AST.Constant as C
 import           LLVM.AST.Global hiding (metadata)
 import           LLVM.AST.Type
+import           LLVM.IRBuilder
 
 import           LLVM.Context
 import           LLVM.Exception
@@ -189,6 +190,10 @@ shouldNotThrow ast = do
   withContext $ \context -> do
     withModuleFromAST context ast (\_ -> return ())
 
+emptyName :: AST.Module
+emptyName = defaultModule { moduleDefinitions = defs }
+  where defs = execModuleBuilder emptyModuleBuilder (extern "f" [i32, i64] void)
+
 tests :: TestTree
 tests =
   testGroup
@@ -212,4 +217,8 @@ tests =
     , testCase
         "Reusing variable names across functions is allowed"
         (shouldNotThrow reuseAcrossFunctions)
+    , testCase
+        "Empty names do not collide" $ do
+           moduleStr <- withContext $ \cxt -> withModuleFromAST cxt emptyName moduleLLVMAssembly
+           moduleStr @?= "; ModuleID = '<string>'\nsource_filename = \"<string>\"\n\ndeclare void @f(i32, i64)\n"
     ]
