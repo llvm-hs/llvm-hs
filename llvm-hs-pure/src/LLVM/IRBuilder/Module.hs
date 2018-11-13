@@ -214,15 +214,16 @@ globalStringPtr str nm = do
       char      = IntegerType 8
       charStar  = ptr char
       charArray = C.Array char llvmVals
+      ty        = LLVM.AST.Typed.typeOf charArray
   emitDefn $ GlobalDefinition globalVariableDefaults
     { name                  = nm
-    , LLVM.AST.Global.type' = LLVM.AST.Typed.typeOf charArray
+    , LLVM.AST.Global.type' = ty
     , linkage               = External
     , isConstant            = True
     , initializer           = Just charArray
     , unnamedAddr           = Just GlobalAddr
     }
-  pure $ ConstantOperand $ C.BitCast (C.GlobalReference charStar nm) charStar
+  pure $ ConstantOperand $ C.BitCast (C.GlobalReference (ptr ty) nm) charStar
 
 -- | A named type definition
 typedef
