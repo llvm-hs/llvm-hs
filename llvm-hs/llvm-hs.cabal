@@ -233,6 +233,8 @@ library
     src/LLVM/Internal/FFI/TypeC.cpp
     src/LLVM/Internal/FFI/ValueC.cpp
 
+  cc-options: -std=c++11
+
   if flag(debug)
     cc-options: -g
 
