@@ -453,12 +453,14 @@ data TemplateValueParameterTag
 data DITemplateParameter
   = DITemplateTypeParameter
     { name :: ShortByteString
-    , type' :: MDRef DIType
+    , type' :: Maybe (MDRef DIType)
+    -- ^ For DITemplateTypeParameter this field is required,
+    -- for DITemplateValueParameter it is optional.
     }
   -- ^ <https://llvm.org/docs/LangRef.html#ditemplatetypeparameter>
   | DITemplateValueParameter
     { name :: ShortByteString
-    , type' :: MDRef DIType
+    , type' :: Maybe (MDRef DIType)
     , value :: Metadata
     , tag :: TemplateValueParameterTag
     }
