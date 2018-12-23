@@ -38,6 +38,7 @@ extra-source-files:
   src/LLVM/Internal/FFI/Value.h
   test/debug_metadata_1.ll
   test/debug_metadata_2.ll
+  test/debug_metadata_3.ll
   test/main_return_38.c
 tested-with: GHC == 8.0.2, GHC == 8.2.2, GHC == 8.4.1
 extra-source-files: CHANGELOG.md
