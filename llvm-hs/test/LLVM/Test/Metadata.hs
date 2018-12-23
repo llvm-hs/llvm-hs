@@ -599,6 +599,7 @@ roundtripDITemplateParameter = testProperty "rountrip DITemplateParameter" $ \di
       let mod = defaultModule
             { moduleDefinitions =
                 [ NamedMetadataDefinition "dummy" [paramID]
+                , NamedMetadataDefinition "dummyTy" [tyID]
                 , MetadataNodeDefinition paramID (DINode (DITemplateParameter param))
                 , MetadataNodeDefinition tyID (DINode (DIScope (DIType diType)))
                 ]
@@ -613,8 +614,8 @@ instance Arbitrary TemplateValueParameterTag where
 
 genDITemplateParameter :: Metadata -> MDRef DIType -> Gen DITemplateParameter
 genDITemplateParameter value ty =
-  oneof [ DITemplateTypeParameter <$> arbitrarySbs <*> pure ty
-        , DITemplateValueParameter <$> arbitrarySbs <*> pure ty <*> pure value <*> arbitrary
+  oneof [ DITemplateTypeParameter <$> arbitrarySbs <*> pure (Just ty)
+        , DITemplateValueParameter <$> arbitrarySbs <*> pure Nothing <*> pure value <*> arbitrary
         ]
 
 roundtripDINamespace :: TestTree
