@@ -277,11 +277,13 @@ roundtripDIBasicType = testProperty "roundtrip DIBasicType" $ \diType -> ioPrope
 
 roundtripDIDerivedType :: TestTree
 roundtripDIDerivedType = testProperty "roundtrip DIDerivedType" $ \baseType ->
-  forAll (genDIDerivedType Nothing Nothing (MDRef baseTypeID)) $ \diDerivedType -> ioProperty $
+  forAll (QC.elements [Nothing, Just (MDRef baseTypeID)]) $ \baseType' ->
+  forAll (genDIDerivedType Nothing Nothing baseType') $ \diDerivedType -> ioProperty $
     withContext $ \context -> runEncodeAST context $ do
       let mod = defaultModule
             { moduleDefinitions =
                 [ NamedMetadataDefinition "dummy" [derivedTypeID]
+                , NamedMetadataDefinition "dummy2" [baseTypeID]
                 , MetadataNodeDefinition derivedTypeID (DINode (DIScope (DIType (DIDerivedType diDerivedType))))
                 , MetadataNodeDefinition baseTypeID (DINode (DIScope (DIType baseType)))
                 ]
@@ -297,7 +299,7 @@ instance Arbitrary DerivedTypeTag where
              , ConstType, VolatileType, RestrictType, AtomicType, Member, Inheritance, Friend
              ]
 
-genDIDerivedType :: Maybe (MDRef DIFile) -> Maybe (MDRef DIScope) -> MDRef DIType -> Gen DIDerivedType
+genDIDerivedType :: Maybe (MDRef DIFile) -> Maybe (MDRef DIScope) -> Maybe (MDRef DIType) -> Gen DIDerivedType
 genDIDerivedType file scope baseType =
   DerivedType
     <$> arbitrary
