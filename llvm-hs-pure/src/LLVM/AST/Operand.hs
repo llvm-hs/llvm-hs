@@ -356,7 +356,8 @@ data DIDerivedType =
     , file :: Maybe (MDRef DIFile)
     , line :: Word32
     , scope :: Maybe (MDRef DIScope)
-    , baseType :: MDRef DIType
+    , baseType :: Maybe (MDRef DIType)
+    -- ^ This can be `Nothing` to represent @void *@
     , sizeInBits :: Word64
     , alignInBits :: Word32
     , offsetInBits :: Word64
