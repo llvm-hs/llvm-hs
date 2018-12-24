@@ -671,11 +671,21 @@ instance Arbitrary DWOp where
       [ DwOpFragment <$> (DW_OP_LLVM_Fragment <$> arbitrary <*> arbitrary)
       , pure DW_OP_StackValue
       , pure DW_OP_Swap
+      , pure DW_OP_Lit0
       , DW_OP_ConstU <$> arbitrary
       , DW_OP_PlusUConst <$> arbitrary
       , pure DW_OP_Plus
       , pure DW_OP_Minus
       , pure DW_OP_Mul
+      , pure DW_OP_Div
+      , pure DW_OP_Not
+      , pure DW_OP_Or
+      , pure DW_OP_Xor
+      , pure DW_OP_And
+      , pure DW_OP_Shr
+      , pure DW_OP_Shra
+      , pure DW_OP_Shl
+      , pure DW_OP_Dup
       , pure DW_OP_Deref
       , pure DW_OP_XDeref
       ]
@@ -695,6 +705,11 @@ testFile = do
            pure ()
     ,  testCase "test/debug_metadata_3.ll" $ do
          fStr <- B.readFile "test/debug_metadata_3.ll"
+         withContext $ \context -> do
+           a <- withModuleFromLLVMAssembly' context fStr moduleAST
+           pure ()
+    ,  testCase "test/debug_metadata_4.ll" $ do
+         fStr <- B.readFile "test/debug_metadata_4.ll"
          withContext $ \context -> do
            a <- withModuleFromLLVMAssembly' context fStr moduleAST
            pure ()

@@ -65,10 +65,20 @@ data DWOp
   | DW_OP_StackValue -- ^ Must be the last one or followed by a DW_OP_LLVM_Fragment
   | DW_OP_Swap
   | DW_OP_ConstU Word64
+  | DW_OP_Lit0
   | DW_OP_PlusUConst Word64
   | DW_OP_Plus
   | DW_OP_Minus
   | DW_OP_Mul
+  | DW_OP_Div
+  | DW_OP_Not
+  | DW_OP_Or
+  | DW_OP_Xor
+  | DW_OP_And
+  | DW_OP_Shr
+  | DW_OP_Shra
+  | DW_OP_Shl
+  | DW_OP_Dup
   | DW_OP_Deref
   | DW_OP_XDeref
   deriving (Eq, Ord, Read, Show, Typeable, Data, Generic)
