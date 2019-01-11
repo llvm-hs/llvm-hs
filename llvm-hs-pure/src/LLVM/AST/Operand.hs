@@ -71,6 +71,7 @@ data DWOp
   | DW_OP_Minus
   | DW_OP_Mul
   | DW_OP_Div
+  | DW_OP_Mod
   | DW_OP_Not
   | DW_OP_Or
   | DW_OP_Xor
