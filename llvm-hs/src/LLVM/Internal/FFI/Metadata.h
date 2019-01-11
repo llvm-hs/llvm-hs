@@ -57,6 +57,7 @@ enum LLVM_Hs_DwOp {
     macro(minus)                      \
     macro(mul)                        \
     macro(div)                        \
+    macro(mod)                        \
     macro(not)                        \
     macro(or)                         \
     macro(xor)                        \

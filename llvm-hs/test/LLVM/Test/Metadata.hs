@@ -678,6 +678,7 @@ instance Arbitrary DWOp where
       , pure DW_OP_Minus
       , pure DW_OP_Mul
       , pure DW_OP_Div
+      , pure DW_OP_Mod
       , pure DW_OP_Not
       , pure DW_OP_Or
       , pure DW_OP_Xor

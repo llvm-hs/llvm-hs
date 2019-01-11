@@ -981,6 +981,7 @@ encodeDWOp op =
     A.DW_OP_Minus -> [FFI.DwOp_minus]
     A.DW_OP_Mul -> [FFI.DwOp_mul]
     A.DW_OP_Div -> [FFI.DwOp_div]
+    A.DW_OP_Mod -> [FFI.DwOp_mod]
     A.DW_OP_Not -> [FFI.DwOp_not]
     A.DW_OP_Or -> [FFI.DwOp_or]
     A.DW_OP_Xor -> [FFI.DwOp_xor]
@@ -1083,6 +1084,7 @@ instance DecodeM DecodeAST A.DIExpression (Ptr FFI.DIExpression) where
                 FFI.DwOp_minus -> (A.DW_OP_Minus :) <$> go (i + 1)
                 FFI.DwOp_mul -> (A.DW_OP_Mul :) <$> go (i + 1)
                 FFI.DwOp_div -> (A.DW_OP_Div :) <$> go (i + 1)
+                FFI.DwOp_mod -> (A.DW_OP_Mod :) <$> go (i + 1)
                 FFI.DwOp_not -> (A.DW_OP_Not :) <$> go (i + 1)
                 FFI.DwOp_or -> (A.DW_OP_Or :) <$> go (i + 1)
                 FFI.DwOp_xor -> (A.DW_OP_Xor :) <$> go (i + 1)
