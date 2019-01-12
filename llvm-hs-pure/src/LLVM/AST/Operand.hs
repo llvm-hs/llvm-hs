@@ -472,7 +472,7 @@ data DITemplateParameter
   | DITemplateValueParameter
     { name :: ShortByteString
     , type' :: Maybe (MDRef DIType)
-    , value :: Metadata
+    , value :: Maybe Metadata
     , tag :: TemplateValueParameterTag
     }
   -- ^ <https://llvm.org/docs/LangRef.html#ditemplatevalueparameter>

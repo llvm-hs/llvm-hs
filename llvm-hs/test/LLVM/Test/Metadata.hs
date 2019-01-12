@@ -615,7 +615,7 @@ instance Arbitrary TemplateValueParameterTag where
 genDITemplateParameter :: Metadata -> MDRef DIType -> Gen DITemplateParameter
 genDITemplateParameter value ty =
   oneof [ DITemplateTypeParameter <$> arbitrarySbs <*> pure (Just ty)
-        , DITemplateValueParameter <$> arbitrarySbs <*> pure Nothing <*> pure value <*> arbitrary
+        , DITemplateValueParameter <$> arbitrarySbs <*> pure Nothing <*> pure (Just value) <*> arbitrary
         ]
 
 roundtripDINamespace :: TestTree
@@ -711,6 +711,11 @@ testFile = do
            pure ()
     ,  testCase "test/debug_metadata_4.ll" $ do
          fStr <- B.readFile "test/debug_metadata_4.ll"
+         withContext $ \context -> do
+           a <- withModuleFromLLVMAssembly' context fStr moduleAST
+           pure ()
+    ,  testCase "test/debug_metadata_5.ll" $ do
+         fStr <- B.readFile "test/debug_metadata_5.ll"
          withContext $ \context -> do
            a <- withModuleFromLLVMAssembly' context fStr moduleAST
            pure ()
