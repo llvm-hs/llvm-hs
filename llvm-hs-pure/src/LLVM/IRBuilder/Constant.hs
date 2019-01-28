@@ -13,6 +13,9 @@ int64 = pure . ConstantOperand . Int 64
 int32 :: Applicative f => Integer -> f Operand
 int32 = pure . ConstantOperand . Int 32
 
+int8 :: Applicative f => Integer -> f Operand
+int8 = pure . ConstantOperand . Int 8
+
 bit :: Applicative f => Integer -> f Operand
 bit = pure . ConstantOperand . Int 1
 
