@@ -201,30 +201,6 @@ global nm ty initVal = do
     }
   pure $ ConstantOperand $ C.GlobalReference (ptr ty) nm
 
--- | Creates a series of instructions to generate a pointer to a string
--- constant. Useful for making format strings to pass to @printf@, for example
-globalStringPtr
-  :: MonadModuleBuilder m
-  => String       -- ^ The string to generate
-  -> Name         -- ^ Variable name of the pointer
-  -> m Operand
-globalStringPtr str nm = do
-  let asciiVals = map (fromIntegral . ord) str
-      llvmVals  = map (C.Int 8) (asciiVals ++ [0]) -- append null terminator
-      char      = IntegerType 8
-      charStar  = ptr char
-      charArray = C.Array char llvmVals
-      ty        = LLVM.AST.Typed.typeOf charArray
-  emitDefn $ GlobalDefinition globalVariableDefaults
-    { name                  = nm
-    , LLVM.AST.Global.type' = ty
-    , linkage               = External
-    , isConstant            = True
-    , initializer           = Just charArray
-    , unnamedAddr           = Just GlobalAddr
-    }
-  pure $ ConstantOperand $ C.BitCast (C.GlobalReference (ptr ty) nm) charStar
-
 -- | A named type definition
 typedef
   :: MonadModuleBuilder m
