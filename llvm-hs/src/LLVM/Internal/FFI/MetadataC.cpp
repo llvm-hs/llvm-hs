@@ -284,8 +284,8 @@ uint32_t LLVM_Hs_DITypeGetLine(DIType *ds) {
 
 // DIBasicType
 
-DIBasicType* LLVM_Hs_Get_DIBasicType(LLVMContextRef ctx, uint16_t tag, MDString *name, uint64_t sizeInBits, uint32_t alignInBits, unsigned encoding) {
-    return DIBasicType::get(*unwrap(ctx), tag, name, sizeInBits, alignInBits, encoding);
+DIBasicType* LLVM_Hs_Get_DIBasicType(LLVMContextRef ctx, uint16_t tag, MDString *name, uint64_t sizeInBits, uint32_t alignInBits, unsigned encoding, DINode::DIFlags flags) {
+    return DIBasicType::get(*unwrap(ctx), tag, name, sizeInBits, alignInBits, encoding, flags);
 }
 
 
@@ -539,17 +539,18 @@ DISubprogram *LLVM_Hs_Get_DISubprogram(
     DICompileUnit *unit, Metadata *templateParams, DISubprogram *declaration,
     Metadata *variables, Metadata *thrownTypes) {
     LLVMContext &c = *unwrap(ctx);
+    DISubprogram::DISPFlags spFlags = DISubprogram::toSPFlags(isLocal, isDefinition, isOptimized, virtuality);
     if (isDefinition) {
         return DISubprogram::getDistinct(
           c, scope, name, linkageName, file,
-          line, type, isLocal, isDefinition, scopeLine, containingType,
-          virtuality, virtualIndex, thisAdjustment, flags, isOptimized, unit,
+          line, type, scopeLine, containingType,
+          virtualIndex, thisAdjustment, flags, spFlags, unit,
           templateParams, declaration, variables, thrownTypes);
     } else {
         return DISubprogram::get(
           c, scope, name, linkageName, file,
-          line, type, isLocal, isDefinition, scopeLine, containingType,
-          virtuality, virtualIndex, thisAdjustment, flags, isOptimized, unit,
+          line, type, scopeLine, containingType,
+          virtualIndex, thisAdjustment, flags, spFlags, unit,
           templateParams, declaration, variables, thrownTypes);
     }
 }
@@ -620,12 +621,13 @@ DIGlobalVariable* LLVM_Hs_Get_DIGlobalVariable(LLVMContextRef ctx,
                                                DIFile* file, unsigned line, DIType* type,
                                                LLVMBool isLocalToUnit, LLVMBool isDefinition,
                                                DIDerivedType* declaration,
+                                               Metadata* templateParams,
                                                uint32_t alignInBits) {
     LLVMContext &c = *unwrap(ctx);
     return DIGlobalVariable::get(c, scope, name, linkageName,
                                  file, line, type,
                                  isLocalToUnit, isDefinition,
-                                 declaration,
+                                 declaration, templateParams,
                                  alignInBits);
 }
 
@@ -651,14 +653,14 @@ DICompileUnit* LLVM_Hs_Get_DICompileUnit
    unsigned sourceLanguage, DIFile* file, MDString* producer, LLVMBool isOptimized, MDString* flags,
    unsigned runtimeVersion, MDString* splitDebugFilename, unsigned emissionKind, Metadata* enumTypes, Metadata* retainedTypes,
    Metadata* globalVariables, Metadata* importedEntities, Metadata* macros, uint64_t dwoid, LLVMBool splitDebugInlining,
-   LLVMBool debugInfoForProfiling, LLVMBool gnuPubnames) {
+   LLVMBool debugInfoForProfiling, unsigned nameTableKind, LLVMBool debugBaseAddress) {
     LLVMContext &c = *unwrap(ctx);
     return DICompileUnit::getDistinct
         (c,
          sourceLanguage, file, producer, isOptimized, flags,
          runtimeVersion, splitDebugFilename, emissionKind, enumTypes, retainedTypes,
          globalVariables, importedEntities, macros, dwoid, splitDebugInlining,
-         debugInfoForProfiling, gnuPubnames);
+         debugInfoForProfiling, nameTableKind, debugBaseAddress);
 }
 
 unsigned LLVM_Hs_DICompileUnit_GetLanguage(DICompileUnit* cu) {
@@ -671,10 +673,6 @@ LLVMBool LLVM_Hs_DICompileUnit_GetSplitDebugInlining(DICompileUnit* cu) {
 
 LLVMBool LLVM_Hs_DICompileUnit_GetDebugInfoForProfiling(DICompileUnit* cu) {
     return cu->getDebugInfoForProfiling();
-}
-
-LLVMBool LLVM_Hs_DICompileUnit_GetGnuPubnames(DICompileUnit* cu) {
-    return cu->getGnuPubnames();
 }
 
 LLVMBool LLVM_Hs_DICompileUnit_GetOptimized(DICompileUnit* cu) {
@@ -701,6 +699,10 @@ unsigned LLVM_Hs_DICompileUnit_GetEmissionKind(DICompileUnit* cu) {
     return cu->getEmissionKind();
 }
 
+unsigned LLVM_Hs_DICompileUnit_GetNameTableKind(DICompileUnit* cu) {
+    return static_cast<unsigned>(cu->getNameTableKind());
+}
+
 uint64_t LLVM_Hs_DICompileUnit_GetDWOId(DICompileUnit* cu) {
     return cu->getDWOId();
 }
@@ -723,6 +725,10 @@ MDTuple* LLVM_Hs_DICompileUnit_GetImportedEntities(DICompileUnit* cu) {
 
 MDTuple* LLVM_Hs_DICompileUnit_GetMacros(DICompileUnit* cu) {
     return cast_or_null<MDTuple>(cu->getRawMacros());
+}
+
+LLVMBool LLVM_Hs_DICompileUnit_GetRangesBaseAddress(DICompileUnit* cu) {
+    return cu->getRangesBaseAddress();
 }
 
 // DIFlags

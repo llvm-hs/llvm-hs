@@ -8,15 +8,15 @@ let
 in
 
 { nixpkgs ? <nixpkgs>
-, compiler ? "ghc844" }:
+, compiler ? "ghc863" }:
 let
   hsOverlay = self: super: {
-    llvm_7 = super.llvm_7.override { debugVersion = true; };
+    llvm_8 = super.llvm_8.override { debugVersion = true; };
     haskell = super.haskell // {
       packages = super.haskell.packages // {
         "${compiler}" = super.haskell.packages."${compiler}".override {
           overrides = haskellSelf: haskellSuper: {
-            llvm-hs = haskellSuper.callCabal2nix "llvm-hs" ./llvm-hs { llvm-config = self.llvm_7; };
+            llvm-hs = haskellSuper.callCabal2nix "llvm-hs" ./llvm-hs { llvm-config = self.llvm_8; };
             llvm-hs-pure = haskellSuper.callCabal2nix "llvm-hs-pure" ./llvm-hs-pure {};
           };
         };

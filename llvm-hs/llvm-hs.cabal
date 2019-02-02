@@ -1,5 +1,5 @@
 name: llvm-hs
-version: 7.0.1
+version: 8.0.0
 license: BSD3
 license-file: LICENSE
 author: Anthony Cowley, Stephen Diehl, Moritz Kiefer <moritz.kiefer@purelyfunctional.org>, Benjamin S. Scarlet
@@ -42,7 +42,7 @@ extra-source-files:
   test/debug_metadata_4.ll
   test/debug_metadata_5.ll
   test/main_return_38.c
-tested-with: GHC == 8.0.2, GHC == 8.2.2, GHC == 8.4.1
+tested-with: GHC == 8.0.2, GHC == 8.2.2, GHC == 8.4.4, GHC == 8.6.4
 extra-source-files: CHANGELOG.md
 
 source-repository head
@@ -79,7 +79,7 @@ library
     template-haskell >= 2.5.0.0,
     containers >= 0.4.2.1,
     array >= 0.4.0.0,
-    llvm-hs-pure == 7.0.*
+    llvm-hs-pure == 8.0.*
   hs-source-dirs: src
   default-extensions:
     NoImplicitPrelude

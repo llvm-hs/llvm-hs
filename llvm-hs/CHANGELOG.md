@@ -1,5 +1,6 @@
-## 7.0.2 (unreleased)
+## unreleased
 
+* Upgrade to LLVM 8
 * It is now possible to define multiple variables with an empty name
   without causing a name collision. Variables with an empty name
   cannot be referenced. This fixes an issue caused by using

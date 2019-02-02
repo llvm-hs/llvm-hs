@@ -268,7 +268,7 @@ foreign import ccall unsafe "LLVM_Hs_DISubroutine_GetTypeArray" getSubroutineTyp
 -- | DIBasicType
 
 foreign import ccall unsafe "LLVM_Hs_Get_DIBasicType" getDIBasicType ::
-  Ptr Context -> DwTag -> Ptr MDString -> Word64 -> Word32 -> Encoding -> IO (Ptr DIBasicType)
+  Ptr Context -> DwTag -> Ptr MDString -> Word64 -> Word32 -> Encoding -> DIFlags -> IO (Ptr DIBasicType)
 
 foreign import ccall unsafe "LLVM_Hs_DIBasicType_GetEncoding" getBasicTypeEncoding ::
   Ptr DIBasicType -> IO Encoding
@@ -421,6 +421,7 @@ foreign import ccall unsafe "LLVM_Hs_Get_DIGlobalVariable" getDIGlobalVariable :
   Ptr DIFile -> CUInt -> Ptr DIType ->
   LLVMBool -> LLVMBool ->
   Ptr DIDerivedType ->
+  TupleArray DITemplateParameter ->
   Word32 ->
   IO (Ptr DIGlobalVariable)
 
@@ -442,8 +443,9 @@ foreign import ccall unsafe "LLVM_Hs_Get_DICompileUnit" getDICompileUnit ::
   Ptr Context ->
   CUInt -> Ptr DIFile -> Ptr MDString -> LLVMBool -> Ptr MDString ->
   CUInt -> Ptr MDString -> DebugEmissionKind -> TupleArray DICompositeType -> TupleArray DIScope ->
-  TupleArray DIGlobalVariableExpression -> TupleArray DIImportedEntity -> TupleArray DIMacroNode -> Word64 -> LLVMBool ->
-  LLVMBool -> LLVMBool ->
+  TupleArray DIGlobalVariableExpression -> TupleArray DIImportedEntity -> TupleArray DIMacroNode ->
+  Word64 -> LLVMBool ->
+  LLVMBool -> DebugNameTableKind -> LLVMBool ->
   IO (Ptr DICompileUnit)
 
 foreign import ccall unsafe "LLVM_Hs_DICompileUnit_GetLanguage" getDICompileUnitLanguage ::
@@ -453,9 +455,6 @@ foreign import ccall unsafe "LLVM_Hs_DICompileUnit_GetSplitDebugInlining" getDIC
   Ptr DICompileUnit -> IO LLVMBool
 
 foreign import ccall unsafe "LLVM_Hs_DICompileUnit_GetDebugInfoForProfiling" getDICompileUnitDebugInfoForProfiling ::
-  Ptr DICompileUnit -> IO LLVMBool
-
-foreign import ccall unsafe "LLVM_Hs_DICompileUnit_GetGnuPubnames" getDICompileUnitGnuPubnames ::
   Ptr DICompileUnit -> IO LLVMBool
 
 foreign import ccall unsafe "LLVM_Hs_DICompileUnit_GetOptimized" getDICompileUnitOptimized ::
@@ -476,6 +475,9 @@ foreign import ccall unsafe "LLVM_Hs_DICompileUnit_GetSplitDebugFilename" getDIC
 foreign import ccall unsafe "LLVM_Hs_DICompileUnit_GetEmissionKind" getDICompileUnitEmissionKind ::
   Ptr DICompileUnit -> IO DebugEmissionKind
 
+foreign import ccall unsafe "LLVM_Hs_DICompileUnit_GetNameTableKind" getDICompileUnitNameTableKind ::
+  Ptr DICompileUnit -> IO DebugNameTableKind
+
 foreign import ccall unsafe "LLVM_Hs_DICompileUnit_GetDWOId" getDICompileUnitDWOId ::
   Ptr DICompileUnit -> IO Word64
 
@@ -493,6 +495,9 @@ foreign import ccall unsafe "LLVM_Hs_DICompileUnit_GetImportedEntities" getDICom
 
 foreign import ccall unsafe "LLVM_Hs_DICompileUnit_GetMacros" getDICompileUnitMacros ::
   Ptr DICompileUnit -> IO (TupleArray DIMacroNode)
+
+foreign import ccall unsafe "LLVM_Hs_DICompileUnit_GetRangesBaseAddress" getDICompileUnitRangesBaseAddress ::
+  Ptr DICompileUnit -> IO LLVMBool
 
 -- DIFlags
 foreign import ccall unsafe "LLVM_Hs_DIFlags_GetFlag" getDIFlag ::

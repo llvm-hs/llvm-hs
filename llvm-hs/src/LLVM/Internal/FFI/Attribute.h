@@ -53,6 +53,7 @@
 	macro(SanitizeThread,F,F,T)                       \
     macro(ShadowCallStack,F,F,T)                      \
     macro(Speculatable,F,F,T)                         \
+    macro(SpeculativeLoadHardening,F,F,T)             \
 	macro(StackAlignment,F,F,T)                       \
 	macro(StackProtect,F,F,T)                         \
 	macro(StackProtectReq,F,F,T)                      \

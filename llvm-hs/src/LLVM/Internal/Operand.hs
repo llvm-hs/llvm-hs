@@ -302,6 +302,12 @@ genCodingInstance [t|A.DebugEmissionKind|] ''FFI.DebugEmissionKind
   , (FFI.LineTablesOnly, A.LineTablesOnly)
   ]
 
+genCodingInstance [t|A.DebugNameTableKind|] ''FFI.DebugNameTableKind
+  [ (FFI.NameTableKindDefault, A.NameTableKindDefault)
+  , (FFI.NameTableKindGNU, A.NameTableKindGNU)
+  , (FFI.NameTableKindNone, A.NameTableKindNone)
+  ]
+
 instance DecodeM DecodeAST A.DICompileUnit (Ptr FFI.DICompileUnit) where
   decodeM p = do
     language <- decodeM =<< liftIO (FFI.getDICompileUnitLanguage p)
@@ -315,7 +321,6 @@ instance DecodeM DecodeAST A.DICompileUnit (Ptr FFI.DICompileUnit) where
     dwoid <- decodeM =<< liftIO (FFI.getDICompileUnitDWOId p)
     splitDebugInlining <- decodeM =<< liftIO (FFI.getDICompileUnitSplitDebugInlining p)
     debugInfoForProfiling <- decodeM =<< liftIO (FFI.getDICompileUnitDebugInfoForProfiling p)
-    gnuPubnames <- decodeM =<< liftIO (FFI.getDICompileUnitGnuPubnames p)
     enums <- decodeM =<< liftIO (FFI.getDICompileUnitEnumTypes p)
     retainedTypes' <- decodeM =<< liftIO (FFI.getDICompileUnitRetainedTypes p)
     let toRetainedType :: A.MDRef A.DIScope -> DecodeAST (A.MDRef (Either A.DIType A.DISubprogram))
@@ -327,6 +332,8 @@ instance DecodeM DecodeAST A.DICompileUnit (Ptr FFI.DICompileUnit) where
     globals <- decodeM =<< liftIO (FFI.getDICompileUnitGlobalVariables p)
     entities <- decodeM =<< liftIO (FFI.getDICompileUnitImportedEntities p)
     macros <- decodeM =<< liftIO (FFI.getDICompileUnitMacros p)
+    nameTableKind <- decodeM =<< liftIO (FFI.getDICompileUnitNameTableKind p)
+    debugBaseAddress <- decodeM =<< liftIO (FFI.getDICompileUnitRangesBaseAddress p)
     pure A.CompileUnit
       { A.language = language
       , A.file = file
@@ -344,7 +351,8 @@ instance DecodeM DecodeAST A.DICompileUnit (Ptr FFI.DICompileUnit) where
       , A.dWOId = dwoid
       , A.splitDebugInlining = splitDebugInlining
       , A.debugInfoForProfiling = debugInfoForProfiling
-      , A.gnuPubnames = gnuPubnames
+      , A.nameTableKind = nameTableKind
+      , A.debugBaseAddress = debugBaseAddress
       }
 
 instance EncodeM EncodeAST A.DICompileUnit (Ptr FFI.DICompileUnit) where
@@ -365,15 +373,15 @@ instance EncodeM EncodeAST A.DICompileUnit (Ptr FFI.DICompileUnit) where
     dwoid <- encodeM dWOId
     splitDebugInlining <- encodeM splitDebugInlining
     debugInfoForProfiling <- encodeM debugInfoForProfiling
-    gnuPubnames <- encodeM gnuPubnames
+    nameTableKind <- encodeM nameTableKind
+    debugBaseAddress <- encodeM debugBaseAddress
     Context c <- gets encodeStateContext
     liftIO $ FFI.getDICompileUnit
       c
       language file producer optimized flags
       runtimeVersion debugFileName emissionKind enums retainedTypes
       globals imports macros dwoid splitDebugInlining
-      debugInfoForProfiling
-      gnuPubnames
+      debugInfoForProfiling nameTableKind debugBaseAddress
 
 instance EncodeM EncodeAST A.DIScope (Ptr FFI.DIScope) where
   encodeM (A.DIFile f) = FFI.upCast <$> (encodeM f :: EncodeAST (Ptr FFI.DIFile))
@@ -556,15 +564,17 @@ instance DecodeM DecodeAST A.DIBasicType (Ptr FFI.DIBasicType) where
     align <- liftIO (FFI.getTypeAlignInBits (FFI.upCast diTy))
     name <- decodeM =<< liftIO (FFI.getTypeName (FFI.upCast diTy))
     encoding <- decodeM =<< liftIO (FFI.getBasicTypeEncoding diTy)
-    pure (A.BasicType name size align encoding tag)
+    flags <- decodeM =<< liftIO (FFI.getTypeFlags (castPtr diTy :: Ptr FFI.DIType))
+    pure (A.BasicType name size align encoding tag flags)
 
 instance EncodeM EncodeAST A.DIBasicType (Ptr FFI.DIBasicType) where
   encodeM A.BasicType {..} = do
     tag <- encodeM tag
     name <- encodeM name
     encoding <- encodeM encoding
+    flags <- encodeM flags
     Context c <- gets encodeStateContext
-    liftIO (FFI.getDIBasicType c tag name sizeInBits alignInBits encoding)
+    liftIO (FFI.getDIBasicType c tag name sizeInBits alignInBits encoding flags)
 
 
 instance EncodeM EncodeAST A.DISubroutineType (Ptr FFI.DISubroutineType) where
@@ -681,6 +691,7 @@ instance DecodeM DecodeAST A.DIGlobalVariable (Ptr FFI.DIGlobalVariable) where
       , A.local = local
       , A.definition = definition
       , A.staticDataMemberDeclaration = decl
+      , A.templateParams = []
       , A.alignInBits = align
       }
 
@@ -695,8 +706,9 @@ instance EncodeM EncodeAST A.DIGlobalVariable (Ptr FFI.DIGlobalVariable) where
     local <- encodeM local
     definition <- encodeM definition
     dataMemberDeclaration <- encodeM staticDataMemberDeclaration
+    templateParams <- encodeM templateParams
     Context c <- gets encodeStateContext
-    liftIO (FFI.getDIGlobalVariable c scope name linkageName file line type' local definition dataMemberDeclaration alignInBits)
+    liftIO (FFI.getDIGlobalVariable c scope name linkageName file line type' local definition dataMemberDeclaration templateParams alignInBits)
 
 instance DecodeM DecodeAST A.DILocalVariable (Ptr FFI.DILocalVariable) where
   decodeM p = do

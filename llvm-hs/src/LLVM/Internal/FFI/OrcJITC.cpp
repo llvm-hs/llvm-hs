@@ -1,5 +1,6 @@
 #include "llvm/Support/Error.h"
 
+#include "LLVM/Internal/FFI/ErrorHandling.hpp"
 #include "LLVM/Internal/FFI/OrcJIT.h"
 #include "LLVM/Internal/FFI/Target.hpp"
 #include "llvm/ExecutionEngine/JITSymbol.h"
@@ -103,10 +104,10 @@ template <typename T> class CompileLayerT : public CompileLayer {
     T data;
 };
 
-typedef llvm::orc::CompileOnDemandLayer<CompileLayer> LLVMCompileOnDemandLayer;
+typedef llvm::orc::LegacyCompileOnDemandLayer<CompileLayer> LLVMCompileOnDemandLayer;
 typedef LLVMCompileOnDemandLayer *LLVMCompileOnDemandLayerRef;
 
-typedef llvm::orc::IRTransformLayer<
+typedef llvm::orc::LegacyIRTransformLayer<
     CompileLayer,
     std::function<std::unique_ptr<Module>(std::unique_ptr<Module>)>>
     LLVMIRTransformLayer;
@@ -148,7 +149,7 @@ static JITSymbolFlags unwrap(LLVMJITSymbolFlags f) {
 static LLVMJITSymbolFlags wrap(JITSymbolFlags f) {
     unsigned r = 0;
 #define ENUM_CASE(x)                                                           \
-    if ((char)(f & JITSymbolFlags::x))                                         \
+    if (f & JITSymbolFlags::x)                       \
         r |= (unsigned)LLVMJITSymbolFlag##x;
     LLVM_HS_FOR_EACH_JIT_SYMBOL_FLAG(ENUM_CASE)
 #undef ENUM_CASE
@@ -176,9 +177,9 @@ void LLVM_Hs_releaseVModule(ExecutionSession *es, VModuleKey k) {
 CompileLayer *LLVM_Hs_createIRCompileLayer(LinkingLayer *linkingLayer,
                                            LLVMTargetMachineRef tm) {
     TargetMachine *tmm = unwrap(tm);
-    return new CompileLayerT<IRCompileLayer<LinkingLayer, SimpleCompiler>>(
-        IRCompileLayer<LinkingLayer, SimpleCompiler>(*linkingLayer,
-                                                     SimpleCompiler(*tmm)));
+    return new CompileLayerT<LegacyIRCompileLayer<LinkingLayer, SimpleCompiler>>(
+        LegacyIRCompileLayer<LinkingLayer, SimpleCompiler>(*linkingLayer,
+                                                           SimpleCompiler(*tmm)));
 }
 
 CompileLayer *LLVM_Hs_createCompileOnDemandLayer(
@@ -264,14 +265,14 @@ void LLVM_Hs_CompileLayer_removeModule(CompileLayer *compileLayer,
 
 LinkingLayer *LLVM_Hs_createObjectLinkingLayer(
     ExecutionSession *es, LLVMSymbolResolverRef (*symbolResolver)(VModuleKey)) {
-    return new LinkingLayerT<RTDyldObjectLinkingLayer>(
-        RTDyldObjectLinkingLayer(*es, [symbolResolver](VModuleKey k) {
-            return RTDyldObjectLinkingLayer::Resources{
+    return new LinkingLayerT<LegacyRTDyldObjectLinkingLayer>(
+        LegacyRTDyldObjectLinkingLayer(*es, [symbolResolver](VModuleKey k) {
+            return LegacyRTDyldObjectLinkingLayer::Resources{
                 std::make_shared<SectionMemoryManager>(), *symbolResolver(k)};
         }));
 }
 
-// /* Fuctions that work on all object layers */
+/* Fuctions that work on all object layers */
 
 void LLVM_Hs_LinkingLayer_dispose(LinkingLayer *linkingLayer) {
     delete linkingLayer;
@@ -371,9 +372,15 @@ LLVMJITCompileCallbackManagerRef LLVM_Hs_createLocalCompileCallbackManager(
     ExecutionSession *es, const char *triple, JITTargetAddress errorHandler) {
     // We copy the string so that it can be freed on the Haskell side.
     std::string tripleStr(triple);
-    return llvm::orc::createLocalCompileCallbackManager(
-               Triple(std::move(tripleStr)), *es, errorHandler)
-        .release();
+    auto ccMgr =
+        llvm::orc::createLocalCompileCallbackManager(Triple(std::move(tripleStr)), *es, errorHandler);
+    if (!ccMgr) {
+        std::string errMsg;
+        raw_string_ostream errStream(errMsg);
+        errStream << ccMgr.takeError();
+        reportFatalError(errStream.str());
+    }
+    return std::move(*ccMgr).release();
 }
 
 void LLVM_Hs_disposeCallbackManager(

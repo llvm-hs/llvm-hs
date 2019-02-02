@@ -139,10 +139,12 @@ instance DecodeM DecodeAST A.Terminator (Ptr FFI.Instruction) where
         attrs <- callInstAttributeList i
         fv <- liftIO $ FFI.getCallSiteCalledValue i
         f <- decodeM fv
-        args <- forM (leftBiasedZip [1..nOps-3] (parameterAttributes attrs)) $ \(j, pAttrs) ->
-                  (, fromMaybe [] pAttrs) <$> op (j-1)
-        rd <- successor (nOps - 2)
-        ed <- successor (nOps - 1)
+        let argIndices = if nOps >= 4 then [0 .. nOps - 4] else []
+        args <-
+          forM (leftBiasedZip argIndices (parameterAttributes attrs)) $ \(j, pAttrs) ->
+                  (, fromMaybe [] pAttrs) <$> op j
+        rd <- successor (nOps - 3)
+        ed <- successor (nOps - 2)
         return A.Invoke {
           A.callingConvention' = cc,
           A.returnAttributes' = returnAttributes attrs,

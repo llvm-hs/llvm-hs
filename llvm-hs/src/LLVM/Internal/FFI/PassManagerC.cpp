@@ -10,6 +10,8 @@
 #include "llvm/Transforms/Vectorize.h"
 #include "llvm/Transforms/Instrumentation.h"
 #include "llvm/Transforms/Instrumentation/BoundsChecking.h"
+#include "llvm/Transforms/Instrumentation/MemorySanitizer.h"
+#include "llvm/Transforms/Instrumentation/ThreadSanitizer.h"
 #include "llvm/Transforms/Utils.h"
 #include "llvm/CodeGen/Passes.h"
 #include "llvm-c/Target.h"
@@ -151,13 +153,13 @@ void LLVM_Hs_AddMemorySanitizerPass(
 	LLVMPassManagerRef PM,
 	LLVMBool trackOrigins
 ) {
-	unwrap(PM)->add(createMemorySanitizerPass(trackOrigins));
+	unwrap(PM)->add(createMemorySanitizerLegacyPassPass(trackOrigins));
 }
 
 void LLVM_Hs_AddThreadSanitizerPass(
 	LLVMPassManagerRef PM
 ) {
-	unwrap(PM)->add(createThreadSanitizerPass());
+	unwrap(PM)->add(createThreadSanitizerLegacyPassPass());
 }
 
 void LLVM_Hs_AddBoundsCheckingPass(LLVMPassManagerRef PM) {
@@ -166,10 +168,10 @@ void LLVM_Hs_AddBoundsCheckingPass(LLVMPassManagerRef PM) {
 
 void LLVM_Hs_AddLoopVectorizePass(
 	LLVMPassManagerRef PM,
-	LLVMBool noUnrolling,
-	LLVMBool alwaysVectorize
+	LLVMBool interleaveOnlyWhenForced,
+	LLVMBool vectorizeOnlyWhenForced
 ) {
-	unwrap(PM)->add(createLoopVectorizePass(noUnrolling, alwaysVectorize));
+	unwrap(PM)->add(createLoopVectorizePass(interleaveOnlyWhenForced, vectorizeOnlyWhenForced));
 }
 
 void LLVM_Hs_PassManagerBuilderSetLibraryInfo(

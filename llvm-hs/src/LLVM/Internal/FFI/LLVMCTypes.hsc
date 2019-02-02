@@ -363,3 +363,15 @@ pattern FullDebug :: DebugEmissionKind
 pattern FullDebug = DebugEmissionKind 1
 pattern LineTablesOnly :: DebugEmissionKind
 pattern LineTablesOnly = DebugEmissionKind 2
+
+newtype DebugNameTableKind = DebugNameTableKind CUInt
+  deriving (Data, Show)
+
+pattern NameTableKindDefault :: DebugNameTableKind
+pattern NameTableKindDefault = DebugNameTableKind 0
+
+pattern NameTableKindGNU :: DebugNameTableKind
+pattern NameTableKindGNU = DebugNameTableKind 1
+
+pattern NameTableKindNone :: DebugNameTableKind
+pattern NameTableKindNone = DebugNameTableKind 2
