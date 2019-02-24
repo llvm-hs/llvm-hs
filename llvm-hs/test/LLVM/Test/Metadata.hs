@@ -82,6 +82,7 @@ instance Arbitrary Encoding where
       , SignedCharEncoding
       , UnsignedEncoding
       , UnsignedCharEncoding
+      , UTFEncoding
       ]
 
 instance Arbitrary ChecksumInfo where
@@ -716,6 +717,11 @@ testFile = do
            pure ()
     ,  testCase "test/debug_metadata_5.ll" $ do
          fStr <- B.readFile "test/debug_metadata_5.ll"
+         withContext $ \context -> do
+           a <- withModuleFromLLVMAssembly' context fStr moduleAST
+           pure ()
+    ,  testCase "test/debug_metadata_6.ll" $ do
+         fStr <- B.readFile "test/debug_metadata_6.ll"
          withContext $ \context -> do
            a <- withModuleFromLLVMAssembly' context fStr moduleAST
            pure ()
