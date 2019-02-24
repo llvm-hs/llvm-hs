@@ -452,6 +452,7 @@ data Encoding
   | SignedCharEncoding
   | UnsignedEncoding
   | UnsignedCharEncoding
+  | UTFEncoding
   deriving (Eq, Ord, Read, Show, Typeable, Data, Generic)
 
 data TemplateValueParameterTag

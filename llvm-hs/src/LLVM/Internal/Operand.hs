@@ -422,6 +422,7 @@ genCodingInstance [t|A.Encoding|] ''FFI.Encoding
   , (FFI.DwAtE_signed_char, A.SignedCharEncoding)
   , (FFI.DwAtE_unsigned, A.UnsignedEncoding)
   , (FFI.DwAtE_unsigned_char, A.UnsignedCharEncoding)
+  , (FFI.DwAtE_UTF, A.UTFEncoding)
   ]
 
 genCodingInstance [t|A.ChecksumKind|] ''FFI.ChecksumKind
