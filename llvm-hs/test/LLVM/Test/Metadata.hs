@@ -720,11 +720,6 @@ testFile = do
          withContext $ \context -> do
            a <- withModuleFromLLVMAssembly' context fStr moduleAST
            pure ()
-    ,  testCase "test/debug_metadata_6.ll" $ do
-         fStr <- B.readFile "test/debug_metadata_6.ll"
-         withContext $ \context -> do
-           a <- withModuleFromLLVMAssembly' context fStr moduleAST
-           pure ()
     ]
 
 globalMetadata = testCase "global" $ do
