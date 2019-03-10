@@ -47,7 +47,6 @@ import LLVM.AST hiding (function)
 import LLVM.AST.Global
 import LLVM.AST.Linkage
 import LLVM.AST.Type (ptr)
-import qualified LLVM.AST.Typed
 import qualified LLVM.AST.Constant as C
 
 import LLVM.IRBuilder.Internal.SnocList
