@@ -99,7 +99,7 @@ instance Arbitrary DIType where
   arbitrary = oneof [DIBasicType <$> arbitrary]
 
 instance Arbitrary DIBasicType where
-  arbitrary = BasicType <$> arbitrarySbs <*> arbitrary <*> arbitrary <*> arbitrary <*> arbitrary
+  arbitrary = BasicType <$> arbitrarySbs <*> arbitrary <*> arbitrary <*> arbitrary <*> arbitrary <*> genDIFlags
 
 genDIArrayType :: Maybe (MDRef DIType) -> Gen DICompositeType
 genDIArrayType elTy =
@@ -395,9 +395,13 @@ genDICompileUnit file retained macro =
     <*> arbitrary
     <*> arbitrary
     <*> arbitrary
+    <*> arbitrary
 
 instance Arbitrary DebugEmissionKind where
   arbitrary = QC.elements [NoDebug, FullDebug, LineTablesOnly]
+
+instance Arbitrary DebugNameTableKind where
+  arbitrary = QC.elements [NameTableKindDefault, NameTableKindGNU, NameTableKindNone]
 
 roundtripDIVariable :: TestTree
 roundtripDIVariable = testProperty "roundtrip DIVariable" $ \diFile diType ->
@@ -444,6 +448,7 @@ genDIVariable diScope diFile diType =
         <*> arbitrary
         <*> arbitrary
         <*> pure Nothing
+        <*> pure []
         <*> arbitrary
 
 instance Arbitrary A.DIInheritance where
@@ -921,7 +926,8 @@ globalObjectMetadata = testGroup "Metadata on GlobalObject" $
                       , dWOId = 0
                       , splitDebugInlining = True
                       , debugInfoForProfiling = False
-                      , gnuPubnames = False
+                      , nameTableKind = NameTableKindDefault
+                      , debugBaseAddress = False
                       }
                   , MetadataNodeDefinition (MetadataNodeID 3) $
                     DINode . DIScope . DIFile $
@@ -941,7 +947,7 @@ globalObjectMetadata = testGroup "Metadata on GlobalObject" $
             \!0 = !{i32 2, !\"Debug Info Version\", i32 3}\n\
             \!1 = distinct !DICompileUnit(language: DW_LANG_C99, file: !2, producer: \"clang version 6.0.0 (tags/RELEASE_600/final)\", isOptimized: true, runtimeVersion: 0, emissionKind: FullDebug)\n\
             \!2 = !DIFile(filename: \"main.c\", directory: \"/\")\n\
-            \!3 = distinct !DISubprogram(name: \"main\", scope: null, isLocal: false, isDefinition: true, isOptimized: false, unit: !1)\n"
+            \!3 = distinct !DISubprogram(name: \"main\", scope: null, spFlags: DISPFlagDefinition, unit: !1)\n"
       strCheck ast s,
    testCase "metadata on global variables" $ do
       let ast = Module "<string>" "<string>" Nothing Nothing
@@ -982,7 +988,8 @@ globalObjectMetadata = testGroup "Metadata on GlobalObject" $
                       , dWOId = 0
                       , splitDebugInlining = True
                       , debugInfoForProfiling = False
-                      , gnuPubnames = False
+                      , nameTableKind = NameTableKindDefault
+                      , debugBaseAddress = False
                       }
                   , MetadataNodeDefinition (MetadataNodeID 3) $
                     DINode . DIVariable . DIGlobalVariable $
@@ -996,6 +1003,7 @@ globalObjectMetadata = testGroup "Metadata on GlobalObject" $
                       , local = False
                       , definition = True
                       , staticDataMemberDeclaration = Nothing
+                      , templateParams = []
                       , alignInBits = 0
                       }
                   , MetadataNodeDefinition (MetadataNodeID 4) (DIExpression (Expression []))
@@ -1004,7 +1012,7 @@ globalObjectMetadata = testGroup "Metadata on GlobalObject" $
                     O.File "main.c" "/" Nothing
                   , MetadataNodeDefinition (MetadataNodeID 6) $
                     DINode . DIScope . DIType . DIBasicType $
-                    BasicType "" 0 0 Nothing BaseType
+                    BasicType "" 0 0 Nothing BaseType []
                   ]
           s =
             "; ModuleID = '<string>'\n\

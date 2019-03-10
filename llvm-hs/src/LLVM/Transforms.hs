@@ -80,8 +80,8 @@ data Pass
 
   -- here begin the vectorization passes
   | LoopVectorize {
-      noUnrolling :: Bool,
-      alwaysVectorize :: Bool
+      interleaveOnlyWhenForced :: Bool,
+      vectorizeOnlyWhenForced :: Bool
     }
   | SuperwordLevelParallelismVectorize
 
@@ -106,8 +106,8 @@ data Pass
 -- | Defaults for the 'LoopVectorize' pass
 defaultLoopVectorize :: Pass
 defaultLoopVectorize = LoopVectorize {
-    noUnrolling = False,
-    alwaysVectorize = True
+    interleaveOnlyWhenForced = False,
+    vectorizeOnlyWhenForced = False
   }
 
 -- | See <http://gcc.gnu.org/viewcvs/gcc/trunk/gcc/gcov-io.h?view=markup>.

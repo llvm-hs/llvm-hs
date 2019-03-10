@@ -1,5 +1,6 @@
 ## unreleased
 
+* Upgrade to LLVM 8
 * Change type of `value` field in `DITemplateValueParameter` to
   `Maybe Metadata` to reflect that it can be null.
 

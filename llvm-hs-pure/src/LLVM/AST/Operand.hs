@@ -246,6 +246,9 @@ data DINamespace = Namespace
 data DebugEmissionKind = NoDebug | FullDebug | LineTablesOnly
   deriving (Eq, Ord, Read, Show, Typeable, Data, Generic)
 
+data DebugNameTableKind = NameTableKindDefault | NameTableKindGNU | NameTableKindNone
+  deriving (Eq, Ord, Read, Show, Typeable, Data, Generic)
+
 -- | <https://llvm.org/docs/LangRef.html#dicompileunit>
 data DICompileUnit = CompileUnit
   { language :: Word32
@@ -264,7 +267,8 @@ data DICompileUnit = CompileUnit
   , dWOId :: Word64
   , splitDebugInlining :: Bool
   , debugInfoForProfiling :: Bool
-  , gnuPubnames :: Bool
+  , nameTableKind :: DebugNameTableKind
+  , debugBaseAddress :: Bool
   } deriving (Eq, Ord, Read, Show, Typeable, Data, Generic)
 
 -- | <https://llvm.org/docs/LangRef.html#difile>
@@ -333,6 +337,7 @@ data DIBasicType = BasicType
   , alignInBits :: Word32
   , encoding :: Maybe Encoding
   , tag :: BasicTypeTag
+  , flags :: [DIFlag]
   } deriving (Eq, Ord, Read, Show, Typeable, Data, Generic)
 
 -- | <https://llvm.org/docs/LangRef.html#disubroutinetype>
@@ -513,6 +518,7 @@ data DIGlobalVariable = GlobalVariable
   , local :: Bool
   , definition :: Bool
   , staticDataMemberDeclaration :: Maybe (MDRef DIDerivedType)
+  , templateParams :: [MDRef DITemplateParameter]
   , alignInBits :: Word32
   } deriving (Eq, Ord, Read, Show, Typeable, Data, Generic)
 

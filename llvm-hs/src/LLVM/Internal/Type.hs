@@ -147,6 +147,7 @@ instance DecodeM DecodeAST A.Type (Ptr FFI.Type) where
          `ap` (decodeM =<< liftIO (FFI.getArrayLength t))
          `ap` (decodeM =<< liftIO (FFI.getElementType t))
       [typeKindP|Token|] -> return A.TokenType
+      [typeKindP|Label|] -> return A.LabelType
       _ -> error $ "unhandled type kind " ++ show k
 
 createNamedType :: A.Name -> EncodeAST (Ptr FFI.Type, Maybe ShortByteString)
