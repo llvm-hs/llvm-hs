@@ -1,4 +1,4 @@
-## unreleased
+## 8.0.0 (2019-03-10)
 
 * Upgrade to LLVM 8
 * Change type of `value` field in `DITemplateValueParameter` to

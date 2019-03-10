@@ -1,4 +1,4 @@
-## unreleased
+## 8.0.0 (2019-03-10)
 
 * Upgrade to LLVM 8
 * It is now possible to define multiple variables with an empty name
