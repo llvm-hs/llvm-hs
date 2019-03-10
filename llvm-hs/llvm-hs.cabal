@@ -48,7 +48,7 @@ extra-source-files: CHANGELOG.md
 source-repository head
   type: git
   location: git://github.com/llvm-hs/llvm-hs.git
-  branch: llvm-7
+  branch: llvm-8
 
 flag shared-llvm
   description: link against llvm shared rather than static library
