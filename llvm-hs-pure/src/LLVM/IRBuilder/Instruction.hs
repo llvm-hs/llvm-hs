@@ -315,9 +315,9 @@ globalStringPtr str nm = do
     , initializer           = Just charArray
     , unnamedAddr           = Just GlobalAddr
     }
-  let address = ConstantOperand $ C.GlobalReference (ptr ty) nm
-      inBounds = True
-      indices = [ConstantOperand (C.Int 32 0), ConstantOperand (C.Int 32 0)]
-      metaData = []
-      gepInstr = GetElementPtr inBounds address indices metaData
-  emitInstr charStar gepInstr
+  emitInstr charStar GetElementPtr
+    { inBounds = True
+    , address = ConstantOperand $ C.GlobalReference (ptr ty) nm
+    , indices = [ConstantOperand (C.Int 32 0), ConstantOperand (C.Int 32 0)]
+    , AST.metadata = []
+    }
