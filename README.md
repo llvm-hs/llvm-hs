@@ -33,7 +33,7 @@ inconveniences.
 Example using Homebrew on macOS:
 
 ```bash
-$ brew install llvm-hs/llvm/llvm-8.0
+$ brew install llvm-hs/llvm/llvm-8
 ```
 
 ### Debian/Ubuntu
