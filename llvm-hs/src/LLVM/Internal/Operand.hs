@@ -422,6 +422,7 @@ genCodingInstance [t|A.Encoding|] ''FFI.Encoding
   , (FFI.DwAtE_signed_char, A.SignedCharEncoding)
   , (FFI.DwAtE_unsigned, A.UnsignedEncoding)
   , (FFI.DwAtE_unsigned_char, A.UnsignedCharEncoding)
+  , (FFI.DwAtE_UTF, A.UTFEncoding)
   ]
 
 genCodingInstance [t|A.ChecksumKind|] ''FFI.ChecksumKind
@@ -975,10 +976,21 @@ encodeDWOp op =
     A.DW_OP_StackValue -> [FFI.DwOp_stack_value]
     A.DW_OP_Swap -> [FFI.DwOp_swap]
     A.DW_OP_ConstU arg -> [FFI.DwOp_constu, arg]
+    A.DW_OP_Lit0 -> [FFI.DwOp_lit0]
     A.DW_OP_PlusUConst arg -> [FFI.DwOp_plus_uconst, arg]
     A.DW_OP_Plus -> [FFI.DwOp_plus]
     A.DW_OP_Minus -> [FFI.DwOp_minus]
     A.DW_OP_Mul -> [FFI.DwOp_mul]
+    A.DW_OP_Div -> [FFI.DwOp_div]
+    A.DW_OP_Mod -> [FFI.DwOp_mod]
+    A.DW_OP_Not -> [FFI.DwOp_not]
+    A.DW_OP_Or -> [FFI.DwOp_or]
+    A.DW_OP_Xor -> [FFI.DwOp_xor]
+    A.DW_OP_And -> [FFI.DwOp_and]
+    A.DW_OP_Shr -> [FFI.DwOp_shr]
+    A.DW_OP_Shra -> [FFI.DwOp_shra]
+    A.DW_OP_Shl -> [FFI.DwOp_shl]
+    A.DW_OP_Dup -> [FFI.DwOp_dup]
     A.DW_OP_Deref -> [FFI.DwOp_deref]
     A.DW_OP_XDeref -> [FFI.DwOp_xderef]
 
@@ -1064,6 +1076,7 @@ instance DecodeM DecodeAST A.DIExpression (Ptr FFI.DIExpression) where
                   expectElems "constu" i 1
                   arg <- FFI.getDIExpressionElement diExpr (i + 1)
                   (A.DW_OP_ConstU arg:) <$> go (i + 2)
+                FFI.DwOp_lit0 -> (A.DW_OP_Lit0 :) <$> go (i + 1)
                 FFI.DwOp_plus_uconst -> do
                   expectElems "uconst" i 1
                   arg <- FFI.getDIExpressionElement diExpr (i + 1)
@@ -1071,6 +1084,16 @@ instance DecodeM DecodeAST A.DIExpression (Ptr FFI.DIExpression) where
                 FFI.DwOp_plus -> (A.DW_OP_Plus :) <$> go (i + 1)
                 FFI.DwOp_minus -> (A.DW_OP_Minus :) <$> go (i + 1)
                 FFI.DwOp_mul -> (A.DW_OP_Mul :) <$> go (i + 1)
+                FFI.DwOp_div -> (A.DW_OP_Div :) <$> go (i + 1)
+                FFI.DwOp_mod -> (A.DW_OP_Mod :) <$> go (i + 1)
+                FFI.DwOp_not -> (A.DW_OP_Not :) <$> go (i + 1)
+                FFI.DwOp_or -> (A.DW_OP_Or :) <$> go (i + 1)
+                FFI.DwOp_xor -> (A.DW_OP_Xor :) <$> go (i + 1)
+                FFI.DwOp_and -> (A.DW_OP_And :) <$> go (i + 1)
+                FFI.DwOp_shr -> (A.DW_OP_Shr :) <$> go (i + 1)
+                FFI.DwOp_shra -> (A.DW_OP_Shra :) <$> go (i + 1)
+                FFI.DwOp_shl -> (A.DW_OP_Shl :) <$> go (i + 1)
+                FFI.DwOp_dup -> (A.DW_OP_Dup :) <$> go (i + 1)
                 FFI.DwOp_deref -> (A.DW_OP_Deref :) <$> go (i + 1)
                 FFI.DwOp_xderef -> (A.DW_OP_XDeref :) <$> go (i + 1)
                 _ -> throwM (DecodeException ("Unknown DW_OP " <> show op))

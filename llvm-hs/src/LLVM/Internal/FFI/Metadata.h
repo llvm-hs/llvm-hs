@@ -51,10 +51,21 @@ enum LLVM_Hs_DwOp {
     macro(stack_value)                \
     macro(swap)                       \
     macro(constu)                     \
+    macro(lit0)                       \
     macro(plus_uconst)                \
     macro(plus)                       \
     macro(minus)                      \
     macro(mul)                        \
+    macro(div)                        \
+    macro(mod)                        \
+    macro(not)                        \
+    macro(or)                         \
+    macro(xor)                        \
+    macro(and)                        \
+    macro(shr)                        \
+    macro(shra)                       \
+    macro(shl)                        \
+    macro(dup)                        \
     macro(deref)                      \
     macro(xderef)
 

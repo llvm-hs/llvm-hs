@@ -1,3 +1,8 @@
+## unreleased
+
+* Change type of `value` field in `DITemplateValueParameter` to
+  `Maybe Metadata` to reflect that it can be null.
+
 ## 7.0.0 (2018-09-28)
 
 * Track type definitions in `MonadModuleBuilder`. This allows us to

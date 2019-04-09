@@ -98,7 +98,7 @@ compiler are required, at least Clang 3.1, GCC 4.8, or Visual Studio 2015
      to [System Integrity Protection](https://en.wikipedia.org/wiki/System_Integrity_Protection):
      ```sh
      cd $INSTALL_PREFIX/lib
-     ln -s libLLVM.dylib libLLVM-7.0.dylib
+     ln -s libLLVM.dylib libLLVM-7.dylib
      install_name_tool -id $PWD/libLTO.dylib libLTO.dylib
      install_name_tool -id $PWD/libLLVM.dylib libLLVM.dylib
      install_name_tool -change '@rpath/libLLVM.dylib' $PWD/libLLVM.dylib libLTO.dylib

@@ -7,6 +7,7 @@ import Prelude hiding (and, or, pred)
 import Control.Monad.State (gets)
 import qualified Data.Map.Lazy as Map
 import Data.Word
+import Data.Char (ord)
 
 import LLVM.AST hiding (args, dests)
 import LLVM.AST.Type as AST
@@ -17,6 +18,9 @@ import qualified LLVM.AST.CallingConvention as CC
 import qualified LLVM.AST.Constant as C
 import qualified LLVM.AST.IntegerPredicate as IP
 import qualified LLVM.AST.FloatingPointPredicate as FP
+
+import LLVM.AST.Global
+import LLVM.AST.Linkage
 
 import LLVM.IRBuilder.Monad
 import LLVM.IRBuilder.Module
@@ -288,3 +292,32 @@ condBr cond tdest fdest = emitTerm $ CondBr cond tdest fdest []
 -- | See <https://llvm.org/docs/LangRef.html#unreachable-instruction reference>.
 unreachable :: MonadIRBuilder m => m ()
 unreachable = emitTerm $ Unreachable []
+
+-- | Creates a series of instructions to generate a pointer to a string
+-- constant. Useful for making format strings to pass to @printf@, for example
+globalStringPtr
+  :: (MonadModuleBuilder m, MonadIRBuilder m)
+  => String       -- ^ The string to generate
+  -> Name         -- ^ Variable name of the pointer
+  -> m Operand
+globalStringPtr str nm = do
+  let asciiVals = map (fromIntegral . ord) str
+      llvmVals  = map (C.Int 8) (asciiVals ++ [0]) -- append null terminator
+      char      = IntegerType 8
+      charStar  = ptr char
+      charArray = C.Array char llvmVals
+      ty        = LLVM.AST.Typed.typeOf charArray
+  emitDefn $ GlobalDefinition globalVariableDefaults
+    { name                  = nm
+    , LLVM.AST.Global.type' = ty
+    , linkage               = External
+    , isConstant            = True
+    , initializer           = Just charArray
+    , unnamedAddr           = Just GlobalAddr
+    }
+  let address = ConstantOperand $ C.GlobalReference (ptr ty) nm
+      inBounds = True
+      indices = [ConstantOperand (C.Int 32 0), ConstantOperand (C.Int 32 0)]
+      metaData = []
+      gepInstr = GetElementPtr inBounds address indices metaData
+  emitInstr charStar gepInstr

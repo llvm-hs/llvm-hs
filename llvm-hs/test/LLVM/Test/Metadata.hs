@@ -82,6 +82,7 @@ instance Arbitrary Encoding where
       , SignedCharEncoding
       , UnsignedEncoding
       , UnsignedCharEncoding
+      , UTFEncoding
       ]
 
 instance Arbitrary ChecksumInfo where
@@ -277,11 +278,13 @@ roundtripDIBasicType = testProperty "roundtrip DIBasicType" $ \diType -> ioPrope
 
 roundtripDIDerivedType :: TestTree
 roundtripDIDerivedType = testProperty "roundtrip DIDerivedType" $ \baseType ->
-  forAll (genDIDerivedType Nothing Nothing (MDRef baseTypeID)) $ \diDerivedType -> ioProperty $
+  forAll (QC.elements [Nothing, Just (MDRef baseTypeID)]) $ \baseType' ->
+  forAll (genDIDerivedType Nothing Nothing baseType') $ \diDerivedType -> ioProperty $
     withContext $ \context -> runEncodeAST context $ do
       let mod = defaultModule
             { moduleDefinitions =
                 [ NamedMetadataDefinition "dummy" [derivedTypeID]
+                , NamedMetadataDefinition "dummy2" [baseTypeID]
                 , MetadataNodeDefinition derivedTypeID (DINode (DIScope (DIType (DIDerivedType diDerivedType))))
                 , MetadataNodeDefinition baseTypeID (DINode (DIScope (DIType baseType)))
                 ]
@@ -297,7 +300,7 @@ instance Arbitrary DerivedTypeTag where
              , ConstType, VolatileType, RestrictType, AtomicType, Member, Inheritance, Friend
              ]
 
-genDIDerivedType :: Maybe (MDRef DIFile) -> Maybe (MDRef DIScope) -> MDRef DIType -> Gen DIDerivedType
+genDIDerivedType :: Maybe (MDRef DIFile) -> Maybe (MDRef DIScope) -> Maybe (MDRef DIType) -> Gen DIDerivedType
 genDIDerivedType file scope baseType =
   DerivedType
     <$> arbitrary
@@ -597,6 +600,7 @@ roundtripDITemplateParameter = testProperty "rountrip DITemplateParameter" $ \di
       let mod = defaultModule
             { moduleDefinitions =
                 [ NamedMetadataDefinition "dummy" [paramID]
+                , NamedMetadataDefinition "dummyTy" [tyID]
                 , MetadataNodeDefinition paramID (DINode (DITemplateParameter param))
                 , MetadataNodeDefinition tyID (DINode (DIScope (DIType diType)))
                 ]
@@ -611,8 +615,8 @@ instance Arbitrary TemplateValueParameterTag where
 
 genDITemplateParameter :: Metadata -> MDRef DIType -> Gen DITemplateParameter
 genDITemplateParameter value ty =
-  oneof [ DITemplateTypeParameter <$> arbitrarySbs <*> pure ty
-        , DITemplateValueParameter <$> arbitrarySbs <*> pure ty <*> pure value <*> arbitrary
+  oneof [ DITemplateTypeParameter <$> arbitrarySbs <*> pure (Just ty)
+        , DITemplateValueParameter <$> arbitrarySbs <*> pure Nothing <*> pure (Just value) <*> arbitrary
         ]
 
 roundtripDINamespace :: TestTree
@@ -668,11 +672,22 @@ instance Arbitrary DWOp where
       [ DwOpFragment <$> (DW_OP_LLVM_Fragment <$> arbitrary <*> arbitrary)
       , pure DW_OP_StackValue
       , pure DW_OP_Swap
+      , pure DW_OP_Lit0
       , DW_OP_ConstU <$> arbitrary
       , DW_OP_PlusUConst <$> arbitrary
       , pure DW_OP_Plus
       , pure DW_OP_Minus
       , pure DW_OP_Mul
+      , pure DW_OP_Div
+      , pure DW_OP_Mod
+      , pure DW_OP_Not
+      , pure DW_OP_Or
+      , pure DW_OP_Xor
+      , pure DW_OP_And
+      , pure DW_OP_Shr
+      , pure DW_OP_Shra
+      , pure DW_OP_Shl
+      , pure DW_OP_Dup
       , pure DW_OP_Deref
       , pure DW_OP_XDeref
       ]
@@ -687,6 +702,21 @@ testFile = do
           pure ()
     ,  testCase "test/debug_metadata_2.ll" $ do
          fStr <- B.readFile "test/debug_metadata_2.ll"
+         withContext $ \context -> do
+           a <- withModuleFromLLVMAssembly' context fStr moduleAST
+           pure ()
+    ,  testCase "test/debug_metadata_3.ll" $ do
+         fStr <- B.readFile "test/debug_metadata_3.ll"
+         withContext $ \context -> do
+           a <- withModuleFromLLVMAssembly' context fStr moduleAST
+           pure ()
+    ,  testCase "test/debug_metadata_4.ll" $ do
+         fStr <- B.readFile "test/debug_metadata_4.ll"
+         withContext $ \context -> do
+           a <- withModuleFromLLVMAssembly' context fStr moduleAST
+           pure ()
+    ,  testCase "test/debug_metadata_5.ll" $ do
+         fStr <- B.readFile "test/debug_metadata_5.ll"
          withContext $ \context -> do
            a <- withModuleFromLLVMAssembly' context fStr moduleAST
            pure ()

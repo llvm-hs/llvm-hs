@@ -65,10 +65,21 @@ data DWOp
   | DW_OP_StackValue -- ^ Must be the last one or followed by a DW_OP_LLVM_Fragment
   | DW_OP_Swap
   | DW_OP_ConstU Word64
+  | DW_OP_Lit0
   | DW_OP_PlusUConst Word64
   | DW_OP_Plus
   | DW_OP_Minus
   | DW_OP_Mul
+  | DW_OP_Div
+  | DW_OP_Mod
+  | DW_OP_Not
+  | DW_OP_Or
+  | DW_OP_Xor
+  | DW_OP_And
+  | DW_OP_Shr
+  | DW_OP_Shra
+  | DW_OP_Shl
+  | DW_OP_Dup
   | DW_OP_Deref
   | DW_OP_XDeref
   deriving (Eq, Ord, Read, Show, Typeable, Data, Generic)
@@ -356,7 +367,8 @@ data DIDerivedType =
     , file :: Maybe (MDRef DIFile)
     , line :: Word32
     , scope :: Maybe (MDRef DIScope)
-    , baseType :: MDRef DIType
+    , baseType :: Maybe (MDRef DIType)
+    -- ^ This can be `Nothing` to represent @void *@
     , sizeInBits :: Word64
     , alignInBits :: Word32
     , offsetInBits :: Word64
@@ -440,6 +452,7 @@ data Encoding
   | SignedCharEncoding
   | UnsignedEncoding
   | UnsignedCharEncoding
+  | UTFEncoding
   deriving (Eq, Ord, Read, Show, Typeable, Data, Generic)
 
 data TemplateValueParameterTag
@@ -452,13 +465,15 @@ data TemplateValueParameterTag
 data DITemplateParameter
   = DITemplateTypeParameter
     { name :: ShortByteString
-    , type' :: MDRef DIType
+    , type' :: Maybe (MDRef DIType)
+    -- ^ For DITemplateTypeParameter this field is required,
+    -- for DITemplateValueParameter it is optional.
     }
   -- ^ <https://llvm.org/docs/LangRef.html#ditemplatetypeparameter>
   | DITemplateValueParameter
     { name :: ShortByteString
-    , type' :: MDRef DIType
-    , value :: Metadata
+    , type' :: Maybe (MDRef DIType)
+    , value :: Maybe Metadata
     , tag :: TemplateValueParameterTag
     }
   -- ^ <https://llvm.org/docs/LangRef.html#ditemplatevalueparameter>
