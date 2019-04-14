@@ -375,7 +375,7 @@ funcCall = mkModule $ execModuleBuilder emptyModuleBuilder $ mdo
   let mallocTy = AST.ptr $ AST.FunctionType (AST.ptr AST.i8) [AST.i64] False
 
   function "omg" [] (AST.void) $ \_ -> do
-    size <- int64 10
+    let size = int64 10
     call (ConstantOperand $ C.GlobalReference mallocTy "malloc") [(size, [])]
     unreachable
   where

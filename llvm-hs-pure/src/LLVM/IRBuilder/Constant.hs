@@ -7,29 +7,26 @@ import           LLVM.AST.Typed
 import           LLVM.AST.Constant
 import           LLVM.AST.Float
 
-int64 :: Applicative f => Integer -> f Operand
-int64 = pure . ConstantOperand . Int 64
+int64 :: Integer -> Operand
+int64 = ConstantOperand . Int 64
+int32 :: Integer -> Operand
+int32 = ConstantOperand . Int 32
+int8 :: Integer -> Operand
+int8  = ConstantOperand . Int 8
+bit :: Integer -> Operand
+bit   = ConstantOperand . Int 1
 
-int32 :: Applicative f => Integer -> f Operand
-int32 = pure . ConstantOperand . Int 32
+double :: Double -> Operand
+double = ConstantOperand . Float . Double
 
-int8 :: Applicative f => Integer -> f Operand
-int8 = pure . ConstantOperand . Int 8
+single :: Float -> Operand
+single = ConstantOperand . Float . Single
 
-bit :: Applicative f => Integer -> f Operand
-bit = pure . ConstantOperand . Int 1
+half :: Word16 -> Operand
+half = ConstantOperand . Float . Half
 
-double :: Applicative f => Double -> f Operand
-double = pure . ConstantOperand . Float . Double
+struct :: Maybe Name -> Bool -> [Constant] -> Operand
+struct nm packing members = ConstantOperand $ Struct nm packing members
 
-single :: Applicative f => Float -> f Operand
-single = pure . ConstantOperand . Float . Single
-
-half :: Applicative f => Word16 -> f Operand
-half = pure . ConstantOperand . Float . Half
-
-struct :: Applicative f => Maybe Name -> Bool -> [Constant] -> f Operand
-struct nm packing members = pure . ConstantOperand $ Struct nm packing members
-
-array :: Applicative f => [Constant] -> f Operand
-array members = pure . ConstantOperand $ Array (typeOf $ head members) members
+array :: [Constant] -> Operand
+array members = ConstantOperand $ Array (typeOf $ head members) members
