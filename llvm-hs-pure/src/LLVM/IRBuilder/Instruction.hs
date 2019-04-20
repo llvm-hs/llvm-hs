@@ -296,10 +296,10 @@ unreachable = emitTerm $ Unreachable []
 -- | Creates a series of instructions to generate a pointer to a string
 -- constant. Useful for making format strings to pass to @printf@, for example
 globalStringPtr
-  :: (MonadModuleBuilder m, MonadIRBuilder m)
+  :: (MonadModuleBuilder m)
   => String       -- ^ The string to generate
   -> Name         -- ^ Variable name of the pointer
-  -> m Operand
+  -> m C.Constant
 globalStringPtr str nm = do
   let asciiVals = map (fromIntegral . ord) str
       llvmVals  = map (C.Int 8) (asciiVals ++ [0]) -- append null terminator
@@ -315,9 +315,6 @@ globalStringPtr str nm = do
     , initializer           = Just charArray
     , unnamedAddr           = Just GlobalAddr
     }
-  emitInstr charStar GetElementPtr
-    { inBounds = True
-    , address = ConstantOperand $ C.GlobalReference (ptr ty) nm
-    , indices = [ConstantOperand (C.Int 32 0), ConstantOperand (C.Int 32 0)]
-    , AST.metadata = []
-    }
+  return $ C.GetElementPtr True
+                           (C.GlobalReference (ptr ty) nm)
+                           [(C.Int 32 0), (C.Int 32 0)]
