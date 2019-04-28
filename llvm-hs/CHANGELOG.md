@@ -1,3 +1,7 @@
+## 7.1.1 (unreleased)
+
+* Relax LLVM version constarin to 7.X
+
 ## 7.1.0 (unreleased)
 
 * Bump LLVM version to 7.1.0
