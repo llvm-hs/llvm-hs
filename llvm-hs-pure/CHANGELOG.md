@@ -2,6 +2,8 @@
 
 * The functions in `LLVM.IRBuilder.Constant` no longer return a
   monadic context. To recover the previous behavior use `pure`.
+* `LLVM.IRBuilder.Instruction.globalStringPtr` returns a `Constant`
+  instead of an `Operand`.
 
 ## 8.0.0 (2019-03-10)
 
