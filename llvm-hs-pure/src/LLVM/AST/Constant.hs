@@ -9,6 +9,7 @@ import LLVM.AST.Type
 import LLVM.AST.Name
 import LLVM.AST.FloatingPointPredicate (FloatingPointPredicate)
 import LLVM.AST.IntegerPredicate (IntegerPredicate)
+import LLVM.AST.AddrSpace ( AddrSpace(..) )
 import qualified LLVM.AST.Float as F
 
 {- |
@@ -236,3 +237,11 @@ unsignedIntegerValue :: Constant -> Integer
 unsignedIntegerValue (Int nBits bits) =
   bits .&. (complement (-1 `shiftL` (fromIntegral nBits)))
 unsignedIntegerValue _ = error "unsignedIntegerValue is only defined for Int"
+
+-- platform independant sizeof: a gep to the end of a nullptr and some bitcasting.
+sizeof :: Type -> Constant
+sizeof t = PtrToInt szPtr (IntegerType 32)
+  where
+     ptrType = PointerType t (AddrSpace 0)
+     nullPtr = IntToPtr (Int 32 0) ptrType
+     szPtr   = GetElementPtr True nullPtr [Int 32 1]
