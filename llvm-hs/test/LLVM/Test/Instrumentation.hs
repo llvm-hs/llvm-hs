@@ -39,7 +39,7 @@ instrument s m = withContext $ \context -> withModuleFromAST context m $ \mIn' -
   moduleAST mIn'
 
 ast = do
- dl <- withHostTargetMachine getTargetMachineDataLayout
+ dl <- withHostTargetMachineDefault getTargetMachineDataLayout
  triple <- liftIO getDefaultTargetTriple
  return $ Module "<string>" "<string>" (Just dl) (Just triple) [
   -- This function is needed for AddressSanitizerModule
@@ -149,7 +149,7 @@ tests = testGroup "Instrumentation" [
     testCase n $ do
       triple <- getProcessTargetTriple 
       withTargetLibraryInfo triple $ \tli -> do
-        dl <- withHostTargetMachine getTargetMachineDataLayout
+        dl <- withHostTargetMachineDefault getTargetMachineDataLayout
         ast <- ast
         ast' <- instrument (defaultPassSetSpec { transforms = [p], dataLayout = Just dl, targetLibraryInfo = Just tli }) ast
         let names ast = [ n | GlobalDefinition d <- moduleDefinitions ast, Name n <- return (G.name d) ]

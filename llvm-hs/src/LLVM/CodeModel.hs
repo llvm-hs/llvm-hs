@@ -1,4 +1,4 @@
--- | Relocations, used in specifying TargetMachine
+-- | Code model, used in specifying TargetMachine
 module LLVM.CodeModel where
 
 import LLVM.Prelude

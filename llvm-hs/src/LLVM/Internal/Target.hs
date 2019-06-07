@@ -406,16 +406,37 @@ getTargetMachineDataLayout (TargetMachine m) = do
 initializeAllTargets :: IO ()
 initializeAllTargets = FFI.initializeAllTargets
 
--- | Bracket creation and destruction of a 'TargetMachine' configured for the host
-withHostTargetMachine :: (TargetMachine -> IO a) -> IO a
-withHostTargetMachine f = do
+-- | Bracket creation and destruction of a 'TargetMachine' configured for the host.
+--
+-- This function infers and fills the properties of the host machine
+-- (architecture, CPU type, operating system etc.) to construct
+-- a 'TargetMachine' value, but other parameters of 'TargetMachine' (the
+-- code model, relocation model, and optimization level) have to be
+-- provided by the user. For instance, for the JIT-compiled code that you
+-- want to dynamically load you probably want to use the 'Reloc.PIC'
+-- relocation model.
+withHostTargetMachine
+  :: Reloc.Model
+  -> CodeModel.Model
+  -> CodeGenOpt.Level
+  -> (TargetMachine -> IO a) -> IO a
+withHostTargetMachine relocModel codeModel codeGenOpt f = do
   initializeAllTargets
   triple <- getProcessTargetTriple
   cpu <- getHostCPUName
   features <- getHostCPUFeatures
   (target, _) <- lookupTarget Nothing triple
   withTargetOptions $ \options ->
-    withTargetMachine target triple cpu features options Reloc.Default CodeModel.Default CodeGenOpt.Default f
+    withTargetMachine target triple cpu features options relocModel codeModel codeGenOpt f
+
+-- | Like 'withHostTargetMachine', but assumes the default values for the
+-- relocation model, code model, and optimization level ('Reloc.Default',
+-- 'CodeModel.Default', 'CodeGenOpt.Default' respectively).
+--
+-- Note that the 'Reloc.Default' relocation model __is not__ suitable for
+-- JIT compilation; use 'withHostTargetMachine' and 'Reloc.PIC' instead.
+withHostTargetMachineDefault :: (TargetMachine -> IO a) -> IO a
+withHostTargetMachineDefault f = withHostTargetMachine Reloc.Default CodeModel.Default CodeGenOpt.Default f
 
 -- | <http://llvm.org/docs/doxygen/html/classllvm_1_1TargetLibraryInfo.html>
 newtype TargetLibraryInfo = TargetLibraryInfo (Ptr FFI.TargetLibraryInfo)

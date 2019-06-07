@@ -24,7 +24,7 @@ tests =
         withContext $ \ctx ->
           withSystemTempFile "foo" $ \objFile handle -> do
             hClose handle
-            withHostTargetMachine $ \machine ->
+            withHostTargetMachineDefault $ \machine ->
               withModuleFromLLVMAssembly ctx ll $ \mdl -> do
                 obj <- moduleObject machine mdl
                 _ <- writeObjectToFile machine (File objFile) mdl
