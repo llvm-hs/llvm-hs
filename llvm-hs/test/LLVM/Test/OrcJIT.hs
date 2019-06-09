@@ -27,6 +27,9 @@ import LLVM.OrcJIT
 import qualified LLVM.Internal.OrcJIT.CompileLayer as CL
 import qualified LLVM.Internal.OrcJIT.LinkingLayer as LL
 import LLVM.Target
+import qualified LLVM.Relocation as Reloc
+import qualified LLVM.CodeModel as CodeModel
+import qualified LLVM.CodeGenOpt as CodeGenOpt
 
 testModule :: ByteString
 testModule =
@@ -76,7 +79,7 @@ tests =
     testCase "eager compilation" $ do
       resolvers <- newIORef Map.empty
       withTestModule $ \mod ->
-        withHostTargetMachine $ \tm ->
+        withHostTargetMachine Reloc.PIC CodeModel.Default CodeGenOpt.Default $ \tm ->
         withExecutionSession $ \es ->
         withObjectLinkingLayer es (\k -> fmap (\rs -> rs Map.! k) (readIORef resolvers)) $ \linkingLayer ->
         withIRCompileLayer linkingLayer tm $ \compileLayer -> do
@@ -100,7 +103,7 @@ tests =
       passmanagerSuccessful <- newIORef False
       resolvers <- newIORef Map.empty
       withTestModule $ \mod ->
-        withHostTargetMachine $ \tm ->
+        withHostTargetMachine Reloc.PIC CodeModel.Default CodeGenOpt.Default $ \tm ->
         withExecutionSession $ \es ->
         withObjectLinkingLayer es (\k -> fmap (\rs -> rs Map.! k) (readIORef resolvers)) $ \linkingLayer ->
         withIRCompileLayer linkingLayer tm $ \compileLayer ->
@@ -121,7 +124,7 @@ tests =
       let getResolver k = fmap (Map.! k) (readIORef resolvers)
           setResolver k r = modifyIORef' resolvers (Map.insert k r)
       withTestModule $ \mod ->
-        withHostTargetMachine $ \tm -> do
+        withHostTargetMachine Reloc.PIC CodeModel.Default CodeGenOpt.Default $ \tm -> do
           triple <- getTargetMachineTriple tm
           withExecutionSession $ \es ->
             withObjectLinkingLayer es getResolver $ \linkingLayer ->

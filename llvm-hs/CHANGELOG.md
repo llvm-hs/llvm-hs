@@ -1,3 +1,9 @@
+## 8.1.0
+
+* Change `withHostTargetMachine` to accept the code model, relocation model,
+  and optimization level as arguments. The old behaviour is available
+  under the name `withHostTargetMachineDefault`.
+
 ## 8.0.0 (2019-03-10)
 
 * Upgrade to LLVM 8
