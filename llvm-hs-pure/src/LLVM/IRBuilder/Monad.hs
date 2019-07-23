@@ -155,10 +155,8 @@ freshName suggestion = do
   usedNames <- liftIRState $ gets builderUsedNames
   let
     nameCount = fromMaybe 0 $ M.lookup suggestion usedNames
-    unusedName = if nameCount == 0
-                   then suggestion
-                   else suggestion <> fromString (show nameCount)
-    updatedUsedNames = M.insert unusedName (nameCount + 1) usedNames
+    unusedName = suggestion <> fromString ("_" <> show nameCount)
+    updatedUsedNames = M.insert suggestion (nameCount + 1) usedNames
   liftIRState $ modify $ \s -> s { builderUsedNames = updatedUsedNames }
   return $ Name unusedName
 
