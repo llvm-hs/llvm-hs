@@ -32,8 +32,8 @@ import Control.Monad.Trans.Identity
 
 import Data.Bifunctor
 import Data.String
-import Data.HashSet(HashSet)
-import qualified Data.HashSet as HS
+import Data.Map.Strict(Map)
+import qualified Data.Map.Strict as M
 
 import LLVM.AST
 
@@ -78,7 +78,7 @@ emptyPartialBlock nm = PartialBlock nm mempty Nothing
 -- | Builder monad state
 data IRBuilderState = IRBuilderState
   { builderSupply :: !Word
-  , builderUsedNames :: !(HashSet ShortByteString)
+  , builderUsedNames :: !(Map ShortByteString Word)
   , builderNameSuggestion :: !(Maybe ShortByteString)
   , builderBlocks :: SnocList BasicBlock
   , builderBlock :: !(Maybe PartialBlock)
@@ -154,9 +154,12 @@ freshName :: MonadIRBuilder m => ShortByteString -> m Name
 freshName suggestion = do
   usedNames <- liftIRState $ gets builderUsedNames
   let
-    candidates = suggestion : [suggestion <> fromString (show n) | n <- [(1 :: Int)..]]
-    (unusedName:_) = filter (not . (`HS.member` usedNames)) candidates
-  liftIRState $ modify $ \s -> s { builderUsedNames = HS.insert unusedName $ builderUsedNames s }
+    nameCount = fromMaybe 0 $ M.lookup suggestion usedNames
+    unusedName = if nameCount == 0
+                   then suggestion
+                   else suggestion <> fromString (show nameCount)
+    updatedUsedNames = M.insert unusedName (nameCount + 1) usedNames
+  liftIRState $ modify $ \s -> s { builderUsedNames = updatedUsedNames }
   return $ Name unusedName
 
 -- | Generate a fresh numbered name
