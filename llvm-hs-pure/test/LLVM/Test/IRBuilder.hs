@@ -28,18 +28,18 @@ tests =
             [ GlobalDefinition functionDefaults {
                 name = "add",
                 parameters =
-                  ( [ Parameter AST.i32 "a" []
-                    , Parameter AST.i32 "b" []
+                  ( [ Parameter AST.i32 "a_0" []
+                    , Parameter AST.i32 "b_0" []
                     ]
                   , False
                   ),
                 returnType = AST.i32,
                 basicBlocks =
                   [ BasicBlock
-                      "entry"
+                      "entry_0"
                       [ UnName 0 := Add {
-                          operand0 = LocalReference AST.i32 "a",
-                          operand1 = LocalReference AST.i32 "b",
+                          operand0 = LocalReference AST.i32 "a_0",
+                          operand1 = LocalReference AST.i32 "b_0",
                           nsw = False,
                           nuw = False,
                           metadata = []
@@ -65,29 +65,29 @@ tests =
                   name = "foo",
                   returnType = AST.double,
                   basicBlocks =
-                    [ BasicBlock (UnName 0) [ "xxx" := fadd f10 f10]
+                    [ BasicBlock (UnName 0) [ "xxx_0" := fadd f10 f10]
                         (Do (Ret Nothing []))
                     , BasicBlock
-                        "blk"
+                        "blk_0"
                         [ UnName 1 := fadd f10 f10
                         , UnName 2 := fadd (LocalReference AST.double (UnName 1)) (LocalReference AST.double (UnName 1))
                         , UnName 3 := add (ConstantOperand (C.Int 32 10)) (ConstantOperand (C.Int 32 10))
                         ]
-                        (Do (Br "blk1" []))
+                        (Do (Br "blk_1" []))
                     , BasicBlock
-                        "blk1"
-                        [ "c" := fadd f10 f10
-                        , UnName 4 := fadd (LocalReference AST.double "c") (LocalReference AST.double "c")
+                        "blk_1"
+                        [ "c_0" := fadd f10 f10
+                        , UnName 4 := fadd (LocalReference AST.double "c_0") (LocalReference AST.double "c_0")
                         ]
-                        (Do (Br "blk2" []))
+                        (Do (Br "blk_2" []))
                     , BasicBlock
-                        "blk2"
-                        [ "phi" :=
+                        "blk_2"
+                        [ "phi_0" :=
                             Phi
                               AST.double
-                              [ ( f10, "blk" )
-                              , ( f10, "blk1" )
-                              , ( f10, "blk2" )
+                              [ ( f10, "blk_0" )
+                              , ( f10, "blk_1" )
+                              , ( f10, "blk_2" )
                               ]
                               []
                         , UnName 5 := fadd f10 f10
@@ -112,9 +112,9 @@ tests =
                   name = "baz",
                   parameters =
                     ( [ Parameter AST.i32 (UnName 0) []
-                      , Parameter AST.double "arg" []
+                      , Parameter AST.double "arg_0" []
                       , Parameter AST.i32 (UnName 1) []
-                      , Parameter AST.double "arg1" []]
+                      , Parameter AST.double "arg_1" []]
                     , False),
                   returnType = AST.double,
                   basicBlocks =
@@ -132,11 +132,11 @@ tests =
                         (Do (Br (UnName 4) []))
                     , BasicBlock
                         (UnName 4)
-                        [ "arg2" := fadd (LocalReference AST.double "arg") f10
-                        , UnName 5 := fadd (LocalReference AST.double "arg2") (LocalReference AST.double "arg2")
+                        [ "arg_2" := fadd (LocalReference AST.double "arg_0") f10
+                        , UnName 5 := fadd (LocalReference AST.double "arg_2") (LocalReference AST.double "arg_2")
                         , UnName 6 := Select {
                             condition' = ConstantOperand (C.Int 1 0),
-                            trueValue = LocalReference AST.double "arg2",
+                            trueValue = LocalReference AST.double "arg_2",
                             falseValue = LocalReference AST.double (UnName 5),
                             metadata = []
                           }
@@ -177,16 +177,16 @@ recursiveFunctionCalls = do
       [ GlobalDefinition functionDefaults
           { returnType = AST.i32
           , name = Name "f"
-          , parameters = ([Parameter AST.i32 "a" []], False)
+          , parameters = ([Parameter AST.i32 "a_0" []], False)
           , basicBlocks =
-              [ BasicBlock (Name "entry")
+              [ BasicBlock (Name "entry_0")
                  [ UnName 0 := Call
                     { tailCallKind = Nothing
                     , callingConvention = CC.C
                     , returnAttributes = []
                     , I.function =
                         Right (ConstantOperand (C.GlobalReference (AST.ptr (FunctionType AST.i32 [AST.i32] False)) (Name "f")))
-                    , arguments = [(LocalReference (IntegerType {typeBits = 32}) (Name "a"),[])]
+                    , arguments = [(LocalReference (IntegerType {typeBits = 32}) (Name "a_0"),[])]
                     , functionAttributes = []
                     , metadata = []
                     }
@@ -259,29 +259,29 @@ resolvesTypeDefs = do
             [ TypeDefinition "pair" (Just (StructureType False [AST.i32, AST.i32]))
             , GlobalDefinition functionDefaults
               { name = "f"
-              , parameters = ( [ Parameter (AST.ptr (NamedTypeReference "pair")) "ptr" []
-                               , Parameter AST.i32 "x" []
-                               , Parameter AST.i32 "y" []]
+              , parameters = ( [ Parameter (AST.ptr (NamedTypeReference "pair")) "ptr_0" []
+                               , Parameter AST.i32 "x_0" []
+                               , Parameter AST.i32 "y_0" []]
                              , False)
               , returnType = AST.void
               , basicBlocks =
                 [ BasicBlock (UnName 0)
                   [ UnName 1 := GetElementPtr
                       { inBounds = False
-                      , address = LocalReference (AST.ptr (NamedTypeReference "pair")) "ptr"
+                      , address = LocalReference (AST.ptr (NamedTypeReference "pair")) "ptr_0"
                       , indices = [ConstantOperand (C.Int 32 0), ConstantOperand (C.Int 32 0)]
                       , metadata = []
                       }
                   , UnName 2 := GetElementPtr
                       { inBounds = False
-                      , address = LocalReference (AST.ptr (NamedTypeReference "pair")) "ptr"
+                      , address = LocalReference (AST.ptr (NamedTypeReference "pair")) "ptr_0"
                       , indices = [ConstantOperand (C.Int 32 0), ConstantOperand (C.Int 32 1)]
                       , metadata = []
                       }
                   , Do $ Store
                       { volatile = False
                       , address = LocalReference (AST.ptr AST.i32) (UnName 1)
-                      , value = LocalReference AST.i32 "x"
+                      , value = LocalReference AST.i32 "x_0"
                       , maybeAtomicity = Nothing
                       , alignment = 0
                       , metadata = []
@@ -289,7 +289,7 @@ resolvesTypeDefs = do
                   , Do $ Store
                       { volatile = False
                       , address = LocalReference (AST.ptr AST.i32) (UnName 2)
-                      , value = LocalReference AST.i32 "y"
+                      , value = LocalReference AST.i32 "y_0"
                       , maybeAtomicity = Nothing
                       , alignment = 0
                       , metadata = []
