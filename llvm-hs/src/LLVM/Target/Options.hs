@@ -101,7 +101,6 @@ data Options = Options {
 
 -- | <http://llvm.org/doxygen/classllvm_1_1MCTargetOptions.html>
 data MachineCodeOptions = MachineCodeOptions {
-  sanitizeAddresses :: Bool,
   relaxAll :: Bool,
   noExecutableStack :: Bool,
   fatalWarnings :: Bool,

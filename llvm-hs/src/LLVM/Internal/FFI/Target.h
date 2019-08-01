@@ -54,7 +54,6 @@ typedef enum {
 } LLVM_Hs_TargetOptionFlag;
 
 #define LLVM_HS_FOR_EACH_MC_TARGET_OPTION_FLAG(macro)  \
-  macro(SanitizeAddress)                                \
   macro(MCRelaxAll)                                     \
   macro(MCNoExecStack)                                  \
   macro(MCFatalWarnings)                                \

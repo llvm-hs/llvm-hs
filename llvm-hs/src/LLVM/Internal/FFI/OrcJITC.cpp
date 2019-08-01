@@ -1,3 +1,7 @@
+// We ignore deprecations until we get around to updating to the new OrcJIT API
+#pragma GCC diagnostic ignored "-Wdeprecated-declarations"
+#pragma clang diagnostic ignored "-Wdeprecated-declarations"
+
 #include "llvm/Support/Error.h"
 
 #include "LLVM/Internal/FFI/ErrorHandling.hpp"

@@ -9,6 +9,7 @@
 #include "llvm/Transforms/IPO/PassManagerBuilder.h"
 #include "llvm/Transforms/Vectorize.h"
 #include "llvm/Transforms/Instrumentation.h"
+#include "llvm/Transforms/Instrumentation/AddressSanitizer.h"
 #include "llvm/Transforms/Instrumentation/BoundsChecking.h"
 #include "llvm/Transforms/Instrumentation/MemorySanitizer.h"
 #include "llvm/Transforms/Instrumentation/ThreadSanitizer.h"
@@ -146,14 +147,16 @@ void LLVM_Hs_AddAddressSanitizerFunctionPass(
 void LLVM_Hs_AddAddressSanitizerModulePass(
 	LLVMPassManagerRef PM
 ) {
-	unwrap(PM)->add(createAddressSanitizerModulePass());
+	unwrap(PM)->add(createModuleAddressSanitizerLegacyPassPass());
 }
 
 void LLVM_Hs_AddMemorySanitizerPass(
 	LLVMPassManagerRef PM,
-	LLVMBool trackOrigins
+	LLVMBool trackOrigins,
+    LLVMBool recover,
+    LLVMBool kernel
 ) {
-	unwrap(PM)->add(createMemorySanitizerLegacyPassPass(trackOrigins));
+	unwrap(PM)->add(createMemorySanitizerLegacyPassPass({trackOrigins, recover, kernel}));
 }
 
 void LLVM_Hs_AddThreadSanitizerPass(
