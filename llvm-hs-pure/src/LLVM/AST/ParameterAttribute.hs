@@ -17,6 +17,7 @@ data ParameterAttribute
     | ReadNone
     | ReadOnly
     | WriteOnly
+    | ImmArg
     | InAlloca
     | NonNull
     | Dereferenceable Word64

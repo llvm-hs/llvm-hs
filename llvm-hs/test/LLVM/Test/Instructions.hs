@@ -737,7 +737,6 @@ tests = testGroup "Instructions" [
        \source_filename = \"<string>\"\n\
        \\n\
        \define void @0() {\n\
-       \; <label>:0:\n\
        \  switch i16 2, label %foo [\n\
        \    i16 0, label %0\n\
        \    i16 2, label %foo\n\
@@ -790,7 +789,7 @@ tests = testGroup "Instructions" [
        \  %1 = load i8*, i8** @0\n\
        \  indirectbr i8* %1, [label %2]\n\
        \\n\
-       \; <label>:2:                                      ; preds = %0\n\
+       \2:                                                ; preds = %0\n\
        \  ret void\n\
        \}\n"
      ), (

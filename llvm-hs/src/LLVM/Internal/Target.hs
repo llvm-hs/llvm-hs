@@ -203,7 +203,6 @@ pokeTargetOptions hOpts opts@(TargetOptions cOpts) = do
 pokeMachineCodeOptions :: TO.MachineCodeOptions -> MCTargetOptions -> IO ()
 pokeMachineCodeOptions hOpts (MCTargetOptions cOpts) =
   mapM_ (\(c, ha) -> FFI.setMCTargetOptionFlag cOpts c =<< encodeM (ha hOpts)) [
-    (FFI.mcTargetOptionFlagSanitizeAddress, TO.sanitizeAddresses),
     (FFI.mcTargetOptionFlagMCRelaxAll, TO.relaxAll),
     (FFI.mcTargetOptionFlagMCNoExecStack, TO.noExecutableStack),
     (FFI.mcTargetOptionFlagMCFatalWarnings, TO.fatalWarnings),
@@ -279,8 +278,6 @@ peekTargetOptions opts@(TargetOptions tOpts) = do
 peekMachineCodeOptions :: MCTargetOptions -> IO TO.MachineCodeOptions
 peekMachineCodeOptions (MCTargetOptions tOpts) = do
   let gof = decodeM <=< FFI.getMCTargetOptionsFlag tOpts
-  sanitizeAddresses
-    <- gof FFI.mcTargetOptionFlagSanitizeAddress
   relaxAll
     <- gof FFI.mcTargetOptionFlagMCRelaxAll
   noExecutableStack

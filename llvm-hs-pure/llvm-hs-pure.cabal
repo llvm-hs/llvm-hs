@@ -1,5 +1,5 @@
 name: llvm-hs-pure
-version: 8.0.0
+version: 9.0.0
 license: BSD3
 license-file: LICENSE
 author: Anthony Cowley, Stephen Diehl, Moritz Kiefer <moritz.kiefer@purelyfunctional.org>, Benjamin S. Scarlet
@@ -16,13 +16,13 @@ description:
   llvm-hs-pure is a set of pure Haskell types and functions for interacting with LLVM <http://llvm.org/>.
   It includes an ADT to represent LLVM IR (<http://llvm.org/docs/LangRef.html>). The llvm-hs package
   builds on this one with FFI bindings to LLVM, but llvm-hs-pure does not require LLVM to be available.
-tested-with: GHC == 8.0.2, GHC == 8.2.2, GHC == 8.4.4, GHC == 8.6.4
+tested-with: GHC == 8.0.2, GHC == 8.2.2, GHC == 8.4.4, GHC == 8.6.5
 extra-source-files: CHANGELOG.md
 
 source-repository head
   type: git
   location: git://github.com/llvm-hs/llvm-hs.git
-  branch: llvm-8
+  branch: llvm-9
 
 library
   default-language: Haskell2010

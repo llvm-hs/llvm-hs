@@ -146,7 +146,15 @@ data DIFlag
   | IntroducedVirtual
   | BitField
   | NoReturn
-  | MainSubprogram
+  | ArgumentNotModified
+  | TypePassByValue
+  | TypePassByReference
+  | EnumClass
+  | Thunk
+  | NonTrivial
+  | BigEndian
+  | LittleEndian
+  | AllCallsDescribed
   deriving (Eq, Ord, Read, Show, Typeable, Data, Generic)
 
 data DIMacroInfo = Define | Undef

@@ -88,7 +88,6 @@ instance Arbitrary Options where
 
 instance Arbitrary MachineCodeOptions where
   arbitrary = do
-    sanitizeAddresses <- arbitrary
     relaxAll <- arbitrary
     noExecutableStack <- arbitrary
     fatalWarnings <- arbitrary

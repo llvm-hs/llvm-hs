@@ -78,7 +78,15 @@ instance Applicative m => EncodeM m [A.DIFlag] FFI.DIFlags where
           A.IntroducedVirtual -> 1 `shiftL` 18
           A.BitField -> 1 `shiftL` 19
           A.NoReturn -> 1 `shiftL` 20
-          A.MainSubprogram -> 1 `shiftL` 21
+          A.ArgumentNotModified -> 1 `shiftL` 21
+          A.TypePassByValue -> 1 `shiftL` 22
+          A.TypePassByReference -> 1 `shiftL` 23
+          A.EnumClass -> 1 `shiftL` 24
+          A.Thunk -> 1 `shiftL` 25
+          A.NonTrivial -> 1 `shiftL` 26
+          A.BigEndian -> 1 `shiftL` 27
+          A.LittleEndian -> 1 `shiftL` 28
+          A.AllCallsDescribed -> 1 `shiftL` 29
 
 instance Applicative m => DecodeM m [A.DIFlag] FFI.DIFlags where
   decodeM (FFI.DIFlags f) =
@@ -119,7 +127,15 @@ instance Applicative m => DecodeM m [A.DIFlag] FFI.DIFlags where
         , A.IntroducedVirtual
         , A.BitField
         , A.NoReturn
-        , A.MainSubprogram
+        , A.ArgumentNotModified
+        , A.TypePassByValue
+        , A.TypePassByReference
+        , A.EnumClass
+        , A.Thunk
+        , A.NonTrivial
+        , A.BigEndian
+        , A.LittleEndian
+        , A.AllCallsDescribed
         ]
 
 instance DecodeM DecodeAST A.Operand (Ptr FFI.Value) where

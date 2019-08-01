@@ -41,10 +41,10 @@ lookupFlagAssignment = lookup
 #endif
 
 llvmVersion :: Version
-llvmVersion = mkVersion [8,0]
+llvmVersion = mkVersion [9,0]
 
--- Ordered by decreasing specificty so we will prefer llvm-config-8.0
--- over llvm-config-8 over llvm-config.
+-- Ordered by decreasing specificty so we will prefer llvm-config-9.0
+-- over llvm-config-9 over llvm-config.
 llvmConfigNames :: [String]
 llvmConfigNames = reverse versionedConfigs ++ ["llvm-config"]
   where

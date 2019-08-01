@@ -16,6 +16,7 @@
 	macro(Convergent,F,F,T)                           \
 	macro(Dereferenceable,T,T,F)                      \
 	macro(DereferenceableOrNull,T,T,F)                \
+    macro(ImmArg,T,F,F)                               \
 	macro(InAlloca,T,F,F)                             \
 	macro(InReg,T,T,F)                                \
 	macro(InaccessibleMemOnly,F,F,T) \
@@ -30,11 +31,13 @@
 	macro(NoCapture,T,F,F)                            \
     macro(NoCfCheck,F,F,T)                            \
 	macro(NoDuplicate,F,F,T)                          \
+	macro(NoFree,F,F,T)                               \
 	macro(NoImplicitFloat,F,F,T)                      \
 	macro(NoInline,F,F,T)                             \
 	macro(NoRecurse,F,F,T)                            \
 	macro(NoRedZone,F,F,T)                            \
 	macro(NoReturn,F,F,T)                             \
+	macro(NoSync,F,F,T)                               \
 	macro(NoUnwind,F,F,T)                             \
 	macro(NonLazyBind,F,F,T)                          \
 	macro(NonNull,T,T,F)                              \
@@ -49,6 +52,7 @@
 	macro(SafeStack,F,F,T)                            \
 	macro(SanitizeAddress,F,F,T)                      \
     macro(SanitizeHWAddress,F,F,T)                    \
+    macro(SanitizeMemTag,F,F,T)                       \
 	macro(SanitizeMemory,F,F,T)                       \
 	macro(SanitizeThread,F,F,T)                       \
     macro(ShadowCallStack,F,F,T)                      \
@@ -63,6 +67,7 @@
 	macro(SwiftError,T,F,F)                           \
 	macro(SwiftSelf,T,F,F)                            \
 	macro(UWTable,F,F,T)                              \
+	macro(WillReturn,F,F,T)                           \
 	macro(WriteOnly,T,F,T)                            \
 	macro(ZExt,T,T,F)                                 \
 	macro(EndAttrKinds,F,F,F)
