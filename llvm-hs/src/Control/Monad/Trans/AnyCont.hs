@@ -22,7 +22,7 @@ instance Monad m => Monad (AnyContT m) where
   AnyContT f >>= k = AnyContT $ f >>= unAnyContT . k
   return a = AnyContT $ return a
 #if !(MIN_VERSION_base(4,13,0))
-  fail s = Fail.fail
+  fail s = AnyContT (ContT (\_ -> Cont.fail s))
 #endif
 
 instance MonadFail m => MonadFail (AnyContT m) where

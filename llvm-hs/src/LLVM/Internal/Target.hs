@@ -11,6 +11,7 @@ import LLVM.Prelude
 
 import Control.Monad.AnyCont
 import Control.Monad.Catch
+import Control.Monad.Fail (MonadFail)
 import Control.Monad.IO.Class
 import Control.Monad.Trans.Except
 
