@@ -1,4 +1,4 @@
-## unreleased
+## 9.0.0 (2019-09-06)
 
 * The functions in `LLVM.IRBuilder.Constant` no longer return a
   monadic context. To recover the previous behavior use `pure`. (Thanks to @jfaure)

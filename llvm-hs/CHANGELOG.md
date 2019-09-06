@@ -1,4 +1,4 @@
-## unreleased
+## 9.0.0 (2019-09-06)
 
 * Support GHC 8.8
 * Update to LLVM 9.0
