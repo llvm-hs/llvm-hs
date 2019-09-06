@@ -1,3 +1,18 @@
+## unreleased
+
+* Support GHC 8.8
+* Update to LLVM 9.0
+  * Note that this is the last LLVM release that supports the current
+    OrcJIT APIs and `llvm-hs` does not yet have bindings for OrcJIT
+    V2. If you are interested in working on that please get in
+    touch. See https://github.com/llvm-hs/llvm-hs/issues/276 for more
+    details.
+  * The `sanitizeAddresses` field from `MachineCodeOptions` has been
+    removed following a change in LLVM.
+  * The `MemorySanitizer` now has two new options `kernel` and
+    `recover` matching the options in LLVM.
+
+
 ## 8.1.0
 
 * Change `withHostTargetMachine` to accept the code model, relocation model,
