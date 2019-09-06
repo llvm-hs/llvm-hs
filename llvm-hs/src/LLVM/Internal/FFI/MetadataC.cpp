@@ -340,15 +340,15 @@ MDTuple* LLVM_Hs_DICompositeType_GetElements(DICompositeType *dt) {
     return cast_or_null<MDTuple>(dt->getRawElements());
 }
 
-DITypeRef LLVM_Hs_DICompositeTypeGetVTableHolder(DICompositeType *dt) {
+DIType* LLVM_Hs_DICompositeTypeGetVTableHolder(DICompositeType *dt) {
     return dt->getVTableHolder();
 }
 
-DITypeRef LLVM_Hs_DICompositeTypeGetBaseType(DICompositeType *dt) {
+DIType* LLVM_Hs_DICompositeTypeGetBaseType(DICompositeType *dt) {
     return dt->getBaseType();
 }
 
-DITypeRef LLVM_Hs_DIDerivedTypeGetBaseType(DIDerivedType *dt) {
+DIType* LLVM_Hs_DIDerivedTypeGetBaseType(DIDerivedType *dt) {
     return dt->getBaseType();
 }
 
@@ -507,7 +507,7 @@ DISubroutineType* LLVM_Hs_DISubprogram_GetType(DISubprogram* p) {
 }
 
 DIType* LLVM_Hs_DISubprogram_GetContainingType(DISubprogram* p) {
-    return p->getContainingType().resolve();
+    return p->getContainingType();
 }
 
 DICompileUnit* LLVM_Hs_DISubprogram_GetUnit(DISubprogram* p) {
@@ -588,7 +588,7 @@ unsigned LLVM_Hs_DIVariable_GetLine(DIVariable* v) {
 }
 
 DIType* LLVM_Hs_DIVariable_GetType(DIVariable* v) {
-    return v->getType().resolve();
+    return v->getType();
 }
 
 uint32_t LLVM_Hs_DIVariable_GetAlignInBits(DIVariable* v) {
@@ -745,7 +745,7 @@ MDString* LLVM_Hs_DITemplateParameter_GetName(DITemplateParameter* p) {
 }
 
 DIType* LLVM_Hs_DITemplateParameter_GetType(DITemplateParameter* p) {
-    return p->getType().resolve();
+    return p->getType();
 }
 
 // DITemplateTypeParameter
@@ -821,7 +821,7 @@ DIScope* LLVM_Hs_DIImportedEntity_GetScope(DIImportedEntity* e) {
 }
 
 DINode* LLVM_Hs_DIImportedEntity_GetEntity(DIImportedEntity* e) {
-    return e->getEntity().resolve();
+    return e->getEntity();
 }
 
 MDString* LLVM_Hs_DIImportedEntity_GetName(DIImportedEntity* e) {
@@ -877,7 +877,7 @@ MDString* LLVM_Hs_DIObjCProperty_GetSetterName(DIObjCProperty* o) {
 }
 
 DIType* LLVM_Hs_DIObjCProperty_GetType(DIObjCProperty* o) {
-    return o->getType().resolve();
+    return o->getType();
 }
 
 // DIModule

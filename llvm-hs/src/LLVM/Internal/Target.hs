@@ -11,6 +11,7 @@ import LLVM.Prelude
 
 import Control.Monad.AnyCont
 import Control.Monad.Catch
+import Control.Monad.Fail (MonadFail)
 import Control.Monad.IO.Class
 import Control.Monad.Trans.Except
 
@@ -124,7 +125,7 @@ newtype CPUFeature = CPUFeature ByteString
 instance EncodeM e ByteString es => EncodeM e (Map CPUFeature Bool) es where
   encodeM = encodeM . ByteString.intercalate "," . map (\(CPUFeature f, enabled) -> (if enabled then "+" else "-") <> f) . Map.toList
 
-instance (Monad d, DecodeM d ByteString es) => DecodeM d (Map CPUFeature Bool) es where
+instance (MonadFail d, DecodeM d ByteString es) => DecodeM d (Map CPUFeature Bool) es where
   decodeM es = do
     s <- decodeM es
     let flag = do
@@ -203,7 +204,6 @@ pokeTargetOptions hOpts opts@(TargetOptions cOpts) = do
 pokeMachineCodeOptions :: TO.MachineCodeOptions -> MCTargetOptions -> IO ()
 pokeMachineCodeOptions hOpts (MCTargetOptions cOpts) =
   mapM_ (\(c, ha) -> FFI.setMCTargetOptionFlag cOpts c =<< encodeM (ha hOpts)) [
-    (FFI.mcTargetOptionFlagSanitizeAddress, TO.sanitizeAddresses),
     (FFI.mcTargetOptionFlagMCRelaxAll, TO.relaxAll),
     (FFI.mcTargetOptionFlagMCNoExecStack, TO.noExecutableStack),
     (FFI.mcTargetOptionFlagMCFatalWarnings, TO.fatalWarnings),
@@ -279,8 +279,6 @@ peekTargetOptions opts@(TargetOptions tOpts) = do
 peekMachineCodeOptions :: MCTargetOptions -> IO TO.MachineCodeOptions
 peekMachineCodeOptions (MCTargetOptions tOpts) = do
   let gof = decodeM <=< FFI.getMCTargetOptionsFlag tOpts
-  sanitizeAddresses
-    <- gof FFI.mcTargetOptionFlagSanitizeAddress
   relaxAll
     <- gof FFI.mcTargetOptionFlagMCRelaxAll
   noExecutableStack

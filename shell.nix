@@ -11,12 +11,12 @@ in
 , compiler ? "ghc865" }:
 let
   hsOverlay = self: super: {
-    llvm_8 = super.llvm_8.override { debugVersion = true; };
+    llvm_9 = (super.llvm_9.override { debugVersion = true; }).overrideAttrs(_: { doCheck = false; });
     haskell = super.haskell // {
       packages = super.haskell.packages // {
         "${compiler}" = super.haskell.packages."${compiler}".override {
           overrides = haskellSelf: haskellSuper: {
-            llvm-hs = haskellSuper.callCabal2nix "llvm-hs" ./llvm-hs { llvm-config = self.llvm_8; };
+            llvm-hs = haskellSuper.callCabal2nix "llvm-hs" ./llvm-hs { llvm-config = self.llvm_9; };
             llvm-hs-pure = haskellSuper.callCabal2nix "llvm-hs-pure" ./llvm-hs-pure {};
           };
         };
@@ -29,5 +29,5 @@ let
 in
 pkgs.haskell.packages."${compiler}".shellFor {
   packages = pkgs: with pkgs; [llvm-hs llvm-hs-pure];
-  nativeBuildInputs = with pkgs; [ llvm_7 gdb lldb ];
+  nativeBuildInputs = with pkgs; [ llvm_9 gdb lldb ];
 }

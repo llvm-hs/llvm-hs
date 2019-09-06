@@ -1,9 +1,13 @@
 ## unreleased
 
 * The functions in `LLVM.IRBuilder.Constant` no longer return a
-  monadic context. To recover the previous behavior use `pure`.
+  monadic context. To recover the previous behavior use `pure`. (Thanks to @jfaure)
 * `LLVM.IRBuilder.Instruction.globalStringPtr` returns a `Constant`
-  instead of an `Operand`.
+  instead of an `Operand`. (Thanks to @jfaure)
+* Fresh name generation in the IRBuilder should be significantly faster (Thanks to @luc-tielen)
+* Update to LLVM 9.0
+  * The `MainSubprogram` constructor from `DIFlag` has been removed
+    and a few new flags have been added.
 
 ## 8.0.0 (2019-03-10)
 

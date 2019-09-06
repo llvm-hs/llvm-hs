@@ -33,7 +33,7 @@ inconveniences.
 Example using Homebrew on macOS:
 
 ```bash
-$ brew install llvm-hs/llvm/llvm-8
+$ brew install llvm-hs/llvm/llvm-9
 ```
 
 ### Debian/Ubuntu
@@ -44,7 +44,7 @@ instructions for adding the correct package database for your OS version, and
 then:
 
 ```bash
-$ apt-get install llvm-8-dev
+$ apt-get install llvm-9-dev
 ```
 
 ### Nix
@@ -71,7 +71,7 @@ on the LLVM.org website [here](http://llvm.org/docs/CMake.html). [CMake
 compiler are required, at least Clang 3.1, GCC 4.8, or Visual Studio 2015
 (Update 3).
 
-  1. Download and unpack the [LLVM-8.0 source code](http://releases.llvm.org/8.0.0/llvm-8.0.0.src.tar.xz).
+  1. Download and unpack the [LLVM-9.0 source code](http://releases.llvm.org/9.0.0/llvm-9.0.0.src.tar.xz).
      We'll refer to the path the source tree was unpacked to as `LLVM_SRC`.
 
   2. Create a temporary build directory and `cd` to it, for example:
@@ -98,7 +98,7 @@ compiler are required, at least Clang 3.1, GCC 4.8, or Visual Studio 2015
      to [System Integrity Protection](https://en.wikipedia.org/wiki/System_Integrity_Protection):
      ```sh
      cd $INSTALL_PREFIX/lib
-     ln -s libLLVM.dylib libLLVM-8.dylib
+     ln -s libLLVM.dylib libLLVM-9.dylib
      install_name_tool -id $PWD/libLTO.dylib libLTO.dylib
      install_name_tool -id $PWD/libLLVM.dylib libLLVM.dylib
      install_name_tool -change '@rpath/libLLVM.dylib' $PWD/libLLVM.dylib libLTO.dylib

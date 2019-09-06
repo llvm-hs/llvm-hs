@@ -479,7 +479,15 @@ instance Arbitrary A.DIFlag where
           , A.IntroducedVirtual
           , A.BitField
           , A.NoReturn
-          , A.MainSubprogram
+          , A.ArgumentNotModified
+          , A.TypePassByValue
+          , A.TypePassByReference
+          , A.EnumClass
+          , A.Thunk
+          , A.NonTrivial
+          , A.BigEndian
+          , A.LittleEndian
+          , A.AllCallsDescribed
           ]
       ]
 
@@ -525,7 +533,15 @@ genDIFlags = do
       , A.IntroducedVirtual
       , A.BitField
       , A.NoReturn
-      , A.MainSubprogram
+      , A.ArgumentNotModified
+      , A.TypePassByValue
+      , A.TypePassByReference
+      , A.EnumClass
+      , A.Thunk
+      , A.NonTrivial
+      , A.BigEndian
+      , A.LittleEndian
+      , A.AllCallsDescribed
       ]
 
 roundtripDISubprogram :: TestTree

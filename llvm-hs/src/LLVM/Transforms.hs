@@ -97,7 +97,9 @@ data Pass
   | AddressSanitizer
   | AddressSanitizerModule
   | MemorySanitizer {
-      trackOrigins :: Bool
+      trackOrigins :: Bool,
+      recover :: Bool,
+      kernel :: Bool
     }
   | ThreadSanitizer
   | BoundsChecking
@@ -136,7 +138,9 @@ defaultAddressSanitizerModule = AddressSanitizerModule
 -- | Defaults for 'MemorySanitizer'.
 defaultMemorySanitizer :: Pass
 defaultMemorySanitizer = MemorySanitizer {
-  trackOrigins = False
+  trackOrigins = False,
+  recover = False,
+  kernel = False
 }
 
 -- | Defaults for 'ThreadSanitizer'.

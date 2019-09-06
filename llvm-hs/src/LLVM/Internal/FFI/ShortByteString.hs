@@ -1,3 +1,4 @@
+{-# LANGUAGE CPP #-}
 module LLVM.Internal.FFI.ShortByteString
   ( packCString
   , packCStringLen
@@ -5,14 +6,19 @@ module LLVM.Internal.FFI.ShortByteString
   , useAsCStringLen
   ) where
 
-import LLVM.Prelude
 
+
+#if MIN_VERSION_bytestring(0,10,9)
+import Data.ByteString.Short
+#else
+import LLVM.Prelude
 import Data.ByteString.Internal (c_strlen)
 import Data.ByteString.Short.Internal
 import qualified Data.ByteString.Short as ByteString
 import Foreign.C.String
 import Foreign.Marshal.Alloc
 import Foreign.Storable
+
 
 {-# INLINABLE packCString #-}
 packCString :: CString -> IO ShortByteString
@@ -42,3 +48,4 @@ useAsCStringLen bs action =
      copyToPtr bs 0 buf (fromIntegral l)
      action (buf, l)
  where l = ByteString.length bs
+#endif

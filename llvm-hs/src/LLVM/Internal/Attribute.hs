@@ -55,6 +55,7 @@ instance Monad m => EncodeM m A.PA.ParameterAttribute (Ptr FFI.ParameterAttrBuil
       A.PA.Nest -> FFI.parameterAttributeKindNest
       A.PA.ReadOnly -> FFI.parameterAttributeKindReadOnly
       A.PA.ReadNone -> FFI.parameterAttributeKindReadNone
+      A.PA.ImmArg -> FFI.parameterAttributeKindImmArg
       A.PA.InAlloca -> FFI.parameterAttributeKindInAlloca
       A.PA.NonNull -> FFI.parameterAttributeKindNonNull
       A.PA.Returned -> FFI.parameterAttributeKindReturned
@@ -149,6 +150,7 @@ instance DecodeM DecodeAST A.PA.ParameterAttribute FFI.ParameterAttribute where
           [parameterAttributeKindP|Returned|] -> return A.PA.Returned
           [parameterAttributeKindP|SwiftSelf|] -> return A.PA.SwiftSelf
           [parameterAttributeKindP|SwiftError|] -> return A.PA.SwiftError
+          [parameterAttributeKindP|ImmArg|] -> return A.PA.ImmArg
           _ -> error $ "unhandled parameter attribute enum value: " ++ show enum
 
 instance DecodeM DecodeAST A.FA.FunctionAttribute FFI.FunctionAttribute where
