@@ -6,7 +6,7 @@ module LLVM.Internal.FFI.DataLayout where
 
 import LLVM.Prelude
 
-import Foreign.C.String
+import Foreign.C
 import Foreign.Ptr
 
 import LLVM.Internal.FFI.LLVMCTypes
