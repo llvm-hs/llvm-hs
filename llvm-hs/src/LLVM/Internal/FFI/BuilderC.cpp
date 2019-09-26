@@ -7,6 +7,7 @@
 #include "LLVM/Internal/FFI/BinaryOperator.h"
 #include "LLVM/Internal/FFI/ErrorHandling.hpp"
 #include "LLVM/Internal/FFI/Instruction.h"
+#include "LLVM/Internal/FFI/RMWOperation.h"
 
 using namespace llvm;
 
@@ -29,9 +30,9 @@ LLVM_HS_FOR_EACH_SYNCRONIZATION_SCOPE(ENUM_CASE)
 	}
 }
 
-static AtomicRMWInst::BinOp unwrap(LLVMAtomicRMWBinOp l) {
+static AtomicRMWInst::BinOp unwrap(LLVMAtomicRMWBinOp_ l) {
 	switch(l) {
-#define ENUM_CASE(x) case LLVMAtomicRMWBinOp ## x: return AtomicRMWInst::x;
+#define ENUM_CASE(x) case LLVMAtomicRMWBinOp_ ## x: return AtomicRMWInst::x;
 LLVM_HS_FOR_EACH_RMW_OPERATION(ENUM_CASE)
 #undef ENUM_CASE
 	default: return AtomicRMWInst::BinOp(0);
@@ -209,7 +210,7 @@ LLVMValueRef LLVM_Hs_BuildAtomicCmpXchg(
 LLVMValueRef LLVM_Hs_BuildAtomicRMW(
 	LLVMBuilderRef b,
 	LLVMBool v,
-	LLVMAtomicRMWBinOp rmwOp,
+	LLVMAtomicRMWBinOp_ rmwOp,
 	LLVMValueRef ptr, 
 	LLVMValueRef val, 
 	LLVMAtomicOrdering lao,
