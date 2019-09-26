@@ -1,10 +1,8 @@
-resolver: lts-10.8
+resolver: lts-14.7
 
 packages:
-- 'llvm-hs'
-- 'llvm-hs-pure'
-flags:
-  llvm-hs:
-    shared-llvm: true
+- llvm-hs
+- llvm-hs-pure
 
 extra-package-dbs: []
+
