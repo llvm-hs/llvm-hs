@@ -1,3 +1,8 @@
+## 9.0.1 (2019-09-28)
+
+* Fix build with Clang on MacOS.
+* Expose `LLVMOffsetOfElement` as `getOffsetOfElement`.
+
 ## 9.0.0 (2019-09-06)
 
 * Support GHC 8.8
