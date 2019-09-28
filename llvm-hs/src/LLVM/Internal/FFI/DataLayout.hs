@@ -6,7 +6,7 @@ module LLVM.Internal.FFI.DataLayout where
 
 import LLVM.Prelude
 
-import Foreign.C.String
+import Foreign.C
 import Foreign.Ptr
 
 import LLVM.Internal.FFI.LLVMCTypes
@@ -28,3 +28,6 @@ foreign import ccall unsafe "LLVMCopyStringRepOfTargetData" dataLayoutToString :
 
 foreign import ccall unsafe "LLVMABISizeOfType" getTypeAllocSize ::
   Ptr DataLayout -> Ptr Type -> IO Word64
+
+foreign import ccall unsafe "LLVMOffsetOfElement" getOffsetOfElement ::
+  Ptr DataLayout -> Ptr Type -> CUInt -> IO Word64
