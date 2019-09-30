@@ -21,5 +21,8 @@ genCodingInstance [t| RMWOperation |] ''FFI.RMWOperation [
   (FFI.rmwOperationMax, Max),
   (FFI.rmwOperationMin, Min),
   (FFI.rmwOperationUMax, UMax),
-  (FFI.rmwOperationUMin, UMin)
+  (FFI.rmwOperationUMin, UMin),
+  (FFI.rmwOperationFAdd, FAdd),
+  (FFI.rmwOperationFSub, FSub)
  ]
+
