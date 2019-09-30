@@ -27,6 +27,12 @@
     macro(FAdd) \
     macro(FSub)
 
+typedef enum {
+#define ENUM_CASE(x) LLVMAtomicRMWBinOp_ ## x,
+LLVM_HS_FOR_EACH_RMW_OPERATION(ENUM_CASE)
+#undef ENUM_CASE
+} LLVMAtomicRMWBinOp_;
+
 #define LLVM_HS_FOR_EACH_SYNCRONIZATION_SCOPE(macro) \
     macro(SingleThread) \
     macro(System)

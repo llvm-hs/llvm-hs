@@ -7,7 +7,6 @@
 #include "LLVM/Internal/FFI/BinaryOperator.h"
 #include "LLVM/Internal/FFI/ErrorHandling.hpp"
 #include "LLVM/Internal/FFI/Instruction.h"
-#include "LLVM/Internal/FFI/RMWOperation.h"
 
 using namespace llvm;
 

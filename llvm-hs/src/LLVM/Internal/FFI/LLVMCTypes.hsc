@@ -26,7 +26,6 @@ import LLVM.Prelude
 #include "LLVM/Internal/FFI/LibFunc.h"
 #include "LLVM/Internal/FFI/Metadata.h"
 #include "LLVM/Internal/FFI/OrcJIT.h"
-#include "LLVM/Internal/FFI/RMWOperation.h"
 #include "LLVM/Internal/FFI/SMDiagnostic.h"
 #include "LLVM/Internal/FFI/Target.h"
 #include "LLVM/Internal/FFI/Type.h"
