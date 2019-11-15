@@ -32,6 +32,7 @@ data FunctionAttribute
     | Cold
     | JumpTable
     | NoDuplicate
+    | NoFree
     | SanitizeAddress
     | SanitizeHWAddress
     | SanitizeThread

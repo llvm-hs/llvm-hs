@@ -31,7 +31,7 @@
 	macro(NoCapture,T,F,F)                            \
     macro(NoCfCheck,F,F,T)                            \
 	macro(NoDuplicate,F,F,T)                          \
-	macro(NoFree,F,F,T)                               \
+	macro(NoFree,T,F,T)                               \
 	macro(NoImplicitFloat,F,F,T)                      \
 	macro(NoInline,F,F,T)                             \
 	macro(NoRecurse,F,F,T)                            \

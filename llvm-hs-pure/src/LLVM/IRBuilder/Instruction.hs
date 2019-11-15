@@ -304,7 +304,6 @@ globalStringPtr str nm = do
   let asciiVals = map (fromIntegral . ord) str
       llvmVals  = map (C.Int 8) (asciiVals ++ [0]) -- append null terminator
       char      = IntegerType 8
-      charStar  = ptr char
       charArray = C.Array char llvmVals
       ty        = LLVM.AST.Typed.typeOf charArray
   emitDefn $ GlobalDefinition globalVariableDefaults

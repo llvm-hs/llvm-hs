@@ -14,6 +14,6 @@ module LLVM.AST.Attribute (
   ) where
 
 import LLVM.AST.ParameterAttribute
-       hiding (ReadNone, ReadOnly, StringAttribute, WriteOnly,
+       hiding (NoFree, ReadNone, ReadOnly, StringAttribute, WriteOnly,
                stringAttributeKind, stringAttributeValue)
 import LLVM.AST.FunctionAttribute
