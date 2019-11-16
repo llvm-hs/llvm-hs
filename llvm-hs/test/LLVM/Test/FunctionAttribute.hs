@@ -53,6 +53,7 @@ instance Arbitrary FunctionAttribute where
     , return Cold
     , return JumpTable
     , return NoDuplicate
+    , return NoFree
     , return SanitizeAddress
     , return SanitizeHWAddress
     , return SanitizeThread

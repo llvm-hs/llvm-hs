@@ -19,6 +19,7 @@ import qualified LLVM.Test.Module as Module
 import qualified LLVM.Test.ObjectCode as ObjectCode
 import qualified LLVM.Test.Optimization as Optimization
 import qualified LLVM.Test.OrcJIT as OrcJIT
+import qualified LLVM.Test.ParameterAttribute as ParameterAttribute
 import qualified LLVM.Test.Target as Target
 import qualified LLVM.Test.Regression as Regression
 
@@ -36,6 +37,7 @@ tests = testGroup "llvm-hs" [
     Module.tests,
     OrcJIT.tests,
     Optimization.tests,
+    ParameterAttribute.tests,
     Target.tests,
     Analysis.tests,
     Linking.tests,

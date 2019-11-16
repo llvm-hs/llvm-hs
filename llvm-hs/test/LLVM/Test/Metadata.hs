@@ -69,9 +69,6 @@ tests = testGroup "Metadata"
   , testFile
   ]
 
-arbitrarySbs :: Gen ShortByteString
-arbitrarySbs = BSS.pack <$> listOf arbitrary
-
 instance Arbitrary Encoding where
   arbitrary =
     QC.elements

@@ -13,6 +13,7 @@ data ParameterAttribute
     | NoAlias
     | ByVal
     | NoCapture
+    | NoFree
     | Nest
     | ReadNone
     | ReadOnly

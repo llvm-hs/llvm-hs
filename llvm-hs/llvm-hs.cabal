@@ -284,6 +284,7 @@ test-suite test
     LLVM.Test.ObjectCode
     LLVM.Test.OrcJIT
     LLVM.Test.Optimization
+    LLVM.Test.ParameterAttribute
     LLVM.Test.Regression
     LLVM.Test.Support
     LLVM.Test.Target

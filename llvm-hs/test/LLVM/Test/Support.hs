@@ -4,10 +4,14 @@
 
 module LLVM.Test.Support where
 
+import LLVM.Prelude
+
 import Test.Tasty
 import Test.Tasty.HUnit
+import Test.QuickCheck
 
 import Data.ByteString (ByteString)
+import qualified Data.ByteString.Short as BSS
 import Data.Functor
 import Control.Monad
 import Control.Monad.Trans.Except
@@ -33,3 +37,6 @@ strCheckC mAST mStr mStrCanon = withContext $ \context -> do
   (a,s) `assertEqPretty` (mAST, mStrCanon)
 
 strCheck mAST mStr = strCheckC mAST mStr mStr
+
+arbitrarySbs :: Gen ShortByteString
+arbitrarySbs = BSS.pack <$> listOf arbitrary
