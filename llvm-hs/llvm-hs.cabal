@@ -129,6 +129,7 @@ library
     LLVM.Internal.Module
     LLVM.Internal.ObjectFile
     LLVM.Internal.OrcJIT
+    LLVM.Internal.OrcJITV2
     LLVM.Internal.OrcJIT.CompileLayer
     LLVM.Internal.OrcJIT.LinkingLayer
     LLVM.Internal.OrcJIT.CompileOnDemandLayer
@@ -173,6 +174,7 @@ library
     LLVM.Internal.FFI.Module
     LLVM.Internal.FFI.ObjectFile
     LLVM.Internal.FFI.OrcJIT
+    LLVM.Internal.FFI.OrcJITV2
     LLVM.Internal.FFI.OrcJIT.CompileLayer
     LLVM.Internal.FFI.OrcJIT.LinkingLayer
     LLVM.Internal.FFI.OrcJIT.CompileOnDemandLayer
@@ -228,6 +230,7 @@ library
     src/LLVM/Internal/FFI/MetadataC.cpp
     src/LLVM/Internal/FFI/ModuleC.cpp
     src/LLVM/Internal/FFI/OrcJITC.cpp
+    src/LLVM/Internal/FFI/OrcJITV2C.cpp
     src/LLVM/Internal/FFI/RawOStreamC.cpp
     src/LLVM/Internal/FFI/PassManagerC.cpp
     src/LLVM/Internal/FFI/RTDyldMemoryManager.cpp
