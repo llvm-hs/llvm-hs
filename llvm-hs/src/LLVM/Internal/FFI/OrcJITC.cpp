@@ -178,8 +178,8 @@ void LLVM_Hs_releaseVModule(ExecutionSession *es, VModuleKey k) {
 
 /* Constructor functions for the different compile layers */
 
-CompileLayer *LLVM_Hs_createIRCompileLayer(LinkingLayer *linkingLayer,
-                                           LLVMTargetMachineRef tm) {
+CompileLayer *LLVM_Hs_createLegacyIRCompileLayer(LinkingLayer *linkingLayer,
+                                                 LLVMTargetMachineRef tm) {
     TargetMachine *tmm = unwrap(tm);
     return new CompileLayerT<LegacyIRCompileLayer<LinkingLayer, SimpleCompiler>>(
         LegacyIRCompileLayer<LinkingLayer, SimpleCompiler>(*linkingLayer,
