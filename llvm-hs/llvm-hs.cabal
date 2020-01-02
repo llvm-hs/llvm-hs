@@ -69,7 +69,7 @@ library
   ghc-options: -Wall -fno-warn-name-shadowing -fno-warn-orphans
 
   build-depends:
-    base >= 4.9 && < 5,
+    base >= 4.9 && < 4.13,
     attoparsec >= 0.13,
     exceptions >= 0.8,
     utf8-string >= 0.3.7,
