@@ -159,6 +159,7 @@ instance EncodeM EncodeAST A.Constant (Ptr FFI.Constant) where
                              A.ArrayType {} -> pure ()
                              A.StructureType {} -> pure ()
                              A.VectorType {} -> pure ()
+                             A.NamedTypeReference {} -> pure ()
                              _ ->
                                throwM
                                  (EncodeException
