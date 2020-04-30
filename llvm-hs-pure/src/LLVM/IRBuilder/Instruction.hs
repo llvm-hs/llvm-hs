@@ -218,8 +218,23 @@ shuffleVector a b m = emitInstr retType $ ShuffleVector a b m []
 
 
 -- | See <https://llvm.org/docs/LangRef.html#extractvalue-instruction reference>.
-extractValue :: MonadIRBuilder m => Operand -> [Word32] -> m Operand
-extractValue a i = emitInstr (extractValueType i (typeOf a)) $ ExtractValue a i []
+extractValue :: (MonadIRBuilder m, MonadModuleBuilder m) => Operand -> [Word32] -> m Operand
+extractValue a i = do
+  ty <- evType i (typeOf a)
+  emitInstr ty $ ExtractValue a i []
+  where evType [] ty = pure ty
+        evType (i : is) (ArrayType numEls elTy)
+          | fromIntegral i < numEls = evType is elTy
+          | fromIntegral i >= numEls = error "extractValue: Expecting valid index into array type. (Malformed AST)"
+        evType (i : is) (StructureType _ elTys)
+          | fromIntegral i < length elTys = evType is (elTys !! fromIntegral i)
+          | otherwise = error "extractValue: Expecting valid index into structure type. (Malformed AST)"
+        evType is (NamedTypeReference nm) = do
+          mayTy <- liftModuleState (gets (Map.lookup nm . builderTypeDefs))
+          case mayTy of
+            Nothing -> error $ "extractValue: Couldn’t resolve typedef for: " ++ show nm
+            Just ty -> evType is ty
+        evType _ _ = error "extractValue: Expecting structure or array type. (Malformed AST)"
 
 -- | See <https://llvm.org/docs/LangRef.html#insertvalue-instruction reference>.
 insertValue :: MonadIRBuilder m => Operand -> Operand -> [Word32] -> m Operand
