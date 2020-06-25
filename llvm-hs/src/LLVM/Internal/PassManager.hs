@@ -17,6 +17,7 @@ import qualified Data.ByteString.Short as ByteString
 
 import Foreign.C (CString)
 import Foreign.Ptr
+import GHC.Stack
 
 import qualified LLVM.Internal.FFI.PassManager as FFI
 import qualified LLVM.Internal.FFI.Transforms as FFI
@@ -91,7 +92,7 @@ instance (Monad m, MonadThrow m, MonadAnyCont IO m) => EncodeM m GCOVVersion CSt
     | ByteString.length cs == 4 = encodeM cs
     | otherwise = throwM (EncodeException "GCOVVersion should consist of exactly 4 characters")
 
-createPassManager :: PassSetSpec -> IO (Ptr FFI.PassManager)
+createPassManager :: HasCallStack => PassSetSpec -> IO (Ptr FFI.PassManager)
 createPassManager pss = flip runAnyContT return $ do
   pm <- liftIO $ FFI.createPassManager
   forM_ (targetLibraryInfo pss) $ \(TargetLibraryInfo tli) -> do
