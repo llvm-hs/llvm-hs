@@ -8,6 +8,7 @@ import Control.Monad.State (gets)
 import qualified Data.Map.Lazy as Map
 import Data.Word
 import Data.Char (ord)
+import GHC.Stack
 
 import LLVM.AST hiding (args, dests)
 import LLVM.AST.Type as AST
@@ -102,7 +103,7 @@ alloca :: MonadIRBuilder m => Type -> Maybe Operand -> Word32 -> m Operand
 alloca ty count align = emitInstr (ptr ty) $ Alloca ty count align []
 
 -- | See <https://llvm.org/docs/LangRef.html#load-instruction reference>.
-load :: MonadIRBuilder m => Operand -> Word32 -> m Operand
+load :: HasCallStack => MonadIRBuilder m => Operand -> Word32 -> m Operand
 load a align = emitInstr retty $ Load False a Nothing align []
   where
     retty = case typeOf a of
@@ -115,7 +116,7 @@ store addr align val = emitInstrVoid $ Store False addr val Nothing align []
 
 -- | Emit the @getelementptr@ instruction.
 -- See <https://llvm.org/docs/LangRef.html#getelementptr-instruction reference>.
-gep :: (MonadIRBuilder m, MonadModuleBuilder m) => Operand -> [Operand] -> m Operand
+gep :: (MonadIRBuilder m, MonadModuleBuilder m, HasCallStack) => Operand -> [Operand] -> m Operand
 gep addr is = do
   ty <- gepType (typeOf addr) is
   emitInstr ty (GetElementPtr False addr is [])
@@ -197,7 +198,7 @@ bitcast :: MonadIRBuilder m => Operand -> Type -> m Operand
 bitcast a to = emitInstr to $ BitCast a to []
 
 -- | See <https://llvm.org/docs/LangRef.html#extractelement-instruction reference>.
-extractElement :: MonadIRBuilder m => Operand -> Operand -> m Operand
+extractElement :: (MonadIRBuilder m, HasCallStack) => Operand -> Operand -> m Operand
 extractElement v i = emitInstr elemTyp $ ExtractElement v i []
   where elemTyp =
           case typeOf v of
@@ -209,7 +210,7 @@ insertElement :: MonadIRBuilder m => Operand -> Operand -> Operand -> m Operand
 insertElement v e i = emitInstr (typeOf v) $ InsertElement v e i []
 
 -- | See <https://llvm.org/docs/LangRef.html#shufflevector-instruction reference>.
-shuffleVector :: MonadIRBuilder m => Operand -> Operand -> C.Constant -> m Operand
+shuffleVector :: (MonadIRBuilder m, HasCallStack) => Operand -> Operand -> C.Constant -> m Operand
 shuffleVector a b m = emitInstr retType $ ShuffleVector a b m []
   where retType =
           case (typeOf a, typeOf m) of
@@ -252,7 +253,7 @@ retVoid :: MonadIRBuilder m => m ()
 retVoid = emitTerm (Ret Nothing [])
 
 -- | See <https://llvm.org/docs/LangRef.html#call-instruction reference>.
-call :: MonadIRBuilder m => Operand -> [(Operand, [ParameterAttribute])] -> m Operand
+call :: (MonadIRBuilder m, HasCallStack) => Operand -> [(Operand, [ParameterAttribute])] -> m Operand
 call fun args = do
   let instr = Call {
     AST.tailCallKind = Nothing
