@@ -246,9 +246,15 @@ getDataLayout m = do
 -- | Execute a function after encoding the module in LLVM’s internal representation.
 -- May throw 'EncodeException'.
 withModuleFromAST :: Context -> A.Module -> (Module -> IO a) -> IO a
-withModuleFromAST context@(Context c) (A.Module moduleId sourceFileName dataLayout triple definitions) f = runEncodeAST context $ do
+withModuleFromAST context ast =
+  bracket (createModuleFromAST context ast) disposeModule
+
+-- | Encode the module AST in LLVM’s internal representation.
+-- May throw 'EncodeException'.
+createModuleFromAST :: Context -> A.Module -> IO Module
+createModuleFromAST context@(Context c) (A.Module moduleId sourceFileName dataLayout triple definitions) = runEncodeAST context $ do
   moduleId <- encodeM moduleId
-  m <- anyContToM $ bracket (newModule =<< FFI.moduleCreateWithNameInContext moduleId c) (FFI.disposeModule <=< readModule)
+  m <- liftIO $ newModule =<< FFI.moduleCreateWithNameInContext moduleId c
   ffiMod <- readModule m
   sourceFileName' <- encodeM sourceFileName
   liftIO $ FFI.setSourceFileName ffiMod sourceFileName'
@@ -376,8 +382,15 @@ withModuleFromAST context@(Context c) (A.Module moduleId sourceFileName dataLayo
        setVisibility g' (A.G.visibility g)
        setDLLStorageClass g' (A.G.dllStorageClass g)
        return $ return ()
-  liftIO $ f m
+  return m
 
+-- | Destroys a module created by 'createModuleFromAST'.
+disposeModule :: Module -> IO ()
+disposeModule m = FFI.disposeModule =<< readModule m
+
+-- | Retrieves the context associated with a module.
+moduleContext :: Module -> IO Context
+moduleContext m = Context <$> (FFI.getModuleContext =<< readModule m)
 
 -- This returns a nested DecodeAST to allow interleaving of different
 -- decoding steps. Take a look at the call site in moduleAST for more
