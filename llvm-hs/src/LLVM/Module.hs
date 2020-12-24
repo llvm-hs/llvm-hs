@@ -5,6 +5,10 @@ module LLVM.Module (
     File(..),
 
     withModuleFromAST,
+    createModuleFromAST,
+    disposeModule,
+
+    moduleContext,
     moduleAST,
 
     withModuleFromLLVMAssembly,

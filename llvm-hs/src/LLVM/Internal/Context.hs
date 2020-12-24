@@ -18,3 +18,11 @@ data Context = Context (Ptr FFI.Context)
 withContext :: (Context -> IO a) -> IO a
 withContext = runBound . bracket FFI.contextCreate FFI.contextDispose . (. Context)
   where runBound = if rtsSupportsBoundThreads then runInBoundThread else id
+
+-- | Create a Context.
+createContext :: IO Context
+createContext = Context <$> FFI.contextCreate
+
+-- | Destroy a context created by 'createContext'.
+disposeContext :: Context -> IO ()
+disposeContext (Context ptr) = FFI.contextDispose ptr
