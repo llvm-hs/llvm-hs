@@ -14,7 +14,9 @@
 #include "llvm/Transforms/Instrumentation/MemorySanitizer.h"
 #include "llvm/Transforms/Instrumentation/ThreadSanitizer.h"
 #include "llvm/Transforms/Utils.h"
+#include "llvm/LinkAllPasses.h"
 #include "llvm/CodeGen/Passes.h"
+#include "llvm/CodeGen/TargetLowering.h"
 #include "llvm-c/Target.h"
 #include "llvm-c/Transforms/PassManagerBuilder.h"
 #include "llvm/Analysis/TargetLibraryInfo.h"
@@ -47,11 +49,6 @@ inline LLVMTargetMachineRef wrap(const TargetMachine *P) {
 	return reinterpret_cast<LLVMTargetMachineRef>(const_cast<TargetMachine *>(P));
 }
 
-// Taken from llvm/lib/Transforms/IPO/PassManagerBuilder.cpp
-inline PassManagerBuilder *unwrap(LLVMPassManagerBuilderRef P) {
-    return reinterpret_cast<PassManagerBuilder*>(P);
-}
-
 inline TargetLibraryInfoImpl *unwrap(LLVMTargetLibraryInfoRef P) {
   return reinterpret_cast<TargetLibraryInfoImpl*>(P);
 }
@@ -63,7 +60,6 @@ extern "C" {
 #define LLVM_HS_FOR_EACH_PASS_WITHOUT_LLVM_C_BINDING(macro) \
 	macro(BreakCriticalEdges) \
 	macro(DeadCodeElimination) \
-	macro(DeadInstElimination) \
 	macro(DemoteRegisterToMemory) \
 	macro(LCSSA) \
 	macro(LoopInstSimplify) \
@@ -124,17 +120,19 @@ void LLVM_Hs_AddGCOVProfilerPass(
 	LLVMBool emitNotes,
 	LLVMBool emitData,
 	const char *version,
-	LLVMBool useCfgChecksum,
 	LLVMBool noRedZone,
-	LLVMBool functionNamesInData
+	LLVMBool atomic,
+	const char *filter,
+	const char *exclude
 ) {
-	struct GCOVOptions options;
+	auto options = GCOVOptions::getDefault();
 	options.EmitNotes = emitNotes;
 	options.EmitData = emitData;
 	std::copy(version, version+4, options.Version);
-	options.UseCfgChecksum = useCfgChecksum;
 	options.NoRedZone = noRedZone;
-	options.FunctionNamesInData = functionNamesInData;
+	options.Atomic = atomic;
+	options.Filter = filter;
+  options.Exclude = exclude;
 	unwrap(PM)->add(createGCOVProfilerPass(options));
 }
 
@@ -153,10 +151,11 @@ void LLVM_Hs_AddAddressSanitizerModulePass(
 void LLVM_Hs_AddMemorySanitizerPass(
 	LLVMPassManagerRef PM,
 	LLVMBool trackOrigins,
-    LLVMBool recover,
-    LLVMBool kernel
+	LLVMBool recover,
+	LLVMBool kernel
 ) {
-	unwrap(PM)->add(createMemorySanitizerLegacyPassPass({trackOrigins, static_cast<bool>(recover), static_cast<bool>(kernel)}));
+	unwrap(PM)->add(createMemorySanitizerLegacyPassPass(
+    {trackOrigins, static_cast<bool>(recover), static_cast<bool>(kernel)}));
 }
 
 void LLVM_Hs_AddThreadSanitizerPass(
@@ -167,6 +166,29 @@ void LLVM_Hs_AddThreadSanitizerPass(
 
 void LLVM_Hs_AddBoundsCheckingPass(LLVMPassManagerRef PM) {
 	unwrap(PM)->add(createBoundsCheckingLegacyPass());
+}
+
+// TODO(llvm-12): Confirm that these passes have been removed in LLVM 9 → LLVM 12.
+/*
+void LLVM_Hs_AddConstantPropagationPass(LLVMPassManagerRef PM) {
+	unwrap(PM)->add(createConstantPropagationPass());
+}
+
+void LLVM_Hs_AddDeadInstEliminationPass(LLVMPassManagerRef PM) {
+	unwrap(PM)->add(createDeadInstEliminationPass());
+}
+
+void LLVM_Hs_AddIPConstantPropagationPass(LLVMPassManagerRef PM) {
+	unwrap(PM)->add(createIPConstantPropagationPass());
+}
+
+void LLVM_Hs_AddInterproceduralConstantPropagationPass(LLVMPassManagerRef PM) {
+	unwrap(PM)->add(createInterproceduralConstantPropagationPass());
+}
+*/
+
+void LLVM_Hs_AddIPSCCPPass(LLVMPassManagerRef PM) {
+	unwrap(PM)->add(createIPSCCPPass());
 }
 
 void LLVM_Hs_AddLoopVectorizePass(

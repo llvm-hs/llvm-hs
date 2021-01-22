@@ -25,7 +25,6 @@ cName n =
             "GlobalDeadCodeElimination" -> "GlobalDCE"
             "InductionVariableSimplify" -> "IndVarSimplify"
             "InternalizeFunctions" -> "Internalize"
-            "InterproceduralConstantPropagation" -> "IPConstantPropagation"
             "InterproceduralSparseConditionalConstantPropagation" -> "IPSCCP"
             "LoopClosedSingleStaticAssignment" -> "LCSSA"
             "LoopInvariantCodeMotion" -> "LICM"

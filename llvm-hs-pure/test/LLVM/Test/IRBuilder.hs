@@ -52,7 +52,7 @@ tests =
         }
       , testCase "calls constant globals" callWorksWithConstantGlobals
       , testCase "supports recursive function calls" recursiveFunctionCalls
-      , testCase "resolves typefes" resolvesTypeDefs
+      , testCase "resolves typedefs" resolvesTypeDefs
       , testCase "builds the example" $ do
         let f10 = ConstantOperand (C.Float (F.Double 10))
             fadd a b = FAdd { operand0 = a, operand1 = b, fastMathFlags = noFastMathFlags, metadata = [] }

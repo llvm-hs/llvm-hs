@@ -2,6 +2,12 @@
 #pragma GCC diagnostic ignored "-Wdeprecated-declarations"
 #pragma clang diagnostic ignored "-Wdeprecated-declarations"
 
+// FIXME(llvm-12): Clean up this file.
+// OrcJIT APIs like VModuleKeys and LambdaResolvers seem deprecated, so much of
+// the code is commented here - unnecessary bits to be removed. Memory
+// management may also need some reworking.
+
+// #if 0
 #include "llvm/Support/Error.h"
 
 #include "LLVM/Internal/FFI/ErrorHandling.hpp"
@@ -13,7 +19,7 @@
 #include "llvm/ExecutionEngine/Orc/IRCompileLayer.h"
 #include "llvm/ExecutionEngine/Orc/IRTransformLayer.h"
 #include "llvm/ExecutionEngine/Orc/IndirectionUtils.h"
-#include "llvm/ExecutionEngine/Orc/LambdaResolver.h"
+// #include "llvm/ExecutionEngine/Orc/LambdaResolver.h"
 #include "llvm/ExecutionEngine/Orc/RTDyldObjectLinkingLayer.h"
 #include "llvm/ExecutionEngine/SectionMemoryManager.h"
 #include "llvm/IR/Mangler.h"
@@ -27,8 +33,10 @@
 using namespace llvm;
 using namespace orc;
 
+#if 0
 static_assert(std::is_same<VModuleKey, uint64_t>::value,
               "VModuleKey should be uint64_t");
+#endif
 
 #define SYMBOL_CASE(x)                                                         \
     static_assert((unsigned)LLVMJITSymbolFlag##x ==                            \
@@ -36,7 +44,7 @@ static_assert(std::is_same<VModuleKey, uint64_t>::value,
                   "JITSymbolFlag values should agree");
 LLVM_HS_FOR_EACH_JIT_SYMBOL_FLAG(SYMBOL_CASE)
 
-typedef std::shared_ptr<SymbolResolver> *LLVMSymbolResolverRef;
+typedef std::shared_ptr<JITSymbolResolver> *LLVMSymbolResolverRef;
 
 // We want to allow users to choose themselves which layers they want to use.
 // However, the LLVM API requires that this is selected statically via template
@@ -48,24 +56,27 @@ class LinkingLayer {
   public:
     using ObjectPtr = std::unique_ptr<MemoryBuffer>;
     virtual ~LinkingLayer(){};
+    virtual JITSymbol findSymbol(StringRef name, bool exportedSymbolsOnly) = 0;
+#if 0
     virtual Error addObject(VModuleKey k, ObjectPtr objBuffer) = 0;
     virtual Error removeObject(VModuleKey k) = 0;
-    virtual JITSymbol findSymbol(StringRef name, bool exportedSymbolsOnly) = 0;
     virtual JITSymbol findSymbolIn(VModuleKey k, StringRef name,
                                    bool exportedSymbolsOnly) = 0;
     virtual Error emitAndFinalize(VModuleKey k) = 0;
+#endif
 };
 
 template <typename T> class LinkingLayerT : public LinkingLayer {
   public:
     LinkingLayerT(T data_) : data(std::move(data_)) {}
+    JITSymbol findSymbol(StringRef name, bool exportedSymbolsOnly) override {
+        return data.findSymbol(name, exportedSymbolsOnly);
+    }
+#if 0
     Error addObject(VModuleKey k, ObjectPtr objBuffer) override {
         return data.addObject(k, std::move(objBuffer));
     }
     Error removeObject(VModuleKey k) override { return data.removeObject(k); }
-    JITSymbol findSymbol(StringRef name, bool exportedSymbolsOnly) override {
-        return data.findSymbol(name, exportedSymbolsOnly);
-    }
     JITSymbol findSymbolIn(VModuleKey k, StringRef name,
                            bool exportedSymbolsOnly) override {
         return data.findSymbolIn(k, name, exportedSymbolsOnly);
@@ -73,19 +84,23 @@ template <typename T> class LinkingLayerT : public LinkingLayer {
     Error emitAndFinalize(VModuleKey k) override {
         return data.emitAndFinalize(k);
     }
+#endif
 
   private:
     T data;
 };
 
-class CompileLayer {
+// class CompileLayer : public IRLayer {
+class CompileLayer : public IRLayer {
   public:
     virtual ~CompileLayer(){};
     virtual JITSymbol findSymbol(StringRef Name, bool ExportedSymbolsOnly) = 0;
+#if 0
     virtual JITSymbol findSymbolIn(VModuleKey K, StringRef Name,
                                    bool ExportedSymbolsOnly) = 0;
     virtual Error addModule(VModuleKey K, std::unique_ptr<Module> Module) = 0;
     virtual Error removeModule(VModuleKey K) = 0;
+#endif
 };
 
 template <typename T> class CompileLayerT : public CompileLayer {
@@ -95,6 +110,7 @@ template <typename T> class CompileLayerT : public CompileLayer {
     JITSymbol findSymbol(StringRef Name, bool ExportedSymbolsOnly) override {
         return data.findSymbol(Name, ExportedSymbolsOnly);
     }
+#if 0
     JITSymbol findSymbolIn(VModuleKey K, StringRef Name,
                            bool ExportedSymbolsOnly) override {
         return data.findSymbolIn(K, Name, ExportedSymbolsOnly);
@@ -103,11 +119,13 @@ template <typename T> class CompileLayerT : public CompileLayer {
         return data.addModule(K, std::move(Module));
     }
     Error removeModule(VModuleKey K) override { return data.removeModule(K); }
+#endif
 
   private:
     T data;
 };
 
+#if 0
 typedef llvm::orc::LegacyCompileOnDemandLayer<CompileLayer> LLVMCompileOnDemandLayer;
 typedef LLVMCompileOnDemandLayer *LLVMCompileOnDemandLayerRef;
 
@@ -115,6 +133,7 @@ typedef llvm::orc::LegacyIRTransformLayer<
     CompileLayer,
     std::function<std::unique_ptr<Module>(std::unique_ptr<Module>)>>
     LLVMIRTransformLayer;
+#endif
 
 typedef llvm::orc::JITCompileCallbackManager *LLVMJITCompileCallbackManagerRef;
 
@@ -140,7 +159,7 @@ unwrap(LLVMObjectFileRef OF) {
     return reinterpret_cast<object::OwningBinary<object::ObjectFile> *>(OF);
 }
 
-static JITSymbolFlags unwrap(LLVMJITSymbolFlags f) {
+static JITSymbolFlags unwrap(LLVMJITSymbolFlags_ f) {
     JITSymbolFlags flags = JITSymbolFlags::None;
 #define ENUM_CASE(x)                                                           \
     if (f & LLVMJITSymbolFlag##x)                                              \
@@ -150,14 +169,14 @@ static JITSymbolFlags unwrap(LLVMJITSymbolFlags f) {
     return flags;
 }
 
-static LLVMJITSymbolFlags wrap(JITSymbolFlags f) {
+static LLVMJITSymbolFlags_ wrap(JITSymbolFlags f) {
     unsigned r = 0;
 #define ENUM_CASE(x)                                                           \
     if (f & JITSymbolFlags::x)                       \
         r |= (unsigned)LLVMJITSymbolFlag##x;
     LLVM_HS_FOR_EACH_JIT_SYMBOL_FLAG(ENUM_CASE)
 #undef ENUM_CASE
-    return LLVMJITSymbolFlags(r);
+    return LLVMJITSymbolFlags_(r);
 }
 
 extern "C" {
@@ -166,8 +185,13 @@ ExecutionSession *LLVM_Hs_createExecutionSession() {
     return new ExecutionSession();
 }
 
-void LLVM_Hs_disposeExecutionSession(ExecutionSession *es) { delete es; }
+void LLVM_Hs_disposeExecutionSession(ExecutionSession *es) {
+    // FIXME(llvm-12): Uncommenting this causes an assertion failure for OrcV2 test.
+    // Assertion failed: (Pool.empty() && "Dangling references at pool destruction time"), function ~SymbolStringPool, file llvm-project/llvm/include/llvm/ExecutionEngine/Orc/SymbolStringPool.h, line 151.
+    // delete es;
+}
 
+#if 0
 VModuleKey LLVM_Hs_allocateVModule(ExecutionSession *es) {
     return es->allocateVModule();
 }
@@ -175,9 +199,11 @@ VModuleKey LLVM_Hs_allocateVModule(ExecutionSession *es) {
 void LLVM_Hs_releaseVModule(ExecutionSession *es, VModuleKey k) {
     es->releaseVModule(k);
 }
+#endif
 
 /* Constructor functions for the different compile layers */
 
+#if 0
 CompileLayer *LLVM_Hs_createLegacyIRCompileLayer(LinkingLayer *linkingLayer,
                                                  LLVMTargetMachineRef tm) {
     TargetMachine *tmm = unwrap(tm);
@@ -194,14 +220,14 @@ CompileLayer *LLVM_Hs_createCompileOnDemandLayer(
     LLVMJITCompileCallbackManagerRef callbackManager,
     LLVMIndirectStubsManagerBuilderRef stubsManager,
     LLVMBool cloneStubsIntoPartitions) {
-    std::function<std::shared_ptr<SymbolResolver>(VModuleKey)>
+    std::function<std::shared_ptr<JITSymbolResolver>(VModuleKey)>
         getSymbolResolverFn =
             [getSymbolResolver](VModuleKey k) { return *getSymbolResolver(k); };
-    std::function<void(VModuleKey, std::shared_ptr<SymbolResolver>)>
+    std::function<void(VModuleKey, std::shared_ptr<JITSymbolResolver>)>
         setSymbolResolverFn =
             [setSymbolResolver](VModuleKey k,
-                                std::shared_ptr<SymbolResolver> r) {
-                setSymbolResolver(k, new std::shared_ptr<SymbolResolver>(r));
+                                std::shared_ptr<JITSymbolResolver> r) {
+                setSymbolResolver(k, new std::shared_ptr<JITSymbolResolver>(r));
             };
     return new CompileLayerT<LLVMCompileOnDemandLayer>(
         *es, *compileLayer, getSymbolResolverFn, setSymbolResolverFn,
@@ -213,15 +239,33 @@ CompileLayer *LLVM_Hs_createCompileOnDemandLayer(
         *callbackManager, *stubsManager,
         static_cast<bool>(cloneStubsIntoPartitions));
 }
+#endif
 
+// NOTE: An IRCompileLayer actually already exists in OrcJITV2.cpp! No more work needed here :)
+#if 0
+SimpleCompiler *LLVM_Hs_createSimpleCompiler(LLVMTargetMachineRef tm) {
+  TargetMachine *tmm = unwrap(tm);
+  return new SimpleCompiler(*tmm);
+}
+
+//  IRCompileLayer(ExecutionSession &ES, ObjectLayer &BaseLayer,
+//                 std::unique_ptr<IRCompiler> Compile);
+IRCompileLayer *LLVM_Hs_createIRCompileLayer(LLVMTargetMachineRef tm) {
+  TargetMachine *tmm = unwrap(tm);
+  return new //
+}
+#endif
+
+#if 0
 CompileLayer *LLVM_Hs_createIRTransformLayer(CompileLayer *compileLayer,
                                              Module *(*transform)(Module *)) {
     std::function<std::unique_ptr<Module>(std::unique_ptr<Module>)> transform_ =
         [transform](std::unique_ptr<Module> module) {
             return std::unique_ptr<Module>(transform(module.release()));
         };
-    return new CompileLayerT<LLVMIRTransformLayer>(*compileLayer, transform_);
+    return new CompileLayerT<IRTransformLayer>(*compileLayer, transform_);
 }
+#endif
 
 /* Functions that work on all compile layers */
 
@@ -236,6 +280,7 @@ LLVMJITSymbolRef LLVM_Hs_CompileLayer_findSymbol(CompileLayer *compileLayer,
     return new JITSymbol(std::move(symbol));
 }
 
+#if 0
 LLVMJITSymbolRef
 LLVM_Hs_CompileLayer_findSymbolIn(CompileLayer *compileLayer, VModuleKey k,
                                   const char *name,
@@ -275,6 +320,7 @@ LinkingLayer *LLVM_Hs_createObjectLinkingLayer(
                 std::make_shared<SectionMemoryManager>(), *symbolResolver(k)};
         }));
 }
+#endif
 
 /* Fuctions that work on all object layers */
 
@@ -291,6 +337,7 @@ LLVMJITSymbolRef LLVM_Hs_LinkingLayer_findSymbol(LinkingLayer *linkingLayer,
     return new JITSymbol(std::move(symbol));
 }
 
+  #if 0
 LLVMJITSymbolRef
 LLVM_Hs_LinkingLayer_findSymbolIn(LinkingLayer *linkingLayer, VModuleKey k,
                                   const char *name,
@@ -308,20 +355,21 @@ LLVMSymbolResolverRef LLVM_Hs_createLambdaResolver(
         rawResolverFn(name.c_str(), &symbol);
         return symbol;
     };
-    return new std::shared_ptr<SymbolResolver>(
+    return new std::shared_ptr<JITSymbolResolver>(
         createLegacyLookupResolver(*es, resolverFn, [](Error err) {
             cantFail(std::move(err), "lookupFlags failed");
         }));
 }
+#endif
 
 void LLVM_Hs_disposeSymbolResolver(LLVMSymbolResolverRef resolver) {
     delete resolver;
 }
 
+#if 0
 void LLVM_Hs_LinkingLayer_addObject(LinkingLayer *linkLayer, VModuleKey k,
                                     LLVMObjectFileRef objRef,
                                     char **errorMessage) {
-
     std::unique_ptr<MemoryBuffer> objBuffer =
         unwrap(objRef)->takeBinary().second;
     *errorMessage = nullptr;
@@ -331,6 +379,7 @@ void LLVM_Hs_LinkingLayer_addObject(LinkingLayer *linkLayer, VModuleKey k,
         return;
     }
 }
+#endif
 
 JITTargetAddress LLVM_Hs_JITSymbol_getAddress(LLVMJITSymbolRef symbol,
                                               char **errorMessage) {
@@ -344,7 +393,7 @@ JITTargetAddress LLVM_Hs_JITSymbol_getAddress(LLVMJITSymbolRef symbol,
     }
 }
 
-LLVMJITSymbolFlags LLVM_Hs_JITSymbol_getFlags(LLVMJITSymbolRef symbol) {
+LLVMJITSymbolFlags_ LLVM_Hs_JITSymbol_getFlags(LLVMJITSymbolRef symbol) {
     return wrap(symbol->getFlags());
 }
 
@@ -357,7 +406,7 @@ const char *LLVM_Hs_JITSymbol_getErrorMsg(LLVMJITSymbolRef symbol) {
 }
 
 void LLVM_Hs_setJITSymbol(LLVMJITSymbolRef symbol, JITTargetAddress addr,
-                          LLVMJITSymbolFlags flags) {
+                          LLVMJITSymbolFlags_ flags) {
     *symbol = JITSymbol(addr, unwrap(flags));
 }
 
@@ -410,3 +459,5 @@ void LLVM_Hs_insertFun(std::set<llvm::Function *> *set, llvm::Function *f) {
     set->insert(f);
 }
 }
+
+// #endif

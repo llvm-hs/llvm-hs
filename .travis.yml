@@ -5,8 +5,8 @@ cache:
   directories:
     - $HOME/.cabal/packages
     - $HOME/.cabal/store
-    - $HOME/llvm-build-9.0.1
-    - $HOME/llvm-src-9.0.1
+    - $HOME/llvm-build-$LLVM_VER
+    - $HOME/llvm-src-$LLVM_VER
 
 before_cache:
   - rm -fv $HOME/.cabal/packages/hackage.haskell.org/build-reports.log
@@ -20,7 +20,7 @@ before_cache:
 
 env:
   global:
-    - LLVM_VER=9.0.1
+    - LLVM_VER=12.0.0
 
 matrix:
   include:
@@ -50,13 +50,15 @@ before_install:
  - export PATH=$HOME/bin:$PATH
 
 install:
- - curl -L https://github.com/Kitware/CMake/releases/download/v3.15.5/cmake-3.15.5.tar.gz | tar -xzf - -C $HOME
- - export PATH=$HOME/cmake-3.15.5-Linux-x86_64/bin:$PATH
+ - curl -L https://github.com/Kitware/CMake/releases/download/v3.19.7/cmake-3.19.7-Linux-x86_64.tar.gz | tar -xzf - -C $HOME
+ - export PATH=$HOME/cmake-3.19.7-Linux-x86_64/bin:$PATH
  - curl -L https://github.com/ninja-build/ninja/releases/download/v1.9.0/ninja-linux.zip -o ninja-linux.zip
  - unzip ninja-linux.zip -d $HOME/bin
- - curl -L https://github.com/llvm/llvm-project/releases/download/llvmorg-${LLVM_VER}/llvm-${LLVM_VER}.src.tar.xz | tar -xJf - -C $HOME
- - rsync -ac $HOME/llvm-${LLVM_VER}.src/ $HOME/llvm-src-${LLVM_VER}
- - cd $HOME/llvm-src-${LLVM_VER}
+ - # curl -L https://github.com/llvm/llvm-project/releases/download/llvmorg-${LLVM_VER}/llvm-${LLVM_VER}.src.tar.xz | tar -xJf - -C $HOME
+ - # rsync -ac $HOME/llvm-${LLVM_VER}.src/ $HOME/llvm-src-${LLVM_VER}
+ - git clone https://github.com/llvm/llvm-project.git
+ - git checkout release/12.x
+ - cd llvm-project/llvm
  - mkdir -p build && cd build
  - cmake -DCMAKE_BUILD_TYPE=Release -DCMAKE_CXX_FLAGS_RELEASE=-O0 -DCMAKE_INSTALL_PREFIX=$HOME/llvm-build-${LLVM_VER} -DLLVM_PARALLEL_LINK_JOBS=1 -DLLVM_TARGETS_TO_BUILD=X86 -DLLVM_BUILD_LLVM_DYLIB=True -DLLVM_LINK_LLVM_DYLIB=True -GNinja ..
  - ninja -j3 install

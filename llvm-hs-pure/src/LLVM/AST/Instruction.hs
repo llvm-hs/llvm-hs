@@ -382,6 +382,17 @@ data Instruction
       incomingValues :: [ (Operand, Name) ],
       metadata :: InstructionMetadata
   } 
+  | Freeze {
+      operand0 :: Operand,
+      type' :: Type,
+      metadata :: InstructionMetadata
+    }
+  | Select {
+      condition' :: Operand,
+      trueValue :: Operand,
+      falseValue :: Operand,
+      metadata :: InstructionMetadata
+    }
   | Call {
       tailCallKind :: Maybe TailCallKind,
       callingConvention :: CallingConvention,
@@ -391,12 +402,6 @@ data Instruction
       functionAttributes :: [Either FA.GroupID FA.FunctionAttribute],
       metadata :: InstructionMetadata
   }
-  | Select { 
-      condition' :: Operand,
-      trueValue :: Operand,
-      falseValue :: Operand,
-      metadata :: InstructionMetadata
-    }
   | VAArg { 
       argList :: Operand,
       type' :: Type,
@@ -416,7 +421,7 @@ data Instruction
   | ShuffleVector { 
       operand0 :: Operand,
       operand1 :: Operand,
-      mask :: Constant,
+      mask :: [Int32],
       metadata :: InstructionMetadata
     }
   | ExtractValue { 

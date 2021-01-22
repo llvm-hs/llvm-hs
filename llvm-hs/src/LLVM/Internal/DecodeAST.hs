@@ -8,7 +8,6 @@ module LLVM.Internal.DecodeAST where
 
 import LLVM.Prelude
 
-import Control.Monad.Fail
 import Control.Monad.Catch
 import Control.Monad.State
 import Control.Monad.AnyCont

@@ -8,6 +8,7 @@ import Control.Monad.State (gets)
 import qualified Data.Map.Lazy as Map
 import Data.Word
 import Data.Char (ord)
+import GHC.Int
 import GHC.Stack
 
 import LLVM.AST hiding (args, dests)
@@ -210,11 +211,11 @@ insertElement :: MonadIRBuilder m => Operand -> Operand -> Operand -> m Operand
 insertElement v e i = emitInstr (typeOf v) $ InsertElement v e i []
 
 -- | See <https://llvm.org/docs/LangRef.html#shufflevector-instruction reference>.
-shuffleVector :: (MonadIRBuilder m, HasCallStack) => Operand -> Operand -> C.Constant -> m Operand
+shuffleVector :: (MonadIRBuilder m, HasCallStack) => Operand -> Operand -> [Int32] -> m Operand
 shuffleVector a b m = emitInstr retType $ ShuffleVector a b m []
   where retType =
-          case (typeOf a, typeOf m) of
-            (VectorType _ elemTyp, VectorType maskLength _) -> VectorType maskLength elemTyp
+          case typeOf a of
+            VectorType _ elemTyp -> VectorType (fromIntegral (length m)) elemTyp
             _ -> error "shuffleVector: Expected two vectors and a vector mask"
 
 

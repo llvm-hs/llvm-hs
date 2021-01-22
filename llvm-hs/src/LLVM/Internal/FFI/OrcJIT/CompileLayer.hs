@@ -16,6 +16,8 @@ data CompileLayer
 foreign import ccall safe "LLVM_Hs_CompileLayer_dispose" disposeCompileLayer ::
   Ptr CompileLayer -> IO ()
 
+-- TODO(llvm-12): Consider removing this unused API?
+{-
 foreign import ccall safe "LLVM_Hs_CompileLayer_addModule" addModule ::
   Ptr CompileLayer ->
   Ptr DataLayout ->
@@ -26,9 +28,13 @@ foreign import ccall safe "LLVM_Hs_CompileLayer_addModule" addModule ::
 
 foreign import ccall safe "LLVM_Hs_CompileLayer_removeModule" removeModule ::
   Ptr CompileLayer -> ModuleKey -> IO ()
+-}
 
 foreign import ccall safe "LLVM_Hs_CompileLayer_findSymbol" findSymbol ::
   Ptr CompileLayer -> CString -> LLVMBool -> IO (Ptr JITSymbol)
 
+-- TODO(llvm-12): Consider removing this unused API?
+{-
 foreign import ccall safe "LLVM_Hs_CompileLayer_findSymbolIn" findSymbolIn ::
   Ptr CompileLayer -> ModuleKey -> CString -> LLVMBool -> IO (Ptr JITSymbol)
+-}

@@ -89,6 +89,10 @@ moduleTransform passmanagerSuccessful modulePtr = do
 tests :: TestTree
 tests =
   testGroup "OrcJit" [
+    -- FIXME(llvm-12): Re-enable tests.
+    -- Tests are temporarily disabled until they are rewritten using OrcJIT V2 APIs.
+    -- API usages to be updated: withModuleKey, withSymbolResolver, etc.
+    {-
     testCase "eager compilation" $ do
       resolvers <- newIORef Map.empty
       withTestModule $ \mod ->
@@ -173,18 +177,26 @@ tests =
             Right (JITSymbol mainFn _) <- LL.findSymbolIn linkingLayer k "main" True
             result <- mkMain (castPtrToFunPtr (wordPtrToPtr mainFn))
             result @?= 38,
+    -}
 
     testCase "OrcV2" $ do
-      withTest2Module $ \mod ->
+      withTest2Module $ \m ->
         withHostTargetMachine Reloc.PIC CodeModel.Default CodeGenOpt.Default $ \tm ->
-        OrcV2.withExecutionSession $ \es ->
-        OrcV2.withThreadSafeContext $ \ctx ->
-        OrcV2.withRTDyldObjectLinkingLayer es $ \ol ->
-        OrcV2.withIRCompileLayer es ol tm $ \il -> do
-          dl <- getTargetMachineDataLayout tm
-          OrcV2.irLayerAdd ctx es il mod
-          addr <- OrcV2.esLookup es "main"
-          let mainFn = mkMain (castPtrToFunPtr $ wordPtrToPtr $ fromIntegral addr)
-          result <- mainFn
-          result @?= 42
+        OrcV2.withExecutionSession $ \es -> do
+          let dylibName = "JITDylibName"
+          dylib <- OrcV2.createJITDylib es dylibName
+          OrcV2.withThreadSafeModule m $ \mod ->
+            OrcV2.withRTDyldObjectLinkingLayer es $ \ol ->
+            OrcV2.withIRCompileLayer es ol tm $ \il -> do
+              dl <- getTargetMachineDataLayout tm
+              dylib' <- OrcV2.getJITDylibByName es dylibName
+              OrcV2.addModule mod dylib il
+              -- FIXME(llvm-12): "main" vs "_main" symbol name seems platform-dependent,
+              -- to be verified. "main" on Linux and "_main" on macOS. Find a
+              -- robust platform-independent fix – perhaps by reviving
+              -- `OrcV2.findSymbolIn` which takes a `MangledSymbol`.
+              addr <- OrcV2.lookupSymbol es dylib "_main"
+              let mainFn = mkMain (castPtrToFunPtr $ wordPtrToPtr $ fromIntegral addr)
+              result <- mainFn
+              result @?= 42
     ]
