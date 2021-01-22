@@ -13,7 +13,7 @@ import LLVM.Prelude
 #endif
 #include "llvm-c/Core.h"
 #include "llvm-c/Linker.h"
-#include "llvm-c/OrcBindings.h"
+#include "llvm-c/Orc.h"
 #include "llvm-c/Target.h"
 #include "llvm-c/TargetMachine.h"
 #include "LLVM/Internal/FFI/Analysis.h"
@@ -340,6 +340,7 @@ newtype LibFunc = LibFunc CUInt
 
 newtype JITSymbolFlags = JITSymbolFlags CUInt
   deriving (Eq, Read, Show, Bits, Typeable, Data, Num, Storable, Generic)
+
 #define SF_Rec(n) { #n, LLVMJITSymbolFlag ## n },
 #{inject JIT_SYMBOL_FLAG, JITSymbolFlags, JITSymbolFlags, jitSymbolFlags, SF_Rec}
 

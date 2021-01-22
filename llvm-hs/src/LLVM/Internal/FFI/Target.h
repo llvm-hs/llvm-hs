@@ -26,7 +26,6 @@
   macro(Object)
 
 #define LLVM_HS_FOR_EACH_TARGET_OPTION_FLAG(macro)  \
-  macro(PrintMachineCode)                               \
   macro(UnsafeFPMath)                                   \
   macro(NoInfsFPMath)                                   \
   macro(NoNaNsFPMath)                                   \
@@ -37,15 +36,31 @@
   macro(GuaranteedTailCallOpt)                          \
   macro(StackSymbolOrdering)                            \
   macro(EnableFastISel)                                 \
+  macro(EnableGlobalISel)                               \
   macro(UseInitArray)                                   \
   macro(DisableIntegratedAS)                            \
   macro(RelaxELFRelocations)                            \
   macro(FunctionSections)                               \
   macro(DataSections)                                   \
+  macro(IgnoreXCOFFVisibility)                          \
   macro(UniqueSectionNames)                             \
+  macro(UniqueBasicBlockSectionNames)                   \
   macro(TrapUnreachable)                                \
+  macro(NoTrapAfterNoreturn)                            \
   macro(EmulatedTLS)                                    \
-  macro(EnableIPRA)
+  macro(ExplicitEmulatedTLS)                            \
+  macro(EnableIPRA)                                     \
+  macro(EmitStackSizeSection)                           \
+  macro(EnableMachineOutliner)                          \
+  macro(EnableMachineFunctionSplitter)                  \
+  macro(SupportsDefaultOutlining)                       \
+  macro(EmitAddrsig)                                    \
+  macro(EmitCallSiteInfo)                               \
+  macro(SupportsDebugEntryValues)                       \
+  macro(EnableDebugEntryValues)                         \
+  macro(ValueTrackingVariableLocations)                 \
+  macro(ForceDwarfFrameSection)                         \
+  macro(XRayOmitFunctionIndex)                          \
 
 typedef enum {
 #define ENUM_CASE(n) LLVM_Hs_TargetOptionFlag_ ## n,
@@ -62,7 +77,6 @@ typedef enum {
   macro(MCSaveTempLabels)                               \
   macro(MCUseDwarfDirectory)                            \
   macro(MCIncrementalLinkerCompatible)                  \
-  macro(MCPIECopyRelocations)                           \
   macro(ShowMCEncoding)                                 \
   macro(ShowMCInst)                                     \
   macro(AsmVerbose)                                     \

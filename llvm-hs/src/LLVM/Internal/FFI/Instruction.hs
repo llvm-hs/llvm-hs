@@ -34,10 +34,10 @@ foreign import ccall unsafe "LLVMGetICmpPredicate" getICmpPredicate ::
 foreign import ccall unsafe "LLVM_Hs_GetFCmpPredicate" getFCmpPredicate ::
   Ptr Instruction -> IO FCmpPredicate
 
-foreign import ccall unsafe "LLVM_Hs_GetCallSiteCallingConvention" getCallSiteCallingConvention ::
+foreign import ccall unsafe "LLVM_Hs_GetAbstractCallSiteCallingConvention" getCallSiteCallingConvention ::
   Ptr Instruction -> IO CallingConvention
 
-foreign import ccall unsafe "LLVM_Hs_SetCallSiteCallingConvention" setCallSiteCallingConvention ::
+foreign import ccall unsafe "LLVM_Hs_SetAbstractCallSiteCallingConvention" setCallSiteCallingConvention ::
   Ptr Instruction -> CallingConvention -> IO ()
 
 foreign import ccall unsafe "LLVM_Hs_GetTailCallKind" getTailCallKind ::
@@ -52,12 +52,12 @@ foreign import ccall unsafe "LLVMGetCalledValue" getCallSiteCalledValue ::
 foreign import ccall unsafe "LLVMGetNumArgOperands" getCallSiteNumArgOperands ::
   Ptr Instruction -> IO CUInt
 
-foreign import ccall unsafe "LLVM_Hs_CallSiteAttributesAtIndex" getCallSiteAttributesAtIndex ::
+foreign import ccall unsafe "LLVM_Hs_AbstractCallSiteAttributesAtIndex" getCallSiteAttributesAtIndex ::
   Ptr Instruction -> AttributeIndex -> IO (AttributeSet a)
 
-foreign import ccall unsafe "LLVM_Hs_CallSiteSetAttributeList" setCallSiteAttributeList ::
+foreign import ccall unsafe "LLVM_Hs_AbstractCallSiteSetAttributeList" setCallSiteAttributeList ::
   Ptr Instruction -> AttributeList -> IO ()
-                     
+
 foreign import ccall unsafe "LLVMAddIncoming" addIncoming' ::
   Ptr Instruction -> Ptr (Ptr Value) -> Ptr (Ptr BasicBlock) -> CUInt -> IO ()
 
@@ -148,6 +148,12 @@ foreign import ccall unsafe "LLVM_Hs_SetMetadata" setMetadata ::
 
 foreign import ccall unsafe "LLVM_Hs_GetMetadata" getMetadata ::
   Ptr Instruction -> Ptr MDKindID -> Ptr (Ptr MDNode) -> CUInt -> IO CUInt
+
+foreign import ccall unsafe "LLVM_Hs_GetShuffleVectorMaskSize" getShuffleVectorMaskSize ::
+  Ptr Instruction -> IO CUInt
+
+foreign import ccall unsafe "LLVM_Hs_GetShuffleVectorMask" getShuffleVectorMask ::
+  Ptr Instruction -> Ptr CInt -> IO ()
 
 foreign import ccall unsafe "LLVM_Hs_GetCleanupPad" getCleanupPad ::
   Ptr Instruction -> IO (Ptr Instruction)

@@ -1,4 +1,5 @@
 {-# LANGUAGE OverloadedStrings #-}
+{-# LANGUAGE PatternSynonyms #-}
 module LLVM.Test.Optimization where
 
 import Test.Tasty
@@ -29,10 +30,21 @@ import qualified LLVM.AST.CallingConvention as CC
 import qualified LLVM.AST.Attribute as A
 import qualified LLVM.AST.Global as G
 import qualified LLVM.AST.Constant as C
+import qualified LLVM.Internal.Module as M (readModule)
+import qualified LLVM.Internal.FFI.Module as M (dumpModule)
 
 import qualified LLVM.Relocation as R
 import qualified LLVM.CodeModel as CM
 import qualified LLVM.CodeGenOpt as CGO
+
+import Debug.Trace
+
+-- TODO(llvm-12): This utility for dumping a module might be useful.
+-- Consider moving to library code or deleting it from this test.
+dumpModule' :: A.Module -> IO ()
+dumpModule' m = withContext $ \context -> withModuleFromAST context m $ \m' -> do
+  mPtr <- M.readModule m'
+  M.dumpModule mPtr
 
 handAST = 
   Module "<string>" "<string>" Nothing Nothing [
@@ -96,13 +108,27 @@ handAST =
       FunctionAttributes (A.GroupID 0) [A.NoUnwind, A.ReadNone, A.UWTable]
      ]
 
-isVectory :: A.Module -> Assertion
-isVectory Module { moduleDefinitions = ds } =
-  (@? "Module is not vectory") $ not $ null [ i 
-    | GlobalDefinition (Function { G.basicBlocks = b }) <- ds,
-      BasicBlock _ is _ <- b,
-      _ := i@(ExtractElement {}) <- is
-   ]
+pattern LLVMLoopIsVectorizedMetadata :: Integer -> Definition
+pattern LLVMLoopIsVectorizedMetadata i <- MetadataNodeDefinition _ (MDTuple [
+    Just (MDString "llvm.loop.isvectorized"),
+    Just (MDValue (ConstantOperand C.Int {C.integerBits = 32, C.integerValue = i}))
+  ])
+
+isVectorized :: A.Module -> Assertion
+isVectorized mod@Module { moduleDefinitions = defs } = do
+  let assertHasVectorTypedValues =
+        (@? "Module contains no vector-typed phi instructions") $
+          not $ null [ i
+              | GlobalDefinition Function { G.basicBlocks = b } <- defs,
+                BasicBlock _ is _ <- b,
+                _ := i@Phi { type' = VectorType _ _ } <- is
+            ]
+  let assertHasVectorizedMetadata =
+        (@? "Module is missing 'llvm.loop.isvectorized' metadata") $
+          not $ null [ 1
+              | LLVMLoopIsVectorizedMetadata 1 <- defs
+            ]
+  assertHasVectorTypedValues <> assertHasVectorizedMetadata
 
 optimize :: PassSetSpec -> A.Module -> IO A.Module
 optimize pss m = withContext $ \context -> withModuleFromAST context m $ \mIn' -> do
@@ -130,49 +156,42 @@ tests = testGroup "Optimization" [
       ],
 
   testGroup "individual" [
-    testCase "ConstantPropagation" $ do
-      mOut <- optimize defaultPassSetSpec { transforms = [T.ConstantPropagation] } handAST
-
-      mOut @?= Module "<string>" "<string>" Nothing Nothing [
-        GlobalDefinition $ functionDefaults {
-          G.returnType = i32,
-          G.name = Name "foo",
-          G.parameters = ([Parameter i32 (Name "x") []], False),
-          G.functionAttributes = [Left (A.GroupID 0)],
-          G.basicBlocks = [
-            BasicBlock (UnName 0) [] (Do $ Br (Name "here") []),
-            BasicBlock (Name "here") [] (
-               Do $ CondBr {
-                 condition = ConstantOperand (C.Int 1 1),
-                 trueDest = Name "take", 
-                 falseDest = Name "done",
-                 metadata' = []
-               }
-            ),
-            BasicBlock (Name "take") [
-             UnName 1 := Sub {
-               nsw = False,
-               nuw = False,
-               operand0 = LocalReference i32 (Name "x"),
-               operand1 = LocalReference i32 (Name "x"),
-               metadata = []
-              }
-            ] (
-             Do $ Br (Name "done") []
-            ),
-            BasicBlock (Name "done") [
-             Name "r" := Phi {
-               type' = i32,
-               incomingValues = [(LocalReference i32 (UnName 1), Name "take"),(ConstantOperand (C.Int 32 57), Name "here")],
-               metadata = []
-              }
-            ] (
-              Do $ Ret (Just (LocalReference i32 (Name "r"))) []
-            )
-           ]
-         },
-        FunctionAttributes (A.GroupID 0) [A.NoUnwind, A.ReadNone, A.UWTable]
-       ],
+    testCase "InstSimplify" $ do
+      let
+        mIn = Module "<string>" "<string>" Nothing Nothing [
+           GlobalDefinition $ functionDefaults {
+            G.returnType = i32,
+             G.name = Name "foo",
+             G.parameters = ([Parameter i32 (Name "x") []], False),
+             G.functionAttributes = [Left (A.GroupID 0)],
+             G.basicBlocks = [
+               BasicBlock (UnName 0) [] (Do $ Br (Name "here") []),
+               BasicBlock (Name "here") [] (
+                  Do $ CondBr {
+                    condition = ConstantOperand (C.Int 1 1),
+                    trueDest = Name "take",
+                    falseDest = Name "done",
+                    metadata' = []
+                  }
+               ),
+               BasicBlock (Name "take") [] (
+                Do $ Br (Name "done") []
+               ),
+               BasicBlock (Name "done") [
+                Name "r" := Phi {
+                  type' = i32,
+                  incomingValues = [(ConstantOperand (C.Int 32 0), Name "take"), (ConstantOperand (C.Int 32 57), Name "here")],
+                  metadata = []
+                 }
+               ] (
+                 Do $ Ret (Just (LocalReference i32 (Name "r"))) []
+               )
+              ]
+            },
+           FunctionAttributes (A.GroupID 0) [A.NoUnwind, A.ReadNone, A.UWTable]
+          ]
+      mOut <- optimize defaultPassSetSpec { transforms = [T.InstructionSimplify] } handAST
+      mOut @?= mIn,
 
     testCase "SLPVectorization" $ do
       let
@@ -264,7 +283,7 @@ tests = testGroup "Optimization" [
                      ] [],
                     UnName 2 := GetElementPtr True (ConstantOperand (C.GlobalReference (PointerType (A.T.ArrayType 2048 i32) (AddrSpace 0)) (Name "a"))) [
                       ConstantOperand (C.Int 64 0),
-                      (LocalReference i64 (Name "indvars.iv"))
+                      LocalReference i64 (Name "indvars.iv")
                      ] [],
                     UnName 3 := Load False (LocalReference (ptr i32) (UnName 2)) Nothing 4 [],
                     UnName 4 := Trunc (LocalReference i64 (Name "indvars.iv")) i32 [],
@@ -292,7 +311,7 @@ tests = testGroup "Optimization" [
                         dataLayout = moduleDataLayout mIn,
                         targetMachine = Just tm
                       }) mIn
-      isVectory mOut,
+      isVectorized mOut,
 
     testCase "LowerInvoke" $ do
       -- This test doesn't test much about what LowerInvoke does, just that it seems to work.

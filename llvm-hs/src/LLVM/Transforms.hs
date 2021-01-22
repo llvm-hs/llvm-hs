@@ -17,16 +17,15 @@ data Pass
   | BreakCriticalEdges
   -- | can use a 'LLVM.Target.TargetMachine'
   | CodeGenPrepare
-  | ConstantPropagation
   | CorrelatedValuePropagation
   | DeadCodeElimination
-  | DeadInstructionElimination
   | DeadStoreElimination
   | DemoteRegisterToMemory
   | EarlyCommonSubexpressionElimination
   | GlobalValueNumbering { noLoads :: Bool }
   | InductionVariableSimplify
   | InstructionCombining
+  | InstructionSimplify
   | JumpThreading
   | LoopClosedSingleStaticAssignment
   | LoopInvariantCodeMotion
@@ -68,7 +67,6 @@ data Pass
     }
   | GlobalDeadCodeElimination
   | InternalizeFunctions { exportList :: [String] }
-  | InterproceduralConstantPropagation
   | InterproceduralSparseConditionalConstantPropagation
   | MergeFunctions
   | PartialInlining
@@ -90,9 +88,10 @@ data Pass
       emitNotes :: Bool,
       emitData :: Bool,
       version :: GCOVVersion, 
-      useCfgChecksum :: Bool,
       noRedZone :: Bool,
-      functionNamesInData :: Bool
+      atomic :: Bool,
+      filter :: String,
+      exclude :: String
     }
   | AddressSanitizer
   | AddressSanitizerModule
@@ -122,9 +121,10 @@ defaultGCOVProfiler = GCOVProfiler {
     emitNotes = True,
     emitData = True,
     version = GCOVVersion "402*", 
-    useCfgChecksum = False,
     noRedZone = False,
-    functionNamesInData = True
+    atomic = True,
+    LLVM.Transforms.filter = "",
+    exclude = ""
   }
 
 -- | Defaults for 'AddressSanitizer'.

@@ -34,7 +34,6 @@ import qualified LLVM.Internal.FFI.Instruction as FFI
 import qualified LLVM.Internal.FFI.Value as FFI
 import qualified LLVM.Internal.FFI.User as FFI
 import qualified LLVM.Internal.FFI.Builder as FFI
-import qualified LLVM.Internal.FFI.Constant as FFI
 import qualified LLVM.Internal.FFI.BasicBlock as FFI
 
 import LLVM.Internal.Atomicity ()
@@ -302,7 +301,6 @@ $(do
         t <- typeOf i
         nOps <- liftIO $ FFI.getNumOperands (FFI.upCast i)
         let op n = decodeM =<< (liftIO $ FFI.getOperand (FFI.upCast i) n)
-            cop n = decodeM =<< (liftIO $ FFI.isAConstant =<< FFI.getOperand (FFI.upCast i) n)
             get_nsw b = liftIO $ decodeM =<< FFI.hasNoSignedWrap (FFI.upCast b)
             get_nuw b = liftIO $ decodeM =<< FFI.hasNoUnsignedWrap (FFI.upCast b)
             get_exact b = liftIO $ decodeM =<< FFI.isExact (FFI.upCast b)
@@ -333,7 +331,12 @@ $(do
                                   "ExtractElement" -> [| op 1 |]
                                   "InsertElement" -> [| op 2 |]
                                   _ -> [|error "Index fields are only supported for 'ExtractElement' and 'InsertElement': " <> lrn|])
-                "mask" -> ([], [| cop 2 |])
+                "mask" ->
+                  ([], [| do
+                          n <- liftIO $ FFI.getShuffleVectorMaskSize i
+                          a <- allocaArray n
+                          liftIO $ FFI.getShuffleVectorMask i a
+                          decodeM (n, a) |])
                 "aggregate" -> ([], [| op 0 |])
                 "metadata" -> ([], [| meta i |])
                 "iPredicate" -> ([], [| decodeM =<< liftIO (FFI.getICmpPredicate i) |])
@@ -458,6 +461,17 @@ $(do
                  bs3' <- encodeM bs3
                  liftIO $ FFI.addIncoming i ivs3' bs3'
                )
+          A.Select { A.condition' = c, A.trueValue = t, A.falseValue = f } -> do
+            c' <- encodeM c
+            t' <- encodeM t
+            f' <- encodeM f
+            i <- liftIO $ FFI.buildSelect builder c' t' f' s
+            return' i
+          A.Freeze { A.operand0 = op0, A.type' = t } -> do
+            op0' <- encodeM op0
+            t' <- encodeM t
+            i <- liftIO $ FFI.buildFreeze builder op0' t'
+            return' i
           A.Call {
             A.tailCallKind = tck,
             A.callingConvention = cc,
@@ -476,12 +490,6 @@ $(do
             liftIO $ FFI.setTailCallKind i tck
             cc <- encodeM cc
             liftIO $ FFI.setCallSiteCallingConvention i cc
-            return' i
-          A.Select { A.condition' = c, A.trueValue = t, A.falseValue = f } -> do
-            c' <- encodeM c
-            t' <- encodeM t
-            f' <- encodeM f
-            i <- liftIO $ FFI.buildSelect builder c' t' f' s
             return' i
           A.VAArg { A.argList = al, A.type' = t } -> do
             al' <- encodeM al
@@ -502,8 +510,8 @@ $(do
           A.ShuffleVector { A.operand0 = o0, A.operand1 = o1, A.mask = mask } -> do
             o0' <- encodeM o0
             o1' <- encodeM o1
-            mask' <- encodeM mask
-            i <- liftIO $ FFI.buildShuffleVector builder o0' o1' mask' s
+            (sizeMask, mask') <- encodeM mask
+            i <- liftIO $ FFI.buildShuffleVector builder o0' o1' mask' sizeMask s
             return' i
           A.ExtractValue { A.aggregate = a, A.indices' = is } -> do
             a' <- encodeM a
@@ -588,8 +596,9 @@ $(do
                         [p|A.ICmp{}|],
                         [p|A.FCmp{}|],
                         [p|A.Phi{}|],
-                        [p|A.Call{}|],
                         [p|A.Select{}|],
+                        [p|A.Freeze{}|],
+                        [p|A.Call{}|],
                         [p|A.VAArg{}|],
                         [p|A.ExtractElement{}|],
                         [p|A.InsertElement{}|],

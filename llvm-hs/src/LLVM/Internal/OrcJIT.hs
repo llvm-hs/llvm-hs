@@ -1,6 +1,10 @@
 {-# LANGUAGE MultiParamTypeClasses #-}
 module LLVM.Internal.OrcJIT where
 
+-- FIXME(llvm-12): Clean up this file.
+-- Most logic exists in llvm-hs/src/LLVM/Internal/OrcJITV2.hs now. Perhaps
+-- consider combining the files.
+
 import LLVM.Prelude
 
 import Control.Exception
@@ -31,6 +35,8 @@ instance MonadIO m => DecodeM m MangledSymbol CString where
   decodeM str = liftIO $ MangledSymbol <$> packCString str
 
 newtype ExecutionSession = ExecutionSession (Ptr FFI.ExecutionSession)
+
+newtype JITDylib = JITDylib (Ptr FFI.JITDylib)
 
 -- | Contrary to the C++ interface, we do not store the HasError flag
 -- here. Instead decoding a JITSymbol produces a sumtype based on
@@ -70,6 +76,8 @@ newtype SymbolResolver =
 -- | Create a `FFI.SymbolResolver` that can be used with the JIT.
 withSymbolResolver :: ExecutionSession -> SymbolResolver -> (Ptr FFI.SymbolResolver -> IO a) -> IO a
 withSymbolResolver (ExecutionSession es) (SymbolResolver resolverFn) f =
+  error "NOTE(llvm-12): SymbolResolvers seem deprecated and this should never be called"
+  {-
   bracket (FFI.wrapSymbolResolverFn resolverFn') freeHaskellFunPtr $ \resolverPtr ->
     bracket (FFI.createLambdaResolver es resolverPtr) FFI.disposeSymbolResolver $ \resolver ->
       f resolver
@@ -77,6 +85,7 @@ withSymbolResolver (ExecutionSession es) (SymbolResolver resolverFn) f =
     resolverFn' symbol result = do
       setSymbol <- encodeM =<< resolverFn =<< decodeM symbol
       setSymbol result
+  -}
 
 instance Monad m => EncodeM m JITSymbolFlags FFI.JITSymbolFlags where
   encodeM f = return $ foldr1 (.|.) [
@@ -120,6 +129,7 @@ instance (MonadIO m, MonadAnyCont IO m) => DecodeM m (Either JITSymbolError JITS
         flags <- decodeM rawFlags
         pure (Right (JITSymbol (fromIntegral addr) flags))
 
+{-
 instance MonadIO m =>
   EncodeM m SymbolResolver (IORef [IO ()] -> Ptr FFI.ExecutionSession -> IO (Ptr FFI.SymbolResolver)) where
   encodeM (SymbolResolver resolverFn) = return $ \cleanups es -> do
@@ -132,6 +142,7 @@ instance MonadIO m => EncodeM m (MangledSymbol -> IO (Either JITSymbolError JITS
       (\symbol result -> do
          setSymbol <- encodeM =<< callback =<< decodeM symbol
          setSymbol result)
+-}
 
 -- | Allocate the resource and register it for cleanup.
 allocWithCleanup :: IORef [IO ()] -> IO a -> (a -> IO ()) -> IO a
@@ -166,6 +177,7 @@ disposeExecutionSession (ExecutionSession es) = FFI.disposeExecutionSession es
 withExecutionSession :: (ExecutionSession -> IO a) -> IO a
 withExecutionSession = bracket createExecutionSession disposeExecutionSession
 
+{-
 -- | Allocate a module key for a new module to add to the JIT.
 allocateModuleKey :: ExecutionSession -> IO FFI.ModuleKey
 allocateModuleKey (ExecutionSession es) = FFI.allocateVModule es
@@ -179,3 +191,4 @@ releaseModuleKey (ExecutionSession es) k = FFI.releaseVModule es k
 -- `releaseModuleKey`.
 withModuleKey :: ExecutionSession -> (FFI.ModuleKey -> IO a) -> IO a
 withModuleKey es = bracket (allocateModuleKey es) (releaseModuleKey es)
+-}

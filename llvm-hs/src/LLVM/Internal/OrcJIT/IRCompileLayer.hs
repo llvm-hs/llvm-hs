@@ -46,7 +46,9 @@ newIRCompileLayer linkingLayer (TargetMachine tm) = flip runAnyContT return $ do
       (FFI.disposeCompileLayer . FFI.upCast)
   return (IRCompileLayer cl dl cleanups)
 
+{-
 -- | 'bracket'-style wrapper around 'newIRCompileLayer' and 'disposeCompileLayer'.
 withIRCompileLayer :: LinkingLayer l => l -> TargetMachine -> (IRCompileLayer l -> IO a) -> IO a
 withIRCompileLayer linkingLayer tm =
   bracket (newIRCompileLayer linkingLayer tm) disposeCompileLayer
+-}

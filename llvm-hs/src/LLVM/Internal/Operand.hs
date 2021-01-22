@@ -9,6 +9,7 @@
   ScopedTypeVariables,
   TemplateHaskell
   #-}
+{-# OPTIONS_GHC -fno-warn-orphans #-}
 module LLVM.Internal.Operand where
 
 import LLVM.Prelude
@@ -42,6 +43,7 @@ import LLVM.Internal.Metadata (getByteStringFromFFI)
 
 import qualified LLVM.AST as A hiding (GlobalVariable, Module, PointerType, type')
 import qualified LLVM.AST.Operand as A
+import qualified LLVM.AST.Constant as A (Constant(Int, integerBits, integerValue))
 
 import LLVM.Internal.FFI.LLVMCTypes (mdSubclassIdP)
 
@@ -61,7 +63,7 @@ instance Applicative m => EncodeM m [A.DIFlag] FFI.DIFlags where
           A.Accessibility A.Public -> 3
           A.FwdDecl -> 1 `shiftL` 2
           A.AppleBlock -> 1 `shiftL` 3
-          A.BlockByrefStruct -> 1 `shiftL` 4
+          A.ReservedBit4 -> 1 `shiftL` 4
           A.VirtualFlag -> 1 `shiftL` 5
           A.Artificial -> 1 `shiftL` 6
           A.Explicit -> 1 `shiftL` 7
@@ -78,7 +80,6 @@ instance Applicative m => EncodeM m [A.DIFlag] FFI.DIFlags where
           A.IntroducedVirtual -> 1 `shiftL` 18
           A.BitField -> 1 `shiftL` 19
           A.NoReturn -> 1 `shiftL` 20
-          A.ArgumentNotModified -> 1 `shiftL` 21
           A.TypePassByValue -> 1 `shiftL` 22
           A.TypePassByReference -> 1 `shiftL` 23
           A.EnumClass -> 1 `shiftL` 24
@@ -113,7 +114,6 @@ instance Applicative m => DecodeM m [A.DIFlag] FFI.DIFlags where
       flags =
         [ A.FwdDecl
         , A.AppleBlock
-        , A.BlockByrefStruct
         , A.VirtualFlag
         , A.Artificial
         , A.Explicit
@@ -127,7 +127,6 @@ instance Applicative m => DecodeM m [A.DIFlag] FFI.DIFlags where
         , A.IntroducedVirtual
         , A.BitField
         , A.NoReturn
-        , A.ArgumentNotModified
         , A.TypePassByValue
         , A.TypePassByReference
         , A.EnumClass
@@ -161,10 +160,12 @@ instance DecodeM DecodeAST A.Metadata (Ptr FFI.Metadata) where
         n <- liftIO $ FFI.isAMDNode md
         if n /= nullPtr
           then A.MDNode <$> decodeM n
-          else do v <- liftIO $ FFI.isAMDValue md
-                  if v /= nullPtr
-                    then A.MDValue <$> decodeM v
-                    else throwM (DecodeException "Metadata was not one of [MDString, MDValue, MDNode]")
+          else do
+            v <- liftIO $ FFI.isAMDValue md
+            if v /= nullPtr
+              then A.MDValue <$> decodeM v
+              else do
+                throwM (DecodeException "Metadata was not one of [MDString, MDValue, MDNode]")
 
 instance DecodeM DecodeAST A.DINode (Ptr FFI.DINode) where
   decodeM diN = do
@@ -172,20 +173,20 @@ instance DecodeM DecodeAST A.DINode (Ptr FFI.DINode) where
     case sId of
       [mdSubclassIdP|DIEnumerator|] ->
         A.DIEnumerator <$> decodeM (castPtr diN :: Ptr FFI.DIEnumerator)
-      [mdSubclassIdP|DIImportedEntity|] -> A.DIImportedEntity <$> decodeM (castPtr diN :: Ptr FFI.DIImportedEntity)
-      [mdSubclassIdP|DIObjCProperty|]   -> A.DIObjCProperty <$> decodeM (castPtr diN :: Ptr FFI.DIObjCProperty)
-      [mdSubclassIdP|DISubrange|]       -> A.DISubrange <$> decodeM (castPtr diN :: Ptr FFI.DISubrange)
       [mdSubclassIdP|DIBasicType|]        -> A.DIScope <$> decodeM (castPtr diN :: Ptr FFI.DIScope)
+      [mdSubclassIdP|DICompileUnit|]      -> A.DIScope <$> decodeM (castPtr diN :: Ptr FFI.DIScope)
       [mdSubclassIdP|DICompositeType|]    -> A.DIScope <$> decodeM (castPtr diN :: Ptr FFI.DIScope)
       [mdSubclassIdP|DIDerivedType|]      -> A.DIScope <$> decodeM (castPtr diN :: Ptr FFI.DIScope)
-      [mdSubclassIdP|DISubroutineType|]   -> A.DIScope <$> decodeM (castPtr diN :: Ptr FFI.DIScope)
+      [mdSubclassIdP|DIFile|]             -> A.DIScope <$> decodeM (castPtr diN :: Ptr FFI.DIScope)
+      [mdSubclassIdP|DIImportedEntity|] -> A.DIImportedEntity <$> decodeM (castPtr diN :: Ptr FFI.DIImportedEntity)
       [mdSubclassIdP|DILexicalBlock|]     -> A.DIScope <$> decodeM (castPtr diN :: Ptr FFI.DIScope)
       [mdSubclassIdP|DILexicalBlockFile|] -> A.DIScope <$> decodeM (castPtr diN :: Ptr FFI.DIScope)
-      [mdSubclassIdP|DIFile|]             -> A.DIScope <$> decodeM (castPtr diN :: Ptr FFI.DIScope)
-      [mdSubclassIdP|DINamespace|]        -> A.DIScope <$> decodeM (castPtr diN :: Ptr FFI.DIScope)
-      [mdSubclassIdP|DISubprogram|]       -> A.DIScope <$> decodeM (castPtr diN :: Ptr FFI.DIScope)
-      [mdSubclassIdP|DICompileUnit|]      -> A.DIScope <$> decodeM (castPtr diN :: Ptr FFI.DIScope)
       [mdSubclassIdP|DIModule|]           -> A.DIScope <$> decodeM (castPtr diN :: Ptr FFI.DIScope)
+      [mdSubclassIdP|DINamespace|]        -> A.DIScope <$> decodeM (castPtr diN :: Ptr FFI.DIScope)
+      [mdSubclassIdP|DIObjCProperty|]   -> A.DIObjCProperty <$> decodeM (castPtr diN :: Ptr FFI.DIObjCProperty)
+      [mdSubclassIdP|DISubprogram|]       -> A.DIScope <$> decodeM (castPtr diN :: Ptr FFI.DIScope)
+      [mdSubclassIdP|DISubrange|]       -> A.DISubrange <$> decodeM (castPtr diN :: Ptr FFI.DISubrange)
+      [mdSubclassIdP|DISubroutineType|]   -> A.DIScope <$> decodeM (castPtr diN :: Ptr FFI.DIScope)
 
       [mdSubclassIdP|DIGlobalVariable|] -> A.DIVariable <$> decodeM (castPtr diN :: Ptr FFI.DIVariable)
       [mdSubclassIdP|DILocalVariable|]  -> A.DIVariable <$> decodeM (castPtr diN :: Ptr FFI.DIVariable)
@@ -195,26 +196,70 @@ instance DecodeM DecodeAST A.DINode (Ptr FFI.DINode) where
 
       _ -> throwM (DecodeException ("Unknown subclass id for DINode: " <> show sId))
 
+instance EncodeM EncodeAST A.DICount (Ptr FFI.Metadata) where
+  encodeM count = do
+    case count of
+      A.DICountConstant i -> do
+        let constant = A.MDValue (A.ConstantOperand (A.Int { A.integerBits = 64, A.integerValue = toInteger i }))
+        encodeM constant
+      A.DICountVariable v -> do
+        encodeM (A.MDNode $ A.DINode . A.DIVariable <$> v)
+
+instance EncodeM EncodeAST A.DIBound (Ptr FFI.Metadata) where
+  encodeM bound = do
+    case bound of
+      A.DIBoundConstant i -> do
+        let constant = A.MDValue (A.ConstantOperand (A.Int { A.integerBits = 64, A.integerValue = toInteger i }))
+        encodeM constant
+      A.DIBoundVariable v -> do
+        encodeM (A.MDNode (A.DINode . A.DIVariable <$> v))
+      A.DIBoundExpression e -> do
+        encodeM (A.MDNode (A.DIExpression <$> e))
+
+instance DecodeM DecodeAST A.DICount (Ptr FFI.Metadata) where
+  decodeM m = do
+    c <- liftIO $ FFI.isAMDValue m
+    if c /= nullPtr
+    then do
+      (A.ConstantOperand A.Int { A.integerValue = i }) <- decodeM c
+      pure (A.DICountConstant (fromInteger i))
+    else do
+      v <- decodeM =<< liftIO (FFI.isADIVariable m)
+      pure (A.DICountVariable v)
+
+instance DecodeM DecodeAST A.DIBound (Ptr FFI.Metadata) where
+  decodeM m = do
+    c <- liftIO $ FFI.isAMDValue m
+    if c /= nullPtr
+    then do
+      (A.ConstantOperand A.Int { A.integerValue = i }) <- decodeM c
+      pure (A.DIBoundConstant (fromInteger i))
+    else do
+      v <- liftIO (FFI.isADIVariable m)
+      if v /= nullPtr
+        then do
+          v' <- decodeM =<< pure v
+          pure (A.DIBoundVariable v')
+        else do
+          e <- decodeM =<< liftIO (FFI.isADIExpression m)
+          pure (A.DIBoundExpression e)
+
 instance EncodeM EncodeAST A.DISubrange (Ptr FFI.DISubrange) where
   encodeM (A.Subrange {..}) = do
     Context c <- gets encodeStateContext
-    case count of
-      A.DICountConstant i -> liftIO (FFI.getDISubrangeConstantCount c i lowerBound)
-      A.DICountVariable v -> do
-        v' <- encodeM v
-        liftIO (FFI.getDISubrangeVariableCount c v' lowerBound)
+    count' <- encodeM count
+    lowerBound' <- encodeM lowerBound
+    upperBound' <- encodeM upperBound
+    stride' <- encodeM stride
+    liftIO (FFI.getDISubrangeVariableFields c count' lowerBound' upperBound' stride')
 
 instance DecodeM DecodeAST A.DISubrange (Ptr FFI.DISubrange) where
   decodeM r = do
-    lowerBound <- liftIO (FFI.getDISubrangeLowerBound r)
-    hasConstantCount <- decodeM =<< liftIO (FFI.getDISubrangeHasConstantCount r)
-    if hasConstantCount
-      then do
-        count <- liftIO (FFI.getDISubrangeCountConstant r)
-        pure (A.Subrange (A.DICountConstant count) lowerBound)
-      else do
-        count <- decodeM =<< liftIO (FFI.getDISubrangeCountVariable r)
-        pure (A.Subrange (A.DICountVariable count) lowerBound)
+    count <- decodeM =<< liftIO (FFI.getDISubrangeCount r)
+    lowerBound <- decodeM =<< liftIO (FFI.getDISubrangeLowerBound r)
+    upperBound <- decodeM =<< liftIO (FFI.getDISubrangeUpperBound r)
+    stride <- decodeM =<< liftIO (FFI.getDISubrangeStride r)
+    pure (A.Subrange count lowerBound upperBound stride)
 
 instance EncodeM EncodeAST A.DIEnumerator (Ptr FFI.DIEnumerator) where
   encodeM (A.Enumerator {..}) = do
@@ -293,13 +338,15 @@ instance DecodeM DecodeAST A.DIModule (Ptr FFI.DIModule) where
     let m = castPtr p :: Ptr FFI.DIModule
     configurationMacros <- decodeM =<< liftIO (FFI.getDIModuleConfigurationMacros m)
     includePath <- decodeM =<< liftIO (FFI.getDIModuleIncludePath m)
-    isysRoot <- decodeM =<< liftIO (FFI.getDIModuleISysRoot m)
+    apiNotesFile <- decodeM =<< liftIO (FFI.getDIModuleAPINotesFile m)
+    lineNo <- liftIO (FFI.getDIModuleLineNo m)
     pure A.Module
       { A.scope = scope
       , A.name = name
       , A.configurationMacros = configurationMacros
       , A.includePath = includePath
-      , A.isysRoot = isysRoot
+      , A.apiNotesFile = apiNotesFile
+      , A.lineNo = lineNo
       }
 
 instance EncodeM EncodeAST A.DIModule (Ptr FFI.DIModule) where
@@ -308,9 +355,9 @@ instance EncodeM EncodeAST A.DIModule (Ptr FFI.DIModule) where
     name <- encodeM name
     configurationMacros <- encodeM configurationMacros
     includePath <- encodeM includePath
-    isysRoot <- encodeM isysRoot
+    apiNotesFile <- encodeM apiNotesFile
     Context c <- gets encodeStateContext
-    liftIO (FFI.getDIModule c scope name configurationMacros includePath isysRoot)
+    liftIO (FFI.getDIModule c scope name configurationMacros includePath apiNotesFile lineNo)
 
 genCodingInstance [t|A.DebugEmissionKind|] ''FFI.DebugEmissionKind
   [ (FFI.NoDebug, A.NoDebug)
@@ -774,7 +821,7 @@ instance EncodeM EncodeAST A.DITemplateParameter (Ptr FFI.DITemplateParameter) w
       A.DITemplateValueParameter {..} -> do
         tag <- encodeM tag
         value <- encodeM value
-        FFI.upCast <$> liftIO (FFI.getDITemplateValueParameter c name' ty tag value)
+        FFI.upCast <$> liftIO (FFI.getDITemplateValueParameter c name' ty tag True value)
 
 instance DecodeM DecodeAST A.DITemplateParameter (Ptr FFI.DITemplateParameter) where
   decodeM p = do
@@ -927,7 +974,10 @@ instance DecodeM DecodeAST A.CallableOperand (Ptr FFI.Value) where
      else Right <$> decodeM v
 
 instance EncodeM EncodeAST A.Operand (Ptr FFI.Value) where
-  encodeM (A.ConstantOperand c) = (FFI.upCast :: Ptr FFI.Constant -> Ptr FFI.Value) <$> encodeM c
+  encodeM (A.ConstantOperand c) = do
+    c' <- (encodeM :: A.Constant -> EncodeAST (Ptr FFI.Constant)) c
+    let v = (FFI.upCast :: Ptr FFI.Constant -> Ptr FFI.Value) c'
+    return v
   encodeM (A.LocalReference t n) = do
     lv <- refer encodeStateLocals n $ do
       lv <- do
@@ -951,7 +1001,8 @@ instance EncodeM EncodeAST A.Metadata (Ptr FFI.Metadata) where
   encodeM (A.MDNode mdn) = (FFI.upCast :: Ptr FFI.MDNode -> Ptr FFI.Metadata) <$> encodeM mdn
   encodeM (A.MDValue v) = do
      v <- encodeM v
-     FFI.upCast <$> liftIO (FFI.mdValue v)
+     mdVal <- liftIO $ FFI.mdValue v
+     return $ FFI.upCast mdVal
 
 instance EncodeM EncodeAST A.CallableOperand (Ptr FFI.Value) where
   encodeM (Right o) = encodeM o
@@ -994,8 +1045,10 @@ instance (MonadIO m, MonadState EncodeState m, MonadAnyCont IO m, EncodeM m a (P
 instance (MonadIO m, MonadAnyCont IO m, DecodeM m a (Ptr a')) => DecodeM m [a] (FFI.TupleArray a') where
   decodeM (FFI.TupleArray p)
     | p == nullPtr = pure []
-    | otherwise = decodeArray FFI.getMDNodeNumOperands getOperand (FFI.upCast p)
-    where getOperand md i = (castPtr <$> FFI.getMDNodeOperand md i) :: IO (Ptr a')
+    | otherwise = do
+      decodeArray FFI.getMDNodeNumOperands getOperand (FFI.upCast p)
+    where
+      getOperand md i = (castPtr <$> FFI.getMDNodeOperand md i) :: IO (Ptr a')
 
 encodeDWOp :: A.DWOp -> [Word64]
 encodeDWOp op =

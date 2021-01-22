@@ -51,6 +51,8 @@ findSymbol compileLayer symbol exportedSymbolsOnly = flip runAnyContT return $ d
     (FFI.findSymbol (getCompileLayer compileLayer) symbol' exportedSymbolsOnly') FFI.disposeSymbol
   decodeM symbol
 
+-- TODO(llvm-12): Consider removing this unused API?
+{-
 -- | @'findSymbolIn' layer handle symbol exportedSymbolsOnly@ searches for
 -- @symbol@ in the context of the module represented by @handle@. If
 -- @exportedSymbolsOnly@ is 'True' only exported symbols are searched.
@@ -61,7 +63,10 @@ findSymbolIn compileLayer handle symbol exportedSymbolsOnly = flip runAnyContT r
   symbol <- anyContToM $ bracket
     (FFI.findSymbolIn (getCompileLayer compileLayer) handle symbol' exportedSymbolsOnly') FFI.disposeSymbol
   decodeM symbol
+-}
 
+-- TODO(llvm-12): Consider removing this unused API?
+{-
 -- | Add a module to the 'CompileLayer'. The 'SymbolResolver' is used
 -- to resolve external symbols in the module.
 --
@@ -79,7 +84,10 @@ addModule compileLayer k mod = flip runAnyContT return $ do
       k
       mod'
       errMsg
+-}
 
+-- TODO(llvm-12): Consider removing this unused API?
+{-
 -- | Remove a previously added module.
 removeModule :: CompileLayer l => l -> FFI.ModuleKey -> IO ()
 removeModule compileLayer handle =
@@ -94,6 +102,7 @@ withModule compileLayer k mod =
   bracket_
     (addModule compileLayer k mod)
     (removeModule compileLayer k)
+-}
 
 -- | Dispose of a 'CompileLayer'. This should called when the
 -- 'CompileLayer' is not needed anymore.

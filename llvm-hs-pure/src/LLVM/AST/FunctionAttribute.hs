@@ -5,50 +5,52 @@ import LLVM.Prelude
 
 -- | <http://llvm.org/docs/LangRef.html#function-attributes>
 data FunctionAttribute
-    = NoReturn
-    | NoUnwind
-    | ReadNone
-    | ReadOnly
-    | NoInline
-    | NoRecurse
+    = AllocSize Word32 (Maybe Word32) -- ^ AllocSize 0 (Just 0) is invalid
     | AlwaysInline
+    | ArgMemOnly
+    | Builtin
+    | Cold
+    | Convergent
+    | InaccessibleMemOnly
+    | InaccessibleMemOrArgMemOnly
+    | InlineHint
+    | JumpTable
     | MinimizeSize
+    | Naked
+    | NoBuiltin
+    | NoDuplicate
+    | NoFree
+    | NoImplicitFloat
+    | NoInline
+    | NonLazyBind
+    | NoRecurse
+    | NoRedZone
+    | NoReturn
+    | NoSync
+    | NoUnwind
     | OptimizeForSize
     | OptimizeNone
+    | ReadNone
+    | ReadOnly
+    | ReturnsTwice
+    | SafeStack
+    | SanitizeAddress
+    | SanitizeHWAddress
+    | SanitizeMemory
+    | SanitizeThread
+    | Speculatable
+    | StackAlignment Word64
     | StackProtect
     | StackProtectReq
     | StackProtectStrong
     | StrictFP
-    | NoRedZone
-    | NoImplicitFloat
-    | Naked
-    | InlineHint
-    | StackAlignment Word64
-    | ReturnsTwice
-    | UWTable
-    | NonLazyBind
-    | Builtin
-    | NoBuiltin
-    | Cold
-    | JumpTable
-    | NoDuplicate
-    | NoFree
-    | SanitizeAddress
-    | SanitizeHWAddress
-    | SanitizeThread
-    | SanitizeMemory
-    | Speculatable
     | StringAttribute {
         stringAttributeKind :: ShortByteString,
         stringAttributeValue :: ShortByteString -- ^ Use "" for no value -- the two are conflated
       }
-    | AllocSize Word32 (Maybe Word32) -- ^ AllocSize 0 (Just 0) is invalid
+    | UWTable
+    | WillReturn
     | WriteOnly
-    | ArgMemOnly
-    | Convergent
-    | InaccessibleMemOnly
-    | InaccessibleMemOrArgMemOnly
-    | SafeStack
   deriving (Eq, Ord, Read, Show, Typeable, Data, Generic)
 
 -- | <http://llvm.org/docs/LangRef.html#attribute-groups>

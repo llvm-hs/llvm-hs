@@ -2,10 +2,11 @@ module LLVM.OrcJIT.CompileLayer
   ( CompileLayer(..)
   , mangleSymbol
   , findSymbol
-  , findSymbolIn
-  , addModule
-  , removeModule
-  , withModule
+  -- TODO(llvm-12): Remove unused APIs.
+  -- , findSymbolIn
+  -- , addModule
+  -- , removeModule
+  -- , withModule
   , disposeCompileLayer
   ) where
 

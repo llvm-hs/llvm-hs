@@ -16,6 +16,6 @@ typedef enum {
               LLVMJITSymbolFlagCommon = 1U << 2,
               LLVMJITSymbolFlagAbsolute = 1U << 3,
               LLVMJITSymbolFlagExported = 1U << 4
-} LLVMJITSymbolFlags;
+} LLVMJITSymbolFlags_;
 
 #endif

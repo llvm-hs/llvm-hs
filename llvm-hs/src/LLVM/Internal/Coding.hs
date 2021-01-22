@@ -35,12 +35,12 @@ genCodingInstance ht ctn chs = do
   let n = const Nothing
   [d| 
     instance Monad m => EncodeM m $(ht) $(conT ctn) where
-      encodeM h = return $ $(
+      encodeM h = return $(
         caseE [| h |] [ match (dataToPatQ n h) (normalB (dataToExpQ n c)) [] | (c,h) <- chs ] 
        )
 
     instance Monad m => DecodeM m $(ht) $(conT ctn) where
-      decodeM c = return $ $(
+      decodeM c = return $(
         caseE [| c |] ([ match (dataToPatQ n c) (normalB (dataToExpQ n h)) [] | (c,h) <- chs] ++
                        [ match wildP (normalB [e| error ("Decoding failed: Unknown " <> show c) |]) []]))
    |]

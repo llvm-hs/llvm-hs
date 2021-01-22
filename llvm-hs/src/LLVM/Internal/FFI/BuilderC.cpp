@@ -156,7 +156,7 @@ LLVMValueRef LLVM_Hs_BuildLoad(
 	unsigned align,
 	const char *name
 ) {
-	LoadInst *i = unwrap(b)->CreateAlignedLoad(unwrap(p), align, isVolatile, name);
+	LoadInst *i = unwrap(b)->CreateAlignedLoad(unwrap(p), MaybeAlign(align), isVolatile, name);
 	i->setOrdering(unwrap(atomicOrdering));
 	if (atomicOrdering != LLVMAtomicOrderingNotAtomic) i->setSyncScopeID(unwrap(synchScope));
 	return wrap(i);
@@ -172,7 +172,7 @@ LLVMValueRef LLVM_Hs_BuildStore(
 	unsigned align,
 	const char *name
 ) {
-	StoreInst *i = unwrap(b)->CreateAlignedStore(unwrap(v), unwrap(p), align, isVolatile);
+	StoreInst *i = unwrap(b)->CreateAlignedStore(unwrap(v), unwrap(p), MaybeAlign(align), isVolatile);
 	i->setName(name);
 	i->setOrdering(unwrap(atomicOrdering));
 	if (atomicOrdering != LLVMAtomicOrderingNotAtomic) i->setSyncScopeID(unwrap(synchScope));
@@ -280,6 +280,10 @@ LLVMValueRef LLVM_Hs_BuildInBoundsGEP(LLVMBuilderRef B, LLVMValueRef Pointer,
   return wrap(unwrap(B)->Insert(GetElementPtrInst::CreateInBounds(nullptr, unwrap(Pointer), IdxList), Name));
 }
 
+LLVMValueRef LLVM_Hs_Freeze(LLVMBuilderRef B, LLVMValueRef Op, const char *Name) {
+    return wrap(unwrap(B)->Insert(new FreezeInst(unwrap(Op), Name)));
+}
+
 LLVMValueRef LLVM_Hs_BuildSelect(LLVMBuilderRef B, LLVMValueRef If,
                                  LLVMValueRef Then, LLVMValueRef Else,
                                  const char *Name) {
@@ -322,10 +326,11 @@ LLVMValueRef LLVM_Hs_BuildInsertElement(LLVMBuilderRef B, LLVMValueRef VecVal,
 }
 
 LLVMValueRef LLVM_Hs_BuildShuffleVector(LLVMBuilderRef B, LLVMValueRef V1,
-                                        LLVMValueRef V2, LLVMValueRef Mask,
-                                        const char *Name) {
+                                        LLVMValueRef V2, int *MaskArgs,
+                                        unsigned MaskSize, const char *Name) {
+    ArrayRef<int> maskArray(MaskArgs, MaskSize);
     return wrap(unwrap(B)->Insert(new ShuffleVectorInst(unwrap(V1), unwrap(V2),
-                                                        unwrap(Mask)),
+                                                        maskArray),
                                   Name));
 }
 }
