@@ -183,22 +183,22 @@ static LLVM_Hs_DebuggerKind wrap(DebuggerKind x) {
     }
 }
 
-static FPDenormal::DenormalMode unwrap(LLVM_Hs_FPDenormalMode x) {
+static DenormalMode::DenormalModeKind unwrap(LLVM_Hs_FPDenormalMode x) {
     switch (x) {
 #define ENUM_CASE(x)                                                           \
     case LLVM_Hs_FPDenormalMode_##x:                                           \
-        return FPDenormal::x;
+      return DenormalMode::DenormalModeKind::x;
         LLVM_HS_FOR_EACH_FP_DENORMAL_MODE(ENUM_CASE)
 #undef ENUM_CASE
     default:
-        return FPDenormal::DenormalMode(0);
+          return DenormalMode::DenormalModeKind(0);
     }
 }
 
-static LLVM_Hs_FPDenormalMode wrap(FPDenormal::DenormalMode x) {
+static LLVM_Hs_FPDenormalMode wrap(DenormalMode::DenormalModeKind x) {
     switch (x) {
 #define ENUM_CASE(x)                                                           \
-    case FPDenormal::x:                                                        \
+    case DenormalMode::DenormalModeKind::x:                                           \
         return LLVM_Hs_FPDenormalMode_##x;
         LLVM_HS_FOR_EACH_FP_DENORMAL_MODE(ENUM_CASE)
 #undef ENUM_CASE
@@ -398,11 +398,15 @@ LLVM_Hs_DebuggerKind LLVM_Hs_GetDebuggerTuning(TargetOptions *to) {
 }
 
 void LLVM_Hs_SetFPDenormalMode(TargetOptions *to, LLVM_Hs_FPDenormalMode v) {
-    to->FPDenormalMode = unwrap(v);
+    auto denormalModeKind = unwrap(v);
+    DenormalMode denormalMode{denormalModeKind, denormalModeKind};
+    to->setFPDenormalMode(denormalMode);
 }
 
 LLVM_Hs_FPDenormalMode LLVM_Hs_GetFPDenormalMode(TargetOptions *to) {
-    return wrap(to->FPDenormalMode);
+    auto denormalMode = to->getRawFPDenormalMode();
+    assert(denormalMode.isSimple() && "Input and output kinds must match");
+    return wrap(denormalMode.Input);
 }
 
 void LLVM_Hs_SetExceptionModel(TargetOptions *to, LLVM_Hs_ExceptionHandling v) {
@@ -559,13 +563,13 @@ LLVMBool LLVM_Hs_TargetMachineEmit(LLVMTargetMachineRef T, LLVMModuleRef M,
 
     Mod->setDataLayout(TM->createDataLayout());
 
-    TargetMachine::CodeGenFileType ft;
+    CodeGenFileType ft;
     switch (codegen) {
     case LLVMAssemblyFile:
-        ft = TargetMachine::CGFT_AssemblyFile;
+        ft = CGFT_AssemblyFile;
         break;
     default:
-        ft = TargetMachine::CGFT_ObjectFile;
+        ft = CGFT_ObjectFile;
         break;
     }
     if (TM->addPassesToEmitFile(pass, *OS, nullptr, ft)) {

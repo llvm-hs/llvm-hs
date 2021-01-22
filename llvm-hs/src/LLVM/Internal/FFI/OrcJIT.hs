@@ -16,11 +16,46 @@ newtype ModuleKey = ModuleKey Word64 deriving (Eq, Ord, Show)
 data JITSymbol
 data SymbolResolver
 data ExecutionSession
+data JITDylib
 
 newtype TargetAddress = TargetAddress Word64
 
 type SymbolResolverFn = CString -> Ptr JITSymbol -> IO ()
 
+foreign import ccall safe "LLVM_Hs_disposeJITSymbol" disposeSymbol ::
+  Ptr JITSymbol -> IO ()
+
+foreign import ccall safe "LLVM_Hs_JITSymbol_getAddress" getAddress ::
+  Ptr JITSymbol -> Ptr (OwnerTransfered CString) -> IO TargetAddress
+
+foreign import ccall safe "LLVM_Hs_JITSymbol_getFlags" getFlags ::
+  Ptr JITSymbol -> IO JITSymbolFlags
+
+foreign import ccall safe "LLVM_Hs_JITSymbol_getErrorMsg" getErrorMsg ::
+  Ptr JITSymbol -> IO (OwnerTransfered CString)
+
+foreign import ccall safe "LLVM_Hs_setJITSymbol" setJITSymbol ::
+  Ptr JITSymbol -> TargetAddress -> JITSymbolFlags -> IO ()
+
+foreign import ccall safe "LLVM_Hs_getMangledSymbol" getMangledSymbol ::
+  Ptr CString -> CString -> Ptr DataLayout -> IO ()
+
+foreign import ccall safe "LLVM_Hs_disposeMangledSymbol" disposeMangledSymbol ::
+  CString -> IO ()
+
+foreign import ccall safe "LLVM_Hs_createExecutionSession" createExecutionSession ::
+  IO (Ptr ExecutionSession)
+
+foreign import ccall safe "LLVM_Hs_disposeExecutionSession" disposeExecutionSession ::
+  Ptr ExecutionSession -> IO ()
+
+foreign import ccall "wrapper" wrapGetSymbolResolver ::
+  (ModuleKey -> IO (Ptr SymbolResolver)) -> IO (FunPtr (ModuleKey -> IO (Ptr SymbolResolver)))
+
+foreign import ccall "wrapper" wrapSetSymbolResolver ::
+  (ModuleKey -> Ptr SymbolResolver -> IO ()) -> IO (FunPtr (ModuleKey -> Ptr SymbolResolver -> IO ()))
+
+{-
 foreign import ccall "wrapper" wrapSymbolResolverFn ::
   SymbolResolverFn -> IO (FunPtr SymbolResolverFn)
 
@@ -70,3 +105,4 @@ foreign import ccall "wrapper" wrapGetSymbolResolver ::
 
 foreign import ccall "wrapper" wrapSetSymbolResolver ::
   (ModuleKey -> Ptr SymbolResolver -> IO ()) -> IO (FunPtr (ModuleKey -> Ptr SymbolResolver -> IO ()))
+-}

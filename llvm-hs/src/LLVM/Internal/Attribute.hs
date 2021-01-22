@@ -45,24 +45,24 @@ instance Monad m => EncodeM m A.PA.ParameterAttribute (Ptr FFI.ParameterAttrBuil
     A.PA.Dereferenceable v -> FFI.attrBuilderAddDereferenceable b v
     A.PA.DereferenceableOrNull v -> FFI.attrBuilderAddDereferenceableOrNull b v
     _ -> FFI.attrBuilderAddParameterAttributeKind b $ case a of
-      A.PA.ZeroExt -> FFI.parameterAttributeKindZExt
-      A.PA.SignExt -> FFI.parameterAttributeKindSExt
-      A.PA.InReg -> FFI.parameterAttributeKindInReg
-      A.PA.SRet -> FFI.parameterAttributeKindStructRet
-      A.PA.NoAlias -> FFI.parameterAttributeKindNoAlias
       A.PA.ByVal -> FFI.parameterAttributeKindByVal
-      A.PA.NoCapture -> FFI.parameterAttributeKindNoCapture
-      A.PA.NoFree -> FFI.parameterAttributeKindNoFree
-      A.PA.Nest -> FFI.parameterAttributeKindNest
-      A.PA.ReadOnly -> FFI.parameterAttributeKindReadOnly
-      A.PA.ReadNone -> FFI.parameterAttributeKindReadNone
       A.PA.ImmArg -> FFI.parameterAttributeKindImmArg
       A.PA.InAlloca -> FFI.parameterAttributeKindInAlloca
+      A.PA.InReg -> FFI.parameterAttributeKindInReg
+      A.PA.Nest -> FFI.parameterAttributeKindNest
+      A.PA.NoAlias -> FFI.parameterAttributeKindNoAlias
+      A.PA.NoCapture -> FFI.parameterAttributeKindNoCapture
+      A.PA.NoFree -> FFI.parameterAttributeKindNoFree
       A.PA.NonNull -> FFI.parameterAttributeKindNonNull
+      A.PA.ReadNone -> FFI.parameterAttributeKindReadNone
+      A.PA.ReadOnly -> FFI.parameterAttributeKindReadOnly
       A.PA.Returned -> FFI.parameterAttributeKindReturned
-      A.PA.SwiftSelf -> FFI.parameterAttributeKindSwiftSelf
+      A.PA.SignExt -> FFI.parameterAttributeKindSExt
+      A.PA.SRet -> FFI.parameterAttributeKindStructRet
       A.PA.SwiftError -> FFI.parameterAttributeKindSwiftError
+      A.PA.SwiftSelf -> FFI.parameterAttributeKindSwiftSelf
       A.PA.WriteOnly -> FFI.parameterAttributeKindWriteOnly
+      A.PA.ZeroExt -> FFI.parameterAttributeKindZExt
       A.PA.Alignment _ -> inconsistentCases "ParameterAttribute" a
       A.PA.Dereferenceable _ -> inconsistentCases "ParameterAttribute" a
       A.PA.DereferenceableOrNull _ -> inconsistentCases "ParameterAttribute" a
@@ -74,52 +74,54 @@ instance Monad m => EncodeM m A.FA.FunctionAttribute (Ptr FFI.FunctionAttrBuilde
     (valueP, valueLen) <- encodeM value
     liftIO $ FFI.attrBuilderAddStringAttribute b kindP kindLen valueP valueLen
   encodeM a = return $ \b -> case a of
-    A.FA.StackAlignment v -> liftIO $ FFI.attrBuilderAddStackAlignment b v
     A.FA.AllocSize x y -> do
       x' <- encodeM x
       y' <- encodeM y
       liftIO $ FFI.attrBuilderAddAllocSize b x' y'
+    A.FA.StackAlignment v -> liftIO $ FFI.attrBuilderAddStackAlignment b v
     _ -> liftIO $ FFI.attrBuilderAddFunctionAttributeKind b $ case a of
+      A.FA.AlwaysInline -> FFI.functionAttributeKindAlwaysInline
+      A.FA.ArgMemOnly -> FFI.functionAttributeKindArgMemOnly
+      A.FA.Builtin -> FFI.functionAttributeKindBuiltin
+      A.FA.Cold -> FFI.functionAttributeKindCold
       A.FA.Convergent -> FFI.functionAttributeKindConvergent
       A.FA.InaccessibleMemOnly -> FFI.functionAttributeKindInaccessibleMemOnly
       A.FA.InaccessibleMemOrArgMemOnly -> FFI.functionAttributeKindInaccessibleMemOrArgMemOnly
-      A.FA.NoReturn -> FFI.functionAttributeKindNoReturn
-      A.FA.NoUnwind -> FFI.functionAttributeKindNoUnwind
-      A.FA.ReadNone -> FFI.functionAttributeKindReadNone
-      A.FA.ReadOnly -> FFI.functionAttributeKindReadOnly
-      A.FA.NoInline -> FFI.functionAttributeKindNoInline
-      A.FA.NoRecurse -> FFI.functionAttributeKindNoRecurse
-      A.FA.AlwaysInline -> FFI.functionAttributeKindAlwaysInline
+      A.FA.InlineHint -> FFI.functionAttributeKindInlineHint
+      A.FA.JumpTable -> FFI.functionAttributeKindJumpTable
       A.FA.MinimizeSize -> FFI.functionAttributeKindMinSize
+      A.FA.Naked -> FFI.functionAttributeKindNaked
+      A.FA.NoBuiltin -> FFI.functionAttributeKindNoBuiltin
+      A.FA.NoDuplicate -> FFI.functionAttributeKindNoDuplicate
+      A.FA.NoFree -> FFI.functionAttributeKindNoFree
+      A.FA.NoImplicitFloat -> FFI.functionAttributeKindNoImplicitFloat
+      A.FA.NoInline -> FFI.functionAttributeKindNoInline
+      A.FA.NonLazyBind -> FFI.functionAttributeKindNonLazyBind
+      A.FA.NoRecurse -> FFI.functionAttributeKindNoRecurse
+      A.FA.NoRedZone -> FFI.functionAttributeKindNoRedZone
+      A.FA.NoReturn -> FFI.functionAttributeKindNoReturn
+      A.FA.NoSync -> FFI.functionAttributeKindNoSync
+      A.FA.NoUnwind -> FFI.functionAttributeKindNoUnwind
       A.FA.OptimizeForSize -> FFI.functionAttributeKindOptimizeForSize
       A.FA.OptimizeNone -> FFI.functionAttributeKindOptimizeNone
-      A.FA.WriteOnly -> FFI.functionAttributeKindWriteOnly
-      A.FA.ArgMemOnly -> FFI.functionAttributeKindArgMemOnly
+      A.FA.ReadNone -> FFI.functionAttributeKindReadNone
+      A.FA.ReadOnly -> FFI.functionAttributeKindReadOnly
+      A.FA.ReturnsTwice -> FFI.functionAttributeKindReturnsTwice
+      A.FA.SafeStack -> FFI.functionAttributeKindSafeStack
+      A.FA.SanitizeAddress -> FFI.functionAttributeKindSanitizeAddress
+      A.FA.SanitizeHWAddress -> FFI.functionAttributeKindSanitizeHWAddress
+      A.FA.SanitizeMemory -> FFI.functionAttributeKindSanitizeMemory
+      A.FA.SanitizeThread -> FFI.functionAttributeKindSanitizeThread
+      A.FA.Speculatable -> FFI.functionAttributeKindSpeculatable
       A.FA.StackProtect -> FFI.functionAttributeKindStackProtect
       A.FA.StackProtectReq -> FFI.functionAttributeKindStackProtectReq
       A.FA.StackProtectStrong -> FFI.functionAttributeKindStackProtectStrong
       A.FA.StrictFP -> FFI.functionAttributeKindStrictFP
-      A.FA.NoRedZone -> FFI.functionAttributeKindNoRedZone
-      A.FA.NoImplicitFloat -> FFI.functionAttributeKindNoImplicitFloat
-      A.FA.Naked -> FFI.functionAttributeKindNaked
-      A.FA.InlineHint -> FFI.functionAttributeKindInlineHint
-      A.FA.ReturnsTwice -> FFI.functionAttributeKindReturnsTwice
       A.FA.UWTable -> FFI.functionAttributeKindUWTable
-      A.FA.NonLazyBind -> FFI.functionAttributeKindNonLazyBind
-      A.FA.Builtin -> FFI.functionAttributeKindBuiltin
-      A.FA.NoBuiltin -> FFI.functionAttributeKindNoBuiltin
-      A.FA.Cold -> FFI.functionAttributeKindCold
-      A.FA.JumpTable -> FFI.functionAttributeKindJumpTable
-      A.FA.NoDuplicate -> FFI.functionAttributeKindNoDuplicate
-      A.FA.NoFree -> FFI.functionAttributeKindNoFree
-      A.FA.SanitizeAddress -> FFI.functionAttributeKindSanitizeAddress
-      A.FA.SanitizeHWAddress -> FFI.functionAttributeKindSanitizeHWAddress
-      A.FA.SanitizeThread -> FFI.functionAttributeKindSanitizeThread
-      A.FA.SanitizeMemory -> FFI.functionAttributeKindSanitizeMemory
-      A.FA.SafeStack -> FFI.functionAttributeKindSafeStack
-      A.FA.Speculatable -> FFI.functionAttributeKindSpeculatable
-      A.FA.StackAlignment _ -> inconsistentCases "FunctionAttribute" a
+      A.FA.WillReturn -> FFI.functionAttributeKindWillReturn
+      A.FA.WriteOnly -> FFI.functionAttributeKindWriteOnly
       A.FA.AllocSize _ _ -> inconsistentCases "FunctionAttribute" a
+      A.FA.StackAlignment _ -> inconsistentCases "FunctionAttribute" a
       A.FA.StringAttribute _ _ -> inconsistentCases "FunctionAttribute" a
 
 instance DecodeM DecodeAST A.PA.ParameterAttribute FFI.ParameterAttribute where
@@ -133,27 +135,27 @@ instance DecodeM DecodeAST A.PA.ParameterAttribute FFI.ParameterAttribute where
       else do
         enum <- liftIO $ FFI.parameterAttributeKindAsEnum a
         case enum of
-          [parameterAttributeKindP|ZExt|] -> return A.PA.ZeroExt
-          [parameterAttributeKindP|SExt|] -> return A.PA.SignExt
-          [parameterAttributeKindP|InReg|] -> return A.PA.InReg
-          [parameterAttributeKindP|StructRet|] -> return A.PA.SRet
           [parameterAttributeKindP|Alignment|] -> return A.PA.Alignment `ap` (liftIO $ FFI.attributeValueAsInt a)
-          [parameterAttributeKindP|NoAlias|] -> return A.PA.NoAlias
           [parameterAttributeKindP|ByVal|] -> return A.PA.ByVal
+          [parameterAttributeKindP|DereferenceableOrNull|] -> return A.PA.DereferenceableOrNull `ap` (liftIO $ FFI.attributeValueAsInt a)
+          [parameterAttributeKindP|Dereferenceable|] -> return A.PA.Dereferenceable `ap` (liftIO $ FFI.attributeValueAsInt a)
+          [parameterAttributeKindP|ImmArg|] -> return A.PA.ImmArg
+          [parameterAttributeKindP|InAlloca|] -> return A.PA.InAlloca
+          [parameterAttributeKindP|InReg|] -> return A.PA.InReg
+          [parameterAttributeKindP|Nest|] -> return A.PA.Nest
+          [parameterAttributeKindP|NoAlias|] -> return A.PA.NoAlias
           [parameterAttributeKindP|NoCapture|] -> return A.PA.NoCapture
           [parameterAttributeKindP|NoFree|] -> return A.PA.NoFree
-          [parameterAttributeKindP|Nest|] -> return A.PA.Nest
-          [parameterAttributeKindP|ReadOnly|] -> return A.PA.ReadOnly
-          [parameterAttributeKindP|ReadNone|] -> return A.PA.ReadNone
-          [parameterAttributeKindP|WriteOnly|] -> return A.PA.WriteOnly
-          [parameterAttributeKindP|InAlloca|] -> return A.PA.InAlloca
           [parameterAttributeKindP|NonNull|] -> return A.PA.NonNull
-          [parameterAttributeKindP|Dereferenceable|] -> return A.PA.Dereferenceable `ap` (liftIO $ FFI.attributeValueAsInt a)
-          [parameterAttributeKindP|DereferenceableOrNull|] -> return A.PA.DereferenceableOrNull `ap` (liftIO $ FFI.attributeValueAsInt a)
+          [parameterAttributeKindP|ReadNone|] -> return A.PA.ReadNone
+          [parameterAttributeKindP|ReadOnly|] -> return A.PA.ReadOnly
           [parameterAttributeKindP|Returned|] -> return A.PA.Returned
-          [parameterAttributeKindP|SwiftSelf|] -> return A.PA.SwiftSelf
+          [parameterAttributeKindP|SExt|] -> return A.PA.SignExt
+          [parameterAttributeKindP|StructRet|] -> return A.PA.SRet
           [parameterAttributeKindP|SwiftError|] -> return A.PA.SwiftError
-          [parameterAttributeKindP|ImmArg|] -> return A.PA.ImmArg
+          [parameterAttributeKindP|SwiftSelf|] -> return A.PA.SwiftSelf
+          [parameterAttributeKindP|WriteOnly|] -> return A.PA.WriteOnly
+          [parameterAttributeKindP|ZExt|] -> return A.PA.ZeroExt
           _ -> error $ "unhandled parameter attribute enum value: " ++ show enum
 
 instance DecodeM DecodeAST A.FA.FunctionAttribute FFI.FunctionAttribute where
@@ -172,45 +174,47 @@ instance DecodeM DecodeAST A.FA.FunctionAttribute FFI.FunctionAttribute where
              y <- decodeOptional (FFI.attributeGetAllocSizeArgs a x)
              x' <- decodeM =<< peek x
              return (A.FA.AllocSize x' y)
-           [functionAttributeKindP|NoReturn|] -> return A.FA.NoReturn
-           [functionAttributeKindP|NoUnwind|] -> return A.FA.NoUnwind
-           [functionAttributeKindP|ReadNone|] -> return A.FA.ReadNone
-           [functionAttributeKindP|ReadOnly|] -> return A.FA.ReadOnly
-           [functionAttributeKindP|NoInline|] -> return A.FA.NoInline
-           [functionAttributeKindP|NoRecurse|] -> return A.FA.NoRecurse
            [functionAttributeKindP|AlwaysInline|] -> return A.FA.AlwaysInline
-           [functionAttributeKindP|MinSize|] -> return A.FA.MinimizeSize
-           [functionAttributeKindP|OptimizeForSize|] -> return A.FA.OptimizeForSize
-           [functionAttributeKindP|OptimizeNone|] -> return A.FA.OptimizeNone
-           [functionAttributeKindP|StackProtect|] -> return A.FA.StackProtect
-           [functionAttributeKindP|StackProtectReq|] -> return A.FA.StackProtectReq
-           [functionAttributeKindP|StackProtectStrong|] -> return A.FA.StackProtectStrong
-           [functionAttributeKindP|StrictFP|] -> return A.FA.StrictFP
-           [functionAttributeKindP|NoRedZone|] -> return A.FA.NoRedZone
-           [functionAttributeKindP|NoImplicitFloat|] -> return A.FA.NoImplicitFloat
-           [functionAttributeKindP|Naked|] -> return A.FA.Naked
-           [functionAttributeKindP|InlineHint|] -> return A.FA.InlineHint
-           [functionAttributeKindP|StackAlignment|] -> return A.FA.StackAlignment `ap` (liftIO $ FFI.attributeValueAsInt a)
-           [functionAttributeKindP|ReturnsTwice|] -> return A.FA.ReturnsTwice
-           [functionAttributeKindP|UWTable|] -> return A.FA.UWTable
-           [functionAttributeKindP|NonLazyBind|] -> return A.FA.NonLazyBind
-           [functionAttributeKindP|Builtin|] -> return A.FA.Builtin
-           [functionAttributeKindP|NoBuiltin|] -> return A.FA.NoBuiltin
-           [functionAttributeKindP|Cold|] -> return A.FA.Cold
-           [functionAttributeKindP|JumpTable|] -> return A.FA.JumpTable
-           [functionAttributeKindP|NoDuplicate|] -> return A.FA.NoDuplicate
-           [functionAttributeKindP|NoFree|] -> return A.FA.NoFree
-           [functionAttributeKindP|SanitizeAddress|] -> return A.FA.SanitizeAddress
-           [functionAttributeKindP|SanitizeHWAddress|] -> return A.FA.SanitizeHWAddress
-           [functionAttributeKindP|SanitizeThread|] -> return A.FA.SanitizeThread
-           [functionAttributeKindP|SanitizeMemory|] -> return A.FA.SanitizeMemory
            [functionAttributeKindP|ArgMemOnly|] -> return A.FA.ArgMemOnly
+           [functionAttributeKindP|Builtin|] -> return A.FA.Builtin
+           [functionAttributeKindP|Cold|] -> return A.FA.Cold
            [functionAttributeKindP|Convergent|] -> return A.FA.Convergent
            [functionAttributeKindP|InaccessibleMemOnly|] -> return A.FA.InaccessibleMemOnly
            [functionAttributeKindP|InaccessibleMemOrArgMemOnly|] -> return A.FA.InaccessibleMemOrArgMemOnly
+           [functionAttributeKindP|InlineHint|] -> return A.FA.InlineHint
+           [functionAttributeKindP|JumpTable|] -> return A.FA.JumpTable
+           [functionAttributeKindP|MinSize|] -> return A.FA.MinimizeSize
+           [functionAttributeKindP|Naked|] -> return A.FA.Naked
+           [functionAttributeKindP|NoBuiltin|] -> return A.FA.NoBuiltin
+           [functionAttributeKindP|NoDuplicate|] -> return A.FA.NoDuplicate
+           [functionAttributeKindP|NoFree|] -> return A.FA.NoFree
+           [functionAttributeKindP|NoImplicitFloat|] -> return A.FA.NoImplicitFloat
+           [functionAttributeKindP|NoInline|] -> return A.FA.NoInline
+           [functionAttributeKindP|NoRecurse|] -> return A.FA.NoRecurse
+           [functionAttributeKindP|NoRedZone|] -> return A.FA.NoRedZone
+           [functionAttributeKindP|NoReturn|] -> return A.FA.NoReturn
+           [functionAttributeKindP|NoSync|] -> return A.FA.NoSync
+           [functionAttributeKindP|NoUnwind|] -> return A.FA.NoUnwind
+           [functionAttributeKindP|NonLazyBind|] -> return A.FA.NonLazyBind
+           [functionAttributeKindP|OptimizeForSize|] -> return A.FA.OptimizeForSize
+           [functionAttributeKindP|OptimizeNone|] -> return A.FA.OptimizeNone
+           [functionAttributeKindP|ReadNone|] -> return A.FA.ReadNone
+           [functionAttributeKindP|ReadOnly|] -> return A.FA.ReadOnly
+           [functionAttributeKindP|ReturnsTwice|] -> return A.FA.ReturnsTwice
            [functionAttributeKindP|SafeStack|] -> return A.FA.SafeStack
-           [functionAttributeKindP|WriteOnly|] -> return A.FA.WriteOnly
+           [functionAttributeKindP|SanitizeAddress|] -> return A.FA.SanitizeAddress
+           [functionAttributeKindP|SanitizeHWAddress|] -> return A.FA.SanitizeHWAddress
+           [functionAttributeKindP|SanitizeMemory|] -> return A.FA.SanitizeMemory
+           [functionAttributeKindP|SanitizeThread|] -> return A.FA.SanitizeThread
            [functionAttributeKindP|Speculatable|] -> return A.FA.Speculatable
+           [functionAttributeKindP|StackAlignment|] -> return A.FA.StackAlignment `ap` (liftIO $ FFI.attributeValueAsInt a)
+           [functionAttributeKindP|StackProtectReq|] -> return A.FA.StackProtectReq
+           [functionAttributeKindP|StackProtectStrong|] -> return A.FA.StackProtectStrong
+           [functionAttributeKindP|StackProtect|] -> return A.FA.StackProtect
+           [functionAttributeKindP|StrictFP|] -> return A.FA.StrictFP
+           [functionAttributeKindP|UWTable|] -> return A.FA.UWTable
+           [functionAttributeKindP|WillReturn|] -> return A.FA.WillReturn
+           [functionAttributeKindP|WriteOnly|] -> return A.FA.WriteOnly
            _ -> error $ "unhandled function attribute enum value: " ++ show enum
 
 allocaAttrBuilder :: (Monad m, MonadAnyCont IO m) => m (Ptr (FFI.AttrBuilder a))

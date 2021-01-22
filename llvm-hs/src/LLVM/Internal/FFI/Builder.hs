@@ -148,6 +148,9 @@ foreign import ccall unsafe "LLVMBuildPhi" buildPhi ::
 foreign import ccall unsafe "LLVMBuildCall" buildCall ::
   Ptr Builder -> Ptr Value -> Ptr (Ptr Value) -> CUInt -> CString -> IO (Ptr Instruction)
 
+foreign import ccall unsafe "LLVM_Hs_Freeze" buildFreeze ::
+  Ptr Builder -> Ptr Value -> Ptr Type -> IO (Ptr Instruction)
+
 foreign import ccall unsafe "LLVM_Hs_BuildSelect" buildSelect ::
   Ptr Builder -> Ptr Value -> Ptr Value -> Ptr Value -> CString -> IO (Ptr Instruction)
 
@@ -161,7 +164,7 @@ foreign import ccall unsafe "LLVM_Hs_BuildInsertElement" buildInsertElement ::
   Ptr Builder -> Ptr Value -> Ptr Value -> Ptr Value -> CString -> IO (Ptr Instruction)
 
 foreign import ccall unsafe "LLVM_Hs_BuildShuffleVector" buildShuffleVector ::
-  Ptr Builder -> Ptr Value -> Ptr Value -> Ptr Constant -> CString -> IO (Ptr Instruction)
+  Ptr Builder -> Ptr Value -> Ptr Value -> Ptr CInt -> CUInt -> CString -> IO (Ptr Instruction)
 
 foreign import ccall unsafe "LLVM_Hs_BuildExtractValue" buildExtractValue ::
   Ptr Builder -> Ptr Value -> Ptr CUInt -> CUInt -> CString -> IO (Ptr Instruction)

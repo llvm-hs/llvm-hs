@@ -96,7 +96,7 @@ enum LLVM_Hs_DwAtE {
     macro(ASCII)
 
 enum LLVM_Hs_DwTag {
-#define HANDLE_DW_TAG(ID, NAME, VERSION, VENDOR) LLVM_Hs_DwTag_##NAME = ID,
+#define HANDLE_DW_TAG(ID, NAME, VERSION, VENDOR, KIND) LLVM_Hs_DwTag_##NAME = ID,
 #include "llvm/BinaryFormat/Dwarf.def"
 #undef HANDLE_DW_TAG
 };

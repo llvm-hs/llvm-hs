@@ -54,7 +54,6 @@ instance Arbitrary ExceptionHandling where
 
 instance Arbitrary Options where
   arbitrary = do
-    printMachineCode <- arbitrary
     unsafeFloatingPointMath <- arbitrary
     noInfinitiesFloatingPointMath <- arbitrary
     noNaNsFloatingPointMath <- arbitrary
@@ -96,7 +95,6 @@ instance Arbitrary MachineCodeOptions where
     saveTemporaryLabels <- arbitrary
     useDwarfDirectory <- arbitrary
     incrementalLinkerCompatible <- arbitrary
-    pieCopyRelocations <- arbitrary
     showMachineCodeEncoding <- arbitrary
     showMachineCodeInstructions <- arbitrary
     verboseAssembly <- arbitrary

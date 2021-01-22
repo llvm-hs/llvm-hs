@@ -7,6 +7,7 @@ import Test.Tasty.HUnit
 import LLVM.Test.Support
 
 import Control.Monad.Trans.Except 
+import Control.Monad.Except (catchError)
 import Control.Monad.IO.Class
 
 import Data.Functor hiding (void)
@@ -25,6 +26,7 @@ import LLVM.AST.Type
 import LLVM.AST.Name
 import LLVM.AST.AddrSpace
 import LLVM.AST.DataLayout
+import LLVM.Triple
 import qualified LLVM.AST.IntegerPredicate as IPred
 import qualified LLVM.AST.Linkage as L
 import qualified LLVM.AST.Visibility as V
@@ -32,6 +34,8 @@ import qualified LLVM.AST.CallingConvention as CC
 import qualified LLVM.AST.Attribute as A
 import qualified LLVM.AST.Global as G
 import qualified LLVM.AST.Constant as C
+
+import Debug.Trace
 
 instrument :: PassSetSpec -> A.Module -> IO A.Module
 instrument s m = withContext $ \context -> withModuleFromAST context m $ \mIn' -> do
@@ -144,23 +148,41 @@ ast = do
    }
   ]
 
-tests = testGroup "Instrumentation" [
+isMemorySanitizerSupported :: IO Bool
+isMemorySanitizerSupported = do
+  triple <- getProcessTargetTriple
+  let ~(Right triple') = runExcept (parseTriple triple)
+  let os' = os triple'
+  return $ Set.member os' (Set.fromList [FreeBSD, NetBSD, Linux])
+
+instrumentationPasses :: [(TestName, Pass, IO Bool)]
+instrumentationPasses = [
+    ("GCOVProfiler", defaultGCOVProfiler, return True),
+    ("AddressSanitizer", defaultAddressSanitizer, return True),
+    ("AddressSanitizerModule", defaultAddressSanitizerModule, return True),
+    ("ThreadSanitizer", defaultThreadSanitizer, return True),
+    ("BoundsChecking", BoundsChecking, return True),
+    ("MemorySanitizer", defaultMemorySanitizer, isMemorySanitizerSupported)
+  ]
+
+tests =
+  testGroup "Instrumentation" [
   testGroup "basic" [
     testCase n $ do
-      triple <- getProcessTargetTriple 
-      withTargetLibraryInfo triple $ \tli -> do
-        dl <- withHostTargetMachineDefault getTargetMachineDataLayout
-        ast <- ast
-        ast' <- instrument (defaultPassSetSpec { transforms = [p], dataLayout = Just dl, targetLibraryInfo = Just tli }) ast
-        let names ast = [ n | GlobalDefinition d <- moduleDefinitions ast, Name n <- return (G.name d) ]
-        (names ast') `List.intersect` (names ast) @?= names ast
-    | (n,p) <- [
-     ("GCOVProfiler", defaultGCOVProfiler),
-     ("AddressSanitizer", defaultAddressSanitizer),
-     ("AddressSanitizerModule", defaultAddressSanitizerModule),
-     ("MemorySanitizer", defaultMemorySanitizer),
-     ("ThreadSanitizer", defaultThreadSanitizer),
-     ("BoundsChecking", BoundsChecking)--,
+      shouldTestPass' <- shouldTestPass
+      if not shouldTestPass'
+        then return ()
+        else do
+          cpu <- getHostCPUName
+          triple <- getProcessTargetTriple
+          bool <- isMemorySanitizerSupported
+          withTargetLibraryInfo triple $ \tli -> do
+            dl <- withHostTargetMachineDefault getTargetMachineDataLayout
+            ast <- ast
+            ast' <- instrument (defaultPassSetSpec { transforms = [p], dataLayout = Just dl, targetLibraryInfo = Just tli }) ast
+            let names ast = [ n | GlobalDefinition d <- moduleDefinitions ast, Name n <- return (G.name d) ]
+            names ast' `List.intersect` names ast @?= names ast
+    |
+    (n, p, shouldTestPass) <- instrumentationPasses
     ]
-   ]
- ]
+  ]

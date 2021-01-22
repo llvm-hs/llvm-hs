@@ -249,11 +249,15 @@ instance Arbitrary DIFile where
     O.File <$> arbitrarySbs <*> arbitrarySbs <*> arbitrary
 
 instance Arbitrary DISubrange where
-  arbitrary = Subrange <$> arbitrary <*> arbitrary
+  arbitrary = Subrange <$> arbitrary <*> arbitrary <*> arbitrary <*> arbitrary
 
 instance Arbitrary DICount where
-  -- TODO Include DICountVariable
+  -- TODO: Also generate non-trivial DICountVariable case.
   arbitrary = DICountConstant <$> arbitrary
+
+instance Arbitrary DIBound where
+  -- TODO: Also generate non-trivial DIBoundVariable, DIBoundExpression cases.
+  arbitrary = DIBoundConstant <$> arbitrary
 
 instance Arbitrary DIEnumerator where
   arbitrary = Enumerator <$> arbitrary <*> arbitrary <*> arbitrarySbs
@@ -263,7 +267,7 @@ instance Arbitrary DINode where
     oneof
       [ DISubrange <$> arbitrary
       , DIEnumerator <$> arbitrary
-      -- TODO: Add missing constructors
+      -- TODO: Also generate non-trivial cases.
       ]
 
 roundtripDIBasicType :: TestTree
@@ -462,7 +466,6 @@ instance Arbitrary A.DIFlag where
       , QC.elements
           [ A.FwdDecl
           , A.AppleBlock
-          , A.BlockByrefStruct
           , A.VirtualFlag
           , A.Artificial
           , A.Explicit
@@ -476,7 +479,6 @@ instance Arbitrary A.DIFlag where
           , A.IntroducedVirtual
           , A.BitField
           , A.NoReturn
-          , A.ArgumentNotModified
           , A.TypePassByValue
           , A.TypePassByReference
           , A.EnumClass
@@ -516,7 +518,6 @@ genDIFlags = do
     flags =
       [ A.FwdDecl
       , A.AppleBlock
-      , A.BlockByrefStruct
       , A.VirtualFlag
       , A.Artificial
       , A.Explicit
@@ -530,7 +531,6 @@ genDIFlags = do
       , A.IntroducedVirtual
       , A.BitField
       , A.NoReturn
-      , A.ArgumentNotModified
       , A.TypePassByValue
       , A.TypePassByReference
       , A.EnumClass
@@ -612,7 +612,7 @@ instance Arbitrary Virtuality where
   arbitrary = QC.elements [A.NoVirtuality, A.Virtual, A.PureVirtual]
 
 roundtripDITemplateParameter :: TestTree
-roundtripDITemplateParameter = testProperty "rountrip DITemplateParameter" $ \diType ->
+roundtripDITemplateParameter = testProperty "roundtrip DITemplateParameter" $ \diType ->
   forAll (genDITemplateParameter (MDValue (ConstantOperand (C.Int 32 1))) (MDRef tyID)) $ \param -> ioProperty $
     withContext $ \context -> runEncodeAST context $ do
       let mod = defaultModule
@@ -638,7 +638,7 @@ genDITemplateParameter value ty =
         ]
 
 roundtripDINamespace :: TestTree
-roundtripDINamespace = testProperty "rountrip DINamespace" $ \diFile ->
+roundtripDINamespace = testProperty "roundtrip DINamespace" $ \diFile ->
   forAll (genDINamespace (MDRef fileID)) $ \diNamespace -> ioProperty $
     withContext $ \context -> runEncodeAST context $ do
       let mod = defaultModule

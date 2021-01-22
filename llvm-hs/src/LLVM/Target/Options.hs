@@ -66,7 +66,6 @@ data ExceptionHandling
 -- | The options of a 'LLVM.Target.TargetOptions'
 -- <http://llvm.org/doxygen/classllvm_1_1TargetOptions.html>
 data Options = Options {
-  printMachineCode :: Bool,
   unsafeFloatingPointMath :: Bool,
   noInfinitiesFloatingPointMath :: Bool,
   noNaNsFloatingPointMath :: Bool,
@@ -109,7 +108,6 @@ data MachineCodeOptions = MachineCodeOptions {
   saveTemporaryLabels :: Bool,
   useDwarfDirectory :: Bool,
   incrementalLinkerCompatible :: Bool,
-  pieCopyRelocations :: Bool,
   showMachineCodeEncoding :: Bool,
   showMachineCodeInstructions :: Bool,
   verboseAssembly :: Bool,

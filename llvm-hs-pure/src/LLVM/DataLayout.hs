@@ -123,5 +123,5 @@ parseDataLayout defaultEndianness str =
      ]
   in
     case parseOnly (parseSpec `sepBy` (char '-')) str of
-      Left _ -> throwE $ "ill formed data layout: " ++ show str
+      Left _ -> throwE $ "ill-formed data layout: " ++ show str
       Right fs -> pure . Just $ foldr ($) (defaultDataLayout defaultEndianness) fs

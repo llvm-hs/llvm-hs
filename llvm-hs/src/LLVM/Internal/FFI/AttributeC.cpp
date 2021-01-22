@@ -123,11 +123,11 @@ void LLVM_Hs_AttrBuilderAddStringAttribute(AttrBuilder &ab, const char *kind,
 }
 
 void LLVM_Hs_AttrBuilderAddAlignment(AttrBuilder &ab, uint64_t v) {
-    ab.addAlignmentAttr(v);
+    ab.addAlignmentAttr(MaybeAlign(v));
 }
 
 void LLVM_Hs_AttrBuilderAddStackAlignment(AttrBuilder &ab, uint64_t v) {
-    ab.addStackAlignmentAttr(v);
+    ab.addStackAlignmentAttr(MaybeAlign(v));
 }
 
 void LLVM_Hs_AttrBuilderAddAllocSize(AttrBuilder &ab, unsigned x, unsigned y,
