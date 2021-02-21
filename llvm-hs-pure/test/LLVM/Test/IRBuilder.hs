@@ -252,6 +252,11 @@ resolvesTypeDefs = do
             yPtr <- gep ptr [ConstantOperand (C.Int 32 0), ConstantOperand (C.Int 32 1)]
             store xPtr 0 x
             store yPtr 0 y
+          function "g" [(pairTy, "pair")] AST.i32 $ \[pair] -> do
+            x <- extractValue pair [0]
+            y <- extractValue pair [1]
+            z <- add x y
+            ret z
           pure ()
         ast = defaultModule
           { moduleName = "<string>"
@@ -296,6 +301,34 @@ resolvesTypeDefs = do
                       }
                   ]
                   (Do (Ret Nothing []))
+                ]
+              }
+            , GlobalDefinition functionDefaults
+              { name = "g"
+              , parameters = ( [Parameter (NamedTypeReference "pair") "pair_0" []]
+                             , False)
+              , returnType = AST.i32
+              , basicBlocks =
+                [ BasicBlock (UnName 0)
+                  [ UnName 1 := ExtractValue
+                      { aggregate = LocalReference (NamedTypeReference "pair") "pair_0"
+                      , indices' = [0]
+                      , metadata = []
+                      }
+                  , UnName 2 := ExtractValue
+                      { aggregate = LocalReference (NamedTypeReference "pair") "pair_0"
+                      , indices' = [1]
+                      , metadata = []
+                      }
+                  , UnName 3 := Add
+                      { nsw = False
+                      , nuw = False
+                      , operand0 = LocalReference AST.i32 (UnName 1)
+                      , operand1 = LocalReference AST.i32 (UnName 2)
+                      , metadata = []
+                      }
+                  ]
+                  (Do (Ret (Just (LocalReference AST.i32 (UnName 3))) []))
                 ]
               }
             ]}

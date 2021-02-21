@@ -118,24 +118,28 @@ store addr align val = emitInstrVoid $ Store False addr val Nothing align []
 -- See <https://llvm.org/docs/LangRef.html#getelementptr-instruction reference>.
 gep :: (MonadIRBuilder m, MonadModuleBuilder m, HasCallStack) => Operand -> [Operand] -> m Operand
 gep addr is = do
-  ty <- gepType (typeOf addr) is
+  ty <- ptr <$> gepType "gep" (typeOf addr) is
   emitInstr ty (GetElementPtr False addr is [])
+
+-- TODO: Perhaps use the function from llvm-hs-pretty (https://github.com/llvm-hs/llvm-hs-pretty/blob/master/src/LLVM/Typed.hs)
+gepType :: MonadModuleBuilder m => String -> Type -> [Operand] -> m Type
+gepType caller = go
   where
-    -- TODO: Perhaps use the function from llvm-hs-pretty (https://github.com/llvm-hs/llvm-hs-pretty/blob/master/src/LLVM/Typed.hs)
-    gepType :: MonadModuleBuilder m => Type -> [Operand] -> m Type
-    gepType ty [] = pure (ptr ty)
-    gepType (PointerType ty _) (_:is') = gepType ty is'
-    gepType (StructureType _ elTys) (ConstantOperand (C.Int 32 val):is') =
-      gepType (elTys !! fromIntegral val) is'
-    gepType (StructureType _ _) (i:_) = error $ "gep: Indices into structures should be 32-bit constants. " ++ show i
-    gepType (VectorType _ elTy) (_:is') = gepType elTy is'
-    gepType (ArrayType _ elTy) (_:is') = gepType elTy is'
-    gepType (NamedTypeReference nm) is' = do
+    msg m = caller ++ ": " ++ m
+
+    go ty [] = pure ty
+    go (PointerType ty _) (_:is') = go ty is'
+    go (StructureType _ elTys) (ConstantOperand (C.Int 32 val):is') =
+      go (elTys !! fromIntegral val) is'
+    go (StructureType _ _) (i:_) = error $ msg ("Indices into structures should be 32-bit constants. " ++ show i)
+    go (VectorType _ elTy) (_:is') = go elTy is'
+    go (ArrayType _ elTy) (_:is') = go elTy is'
+    go (NamedTypeReference nm) is' = do
       mayTy <- liftModuleState (gets (Map.lookup nm . builderTypeDefs))
       case mayTy of
-        Nothing -> error $ "gep: Couldn’t resolve typedef for: " ++ show nm
-        Just ty -> gepType ty is'
-    gepType t (_:_) = error $ "gep: Can't index into a " ++ show t
+        Nothing -> error $ msg ("Couldn’t resolve typedef for: " ++ show nm)
+        Just ty -> go ty is'
+    go t (_:_) = error $ msg ("Can't index into a " ++ show t)
 
 -- | Emit the @trunc ... to@ instruction.
 -- See <https://llvm.org/docs/LangRef.html#trunc-to-instruction reference>.
@@ -219,8 +223,18 @@ shuffleVector a b m = emitInstr retType $ ShuffleVector a b m []
 
 
 -- | See <https://llvm.org/docs/LangRef.html#extractvalue-instruction reference>.
-extractValue :: MonadIRBuilder m => Operand -> [Word32] -> m Operand
-extractValue a i = emitInstr (extractValueType i (typeOf a)) $ ExtractValue a i []
+extractValue :: (MonadIRBuilder m, MonadModuleBuilder m, HasCallStack) => Operand -> [Word32] -> m Operand
+extractValue a i = do
+  retType <- gepType "extractValue" aggType (map (ConstantOperand . C.Int 32 . fromIntegral) i)
+  emitInstr retType $ ExtractValue a i []
+  where
+    aggType =
+      case typeOf a of
+        typ@ArrayType{} -> typ
+        typ@NamedTypeReference{} -> typ
+        typ@StructureType{} -> typ
+        _ -> error "extractValue: Expecting Array or Structure type"
+
 
 -- | See <https://llvm.org/docs/LangRef.html#insertvalue-instruction reference>.
 insertValue :: MonadIRBuilder m => Operand -> Operand -> [Word32] -> m Operand
