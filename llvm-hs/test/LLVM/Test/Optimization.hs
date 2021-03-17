@@ -143,7 +143,7 @@ tests = testGroup "Optimization" [
             )
           ]
         },
-      FunctionAttributes (A.GroupID 0) [A.NoRecurse, A.NoUnwind, A.ReadNone, A.UWTable]
+      FunctionAttributes (A.GroupID 0) [A.NoRecurse, A.NoUnwind, A.ReadNone, A.UWTable, A.WillReturn]
       ],
 
   testGroup "individual" [
