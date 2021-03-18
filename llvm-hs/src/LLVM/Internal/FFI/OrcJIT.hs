@@ -21,6 +21,7 @@ data ObjectLayer
 data IRLayer
 data JITDylib
 data ExecutionSession
+data SymbolStringPtr
 
 foreign import ccall safe "LLVM_Hs_createExecutionSession" createExecutionSession ::
   IO (Ptr ExecutionSession)
@@ -86,3 +87,12 @@ foreign import ccall safe "LLVM_Hs_createMangleAndInterner" createMangleAndInter
 
 foreign import ccall safe "LLVM_Hs_disposeMangleAndInterner" disposeMangleAndInterner ::
   Ptr MangleAndInterner -> IO ()
+
+foreign import ccall safe "LLVM_Hs_MangleAndInterner_call" mangleSymbol ::
+  Ptr MangleAndInterner -> CString -> IO (Ptr SymbolStringPtr)
+
+foreign import ccall safe "LLVM_Hs_SymbolStringPtr_c_str" mangledSymbolString ::
+  Ptr SymbolStringPtr -> IO CString
+
+foreign import ccall safe "LLVM_Hs_disposeSymbolStringPtr" disposeMangledSymbol ::
+  Ptr SymbolStringPtr -> IO ()
