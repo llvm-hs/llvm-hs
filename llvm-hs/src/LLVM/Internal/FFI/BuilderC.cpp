@@ -190,9 +190,9 @@ LLVMValueRef LLVM_Hs_BuildFence(
 LLVMValueRef LLVM_Hs_BuildAtomicCmpXchg(
 	LLVMBuilderRef b,
 	LLVMBool v,
-	LLVMValueRef ptr, 
-	LLVMValueRef cmp, 
-	LLVMValueRef n, 
+	LLVMValueRef ptr,
+	LLVMValueRef cmp,
+	LLVMValueRef n,
 	LLVMAtomicOrdering successOrdering,
 	LLVMAtomicOrdering failureOrdering,
 	LLVMSynchronizationScope lss,
@@ -210,8 +210,8 @@ LLVMValueRef LLVM_Hs_BuildAtomicRMW(
 	LLVMBuilderRef b,
 	LLVMBool v,
 	LLVMAtomicRMWBinOp_ rmwOp,
-	LLVMValueRef ptr, 
-	LLVMValueRef val, 
+	LLVMValueRef ptr,
+	LLVMValueRef val,
 	LLVMAtomicOrdering lao,
 	LLVMSynchronizationScope lss,
 	const char *name
@@ -278,10 +278,6 @@ LLVMValueRef LLVM_Hs_BuildInBoundsGEP(LLVMBuilderRef B, LLVMValueRef Pointer,
                                       const char *Name) {
   ArrayRef<Value *> IdxList(unwrap(Indices), NumIndices);
   return wrap(unwrap(B)->Insert(GetElementPtrInst::CreateInBounds(nullptr, unwrap(Pointer), IdxList), Name));
-}
-
-LLVMValueRef LLVM_Hs_Freeze(LLVMBuilderRef B, LLVMValueRef Op, const char *Name) {
-    return wrap(unwrap(B)->Insert(new FreezeInst(unwrap(Op), Name)));
 }
 
 LLVMValueRef LLVM_Hs_BuildSelect(LLVMBuilderRef B, LLVMValueRef If,

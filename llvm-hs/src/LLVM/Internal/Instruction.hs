@@ -335,7 +335,7 @@ $(do
                   ([], [| do
                           n <- liftIO $ FFI.getShuffleVectorMaskSize i
                           a <- allocaArray n
-                          liftIO $ FFI.getShuffleVectorMask i a
+                          liftIO $ FFI.getShuffleVectorMask i n a
                           decodeM (n, a) |])
                 "aggregate" -> ([], [| op 0 |])
                 "metadata" -> ([], [| meta i |])

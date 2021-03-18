@@ -1,3 +1,7 @@
+## 12.0.0 (2021-03-19)
+
+* Update to LLVM 12.0
+
 ## 9.0.0 (2019-09-06)
 
 * The functions in `LLVM.IRBuilder.Constant` no longer return a

@@ -132,7 +132,7 @@ void LLVM_Hs_AddGCOVProfilerPass(
 	options.NoRedZone = noRedZone;
 	options.Atomic = atomic;
 	options.Filter = filter;
-  options.Exclude = exclude;
+	options.Exclude = exclude;
 	unwrap(PM)->add(createGCOVProfilerPass(options));
 }
 
@@ -167,25 +167,6 @@ void LLVM_Hs_AddThreadSanitizerPass(
 void LLVM_Hs_AddBoundsCheckingPass(LLVMPassManagerRef PM) {
 	unwrap(PM)->add(createBoundsCheckingLegacyPass());
 }
-
-// TODO(llvm-12): Confirm that these passes have been removed in LLVM 9 → LLVM 12.
-/*
-void LLVM_Hs_AddConstantPropagationPass(LLVMPassManagerRef PM) {
-	unwrap(PM)->add(createConstantPropagationPass());
-}
-
-void LLVM_Hs_AddDeadInstEliminationPass(LLVMPassManagerRef PM) {
-	unwrap(PM)->add(createDeadInstEliminationPass());
-}
-
-void LLVM_Hs_AddIPConstantPropagationPass(LLVMPassManagerRef PM) {
-	unwrap(PM)->add(createIPConstantPropagationPass());
-}
-
-void LLVM_Hs_AddInterproceduralConstantPropagationPass(LLVMPassManagerRef PM) {
-	unwrap(PM)->add(createInterproceduralConstantPropagationPass());
-}
-*/
 
 void LLVM_Hs_AddIPSCCPPass(LLVMPassManagerRef PM) {
 	unwrap(PM)->add(createIPSCCPPass());
