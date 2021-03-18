@@ -208,4 +208,16 @@ void LLVM_Hs_disposeMangleAndInterner(MangleAndInterner* mangler) {
     delete mangler;
 }
 
+SymbolStringPtr* LLVM_Hs_MangleAndInterner_call(MangleAndInterner* mangler, const char* name) {
+    return new SymbolStringPtr((*mangler)(name));
+}
+
+const char* LLVM_Hs_SymbolStringPtr_c_str(SymbolStringPtr* ptr) {
+    return (*(*ptr)).data();
+}
+
+void LLVM_Hs_disposeSymbolStringPtr(SymbolStringPtr* ptr) {
+    delete ptr;
+}
+
 }
