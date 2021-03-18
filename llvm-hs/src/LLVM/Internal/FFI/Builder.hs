@@ -148,7 +148,7 @@ foreign import ccall unsafe "LLVMBuildPhi" buildPhi ::
 foreign import ccall unsafe "LLVMBuildCall" buildCall ::
   Ptr Builder -> Ptr Value -> Ptr (Ptr Value) -> CUInt -> CString -> IO (Ptr Instruction)
 
-foreign import ccall unsafe "LLVM_Hs_Freeze" buildFreeze ::
+foreign import ccall unsafe "LLVMBuildFreeze" buildFreeze ::
   Ptr Builder -> Ptr Value -> Ptr Type -> IO (Ptr Instruction)
 
 foreign import ccall unsafe "LLVM_Hs_BuildSelect" buildSelect ::

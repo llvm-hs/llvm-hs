@@ -27,40 +27,9 @@ inconveniences.
 
 ## Installing LLVM
 
-### Homebrew
-
-Example using Homebrew on macOS:
-
-```bash
-$ brew install llvm-hs/llvm/llvm-9
-```
-
-### Debian/Ubuntu
-
-For Debian/Ubuntu based Linux distributions, the LLVM.org website provides
-binary distribution packages. Check [apt.llvm.org](http://apt.llvm.org/) for
-instructions for adding the correct package database for your OS version, and
-then:
-
-```bash
-$ apt-get install llvm-9-dev
-```
-
-### Nix
-
-Nix users can use the following commands to build the library:
-
-```bash
-$ nix-shell
-$ cabal new-build llvm-hs
-```
-
-The Nix shell uses a pinned version of nixpkgs by default.
-You can define the `nixpkgs` argument to use a different nixpkgs tree:
-
-```bash
-$ nix-shell --arg nixpkgs '<nixpkgs>'
-```
+LLVM 12 is still not fully released, and as such is unavailable in most
+package managers. For now, the only reliable way to obtain the binaries
+is to build it form source, following the instructions below.
 
 ### Building from source
 
@@ -70,37 +39,30 @@ on the LLVM.org website [here](http://llvm.org/docs/CMake.html). [CMake
 compiler are required, at least Clang 3.1, GCC 4.8, or Visual Studio 2015
 (Update 3).
 
-  1. Download and unpack the [LLVM-9.0 source code](http://releases.llvm.org/9.0.0/llvm-9.0.0.src.tar.xz).
-     We'll refer to the path the source tree was unpacked to as `LLVM_SRC`.
+  1. Download and unpack the [LLVM source code](https://github.com/llvm/llvm-project):
+     ```sh
+     git clone https://github.com/llvm/llvm-project -b release/12.x --single-branch
+     cd llvm-project
+     ```
 
   2. Create a temporary build directory and `cd` to it, for example:
      ```sh
-     mkdir /tmp/build
-     cd /tmp/build
+     mkdir build && cd build
      ```
 
   3. Execute the following to configure the build. Here, `INSTALL_PREFIX` is
      where LLVM is to be installed, for example `/usr/local`:
      ```sh
-     cmake $LLVM_SRC -DCMAKE_INSTALL_PREFIX=$INSTALL_PREFIX -DLLVM_BUILD_LLVM_DYLIB=True -DLLVM_LINK_LLVM_DYLIB=True
+     cmake -DCMAKE_BUILD_TYPE=Release -DCMAKE_INSTALL_PREFIX=$INSTALL_PREFIX -DLLVM_PARALLEL_LINK_JOBS=1 -DLLVM_BUILD_LLVM_DYLIB=True -DLLVM_LINK_LLVM_DYLIB=True ../llvm
      ```
      See [options and variables](http://llvm.org/docs/CMake.html#options-and-variables)
-     for a list of additional build parameters you can specify.
+     for a list of additional build parameters you can specify (we especially recommend the
+     `ninja` build system).
 
   4. Build and install:
      ```sh
      cmake --build .
      cmake --build . --target install
-     ```
-
-  5. For macOS only, some additional steps are useful to work around issues related
-     to [System Integrity Protection](https://en.wikipedia.org/wiki/System_Integrity_Protection):
-     ```sh
-     cd $INSTALL_PREFIX/lib
-     ln -s libLLVM.dylib libLLVM-9.dylib
-     install_name_tool -id $PWD/libLTO.dylib libLTO.dylib
-     install_name_tool -id $PWD/libLLVM.dylib libLLVM.dylib
-     install_name_tool -change '@rpath/libLLVM.dylib' $PWD/libLLVM.dylib libLTO.dylib
      ```
 
 

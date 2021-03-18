@@ -1,3 +1,8 @@
+## 12.0.0 (2021-03-19)
+
+* Update to LLVM 12.0
+* Remove OrcJIT V1 bindings and replace them with OrcJIT V2.
+
 ## 9.0.1 (2019-09-28)
 
 * Fix build with Clang on MacOS.
