@@ -5,20 +5,21 @@ module LLVM.Internal.Linking
 
 import LLVM.Prelude
 
-import qualified Data.ByteString as BS
 import Foreign.C.String
 import Foreign.Ptr
 import LLVM.Internal.Coding
+import LLVM.Internal.OrcJIT
+import qualified LLVM.Internal.FFI.OrcJIT as FFI
 import qualified LLVM.Internal.FFI.DynamicLibrary as DL
 import qualified LLVM.Internal.FFI.RTDyldMemoryManager as Dyld
 
--- FIXME(llvm-12): Add this back
 -- | Get the address of the given symbol in
 --   the current process' address space.
 getSymbolAddressInProcess
-  :: a -> IO WordPtr
-getSymbolAddressInProcess _ = undefined
-  -- = undefined -- fromIntegral <$> BS.useAsCString sym Dyld.getSymbolAddressInProcess
+  :: MangledSymbol -> IO WordPtr
+getSymbolAddressInProcess (MangledSymbol sym) = do
+  symStr <- FFI.mangledSymbolString sym
+  fromIntegral <$> Dyld.getSymbolAddressInProcess symStr
 
 -- | Loads the given dynamic library permanently. If 'Nothing'
 --   is given, this will make the symbols from the current

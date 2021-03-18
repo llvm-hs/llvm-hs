@@ -232,6 +232,9 @@ createRTDyldObjectLinkingLayer (ExecutionSession es cleanups) = do
 -- IRLayer + IRCompileLayer
 --------------------------------------------------------------------------------
 
+-- | A mangled symbol name. Valid only for as long as the IRLayer that created it.
+newtype MangledSymbol = MangledSymbol (Ptr FFI.SymbolStringPtr)
+
 -- | A type class implemented by the different OrcJIT IR layers.
 --
 -- See e.g. 'IRCompileLayer'.
@@ -248,6 +251,15 @@ addModule :: IRLayer l => ThreadSafeModule -> JITDylib -> l -> IO ()
 addModule (ThreadSafeModule m) (JITDylib dylib) irl =
   FFI.irLayerAddModule m dylib (getDataLayout irl) (getIRLayer irl)
 
+mangleSymbol :: IRLayer l => l -> ShortByteString -> IO MangledSymbol
+mangleSymbol irl name = SBS.useAsCString name $ \namePtr ->
+  MangledSymbol <$> FFI.mangleSymbol (getMangler irl) namePtr
+
+disposeMangledSymbol :: MangledSymbol -> IO ()
+disposeMangledSymbol (MangledSymbol symbol) = FFI.disposeMangledSymbol symbol
+
+withMangledSymbol :: IRLayer l => l -> ShortByteString -> (MangledSymbol -> IO a) -> IO a
+withMangledSymbol irl name = bracket (mangleSymbol irl name) disposeMangledSymbol
 
 -- | An IR layer that compiles the symbols in a module eagerly.
 data IRCompileLayer = IRCompileLayer !(Ptr FFI.IRLayer) !(Ptr FFI.DataLayout) !(Ptr FFI.MangleAndInterner)
