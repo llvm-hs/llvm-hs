@@ -25,6 +25,7 @@ data Pass
   | GlobalValueNumbering { noLoads :: Bool }
   | InductionVariableSimplify
   | InstructionCombining
+  -- | Instruction simplification includes constant folding
   | InstructionSimplify
   | JumpThreading
   | LoopClosedSingleStaticAssignment
@@ -44,9 +45,9 @@ data Pass
   | PromoteMemoryToRegister
   | Reassociate
   | ScalarReplacementOfAggregates { requiresDominatorTree :: Bool }
-  | OldScalarReplacementOfAggregates { 
-      oldScalarReplacementOfAggregatesThreshold :: Maybe Word, 
-      useDominatorTree :: Bool, 
+  | OldScalarReplacementOfAggregates {
+      oldScalarReplacementOfAggregatesThreshold :: Maybe Word,
+      useDominatorTree :: Bool,
       structMemberThreshold :: Maybe Word,
       arrayElementThreshold :: Maybe Word,
       scalarLoadThreshold :: Maybe Word
@@ -62,7 +63,7 @@ data Pass
   | ArgumentPromotion
   | ConstantMerge
   | FunctionAttributes
-  | FunctionInlining { 
+  | FunctionInlining {
       functionInliningThreshold :: Word
     }
   | GlobalDeadCodeElimination
@@ -87,7 +88,7 @@ data Pass
   | GCOVProfiler {
       emitNotes :: Bool,
       emitData :: Bool,
-      version :: GCOVVersion, 
+      version :: GCOVVersion,
       noRedZone :: Bool,
       atomic :: Bool,
       filter :: String,
@@ -120,7 +121,7 @@ defaultGCOVProfiler :: Pass
 defaultGCOVProfiler = GCOVProfiler {
     emitNotes = True,
     emitData = True,
-    version = GCOVVersion "402*", 
+    version = GCOVVersion "402*",
     noRedZone = False,
     atomic = True,
     LLVM.Transforms.filter = "",
