@@ -21,11 +21,11 @@ foreign import ccall unsafe "LLVMIsAInstruction" isAInstruction ::
 newtype COpcode = COpcode CUInt
 
 -- get the C API opcode
-foreign import ccall unsafe "LLVMGetInstructionOpcode" getInstructionOpcode :: 
+foreign import ccall unsafe "LLVMGetInstructionOpcode" getInstructionOpcode ::
   Ptr Instruction -> IO COpcode
 
 -- get the C++ API opcode (one less level of mapping than for that from the C API)
-foreign import ccall unsafe "LLVM_Hs_GetInstructionDefOpcode" getInstructionDefOpcode :: 
+foreign import ccall unsafe "LLVM_Hs_GetInstructionDefOpcode" getInstructionDefOpcode ::
   Ptr Instruction -> IO CPPOpcode
 
 foreign import ccall unsafe "LLVMGetICmpPredicate" getICmpPredicate ::
@@ -153,7 +153,7 @@ foreign import ccall unsafe "LLVM_Hs_GetShuffleVectorMaskSize" getShuffleVectorM
   Ptr Instruction -> IO CUInt
 
 foreign import ccall unsafe "LLVM_Hs_GetShuffleVectorMask" getShuffleVectorMask ::
-  Ptr Instruction -> Ptr CInt -> IO ()
+  Ptr Instruction -> CUInt -> Ptr CInt -> IO ()
 
 foreign import ccall unsafe "LLVM_Hs_GetCleanupPad" getCleanupPad ::
   Ptr Instruction -> IO (Ptr Instruction)

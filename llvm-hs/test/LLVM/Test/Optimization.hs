@@ -30,8 +30,6 @@ import qualified LLVM.AST.CallingConvention as CC
 import qualified LLVM.AST.Attribute as A
 import qualified LLVM.AST.Global as G
 import qualified LLVM.AST.Constant as C
-import qualified LLVM.Internal.Module as M (readModule)
-import qualified LLVM.Internal.FFI.Module as M (dumpModule)
 
 import qualified LLVM.Relocation as R
 import qualified LLVM.CodeModel as CM
@@ -39,14 +37,7 @@ import qualified LLVM.CodeGenOpt as CGO
 
 import Debug.Trace
 
--- TODO(llvm-12): This utility for dumping a module might be useful.
--- Consider moving to library code or deleting it from this test.
-dumpModule' :: A.Module -> IO ()
-dumpModule' m = withContext $ \context -> withModuleFromAST context m $ \m' -> do
-  mPtr <- M.readModule m'
-  M.dumpModule mPtr
-
-handAST = 
+handAST =
   Module "<string>" "<string>" Nothing Nothing [
       GlobalDefinition $ functionDefaults {
         G.returnType = i32,
@@ -252,11 +243,11 @@ tests = testGroup "Optimization" [
 
     testCase "LoopVectorize" $ do
       let
-        mIn = 
+        mIn =
           Module {
             moduleName = "<string>",
             moduleSourceFileName = "<string>",
-            moduleDataLayout = Just $ (defaultDataLayout BigEndian) { 
+            moduleDataLayout = Just $ (defaultDataLayout BigEndian) {
               typeLayouts = Map.singleton (VectorAlign, 128) (AlignmentInfo 128 128)
              },
             moduleTargetTriple = Just "x86_64",
@@ -277,7 +268,7 @@ tests = testGroup "Optimization" [
                     UnName 1 := ICmp IPred.SGT (LocalReference i32 (Name "n")) (ConstantOperand (C.Int 32 0)) []
                    ] (Do $ CondBr (LocalReference i1 (UnName 1)) (Name ".lr.ph") (Name "._crit_edge") []),
                   BasicBlock (Name ".lr.ph") [
-                    Name "indvars.iv" := Phi i64 [ 
+                    Name "indvars.iv" := Phi i64 [
                       (ConstantOperand (C.Int 64 0), UnName 0),
                       (LocalReference i64 (Name "indvars.iv.next"), Name ".lr.ph")
                      ] [],
@@ -306,7 +297,7 @@ tests = testGroup "Optimization" [
         (target, _) <- lookupTarget Nothing triple
         withTargetOptions $ \targetOptions -> do
           withTargetMachine target triple "" Map.empty targetOptions R.Default CM.Default CGO.Default $ \tm -> do
-            optimize (defaultPassSetSpec { 
+            optimize (defaultPassSetSpec {
                         transforms = [ T.defaultLoopVectorize ],
                         dataLayout = moduleDataLayout mIn,
                         targetMachine = Just tm
@@ -319,7 +310,7 @@ tests = testGroup "Optimization" [
       -- how unwinding works (as is the invoke instruction)
       withContext $ \context -> do
         withPassManager (defaultPassSetSpec { transforms = [T.LowerInvoke] }) $ \passManager -> do
-          let astIn = 
+          let astIn =
                 Module "<string>" "<string>" Nothing Nothing [
                   GlobalDefinition $ functionDefaults {
                     G.returnType = i32,
@@ -332,7 +323,7 @@ tests = testGroup "Optimization" [
                       )
                      ]
                    }
-                 ] 
+                 ]
           astOut <- withModuleFromAST context astIn $ \mIn -> do
             runPassManager passManager mIn
             moduleAST mIn

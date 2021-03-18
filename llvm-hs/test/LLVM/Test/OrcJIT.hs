@@ -23,10 +23,8 @@ import qualified LLVM.Internal.FFI.PassManager as FFI
 import LLVM.Context
 import LLVM.Module
 import qualified LLVM.Internal.FFI.Module as FFI
-import qualified LLVM.Internal.OrcJITV2 as OrcV2
+-- import qualified LLVM.Internal.OrcJITV2 as OrcV2
 import LLVM.OrcJIT
-import qualified LLVM.Internal.OrcJIT.CompileLayer as CL
-import qualified LLVM.Internal.OrcJIT.LinkingLayer as LL
 import LLVM.Target
 import qualified LLVM.Relocation as Reloc
 import qualified LLVM.CodeModel as CodeModel
@@ -67,18 +65,6 @@ foreign import ccall "wrapper"
 foreign import ccall "dynamic"
   mkMain :: FunPtr (IO Word32) -> IO Word32
 
-resolver :: CompileLayer l => MangledSymbol -> l -> MangledSymbol -> IO (Either JITSymbolError JITSymbol)
-resolver testFunc compileLayer symbol = do
-  if symbol /= testFunc
-    then CL.findSymbol compileLayer symbol True
-    else do
-      funPtr <- wrapTestFunc myTestFuncImpl
-      let addr = ptrToWordPtr (castFunPtrToPtr funPtr)
-      return (Right (JITSymbol addr defaultJITSymbolFlags))
-
-nullResolver :: MangledSymbol -> IO (Either JITSymbolError JITSymbol)
-nullResolver s = putStrLn "nullresolver" >> return (Left (JITSymbolError "unknown symbol"))
-
 moduleTransform :: IORef Bool -> Ptr FFI.Module -> IO (Ptr FFI.Module)
 moduleTransform passmanagerSuccessful modulePtr = do
   withPassManager defaultCuratedPassSetSpec { optLevel = Just 2 } $ \(PassManager pm) -> do
@@ -88,34 +74,50 @@ moduleTransform passmanagerSuccessful modulePtr = do
 
 tests :: TestTree
 tests =
-  testGroup "OrcJit" [
-    -- FIXME(llvm-12): Re-enable tests.
-    -- Tests are temporarily disabled until they are rewritten using OrcJIT V2 APIs.
-    -- API usages to be updated: withModuleKey, withSymbolResolver, etc.
-    {-
-    testCase "eager compilation" $ do
-      resolvers <- newIORef Map.empty
-      withTestModule $ \mod ->
+  testGroup "OrcJIT" [
+    testCase "basic self-contained function" $ do
+      withTest2Module $ \m ->
         withHostTargetMachine Reloc.PIC CodeModel.Default CodeGenOpt.Default $ \tm ->
-        withExecutionSession $ \es ->
-        withObjectLinkingLayer es (\k -> fmap (\rs -> rs Map.! k) (readIORef resolvers)) $ \linkingLayer ->
-        withIRCompileLayer linkingLayer tm $ \compileLayer -> do
-          testFunc <- mangleSymbol compileLayer "testFunc"
-          withModuleKey es $ \k ->
-            withSymbolResolver es (SymbolResolver (resolver testFunc compileLayer)) $ \resolver -> do
-              modifyIORef' resolvers (Map.insert k resolver)
-              withModule compileLayer k mod $ do
-                mainSymbol <- mangleSymbol compileLayer "main"
-                Right (JITSymbol mainFn _) <- CL.findSymbol compileLayer mainSymbol True
-                result <- mkMain (castPtrToFunPtr (wordPtrToPtr mainFn))
-                result @?= 42
-                Right (JITSymbol mainFn _) <- CL.findSymbolIn compileLayer k mainSymbol True
-                result <- mkMain (castPtrToFunPtr (wordPtrToPtr mainFn))
-                result @?= 42
-                unknownSymbol <- mangleSymbol compileLayer "unknownSymbol"
-                unknownSymbolRes <- CL.findSymbol compileLayer unknownSymbol True
-                unknownSymbolRes @?= Left (JITSymbolError mempty),
+        withExecutionSession $ \es -> do
+          let dylibName = "myDylib"
+          dylib <- createJITDylib es dylibName
+          withClonedThreadSafeModule m $ \tsm -> do
+            ol <- createRTDyldObjectLinkingLayer es
+            il <- createIRCompileLayer es ol tm
+            addModule tsm dylib il
+            Right (JITSymbol addr _) <- lookupSymbol es il dylib "main"
+            let mainFn = mkMain (castPtrToFunPtr $ wordPtrToPtr $ fromIntegral addr)
+            result <- mainFn
+            result @?= 42
 
+    -- TODO: Make it possible to use Haskell functions as definition generators
+    --       and update to OrcJITv2
+    {-
+     testCase "eager compilation" $ do
+       withTestModule $ \mod ->
+         withHostTargetMachine Reloc.PIC CodeModel.Default CodeGenOpt.Default $ \tm ->
+         withExecutionSession $ \es ->
+         withObjectLinkingLayer es (\k -> fmap (\rs -> rs Map.! k) (readIORef resolvers)) $ \linkingLayer ->
+         withIRCompileLayer linkingLayer tm $ \compileLayer -> do
+           testFunc <- mangleSymbol compileLayer "testFunc"
+           withModuleKey es $ \k ->
+             withSymbolResolver es (SymbolResolver (resolver testFunc compileLayer)) $ \resolver -> do
+               modifyIORef' resolvers (Map.insert k resolver)
+               withModule compileLayer k mod $ do
+                 mainSymbol <- mangleSymbol compileLayer "main"
+                 Right (JITSymbol mainFn _) <- CL.findSymbol compileLayer mainSymbol True
+                 result <- mkMain (castPtrToFunPtr (wordPtrToPtr mainFn))
+                 result @?= 42
+                 Right (JITSymbol mainFn _) <- CL.findSymbolIn compileLayer k mainSymbol True
+                 result <- mkMain (castPtrToFunPtr (wordPtrToPtr mainFn))
+                 result @?= 42
+                 unknownSymbol <- mangleSymbol compileLayer "unknownSymbol"
+                 unknownSymbolRes <- CL.findSymbol compileLayer unknownSymbol True
+                 unknownSymbolRes @?= Left (JITSymbolError mempty),
+    -}
+
+    -- TODO: Add IRTransformLayer and translate to OrcJITv2
+    {-
     testCase "IRTransformLayer" $ do
       passmanagerSuccessful <- newIORef False
       resolvers <- newIORef Map.empty
@@ -135,7 +137,10 @@ tests =
               result <- mkMain (castPtrToFunPtr (wordPtrToPtr mainFn))
               result @?= 42
               readIORef passmanagerSuccessful @? "passmanager failed",
+    -}
 
+    -- TODO: Add IRTransformLayer and translate to OrcJITv2
+    {-
     testCase "lazy compilation" $ do
       resolvers <- newIORef Map.empty
       let getResolver k = fmap (Map.! k) (readIORef resolvers)
@@ -158,7 +163,10 @@ tests =
                     Right (JITSymbol mainFn _) <- CL.findSymbol compileLayer mainSymbol True
                     result <- mkMain (castPtrToFunPtr (wordPtrToPtr mainFn))
                     result @?= 42,
+    -}
 
+    -- TODO: Add support for loading object files and update to OrcJITv2
+    {-
     testCase "finding symbols in linking layer" $
       withExecutionSession $ \es ->
       withModuleKey es $ \k ->
@@ -178,25 +186,4 @@ tests =
             result <- mkMain (castPtrToFunPtr (wordPtrToPtr mainFn))
             result @?= 38,
     -}
-
-    testCase "OrcV2" $ do
-      withTest2Module $ \m ->
-        withHostTargetMachine Reloc.PIC CodeModel.Default CodeGenOpt.Default $ \tm ->
-        OrcV2.withExecutionSession $ \es -> do
-          let dylibName = "JITDylibName"
-          dylib <- OrcV2.createJITDylib es dylibName
-          OrcV2.withThreadSafeModule m $ \mod ->
-            OrcV2.withRTDyldObjectLinkingLayer es $ \ol ->
-            OrcV2.withIRCompileLayer es ol tm $ \il -> do
-              dl <- getTargetMachineDataLayout tm
-              dylib' <- OrcV2.getJITDylibByName es dylibName
-              OrcV2.addModule mod dylib il
-              -- FIXME(llvm-12): "main" vs "_main" symbol name seems platform-dependent,
-              -- to be verified. "main" on Linux and "_main" on macOS. Find a
-              -- robust platform-independent fix – perhaps by reviving
-              -- `OrcV2.findSymbolIn` which takes a `MangledSymbol`.
-              addr <- OrcV2.lookupSymbol es dylib "_main"
-              let mainFn = mkMain (castPtrToFunPtr $ wordPtrToPtr $ fromIntegral addr)
-              result <- mainFn
-              result @?= 42
     ]

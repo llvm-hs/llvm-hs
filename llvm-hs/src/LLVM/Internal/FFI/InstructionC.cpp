@@ -137,7 +137,7 @@ unsigned LLVM_Hs_GetInstrAlignment(LLVMValueRef l) {
 
 void LLVM_Hs_SetInstrAlignment(LLVMValueRef l, unsigned a) {
 	switch(unwrap<Instruction>(l)->getOpcode()) {
-#define ENUM_CASE(n) case Instruction::n: unwrap<n ## Inst>(l)->setAlignment(MaybeAlign(a).valueOrOne()); break;
+#define ENUM_CASE(n) case Instruction::n: unwrap<n ## Inst>(l)->setAlignment(Align(a)); break;
 		LLVM_HS_FOR_EACH_ALIGNMENT_INST(ENUM_CASE)
 #undef ENUM_CASE
 	}
@@ -271,9 +271,10 @@ unsigned LLVM_Hs_GetShuffleVectorMaskSize(LLVMValueRef i) {
   return unwrap<ShuffleVectorInst>(i)->getShuffleMask().size();
 }
 
-void LLVM_Hs_GetShuffleVectorMask(LLVMValueRef i, unsigned *result) {
-  auto mask = unwrap<ShuffleVectorInst>(i)->getShuffleMask();
-	std::copy(mask.begin(), mask.end(), result);
+void LLVM_Hs_GetShuffleVectorMask(LLVMValueRef i, unsigned int numResults, int *result) {
+  const auto& mask = unwrap<ShuffleVectorInst>(i)->getShuffleMask();
+  assert(numResults == mask.size());
+  std::copy(mask.begin(), mask.end(), result);
 }
 
 LLVMValueRef LLVM_Hs_GetCleanupPad(LLVMValueRef i) {
