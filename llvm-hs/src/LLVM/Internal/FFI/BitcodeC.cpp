@@ -13,10 +13,10 @@ extern "C" {
 
 LLVMModuleRef LLVM_Hs_ParseBitcode(
 	LLVMContextRef c,
-	LLVMMemoryBufferRef mb, 
+	LLVMMemoryBufferRef mb,
 	char **error
 ) {
-    Expected<std::unique_ptr<Module>> moduleOrErr = parseBitcodeFile(unwrap(mb)->getMemBufferRef(), *unwrap(c), [](StringRef) { return None; });
+    Expected<std::unique_ptr<Module>> moduleOrErr = parseBitcodeFile(unwrap(mb)->getMemBufferRef(), *unwrap(c));
     if (Error err = moduleOrErr.takeError()) {
         handleAllErrors(std::move(err), [&](ErrorInfoBase &eib) {
                 *error = strdup(eib.message().c_str());

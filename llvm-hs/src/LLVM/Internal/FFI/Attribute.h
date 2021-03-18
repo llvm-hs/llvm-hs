@@ -11,6 +11,7 @@
   macro(Builtin,F,F,T)                              \
   macro(Cold,F,F,T)                                 \
   macro(Convergent,F,F,T)                           \
+  macro(Hot,F,F,T)                                  \
   macro(ImmArg,T,F,F)                               \
   macro(InAlloca,T,F,F)                             \
   macro(InReg,T,T,F)                                \
@@ -23,6 +24,7 @@
   macro(Nest,T,F,F)                                 \
   macro(NoAlias,T,T,F)                              \
   macro(NoBuiltin,F,F,T)                            \
+  macro(NoCallback,F,F,T)                           \
   macro(NoCapture,T,F,F)                            \
   macro(NoCfCheck,F,F,T)                            \
   macro(NoDuplicate,F,F,T)                          \
@@ -30,6 +32,7 @@
   macro(NoImplicitFloat,F,F,T)                      \
   macro(NoInline,F,F,T)                             \
   macro(NoMerge,F,F,T)                              \
+  macro(NoProfile,F,F,T)                            \
   macro(NoRecurse,F,F,T)                            \
   macro(NoRedZone,F,F,T)                            \
   macro(NoReturn,F,F,T)                             \

@@ -6,7 +6,7 @@ import Test.Tasty.HUnit
 
 import LLVM.Test.Support
 
-import Control.Monad.Trans.Except 
+import Control.Monad.Trans.Except
 import Control.Monad.Except (catchError)
 import Control.Monad.IO.Class
 
@@ -34,8 +34,6 @@ import qualified LLVM.AST.CallingConvention as CC
 import qualified LLVM.AST.Attribute as A
 import qualified LLVM.AST.Global as G
 import qualified LLVM.AST.Constant as C
-
-import Debug.Trace
 
 instrument :: PassSetSpec -> A.Module -> IO A.Module
 instrument s m = withContext $ \context -> withModuleFromAST context m $ \mIn' -> do
@@ -169,13 +167,11 @@ tests =
   testGroup "Instrumentation" [
   testGroup "basic" [
     testCase n $ do
-      shouldTestPass' <- shouldTestPass
-      if not shouldTestPass'
+      shouldTest <- checkIfShouldTest
+      if not shouldTest
         then return ()
         else do
-          cpu <- getHostCPUName
           triple <- getProcessTargetTriple
-          bool <- isMemorySanitizerSupported
           withTargetLibraryInfo triple $ \tli -> do
             dl <- withHostTargetMachineDefault getTargetMachineDataLayout
             ast <- ast
@@ -183,6 +179,6 @@ tests =
             let names ast = [ n | GlobalDefinition d <- moduleDefinitions ast, Name n <- return (G.name d) ]
             names ast' `List.intersect` names ast @?= names ast
     |
-    (n, p, shouldTestPass) <- instrumentationPasses
+    (n, p, checkIfShouldTest) <- instrumentationPasses
     ]
   ]
