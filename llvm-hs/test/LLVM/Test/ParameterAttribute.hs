@@ -31,7 +31,8 @@ instance Arbitrary ParameterAttribute where
     , return SignExt
     , return InReg
     , return SRet
-    , Alignment <$> elements (map (2^) [0..30 :: Int])
+    -- LLVM doesn't allow alignments larger than 2^29!
+    , Alignment <$> elements (map (2^) [0..29 :: Int])
     , return NoAlias
     , return ByVal
     , return NoCapture
