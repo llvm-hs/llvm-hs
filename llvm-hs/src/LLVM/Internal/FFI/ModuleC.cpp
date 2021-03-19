@@ -7,7 +7,7 @@ using namespace llvm;
 extern "C" {
 
 void LLVM_Hs_DumpModule(LLVMModuleRef m) {
-	unwrap(m)->dump();
+	unwrap(m)->print(llvm::errs(), nullptr);
 }
 
 char *LLVM_Hs_GetModuleIdentifier(LLVMModuleRef val) {

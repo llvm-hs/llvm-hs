@@ -80,7 +80,7 @@ MDTuple* LLVM_Hs_Get_MDTuple(LLVMContextRef c,
 }
 
 void LLVM_Hs_DumpMetadata(LLVMMetadataRef md) {
-    unwrap(md)->dump();
+    unwrap(md)->print(llvm::errs(), nullptr);
 }
 
 unsigned LLVM_Hs_GetMDKindNames(
