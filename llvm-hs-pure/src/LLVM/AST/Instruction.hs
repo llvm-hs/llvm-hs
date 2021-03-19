@@ -1,4 +1,4 @@
--- | LLVM instructions 
+-- | LLVM instructions
 -- <http://llvm.org/docs/LangRef.html#instruction-reference>
 module LLVM.AST.Instruction where
 
@@ -22,18 +22,18 @@ import Data.List.NonEmpty
 type InstructionMetadata = [(ShortByteString, MDRef MDNode)]
 
 -- | <http://llvm.org/docs/LangRef.html#terminators>
-data Terminator 
-  = Ret { 
+data Terminator
+  = Ret {
       returnOperand :: Maybe Operand,
       metadata' :: InstructionMetadata
     }
-  | CondBr { 
-      condition :: Operand, 
-      trueDest :: Name, 
+  | CondBr {
+      condition :: Operand,
+      trueDest :: Name,
       falseDest :: Name,
       metadata' :: InstructionMetadata
     }
-  | Br { 
+  | Br {
       dest :: Name,
       metadata' :: InstructionMetadata
     }
@@ -84,7 +84,7 @@ data Terminator
   deriving (Eq, Read, Show, Typeable, Data, Generic)
 
 -- | <http://llvm.org/docs/LangRef.html#fast-math-flags>
-data FastMathFlags 
+data FastMathFlags
   = FastMathFlags {
       allowReassoc :: Bool,
       noNaNs :: Bool,
@@ -145,7 +145,7 @@ data TailCallKind = Tail | MustTail | NoTail
 -- <http://llvm.org/docs/LangRef.html#memoryops>
 -- <http://llvm.org/docs/LangRef.html#otherops>
 data Instruction
-  = Add { 
+  = Add {
       nsw :: Bool,
       nuw :: Bool,
       operand0 :: Operand,
@@ -165,150 +165,152 @@ data Instruction
       operand1 :: Operand,
       metadata :: InstructionMetadata
     }
-  | FSub { 
+  | FSub {
       fastMathFlags :: FastMathFlags,
-      operand0 :: Operand, 
-      operand1 :: Operand, 
+      operand0 :: Operand,
+      operand1 :: Operand,
       metadata :: InstructionMetadata
     }
-  | Mul { 
-      nsw :: Bool, 
-      nuw :: Bool, 
-      operand0 :: Operand, 
-      operand1 :: Operand, 
-      metadata :: InstructionMetadata 
+  | Mul {
+      nsw :: Bool,
+      nuw :: Bool,
+      operand0 :: Operand,
+      operand1 :: Operand,
+      metadata :: InstructionMetadata
     }
-  | FMul { 
+  | FMul {
       fastMathFlags :: FastMathFlags,
-      operand0 :: Operand, 
-      operand1 :: Operand, 
+      operand0 :: Operand,
+      operand1 :: Operand,
       metadata :: InstructionMetadata
     }
-  | UDiv { 
-      exact :: Bool, 
-      operand0 :: Operand, 
-      operand1 :: Operand, 
+  | UDiv {
+      exact :: Bool,
+      operand0 :: Operand,
+      operand1 :: Operand,
       metadata :: InstructionMetadata
     }
-  | SDiv { 
-      exact :: Bool, 
-      operand0 :: Operand, 
-      operand1 :: Operand, 
+  | SDiv {
+      exact :: Bool,
+      operand0 :: Operand,
+      operand1 :: Operand,
       metadata :: InstructionMetadata
     }
-  | FDiv { 
+  | FDiv {
       fastMathFlags :: FastMathFlags,
-      operand0 :: Operand, 
-      operand1 :: Operand, 
+      operand0 :: Operand,
+      operand1 :: Operand,
       metadata :: InstructionMetadata
     }
-  | URem { 
-      operand0 :: Operand, 
-      operand1 :: Operand, 
+  | URem {
+      operand0 :: Operand,
+      operand1 :: Operand,
       metadata :: InstructionMetadata
     }
-  | SRem { 
-      operand0 :: Operand, 
-      operand1 :: Operand, 
+  | SRem {
+      operand0 :: Operand,
+      operand1 :: Operand,
       metadata :: InstructionMetadata
     }
-  | FRem { 
+  | FRem {
       fastMathFlags :: FastMathFlags,
-      operand0 :: Operand, 
-      operand1 :: Operand, 
+      operand0 :: Operand,
+      operand1 :: Operand,
       metadata :: InstructionMetadata
     }
-  | Shl { 
-      nsw :: Bool, 
-      nuw :: Bool, 
-      operand0 :: Operand, 
-      operand1 :: Operand, 
+  | Shl {
+      nsw :: Bool,
+      nuw :: Bool,
+      operand0 :: Operand,
+      operand1 :: Operand,
       metadata :: InstructionMetadata
     }
-  | LShr { 
-      exact :: Bool, 
-      operand0 :: Operand, 
-      operand1 :: Operand, 
+  | LShr {
+      exact :: Bool,
+      operand0 :: Operand,
+      operand1 :: Operand,
       metadata :: InstructionMetadata
     }
-  | AShr { 
-      exact :: Bool, 
-      operand0 :: Operand, 
-      operand1 :: Operand, 
+  | AShr {
+      exact :: Bool,
+      operand0 :: Operand,
+      operand1 :: Operand,
       metadata :: InstructionMetadata
     }
-  | And { 
-      operand0 :: Operand, 
-      operand1 :: Operand, 
+  | And {
+      operand0 :: Operand,
+      operand1 :: Operand,
       metadata :: InstructionMetadata
     }
-  | Or { 
-      operand0 :: Operand, 
-      operand1 :: Operand, 
+  | Or {
+      operand0 :: Operand,
+      operand1 :: Operand,
       metadata :: InstructionMetadata
     }
-  | Xor { 
-      operand0 :: Operand, 
-      operand1 :: Operand, 
+  | Xor {
+      operand0 :: Operand,
+      operand1 :: Operand,
       metadata :: InstructionMetadata
     }
-  | Alloca { 
+  | Alloca {
       allocatedType :: Type,
       numElements :: Maybe Operand,
       alignment :: Word32,
       metadata :: InstructionMetadata
     }
   | Load {
-      volatile :: Bool, 
+      volatile :: Bool,
       address :: Operand,
       maybeAtomicity :: Maybe Atomicity,
       alignment :: Word32,
       metadata :: InstructionMetadata
     }
   | Store {
-      volatile :: Bool, 
+      volatile :: Bool,
       address :: Operand,
       value :: Operand,
       maybeAtomicity :: Maybe Atomicity,
       alignment :: Word32,
       metadata :: InstructionMetadata
     }
-  | GetElementPtr { 
+  | GetElementPtr {
       inBounds :: Bool,
       address :: Operand,
       indices :: [Operand],
       metadata :: InstructionMetadata
     }
-  | Fence { 
+  | Fence {
       atomicity :: Atomicity,
-      metadata :: InstructionMetadata 
+      metadata :: InstructionMetadata
     }
-  | CmpXchg { 
+  | CmpXchg {
       volatile :: Bool,
       address :: Operand,
       expected :: Operand,
       replacement :: Operand,
+      alignment :: Word32,
       atomicity :: Atomicity,
       failureMemoryOrdering :: MemoryOrdering,
-      metadata :: InstructionMetadata 
+      metadata :: InstructionMetadata
     }
-  | AtomicRMW { 
+  | AtomicRMW {
       volatile :: Bool,
       rmwOperation :: RMWOperation,
       address :: Operand,
       value :: Operand,
+      alignment :: Word32,
       atomicity :: Atomicity,
-      metadata :: InstructionMetadata 
+      metadata :: InstructionMetadata
     }
-  | Trunc { 
+  | Trunc {
       operand0 :: Operand,
       type' :: Type,
-      metadata :: InstructionMetadata 
+      metadata :: InstructionMetadata
     }
   | ZExt {
       operand0 :: Operand,
       type' :: Type,
-      metadata :: InstructionMetadata 
+      metadata :: InstructionMetadata
     }
   | SExt {
       operand0 :: Operand,
@@ -381,7 +383,7 @@ data Instruction
       type' :: Type,
       incomingValues :: [ (Operand, Name) ],
       metadata :: InstructionMetadata
-  } 
+  }
   | Freeze {
       operand0 :: Operand,
       type' :: Type,
@@ -402,44 +404,44 @@ data Instruction
       functionAttributes :: [Either FA.GroupID FA.FunctionAttribute],
       metadata :: InstructionMetadata
   }
-  | VAArg { 
+  | VAArg {
       argList :: Operand,
       type' :: Type,
-      metadata :: InstructionMetadata 
+      metadata :: InstructionMetadata
     }
-  | ExtractElement { 
+  | ExtractElement {
       vector :: Operand,
       index :: Operand,
-      metadata :: InstructionMetadata 
+      metadata :: InstructionMetadata
     }
-  | InsertElement { 
+  | InsertElement {
       vector :: Operand,
       element :: Operand,
       index :: Operand,
       metadata :: InstructionMetadata
     }
-  | ShuffleVector { 
+  | ShuffleVector {
       operand0 :: Operand,
       operand1 :: Operand,
       mask :: [Int32],
       metadata :: InstructionMetadata
     }
-  | ExtractValue { 
+  | ExtractValue {
       aggregate :: Operand,
       indices' :: [Word32],
       metadata :: InstructionMetadata
     }
-  | InsertValue { 
+  | InsertValue {
       aggregate :: Operand,
       element :: Operand,
       indices' :: [Word32],
       metadata :: InstructionMetadata
     }
-  | LandingPad { 
+  | LandingPad {
       type' :: Type,
       cleanup :: Bool,
       clauses :: [LandingPadClause],
-      metadata :: InstructionMetadata 
+      metadata :: InstructionMetadata
     }
   | CatchPad {
       catchSwitch :: Operand,
@@ -456,7 +458,7 @@ data Instruction
 
 -- | Instances of instructions may be given a name, allowing their results to be referenced as 'Operand's.
 -- Sometimes instructions - e.g. a call to a function returning void - don't need names.
-data Named a 
+data Named a
   = Name := a
   | Do a
   deriving (Eq, Read, Show, Typeable, Data, Generic)

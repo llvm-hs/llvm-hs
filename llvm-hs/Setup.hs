@@ -41,7 +41,7 @@ lookupFlagAssignment = lookup
 #endif
 
 llvmVersion :: Version
-llvmVersion = mkVersion [12,0]
+llvmVersion = mkVersion [13,0]
 
 -- Ordered by decreasing specificty so we will prefer llvm-config-9.0
 -- over llvm-config-9 over llvm-config.

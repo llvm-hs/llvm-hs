@@ -125,16 +125,16 @@ buildFence :: Ptr Builder -> (SynchronizationScope, MemoryOrdering) -> CString -
 buildFence builder (ss, mo) s = buildFence' builder mo ss s
 
 foreign import ccall unsafe "LLVM_Hs_BuildAtomicCmpXchg" buildCmpXchg' ::
-  Ptr Builder -> LLVMBool -> Ptr Value -> Ptr Value -> Ptr Value -> MemoryOrdering -> MemoryOrdering -> SynchronizationScope -> CString -> IO (Ptr Instruction)
+  Ptr Builder -> LLVMBool -> Ptr Value -> Ptr Value -> Ptr Value -> CUInt -> MemoryOrdering -> MemoryOrdering -> SynchronizationScope -> CString -> IO (Ptr Instruction)
 
-buildCmpXchg :: Ptr Builder -> LLVMBool -> Ptr Value -> Ptr Value -> Ptr Value -> (SynchronizationScope, MemoryOrdering) -> MemoryOrdering -> CString -> IO (Ptr Instruction)
-buildCmpXchg builder vol a e r (ss, smo) fmo s =  buildCmpXchg' builder vol a e r smo fmo ss s
+buildCmpXchg :: Ptr Builder -> LLVMBool -> Ptr Value -> Ptr Value -> Ptr Value -> CUInt -> (SynchronizationScope, MemoryOrdering) -> MemoryOrdering -> CString -> IO (Ptr Instruction)
+buildCmpXchg builder vol a e r al (ss, smo) fmo s =  buildCmpXchg' builder vol a e r al smo fmo ss s
 
 foreign import ccall unsafe "LLVM_Hs_BuildAtomicRMW" buildAtomicRMW' ::
-  Ptr Builder -> LLVMBool -> RMWOperation -> Ptr Value -> Ptr Value -> MemoryOrdering -> SynchronizationScope -> CString -> IO (Ptr Instruction)
+  Ptr Builder -> LLVMBool -> RMWOperation -> Ptr Value -> Ptr Value -> CUInt -> MemoryOrdering -> SynchronizationScope -> CString -> IO (Ptr Instruction)
 
-buildAtomicRMW :: Ptr Builder -> LLVMBool -> RMWOperation -> Ptr Value -> Ptr Value -> (SynchronizationScope, MemoryOrdering) -> CString -> IO (Ptr Instruction)
-buildAtomicRMW builder vol rmwOp a v (ss, mo) s = buildAtomicRMW' builder vol rmwOp a v mo ss s
+buildAtomicRMW :: Ptr Builder -> LLVMBool -> RMWOperation -> Ptr Value -> Ptr Value -> CUInt -> (SynchronizationScope, MemoryOrdering) -> CString -> IO (Ptr Instruction)
+buildAtomicRMW builder vol rmwOp a v al (ss, mo) s = buildAtomicRMW' builder vol rmwOp a v al mo ss s
 
 foreign import ccall unsafe "LLVM_Hs_BuildICmp" buildICmp ::
   Ptr Builder -> ICmpPredicate -> Ptr Value -> Ptr Value -> CString -> IO (Ptr Instruction)

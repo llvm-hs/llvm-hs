@@ -124,11 +124,13 @@ LLVMTypeRef LLVM_Hs_GetAllocatedType(LLVMValueRef a) {
 #define LLVM_HS_FOR_EACH_ALIGNMENT_INST(macro) \
 	macro(Alloca) \
 	macro(Load) \
-	macro(Store)
+	macro(Store) \
+	macro(AtomicCmpXchg) \
+	macro(AtomicRMW)
 
 unsigned LLVM_Hs_GetInstrAlignment(LLVMValueRef l) {
 	switch(unwrap<Instruction>(l)->getOpcode()) {
-#define ENUM_CASE(n) case Instruction::n: return unwrap<n ## Inst>(l)->getAlignment();
+#define ENUM_CASE(n) case Instruction::n: return unwrap<n ## Inst>(l)->getAlign().value();
 		LLVM_HS_FOR_EACH_ALIGNMENT_INST(ENUM_CASE)
 #undef ENUM_CASE
 	default: return 0;

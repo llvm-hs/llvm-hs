@@ -156,7 +156,9 @@ LLVMValueRef LLVM_Hs_BuildLoad(
 	unsigned align,
 	const char *name
 ) {
-	LoadInst *i = unwrap(b)->CreateAlignedLoad(unwrap(p), MaybeAlign(align), isVolatile, name);
+	LoadInst *i = unwrap(b)->CreateAlignedLoad(
+	    unwrap(p)->getType()->getPointerElementType(),
+	    unwrap(p), MaybeAlign(align), isVolatile, name);
 	i->setOrdering(unwrap(atomicOrdering));
 	if (atomicOrdering != LLVMAtomicOrderingNotAtomic) i->setSyncScopeID(unwrap(synchScope));
 	return wrap(i);
@@ -193,13 +195,14 @@ LLVMValueRef LLVM_Hs_BuildAtomicCmpXchg(
 	LLVMValueRef ptr,
 	LLVMValueRef cmp,
 	LLVMValueRef n,
+	unsigned align,
 	LLVMAtomicOrdering successOrdering,
 	LLVMAtomicOrdering failureOrdering,
 	LLVMSynchronizationScope lss,
 	const char *name
 ) {
 	AtomicCmpXchgInst *a = unwrap(b)->CreateAtomicCmpXchg(
-		unwrap(ptr), unwrap(cmp), unwrap(n), unwrap(successOrdering), unwrap(failureOrdering), unwrap(lss)
+		unwrap(ptr), unwrap(cmp), unwrap(n), MaybeAlign(align), unwrap(successOrdering), unwrap(failureOrdering), unwrap(lss)
 	);
 	a->setVolatile(v);
 	a->setName(name);
@@ -212,12 +215,13 @@ LLVMValueRef LLVM_Hs_BuildAtomicRMW(
 	LLVMAtomicRMWBinOp_ rmwOp,
 	LLVMValueRef ptr,
 	LLVMValueRef val,
+	unsigned align,
 	LLVMAtomicOrdering lao,
 	LLVMSynchronizationScope lss,
 	const char *name
 ) {
 	AtomicRMWInst *a = unwrap(b)->CreateAtomicRMW(
-		unwrap(rmwOp), unwrap(ptr), unwrap(val), unwrap(lao), unwrap(lss)
+		unwrap(rmwOp), unwrap(ptr), unwrap(val), MaybeAlign(align), unwrap(lao), unwrap(lss)
 	);
 	a->setVolatile(v);
 	a->setName(name);

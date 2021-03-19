@@ -27,9 +27,8 @@ inconveniences.
 
 ## Installing LLVM
 
-LLVM 12 is still not fully released, and as such is unavailable in most
-package managers. For now, the only reliable way to obtain the binaries
-is to build it form source, following the instructions below.
+This branch tracks LLVM HEAD, meaning that the only way to build it is to
+use a fresh checkout of LLVM sources.
 
 ### Building from source
 
