@@ -122,7 +122,7 @@ gep addr is = do
   emitInstr ty (GetElementPtr False addr is [])
 
 -- TODO: Perhaps use the function from llvm-hs-pretty (https://github.com/llvm-hs/llvm-hs-pretty/blob/master/src/LLVM/Typed.hs)
-gepType :: MonadModuleBuilder m => String -> Type -> [Operand] -> m Type
+gepType :: (MonadModuleBuilder m, HasCallStack) => String -> Type -> [Operand] -> m Type
 gepType caller = go
   where
     msg m = caller ++ ": " ++ m
