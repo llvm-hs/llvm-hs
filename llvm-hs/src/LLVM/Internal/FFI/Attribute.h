@@ -41,7 +41,7 @@
   macro(NoUnwind,F,F,T)                             \
   macro(NonLazyBind,F,F,T)                          \
   macro(NonNull,T,T,F)                              \
-  macro(NullPointerIsValid,T,T,F)                   \
+  macro(NullPointerIsValid,F,F,T)                   \
   macro(OptForFuzzing,F,F,T)                        \
   macro(OptimizeForSize,F,F,T)                      \
   macro(OptimizeNone,F,F,T)                         \
@@ -79,6 +79,7 @@
   macro(Dereferenceable,T,T,F)                      \
   macro(DereferenceableOrNull,T,T,F)                \
   macro(StackAlignment,F,F,T)                       \
+  macro(VScaleRange,F,F,T)                          \
   macro(EndAttrKinds,F,F,F)
 
 typedef enum {

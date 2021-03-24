@@ -31,22 +31,30 @@ instance Arbitrary FunctionAttribute where
     , return Builtin
     , return Cold
     , return Convergent
+    , return Hot
     , return InaccessibleMemOnly
     , return InaccessibleMemOrArgMemOnly
     , return InlineHint
     , return JumpTable
     , return MinimizeSize
+    , return MustProgress
     , return Naked
     , return NoBuiltin
+    , return NoCallback
+    , return NoCfCheck
     , return NoDuplicate
     , return NoFree
     , return NoImplicitFloat
     , return NoInline
-    , return NonLazyBind
+    , return NoMerge
+    , return NoProfile
     , return NoRecurse
     , return NoRedZone
     , return NoReturn
     , return NoUnwind
+    , return NonLazyBind
+    , return NullPointerIsValid
+    , return OptForFuzzing
     , return OptimizeForSize
     , return OptimizeNone
     , return ReadNone
@@ -55,9 +63,12 @@ instance Arbitrary FunctionAttribute where
     , return SafeStack
     , return SanitizeAddress
     , return SanitizeHWAddress
+    , return SanitizeMemTag
     , return SanitizeMemory
     , return SanitizeThread
+    , return ShadowCallStack
     , return Speculatable
+    , return SpeculativeLoadHardening
     , return StackProtect
     , return StackProtectReq
     , return StackProtectStrong
@@ -67,6 +78,7 @@ instance Arbitrary FunctionAttribute where
     , StackAlignment <$> elements (map (2^) [0..8 :: Int])
     , StringAttribute <$> (B.pack <$> arbitrary) <*> (B.pack <$> arbitrary)
     , suchThat (AllocSize <$> arbitrary <*> arbitrary) (/= AllocSize 0 (Just 0))
+    , suchThat (VScaleRange <$> arbitrary <*> arbitrary) (\(VScaleRange l h) -> l <= h)
     ]
 
   shrink = \case

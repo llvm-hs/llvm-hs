@@ -157,3 +157,9 @@ foreign import ccall unsafe "LLVM_Hs_AttrBuilderAddDereferenceableOrNullAttr" at
 
 foreign import ccall unsafe "LLVM_Hs_AttributeGetAllocSizeArgs" attributeGetAllocSizeArgs ::
   FunctionAttribute -> Ptr CUInt -> Ptr CUInt -> IO LLVMBool
+
+foreign import ccall unsafe "LLVM_Hs_AttributeGetVScaleRangeArgs" attributeGetVScaleRangeArgs ::
+  FunctionAttribute -> Ptr CUInt -> Ptr CUInt -> IO ()
+
+foreign import ccall unsafe "LLVM_Hs_AttrBuilderAddVScaleRange" attrBuilderAddVScaleRange ::
+  Ptr FunctionAttrBuilder -> CUInt -> CUInt -> IO ()

@@ -25,6 +25,7 @@ using namespace orc;
                   "JITSymbolFlag values should agree");
 LLVM_HS_FOR_EACH_JIT_SYMBOL_FLAG(SYMBOL_CASE)
 
+#if 0  // This is not useful for now, but keeping in case we end up needing it
 static JITSymbolFlags unwrap(LLVMJITSymbolFlags_ f) {
     JITSymbolFlags flags = JITSymbolFlags::None;
 #define ENUM_CASE(x)                                                           \
@@ -34,6 +35,7 @@ static JITSymbolFlags unwrap(LLVMJITSymbolFlags_ f) {
 #undef ENUM_CASE
     return flags;
 }
+#endif
 
 static LLVMJITSymbolFlags_ wrap(JITSymbolFlags f) {
     unsigned r = 0;
