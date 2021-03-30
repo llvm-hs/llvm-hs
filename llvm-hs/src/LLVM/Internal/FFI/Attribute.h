@@ -13,7 +13,6 @@
   macro(Convergent,F,F,T)                           \
   macro(Hot,F,F,T)                                  \
   macro(ImmArg,T,F,F)                               \
-  macro(InAlloca,T,F,F)                             \
   macro(InReg,T,T,F)                                \
   macro(InaccessibleMemOnly,F,F,T)                  \
   macro(InaccessibleMemOrArgMemOnly,F,F,T)          \
@@ -71,6 +70,7 @@
   macro(ZExt,T,T,F)                                 \
   macro(ByRef,T,F,F)                                \
   macro(ByVal,T,F,F)                                \
+  macro(InAlloca,T,F,F)                             \
   macro(MustProgress,F,F,T)                         \
   macro(Preallocated,F,F,T)                         \
   macro(StructRet,T,F,F)                            \
