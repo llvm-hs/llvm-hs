@@ -817,7 +817,7 @@ instance EncodeM EncodeAST A.DITemplateParameter (Ptr FFI.DITemplateParameter) w
     Context c <- gets encodeStateContext
     case p of
       A.DITemplateTypeParameter {} -> 
-        FFI.upCast <$> liftIO (FFI.getDITemplateTypeParameter c name' ty)
+        FFI.upCast <$> liftIO (FFI.getDITemplateTypeParameter c name' ty True)
       A.DITemplateValueParameter {..} -> do
         tag <- encodeM tag
         value <- encodeM value

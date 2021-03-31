@@ -106,7 +106,7 @@ AttrBuilder *LLVM_Hs_AttrBuilderFromAttrSet(LLVMAttributeSetRef as) {
     return new AttrBuilder(*as);
 }
 
-void LLVM_Hs_DisposeAttrBuilder(LLVMAttributeSetRef as) { delete as; }
+void LLVM_Hs_DisposeAttrBuilder(AttrBuilder *as) { delete as; }
 
 void LLVM_Hs_AttrBuilderMerge(AttrBuilder *ab1, AttrBuilder *ab2) {
     ab1->merge(*ab2);

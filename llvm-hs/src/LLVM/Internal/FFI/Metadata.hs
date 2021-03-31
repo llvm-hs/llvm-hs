@@ -540,7 +540,7 @@ foreign import ccall unsafe "LLVM_Hs_DITemplateParameter_GetType" getDITemplateP
 -- DITemplateTypeParameter
 
 foreign import ccall unsafe "LLVM_Hs_Get_DITemplateTypeParameter" getDITemplateTypeParameter ::
-  Ptr Context -> Ptr MDString -> Ptr DIType -> IO (Ptr DITemplateTypeParameter)
+  Ptr Context -> Ptr MDString -> Ptr DIType -> Bool -> IO (Ptr DITemplateTypeParameter)
 
 -- DITemplateValueParameter
 
