@@ -60,8 +60,10 @@ foreign import ccall unsafe "LLVM_Hs_Get_DILocation" getDILocation ::
 foreign import ccall unsafe "LLVM_Hs_GetMDValue" getMDValue ::
   Ptr MDValue -> IO (Ptr Value)
 
+{-
 foreign import ccall unsafe "LLVM_Hs_DumpMetadata" dumpMetadata ::
   Ptr Metadata -> IO ()
+-}
 
 foreign import ccall unsafe "LLVM_Hs_GetMetadataOperand" getMetadataOperand ::
   Ptr MetadataAsVal -> IO (Ptr Metadata)

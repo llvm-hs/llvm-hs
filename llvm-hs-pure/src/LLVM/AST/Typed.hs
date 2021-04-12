@@ -135,3 +135,6 @@ instance Typed Global where
                                    in FunctionType returnType (map typeOf params) isVarArg
 instance Typed Parameter where
   typeOf (Parameter t _ _) = t
+
+instance Typed [Int32] where
+  typeOf mask = VectorType (fromIntegral $ length mask) i32
