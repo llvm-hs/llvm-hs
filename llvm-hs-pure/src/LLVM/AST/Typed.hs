@@ -10,6 +10,8 @@ module LLVM.AST.Typed (
 
 import LLVM.Prelude
 
+import GHC.Stack
+
 import LLVM.AST
 import LLVM.AST.Global
 import LLVM.AST.Type
@@ -18,7 +20,7 @@ import qualified LLVM.AST.Constant as C
 import qualified LLVM.AST.Float as F
 
 class Typed a where
-    typeOf :: a -> Type
+    typeOf :: HasCallStack => a -> Type
 
 instance Typed Operand where
   typeOf (LocalReference t _) = t
@@ -35,8 +37,8 @@ instance Typed C.Constant where
   typeOf (C.Null t)      = t
   typeOf (C.AggregateZero t) = t
   typeOf (C.Struct {..}) = case structName of
-                            Just n -> NamedTypeReference n
-                            Nothing -> StructureType isPacked (map typeOf memberValues)
+                             Nothing -> StructureType isPacked (map typeOf memberValues)
+                             Just sn -> NamedTypeReference sn
   typeOf (C.Array {..})  = ArrayType (fromIntegral $ length memberValues) memberType
   typeOf (C.Vector {..}) = VectorType (fromIntegral $ length memberValues) $
                               case memberValues of

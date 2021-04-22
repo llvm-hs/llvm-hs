@@ -34,6 +34,7 @@ import Data.Bifunctor
 import Data.String
 import Data.Map.Strict(Map)
 import qualified Data.Map.Strict as M
+import GHC.Stack
 
 import LLVM.AST
 
@@ -256,7 +257,7 @@ named ir name = do
 -- This function will throw an error if there is no active block. The
 -- only situation in which this can occur is if it is called before
 -- any call to `block` and before emitting any instructions.
-currentBlock :: MonadIRBuilder m => m Name
+currentBlock :: HasCallStack => MonadIRBuilder m => m Name
 currentBlock = liftIRState $ do
   name <- gets (fmap partialBlockName . builderBlock)
   case name of
@@ -266,7 +267,7 @@ currentBlock = liftIRState $ do
 -- | Find out if the currently active block has a terminator.
 --
 -- This function will fail under the same condition as @currentBlock@
-hasTerminator :: MonadIRBuilder m => m Bool
+hasTerminator :: HasCallStack => MonadIRBuilder m => m Bool
 hasTerminator = do
   current <- liftIRState $ gets builderBlock
   case current of

@@ -9,16 +9,15 @@ consult the LLVM documentation and reuse existing resources.
 
 ## Getting started
 
-If you’ve worked with LLVM before, take a look at the examples in
-the
-[llvm-hs-examples repo](https://github.com/llvm-hs/llvm-hs-examples). If
-not, you can find a translation of
-the
-[official LLVM tutorial](http://llvm.org/docs/tutorial/#kaleidoscope-implementing-a-language-with-llvm) at
-https://github.com/llvm-hs/llvm-hs-kaleidoscope. In general, we try to
-stay very close to the API and AST provided by LLVM itself, so
-the [LLVM language reference](http://llvm.org/docs/LangRef.html) is
-also very useful.
+If you’ve worked with LLVM before, take a look at the examples in the
+[llvm-hs-examples repo](https://github.com/llvm-hs/llvm-hs-examples).
+If not, you can find a translation of the [official LLVM
+tutorial](http://llvm.org/docs/tutorial/#kaleidoscope-implementing-a-language-with-llvm)
+at https://github.com/llvm-hs/llvm-hs-kaleidoscope. There is also a
+[blog series](https://blog.josephmorag.com/tags/llvm/) on writing a C
+compiler with the library. In general, we try to stay very close to
+the API and AST provided by LLVM itself, so the [LLVM language
+reference](http://llvm.org/docs/LangRef.html) is also very useful.
 
 ## Contributing
 
