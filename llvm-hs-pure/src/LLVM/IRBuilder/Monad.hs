@@ -13,7 +13,6 @@ import LLVM.Prelude
 
 import Control.Monad.Cont
 import Control.Monad.Except
-import Control.Monad.Fail
 import qualified Control.Monad.Fail as Fail
 import Control.Monad.Identity
 import qualified Control.Monad.Writer.Lazy as Lazy
@@ -24,7 +23,6 @@ import qualified Control.Monad.RWS.Lazy as Lazy
 import qualified Control.Monad.RWS.Strict as Strict
 import qualified Control.Monad.State.Lazy as Lazy
 import Control.Monad.State.Strict
-import Control.Monad.List
 import Control.Monad.Trans.Maybe
 #if !(MIN_VERSION_mtl(2,2,2))
 import Control.Monad.Trans.Identity
@@ -286,7 +284,6 @@ instance MonadState s m => MonadState s (IRBuilderT m) where
 instance MonadIRBuilder m => MonadIRBuilder (ContT r m)
 instance MonadIRBuilder m => MonadIRBuilder (ExceptT e m)
 instance MonadIRBuilder m => MonadIRBuilder (IdentityT m)
-instance MonadIRBuilder m => MonadIRBuilder (ListT m)
 instance MonadIRBuilder m => MonadIRBuilder (MaybeT m)
 instance MonadIRBuilder m => MonadIRBuilder (ReaderT r m)
 instance (MonadIRBuilder m, Monoid w) => MonadIRBuilder (Strict.RWST r w s m)
