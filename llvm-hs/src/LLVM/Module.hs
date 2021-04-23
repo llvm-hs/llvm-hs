@@ -25,9 +25,7 @@ module LLVM.Module (
     moduleObject,
     writeObjectToFile,
 
-    linkModules,
-
-    dumpModule
+    linkModules
   ) where
 
 import LLVM.Internal.Module
