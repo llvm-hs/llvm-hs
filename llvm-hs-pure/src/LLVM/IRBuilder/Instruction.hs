@@ -330,3 +330,9 @@ globalStringPtr str nm = do
   return $ C.GetElementPtr True
                            (C.GlobalReference (ptr ty) nm)
                            [(C.Int 32 0), (C.Int 32 0)]
+
+sizeof :: (MonadModuleBuilder m, MonadIRBuilder m) => Word32 -> Type -> m Operand
+sizeof szBits ty = do
+  tyNullPtr <- inttoptr (ConstantOperand $ C.Int szBits 0) (ptr ty)
+  tySzPtr <- gep tyNullPtr [ConstantOperand $ C.Int szBits 1]
+  ptrtoint tySzPtr $ IntegerType szBits

@@ -11,7 +11,6 @@ import LLVM.Prelude
 
 import Control.Monad.AnyCont
 import Control.Monad.Catch
-import Control.Monad.Fail (MonadFail)
 import Control.Monad.IO.Class
 import Control.Monad.Trans.Except
 
@@ -136,7 +135,7 @@ instance (MonadFail d, DecodeM d ByteString es) => DecodeM d (Map CPUFeature Boo
     case parseOnly (features <* endOfInput) s of
       Right features -> return features
       Left err -> fail ("failure to parse CPUFeature string: " <> err)
-                       
+
 -- | Find a 'Target' given an architecture and/or a \"triple\".
 -- | <http://llvm.org/doxygen/structllvm_1_1TargetRegistry.html#a3105b45e546c9cc3cf78d0f2ec18ad89>
 -- | Be sure to run either 'initializeAllTargets' or

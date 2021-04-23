@@ -239,9 +239,9 @@ unsignedIntegerValue (Int nBits bits) =
 unsignedIntegerValue _ = error "unsignedIntegerValue is only defined for Int"
 
 -- platform independant sizeof: a gep to the end of a nullptr and some bitcasting.
-sizeof :: Type -> Constant
-sizeof t = PtrToInt szPtr (IntegerType 32)
+sizeof :: Word32 -> Type -> Constant
+sizeof szBits t = PtrToInt szPtr (IntegerType szBits)
   where
      ptrType = PointerType t (AddrSpace 0)
-     nullPtr = IntToPtr (Int 32 0) ptrType
-     szPtr   = GetElementPtr True nullPtr [Int 32 1]
+     nullPtr = IntToPtr (Int szBits 0) ptrType
+     szPtr   = GetElementPtr True nullPtr [Int szBits 1]

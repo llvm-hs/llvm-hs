@@ -8,7 +8,6 @@ module LLVM.Internal.DecodeAST where
 
 import LLVM.Prelude
 
-import Control.Monad.Fail
 import Control.Monad.Catch
 import Control.Monad.State
 import Control.Monad.AnyCont
@@ -100,7 +99,7 @@ getName getCString v getNameMap generate = do
   name <- liftIO $ do
             n <- getCString v
             if n == nullPtr then return "" else decodeM n
-  if name /= "" 
+  if name /= ""
      then
        return $ A.Name name
      else
@@ -149,7 +148,7 @@ getMetadataNodeID p = do
     Just r -> return r
     Nothing -> do
       let r = A.MetadataNodeID (fromIntegral (Map.size mdns))
-      modify $ \s -> s { 
+      modify $ \s -> s {
         metadataNodesToDefine = (r, p) Seq.<| metadataNodesToDefine s,
         metadataNodes = Map.insert p r (metadataNodes s)
       }
@@ -163,7 +162,7 @@ takeTypeToDefine = state $ \s -> case Seq.viewr (typesToDefine s) of
 takeMetadataNodeToDefine :: DecodeAST (Maybe (A.MetadataNodeID, Ptr FFI.MDNode))
 takeMetadataNodeToDefine = state $ \s -> case Seq.viewr (metadataNodesToDefine s) of
   remaining Seq.:> md -> (Just md, s { metadataNodesToDefine = remaining })
-  _ -> (Nothing, s)                              
+  _ -> (Nothing, s)
 
 instance DecodeM DecodeAST A.Name (Ptr FFI.BasicBlock) where
   decodeM = getLocalName
