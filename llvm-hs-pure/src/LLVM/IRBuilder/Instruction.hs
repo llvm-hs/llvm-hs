@@ -221,7 +221,6 @@ shuffleVector a b m = emitInstr retType $ ShuffleVector a b m []
             (VectorType _ elemTyp, VectorType maskLength _) -> VectorType maskLength elemTyp
             _ -> error "shuffleVector: Expected two vectors and a vector mask"
 
-
 -- | See <https://llvm.org/docs/LangRef.html#extractvalue-instruction reference>.
 extractValue :: (MonadIRBuilder m, MonadModuleBuilder m, HasCallStack) => Operand -> [Word32] -> m Operand
 extractValue a i = do
@@ -233,8 +232,7 @@ extractValue a i = do
         typ@ArrayType{} -> typ
         typ@NamedTypeReference{} -> typ
         typ@StructureType{} -> typ
-        _ -> error "extractValue: Expecting Array or Structure type"
-
+        _ -> error "extractValue: Expecting structure or array type. (Malformed AST)"
 
 -- | See <https://llvm.org/docs/LangRef.html#insertvalue-instruction reference>.
 insertValue :: MonadIRBuilder m => Operand -> Operand -> [Word32] -> m Operand

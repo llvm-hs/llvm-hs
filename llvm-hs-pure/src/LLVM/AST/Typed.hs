@@ -36,7 +36,9 @@ instance Typed C.Constant where
   typeOf (C.Float t) = typeOf t
   typeOf (C.Null t)      = t
   typeOf (C.AggregateZero t) = t
-  typeOf (C.Struct {..}) = StructureType isPacked (map typeOf memberValues)
+  typeOf (C.Struct {..}) = case structName of
+                             Nothing -> StructureType isPacked (map typeOf memberValues)
+                             Just sn -> NamedTypeReference sn
   typeOf (C.Array {..})  = ArrayType (fromIntegral $ length memberValues) memberType
   typeOf (C.Vector {..}) = VectorType (fromIntegral $ length memberValues) $
                               case memberValues of
