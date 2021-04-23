@@ -564,9 +564,3 @@ moduleAST m = runDecodeAST $ do
         metadata ++
         functionAttributes ++
         comdats)
-
--- | Dump LLVM IR contained in a module to standard error output (stderr).
-dumpModule :: Module -> IO ()
-dumpModule m = do
-  mPtr <- readModule m
-  FFI.dumpModule mPtr
