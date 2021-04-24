@@ -23,6 +23,7 @@ import qualified LLVM.Internal.FFI.PassManager as FFI
 import LLVM.Context
 import LLVM.Module
 import qualified LLVM.Internal.FFI.Module as FFI
+import qualified LLVM.Internal.OrcJITV2 as OrcV2
 import LLVM.OrcJIT
 import qualified LLVM.Internal.OrcJIT.CompileLayer as CL
 import qualified LLVM.Internal.OrcJIT.LinkingLayer as LL
@@ -42,8 +43,20 @@ testModule =
   \  ret i32 %3\n\
   \}\n"
 
+test2Module :: ByteString
+test2Module =
+  "; ModuleID = '<string>'\n\
+  \source_filename = \"<string>\"\n\
+  \\n\
+  \define i32 @main() {\n\
+  \  ret i32 42\n\
+  \}\n"
+
 withTestModule :: (Module -> IO a) -> IO a
 withTestModule f = withContext $ \context -> withModuleFromLLVMAssembly' context testModule f
+
+withTest2Module :: (Module -> IO a) -> IO a
+withTest2Module f = withContext $ \context -> withModuleFromLLVMAssembly' context test2Module f
 
 myTestFuncImpl :: IO Word32
 myTestFuncImpl = return 42
@@ -159,5 +172,19 @@ tests =
             -- Find main symbol by specificly using object handle for given object file
             Right (JITSymbol mainFn _) <- LL.findSymbolIn linkingLayer k "main" True
             result <- mkMain (castPtrToFunPtr (wordPtrToPtr mainFn))
-            result @?= 38
+            result @?= 38,
+
+    testCase "OrcV2" $ do
+      withTest2Module $ \mod ->
+        withHostTargetMachine Reloc.PIC CodeModel.Default CodeGenOpt.Default $ \tm ->
+        OrcV2.withExecutionSession $ \es ->
+        OrcV2.withThreadSafeContext $ \ctx ->
+        OrcV2.withRTDyldObjectLinkingLayer es $ \ol ->
+        OrcV2.withIRCompileLayer es ol tm $ \il -> do
+          dl <- getTargetMachineDataLayout tm
+          OrcV2.irLayerAdd ctx es il mod
+          addr <- OrcV2.esLookup es "main"
+          let mainFn = mkMain (castPtrToFunPtr $ wordPtrToPtr $ fromIntegral addr)
+          result <- mainFn
+          result @?= 42
     ]
