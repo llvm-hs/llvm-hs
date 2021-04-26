@@ -46,7 +46,7 @@ install:
  - export PATH=$HOME/cmake-3.19.7-Linux-x86_64/bin:$PATH
  - curl -L https://github.com/ninja-build/ninja/releases/download/v1.9.0/ninja-linux.zip -o ninja-linux.zip
  - unzip ninja-linux.zip -d $HOME/bin
- - git clone https://github.com/llvm/llvm-project --single-branch
+ - git clone https://github.com/llvm/llvm-project --single-branch --depth 1
  - cd llvm-project/llvm
  - mkdir -p build && cd build
  - cmake -Wno-dev -G "Ninja" .. -DCMAKE_{BUILD_TYPE=Release,CXX_FLAGS_RELEASE=-O0,INSTALL_PREFIX=$HOME/llvm-build-${LLVM_VER}} -DLLVM_{TARGETS_TO_BUILD="X86",ENABLE_PROJECTS="clang;",INCLUDE_{TOOLS=ON,EXAMPLES=OFF,TESTS=OFF,BENCHMARKS=OFF},ENABLE_BINDINGS=OFF,PARALLEL_LINK_JOBS=1,BUILD_LLVM_DYLIB=ON,LINK_LLVM_DYLIB=ON}
