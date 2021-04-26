@@ -46,13 +46,11 @@ install:
  - export PATH=$HOME/cmake-3.19.7-Linux-x86_64/bin:$PATH
  - curl -L https://github.com/ninja-build/ninja/releases/download/v1.9.0/ninja-linux.zip -o ninja-linux.zip
  - unzip ninja-linux.zip -d $HOME/bin
- - # curl -L https://github.com/llvm/llvm-project/releases/download/llvmorg-${LLVM_VER}/llvm-${LLVM_VER}.src.tar.xz | tar -xJf - -C $HOME
- - # rsync -ac $HOME/llvm-${LLVM_VER}.src/ $HOME/llvm-src-${LLVM_VER}
  - git clone https://github.com/llvm/llvm-project -b release/12.x --single-branch
  - cd llvm-project/llvm
  - mkdir -p build && cd build
- - cmake -DCMAKE_BUILD_TYPE=Release -DCMAKE_CXX_FLAGS_RELEASE=-O0 -DCMAKE_INSTALL_PREFIX=$HOME/llvm-build-${LLVM_VER} -DLLVM_PARALLEL_LINK_JOBS=1 -DLLVM_TARGETS_TO_BUILD=X86 -DLLVM_BUILD_LLVM_DYLIB=True -DLLVM_LINK_LLVM_DYLIB=True -GNinja ..
- - ninja -j3 install
+ - cmake -Wno-dev -G "Ninja" .. -DCMAKE_{BUILD_TYPE=Release,CXX_FLAGS_RELEASE=-O0,INSTALL_PREFIX=$HOME/llvm-build-${LLVM_VER}} -DLLVM_{TARGETS_TO_BUILD="X86",ENABLE_PROJECTS="clang;",INCLUDE_{TOOLS=ON,EXAMPLES=OFF,TESTS=OFF,BENCHMARKS=OFF},ENABLE_BINDINGS=OFF,PARALLEL_LINK_JOBS=1,BUILD_LLVM_DYLIB=ON,LINK_LLVM_DYLIB=ON}
+ - cmake --build . --parallel --target install
  - cd $TRAVIS_BUILD_DIR
  - ln -s $HOME/llvm-build-${LLVM_VER}/bin/llvm-config $HOME/bin/llvm-config
  - llvm-config --version
