@@ -102,11 +102,11 @@ getElementPtrType (StructureType _ elTys) (C.Int 32 val:is) =
   getElementPtrType (elTys !! fromIntegral val) is
 getElementPtrType (VectorType _ elTy) (_:is) = getElementPtrType elTy is
 getElementPtrType (ArrayType _ elTy) (_:is) = getElementPtrType elTy is
-getElementPtrType _ _ = error "Expecting aggregate type. (Malformed AST)"
+getElementPtrType ty@_ _ = error $ "Expecting aggregate type but saw " ++ show ty ++ " (Malformed AST)"
 
 getElementType :: Type -> Type
 getElementType (PointerType t _) = t
-getElementType _ = error $ "Expecting pointer type. (Malformed AST)"
+getElementType ty@_ = error $ "Expecting pointer type but saw " ++ show ty ++ " (Malformed AST)"
 
 extractValueType :: [Word32] -> Type -> Type
 extractValueType [] ty = ty
