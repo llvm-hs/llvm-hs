@@ -86,6 +86,7 @@ $(do
     let ats = map typeMapping (fieldTypes List.\\ [TH.ConT ''A.InstructionMetadata, TH.ConT ''A.FastMathFlags])
         cName = "LLVM_Hs_Build" ++ a
     rt <- case k of
+            ID.Unary -> [[t| UnaryOperator |]]
             ID.Binary -> [[t| BinaryOperator |]]
             ID.Cast -> [[t| Instruction |]]
             _ -> []

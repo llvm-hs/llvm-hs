@@ -27,6 +27,10 @@ import LLVM.AST.Linkage
 import LLVM.IRBuilder.Monad
 import LLVM.IRBuilder.Module
 
+-- | See <https://llvm.org/docs/LangRef.html#fneg-instruction reference>.
+fneg :: MonadIRBuilder m => Operand -> m Operand
+fneg a = emitInstr (typeOf a) $ FNeg noFastMathFlags a []
+
 -- | See <https://llvm.org/docs/LangRef.html#fadd-instruction reference>.
 fadd :: MonadIRBuilder m => Operand -> Operand -> m Operand
 fadd a b = emitInstr (typeOf a) $ FAdd noFastMathFlags a b []
