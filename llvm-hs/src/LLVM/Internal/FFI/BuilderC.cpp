@@ -121,6 +121,18 @@ LLVMValueRef LLVM_Hs_Build##Op(LLVMBuilderRef b, LLVMValueRef lhs, LLVMValueRef 
 LLVM_HS_FOR_EACH_BINOP(ENUM_CASE)
 #undef ENUM_CASE
 
+#define LLVM_HS_FOR_EACH_FP_UNOP(macro) \
+    macro(FNeg)
+
+#define ENUM_CASE(Op) \
+LLVMValueRef LLVM_Hs_Build##Op(LLVMBuilderRef b, LLVMValueRef rhs, const char *name) { \
+    UnaryOperator* uo = UnaryOperator::Create(Instruction::Op, unwrap(rhs), name); \
+    uo->setFastMathFlags(unwrap(b)->getFastMathFlags()); \
+    return wrap(unwrap(b)->Insert(uo, name)); \
+}
+LLVM_HS_FOR_EACH_FP_UNOP(ENUM_CASE)
+#undef ENUM_CASE
+
 #define LLVM_HS_FOR_EACH_FP_BINOP(macro) \
     macro(FAdd) \
     macro(FDiv) \

@@ -571,6 +571,7 @@ $(do
                    |
                    (name, ID.instructionKind -> k) <- Map.toList ID.instructionDefs,
                    case (k, name) of
+                     (ID.Unary, _) -> True
                      (ID.Binary, _) -> True
                      (ID.Cast, _) -> True
                      (ID.Memory, "Alloca") -> False

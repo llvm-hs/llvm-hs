@@ -74,6 +74,11 @@ data Instruction
 
 instance ChildOf User Instruction
 
+-- | <http://llvm.org/doxygen/classllvm_1_1UnaryOperator.html>
+data UnaryOperator
+
+instance ChildOf Instruction UnaryOperator
+
 -- | <http://llvm.org/doxygen/classllvm_1_1BinaryOperator.html>
 data BinaryOperator
 
