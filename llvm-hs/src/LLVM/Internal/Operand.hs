@@ -396,7 +396,7 @@ instance DecodeM DecodeAST A.DICompileUnit (Ptr FFI.DICompileUnit) where
     entities <- decodeM =<< liftIO (FFI.getDICompileUnitImportedEntities p)
     macros <- decodeM =<< liftIO (FFI.getDICompileUnitMacros p)
     nameTableKind <- decodeM =<< liftIO (FFI.getDICompileUnitNameTableKind p)
-    debugBaseAddress <- decodeM =<< liftIO (FFI.getDICompileUnitRangesBaseAddress p)
+    rangesBaseAddress <- decodeM =<< liftIO (FFI.getDICompileUnitRangesBaseAddress p)
     pure A.CompileUnit
       { A.language = language
       , A.file = file
@@ -415,7 +415,7 @@ instance DecodeM DecodeAST A.DICompileUnit (Ptr FFI.DICompileUnit) where
       , A.splitDebugInlining = splitDebugInlining
       , A.debugInfoForProfiling = debugInfoForProfiling
       , A.nameTableKind = nameTableKind
-      , A.debugBaseAddress = debugBaseAddress
+      , A.rangesBaseAddress = rangesBaseAddress
       }
 
 instance EncodeM EncodeAST A.DICompileUnit (Ptr FFI.DICompileUnit) where
@@ -437,14 +437,14 @@ instance EncodeM EncodeAST A.DICompileUnit (Ptr FFI.DICompileUnit) where
     splitDebugInlining <- encodeM splitDebugInlining
     debugInfoForProfiling <- encodeM debugInfoForProfiling
     nameTableKind <- encodeM nameTableKind
-    debugBaseAddress <- encodeM debugBaseAddress
+    rangesBaseAddress <- encodeM rangesBaseAddress
     Context c <- gets encodeStateContext
     liftIO $ FFI.getDICompileUnit
       c
       language file producer optimized flags
       runtimeVersion debugFileName emissionKind enums retainedTypes
       globals imports macros dwoid splitDebugInlining
-      debugInfoForProfiling nameTableKind debugBaseAddress
+      debugInfoForProfiling nameTableKind rangesBaseAddress
 
 instance EncodeM EncodeAST A.DIScope (Ptr FFI.DIScope) where
   encodeM (A.DIFile f) = FFI.upCast <$> (encodeM f :: EncodeAST (Ptr FFI.DIFile))
@@ -816,7 +816,7 @@ instance EncodeM EncodeAST A.DITemplateParameter (Ptr FFI.DITemplateParameter) w
     ty <- encodeM (A.type' (p :: A.DITemplateParameter))
     Context c <- gets encodeStateContext
     case p of
-      A.DITemplateTypeParameter {} -> 
+      A.DITemplateTypeParameter {} ->
         FFI.upCast <$> liftIO (FFI.getDITemplateTypeParameter c name' ty)
       A.DITemplateValueParameter {..} -> do
         tag <- encodeM tag

@@ -285,7 +285,7 @@ data DICompileUnit = CompileUnit
   , splitDebugInlining :: Bool
   , debugInfoForProfiling :: Bool
   , nameTableKind :: DebugNameTableKind
-  , debugBaseAddress :: Bool
+  , rangesBaseAddress :: Bool
   } deriving (Eq, Ord, Read, Show, Typeable, Data, Generic)
 
 -- | <https://llvm.org/docs/LangRef.html#difile>

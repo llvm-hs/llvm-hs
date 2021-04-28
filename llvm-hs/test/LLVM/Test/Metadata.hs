@@ -940,7 +940,7 @@ globalObjectMetadata = testGroup "Metadata on GlobalObject" $
                       , splitDebugInlining = True
                       , debugInfoForProfiling = False
                       , nameTableKind = NameTableKindDefault
-                      , debugBaseAddress = False
+                      , rangesBaseAddress = False
                       }
                   , MetadataNodeDefinition (MetadataNodeID 3) $
                     DINode . DIScope . DIFile $
@@ -1002,7 +1002,7 @@ globalObjectMetadata = testGroup "Metadata on GlobalObject" $
                       , splitDebugInlining = True
                       , debugInfoForProfiling = False
                       , nameTableKind = NameTableKindDefault
-                      , debugBaseAddress = False
+                      , rangesBaseAddress = False
                       }
                   , MetadataNodeDefinition (MetadataNodeID 3) $
                     DINode . DIVariable . DIGlobalVariable $
