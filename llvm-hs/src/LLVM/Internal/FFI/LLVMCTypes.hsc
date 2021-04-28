@@ -16,20 +16,20 @@ import LLVM.Prelude
 #include "llvm-c/OrcBindings.h"
 #include "llvm-c/Target.h"
 #include "llvm-c/TargetMachine.h"
-#include "LLVM/Internal/FFI/Analysis.h"
 #include "LLVM/Internal/FFI/Attribute.h"
-#include "LLVM/Internal/FFI/CallingConvention.h"
-#include "LLVM/Internal/FFI/Constant.h"
-#include "LLVM/Internal/FFI/GlobalValue.h"
-#include "LLVM/Internal/FFI/InlineAssembly.h"
 #include "LLVM/Internal/FFI/Instruction.h"
-#include "LLVM/Internal/FFI/LibFunc.h"
-#include "LLVM/Internal/FFI/Metadata.h"
-#include "LLVM/Internal/FFI/OrcJIT.h"
-#include "LLVM/Internal/FFI/SMDiagnostic.h"
-#include "LLVM/Internal/FFI/Target.h"
-#include "LLVM/Internal/FFI/Type.h"
 #include "LLVM/Internal/FFI/Value.h"
+#include "LLVM/Internal/FFI/SMDiagnostic.h"
+#include "LLVM/Internal/FFI/InlineAssembly.h"
+#include "LLVM/Internal/FFI/Target.h"
+#include "LLVM/Internal/FFI/CallingConvention.h"
+#include "LLVM/Internal/FFI/GlobalValue.h"
+#include "LLVM/Internal/FFI/Type.h"
+#include "LLVM/Internal/FFI/Constant.h"
+#include "LLVM/Internal/FFI/Analysis.h"
+#include "LLVM/Internal/FFI/LibFunc.h"
+#include "LLVM/Internal/FFI/OrcJIT.h"
+#include "LLVM/Internal/FFI/Metadata.h"
 
 import Language.Haskell.TH.Quote
 
@@ -225,7 +225,7 @@ newtype AsmDialect = AsmDialect CUInt
 
 newtype RMWOperation = RMWOperation CUInt
   deriving (Eq, Read, Show, Typeable, Data, Generic)
-#define RMWOp_Rec(n) { #n, LLVMAtomicRMWBinOp_ ## n },
+#define RMWOp_Rec(n) { #n, LLVMAtomicRMWBinOp ## n },
 #{inject RMW_OPERATION, RMWOperation, RMWOperation, rmwOperation, RMWOp_Rec}
 
 newtype RelocModel = RelocModel CUInt

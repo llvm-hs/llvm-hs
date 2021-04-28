@@ -36,12 +36,12 @@ LLVM_HS_FOR_EACH_SYNCRONIZATION_SCOPE(ENUM_CASE)
 	}
 }
 
-static LLVMAtomicRMWBinOp_ wrap(AtomicRMWInst::BinOp l) {
+static LLVMAtomicRMWBinOp wrap(AtomicRMWInst::BinOp l) {
 	switch(l) {
-#define ENUM_CASE(x) case AtomicRMWInst::x: return LLVMAtomicRMWBinOp_ ## x;
+#define ENUM_CASE(x) case AtomicRMWInst::x: return LLVMAtomicRMWBinOp ## x;
 LLVM_HS_FOR_EACH_RMW_OPERATION(ENUM_CASE)
 #undef ENUM_CASE
-	default: return LLVMAtomicRMWBinOp_(0);
+	default: return LLVMAtomicRMWBinOp(0);
 	}
 }
 
@@ -197,7 +197,7 @@ LLVMBool LLVM_Hs_GetInBounds(LLVMValueRef i) {
 	return unwrap<GEPOperator>(i)->isInBounds();
 }
 
-LLVMAtomicRMWBinOp_ LLVM_Hs_GetAtomicRMWBinOp(LLVMValueRef i) {
+LLVMAtomicRMWBinOp LLVM_Hs_GetAtomicRMWBinOp(LLVMValueRef i) {
 	return wrap(unwrap<AtomicRMWInst>(i)->getOperation());
 }
 
