@@ -224,7 +224,7 @@ library
     src/LLVM/Internal/FFI/TypeC.cpp
     src/LLVM/Internal/FFI/ValueC.cpp
 
-  cc-options: -std=c++11 -Wno-stringop-overflow -Wno-init-list-lifetime
+  cc-options: -std=c++14 -lstdc++ -fno-rtti -Wno-stringop-overflow -Wno-init-list-lifetime
 
   if flag(debug)
     cc-options: -g
