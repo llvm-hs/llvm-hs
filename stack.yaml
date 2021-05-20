@@ -6,3 +6,5 @@ packages:
 
 extra-package-dbs: []
 
+ghc-options:
+  llvm-hs: -optcxx=-std=c++14 -optcxx=-lstdc++ -optcxx=-fno-rtti
