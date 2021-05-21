@@ -23,7 +23,7 @@ module LLVM.OrcJIT (
     createThreadSafeContext,
     disposeThreadSafeContext,
     -- * ThreadSafeModule
-    ThreadSafeModule,
+    ThreadSafeModule(..),
     -- ** Lifetime management
     withClonedThreadSafeModule,
     cloneAsThreadSafeModule,
