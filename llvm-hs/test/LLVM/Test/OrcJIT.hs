@@ -19,11 +19,9 @@ import System.IO
 
 import LLVM.Internal.PassManager
 import LLVM.Internal.ObjectFile (withObjectFile)
-import qualified LLVM.Internal.FFI.PassManager as FFI
+import LLVM.PassManager
 import LLVM.Context
 import LLVM.Module
-import qualified LLVM.Internal.FFI.Module as FFI
--- import qualified LLVM.Internal.OrcJITV2 as OrcV2
 import LLVM.OrcJIT
 import LLVM.Target
 import qualified LLVM.Relocation as Reloc
@@ -65,30 +63,54 @@ foreign import ccall "wrapper"
 foreign import ccall "dynamic"
   mkMain :: FunPtr (IO Word32) -> IO Word32
 
-moduleTransform :: IORef Bool -> Ptr FFI.Module -> IO (Ptr FFI.Module)
-moduleTransform passmanagerSuccessful modulePtr = do
-  withPassManager defaultCuratedPassSetSpec { optLevel = Just 2 } $ \(PassManager pm) -> do
-    success <- toEnum . fromIntegral <$> FFI.runPassManager pm modulePtr
-    writeIORef passmanagerSuccessful success
-    pure modulePtr
-
 tests :: TestTree
 tests =
   testGroup "OrcJIT" [
     testCase "basic self-contained function" $ do
-      withTest2Module $ \m ->
-        withHostTargetMachine Reloc.PIC CodeModel.Default CodeGenOpt.Default $ \tm ->
+      withHostTargetMachine Reloc.PIC CodeModel.Default CodeGenOpt.Default $ \tm ->
         withExecutionSession $ \es -> do
-          let dylibName = "myDylib"
-          dylib <- createJITDylib es dylibName
-          withClonedThreadSafeModule m $ \tsm -> do
-            ol <- createRTDyldObjectLinkingLayer es
-            il <- createIRCompileLayer es ol tm
-            addModule tsm dylib il
-            Right (JITSymbol addr _) <- lookupSymbol es il dylib "main"
-            let mainFn = mkMain (castPtrToFunPtr $ wordPtrToPtr $ fromIntegral addr)
-            result <- mainFn
-            result @?= 42
+          ol <- createRTDyldObjectLinkingLayer es
+          il <- createIRCompileLayer es ol tm
+          dylib <- createJITDylib es "testDylib"
+          withTest2Module $ \m ->
+            withClonedThreadSafeModule m $ \tsm -> do
+              addModule tsm dylib il
+              Right (JITSymbol addr _) <- lookupSymbol es il dylib "main"
+              let mainFn = mkMain (castPtrToFunPtr $ wordPtrToPtr $ fromIntegral addr)
+              result <- mainFn
+              result @?= 42,
+
+    testCase "using symbols in external shared libraries" $
+      withHostTargetMachine Reloc.PIC CodeModel.Default CodeGenOpt.Default $ \tm ->
+        withExecutionSession $ \es -> do
+          ol <- createRTDyldObjectLinkingLayer es
+          il <- createIRCompileLayer es ol tm
+          dylib <- createJITDylib es "testDylib"
+          let inputPath = "./test/main_return_38.c"
+          withSystemTempFile "main.o" $ \outputPath _ -> do
+            callProcess "gcc" ["-shared", "-fPIC", inputPath, "-o", outputPath]
+            addDynamicLibrarySearchGenerator il dylib outputPath
+            Right (JITSymbol mainFn _) <- lookupSymbol es il dylib "main"
+            result <- mkMain (castPtrToFunPtr (wordPtrToPtr mainFn))
+            result @?= 38,
+
+    testCase "run optimization passes on a JIT module" $ do
+      passmanagerSuccessful <- newIORef False
+      withHostTargetMachine Reloc.PIC CodeModel.Default CodeGenOpt.Default $ \tm ->
+        withExecutionSession $ \es -> do
+          ol <- createRTDyldObjectLinkingLayer es
+          il <- createIRCompileLayer es ol tm
+          dylib <- createJITDylib es "testDylib"
+          withTest2Module $ \m -> do
+           withPassManager defaultCuratedPassSetSpec { optLevel = Just 2 } $ \pm -> do
+             success <- runPassManager pm m
+             writeIORef passmanagerSuccessful success
+             withClonedThreadSafeModule m $ \tsm -> do
+               addModule tsm dylib il
+               Right (JITSymbol mainFn _) <- lookupSymbol es il dylib "main"
+               result <- mkMain (castPtrToFunPtr (wordPtrToPtr mainFn))
+               result @?= 42
+               readIORef passmanagerSuccessful @? "passmanager failed"
 
     -- TODO: Make it possible to use Haskell functions as definition generators
     --       and update to OrcJITv2
@@ -118,29 +140,6 @@ tests =
 
     -- TODO: Add IRTransformLayer and translate to OrcJITv2
     {-
-    testCase "IRTransformLayer" $ do
-      passmanagerSuccessful <- newIORef False
-      resolvers <- newIORef Map.empty
-      withTestModule $ \mod ->
-        withHostTargetMachine Reloc.PIC CodeModel.Default CodeGenOpt.Default $ \tm ->
-        withExecutionSession $ \es ->
-        withObjectLinkingLayer es (\k -> fmap (\rs -> rs Map.! k) (readIORef resolvers)) $ \linkingLayer ->
-        withIRCompileLayer linkingLayer tm $ \compileLayer ->
-        withIRTransformLayer compileLayer tm (moduleTransform passmanagerSuccessful) $ \compileLayer ->
-        withModuleKey es $ \k -> do
-          testFunc <- mangleSymbol compileLayer "testFunc"
-          withSymbolResolver es (SymbolResolver (resolver testFunc compileLayer)) $ \resolver -> do
-            modifyIORef' resolvers (Map.insert k resolver)
-            withModule compileLayer k mod $ do
-              mainSymbol <- mangleSymbol compileLayer "main"
-              Right (JITSymbol mainFn _) <- CL.findSymbol compileLayer mainSymbol True
-              result <- mkMain (castPtrToFunPtr (wordPtrToPtr mainFn))
-              result @?= 42
-              readIORef passmanagerSuccessful @? "passmanager failed",
-    -}
-
-    -- TODO: Add IRTransformLayer and translate to OrcJITv2
-    {-
     testCase "lazy compilation" $ do
       resolvers <- newIORef Map.empty
       let getResolver k = fmap (Map.! k) (readIORef resolvers)
@@ -165,25 +164,4 @@ tests =
                     result @?= 42,
     -}
 
-    -- TODO: Add support for loading object files and update to OrcJITv2
-    {-
-    testCase "finding symbols in linking layer" $
-      withExecutionSession $ \es ->
-      withModuleKey es $ \k ->
-      withSymbolResolver es (SymbolResolver nullResolver) $ \resolver ->
-      withObjectLinkingLayer es (\_ -> pure resolver) $ \linkingLayer -> do
-        let inputPath = "./test/main_return_38.c"
-        withSystemTempFile "main.o" $ \outputPath _ -> do
-          callProcess "gcc" ["-c", inputPath, "-o", outputPath]
-          withObjectFile outputPath $ \objFile -> do
-            addObjectFile linkingLayer k objFile
-            -- Find main symbol by looking into global linking context
-            Right (JITSymbol mainFn _) <- LL.findSymbol linkingLayer "main" True
-            result <- mkMain (castPtrToFunPtr (wordPtrToPtr mainFn))
-            result @?= 38
-            -- Find main symbol by specificly using object handle for given object file
-            Right (JITSymbol mainFn _) <- LL.findSymbolIn linkingLayer k "main" True
-            result <- mkMain (castPtrToFunPtr (wordPtrToPtr mainFn))
-            result @?= 38,
-    -}
     ]
