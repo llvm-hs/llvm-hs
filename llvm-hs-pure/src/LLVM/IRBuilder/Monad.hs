@@ -47,7 +47,7 @@ newtype IRBuilderT m a = IRBuilderT { unIRBuilderT :: StateT IRBuilderState m a 
     , MonadFix, MonadIO, MonadPlus, MonadReader r, MonadTrans, MonadWriter w
     )
 
-instance MonadFail m => MonadFail (IRBuilderT m) where
+instance MonadFail m => Fail.MonadFail (IRBuilderT m) where
     fail str = IRBuilderT (StateT $ \ _ -> Fail.fail str)
 
 type IRBuilder = IRBuilderT Identity
