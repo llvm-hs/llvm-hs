@@ -6,6 +6,7 @@ import           LLVM.AST.Typed
 
 import           LLVM.AST.Constant
 import           LLVM.AST.Float
+import           LLVM.IRBuilder.Module
 
 int64 :: Integer -> Operand
 int64 = ConstantOperand . Int 64
@@ -28,5 +29,7 @@ half = ConstantOperand . Float . Half
 struct :: Maybe Name -> Bool -> [Constant] -> Operand
 struct nm packing members = ConstantOperand $ Struct nm packing members
 
-array :: [Constant] -> Operand
-array members = ConstantOperand $ Array (typeOf $ head members) members
+array :: MonadModuleBuilder m => [Constant] -> m Operand
+array members = do
+  thm <- typeOf $ head members
+  return $ ConstantOperand $ Array thm members
