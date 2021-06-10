@@ -1,7 +1,7 @@
 ## 9.0.1.1 (2021-06-XX)
 
 * Eliminate hard-coded assumption of 32-bit `size_t`
-* Add a runtime variant of the `LLVM.AST.Constant.sizeof` utility in `LLVM.IRBuilder.Instruction.sizeof`. The size of opaque structure types is unknown until link-time as cannot be computed as a constant.
+* Add a runtime variant of the `LLVM.AST.Constant.sizeof` utility in `LLVM.IRBuilder.Instruction.sizeof`. The size of opaque structure types is unknown until link-time and therefore cannot be computed as a constant.
 * Handle type resolution through `NamedTypeReference` correctly: type resolution in LLVM depends on module state by design
 * Support the LLVM `NoFree` attribute
 
