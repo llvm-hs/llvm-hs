@@ -53,7 +53,7 @@ instance Typed C.Constant where
                                return $ VectorType (fromIntegral $ length memberValues) t
 
   typeOf (C.Undef t)     = return t
-  typeOf (C.BlockAddress {..})   = return $ ptr i8
+  typeOf (C.BlockAddress {}) = return $ ptr i8
   typeOf (C.GlobalReference t _) = return t
   typeOf (C.Add {..})     = typeOf operand0
   typeOf (C.FAdd {..})    = typeOf operand0
