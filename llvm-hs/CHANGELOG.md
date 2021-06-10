@@ -1,3 +1,12 @@
+## 9.0.1.1 (2021-06-XX)
+
+* Eliminate hard-coded assumption of 32-bit `size_t`
+* Handle type resolution through `NamedTypeReference` correctly: type resolution in LLVM depends on module state by design
+* Support the LLVM `NoFree` attribute
+* Support unbracketed management of `Module`, `Context` with explicit creation and destruction functions
+* Add basic support for the OrcJITv2 API
+* Various small fixes and improvements to eliminate build warnings
+
 ## 9.0.1 (2019-09-28)
 
 * Fix build with Clang on MacOS.
