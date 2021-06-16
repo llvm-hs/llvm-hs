@@ -47,27 +47,29 @@ enum LLVM_Hs_DwOp {
 };
 
 #define LLVM_HS_FOR_EACH_DW_OP(macro) \
-    macro(LLVM_fragment)              \
-    macro(stack_value)                \
-    macro(swap)                       \
+    macro(and)                        \
+    macro(bregx)                      \
     macro(constu)                     \
-    macro(lit0)                       \
-    macro(plus_uconst)                \
-    macro(plus)                       \
-    macro(minus)                      \
-    macro(mul)                        \
+    macro(deref)                      \
     macro(div)                        \
+    macro(dup)                        \
+    macro(lit0)                       \
+    macro(LLVM_fragment)              \
+    macro(minus)                      \
     macro(mod)                        \
+    macro(mul)                        \
     macro(not)                        \
     macro(or)                         \
-    macro(xor)                        \
-    macro(and)                        \
+    macro(plus)                       \
+    macro(plus_uconst)                \
+    macro(push_object_address)        \
+    macro(shl)                        \
     macro(shr)                        \
     macro(shra)                       \
-    macro(shl)                        \
-    macro(dup)                        \
-    macro(deref)                      \
-    macro(xderef)
+    macro(stack_value)                \
+    macro(swap)                       \
+    macro(xderef)                     \
+    macro(xor)
 
 enum LLVM_Hs_DwAtE {
 #define HANDLE_DW_ATE(ID, NAME, VERSION, VENDOR) LLVM_Hs_DwAtE_##NAME = ID,

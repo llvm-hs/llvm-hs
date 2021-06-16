@@ -769,7 +769,7 @@ instance EncodeM EncodeAST A.DITemplateParameter (Ptr FFI.DITemplateParameter) w
     ty <- encodeM (A.type' (p :: A.DITemplateParameter))
     Context c <- gets encodeStateContext
     case p of
-      A.DITemplateTypeParameter {} -> 
+      A.DITemplateTypeParameter {} ->
         FFI.upCast <$> liftIO (FFI.getDITemplateTypeParameter c name' ty)
       A.DITemplateValueParameter {..} -> do
         tag <- encodeM tag
@@ -1000,27 +1000,29 @@ instance (MonadIO m, MonadAnyCont IO m, DecodeM m a (Ptr a')) => DecodeM m [a] (
 encodeDWOp :: A.DWOp -> [Word64]
 encodeDWOp op =
   case op of
-    A.DwOpFragment (A.DW_OP_LLVM_Fragment offset size) -> [FFI.DwOp_LLVM_fragment, offset, size]
-    A.DW_OP_StackValue -> [FFI.DwOp_stack_value]
-    A.DW_OP_Swap -> [FFI.DwOp_swap]
+    A.DW_OP_And -> [FFI.DwOp_and]
+    A.DW_OP_Bregx -> [FFI.DwOp_bregx]
     A.DW_OP_ConstU arg -> [FFI.DwOp_constu, arg]
-    A.DW_OP_Lit0 -> [FFI.DwOp_lit0]
-    A.DW_OP_PlusUConst arg -> [FFI.DwOp_plus_uconst, arg]
-    A.DW_OP_Plus -> [FFI.DwOp_plus]
-    A.DW_OP_Minus -> [FFI.DwOp_minus]
-    A.DW_OP_Mul -> [FFI.DwOp_mul]
+    A.DW_OP_Deref -> [FFI.DwOp_deref]
     A.DW_OP_Div -> [FFI.DwOp_div]
+    A.DW_OP_Dup -> [FFI.DwOp_dup]
+    A.DwOpFragment (A.DW_OP_LLVM_Fragment offset size) -> [FFI.DwOp_LLVM_fragment, offset, size]
+    A.DW_OP_Lit0 -> [FFI.DwOp_lit0]
+    A.DW_OP_Minus -> [FFI.DwOp_minus]
     A.DW_OP_Mod -> [FFI.DwOp_mod]
+    A.DW_OP_Mul -> [FFI.DwOp_mul]
     A.DW_OP_Not -> [FFI.DwOp_not]
     A.DW_OP_Or -> [FFI.DwOp_or]
-    A.DW_OP_Xor -> [FFI.DwOp_xor]
-    A.DW_OP_And -> [FFI.DwOp_and]
-    A.DW_OP_Shr -> [FFI.DwOp_shr]
-    A.DW_OP_Shra -> [FFI.DwOp_shra]
+    A.DW_OP_Plus -> [FFI.DwOp_plus]
+    A.DW_OP_PlusUConst arg -> [FFI.DwOp_plus_uconst, arg]
+    A.DW_OP_PushObjectAddress -> [FFI.DwOp_push_object_address]
     A.DW_OP_Shl -> [FFI.DwOp_shl]
-    A.DW_OP_Dup -> [FFI.DwOp_dup]
-    A.DW_OP_Deref -> [FFI.DwOp_deref]
+    A.DW_OP_Shra -> [FFI.DwOp_shra]
+    A.DW_OP_Shr -> [FFI.DwOp_shr]
+    A.DW_OP_StackValue -> [FFI.DwOp_stack_value]
+    A.DW_OP_Swap -> [FFI.DwOp_swap]
     A.DW_OP_XDeref -> [FFI.DwOp_xderef]
+    A.DW_OP_Xor -> [FFI.DwOp_xor]
 
 instance DecodeM DecodeAST [Maybe A.Metadata] (Ptr FFI.MDNode) where
   decodeM p = decodeArray FFI.getMDNodeNumOperands FFI.getMDNodeOperand p
@@ -1124,6 +1126,8 @@ instance DecodeM DecodeAST A.DIExpression (Ptr FFI.DIExpression) where
                 FFI.DwOp_dup -> (A.DW_OP_Dup :) <$> go (i + 1)
                 FFI.DwOp_deref -> (A.DW_OP_Deref :) <$> go (i + 1)
                 FFI.DwOp_xderef -> (A.DW_OP_XDeref :) <$> go (i + 1)
+                FFI.DwOp_bregx -> (A.DW_OP_Bregx :) <$> go (i + 1)
+                FFI.DwOp_push_object_address -> (A.DW_OP_PushObjectAddress :) <$> go (i + 1)
                 _ -> throwM (DecodeException ("Unknown DW_OP " <> show op))
         expectElems name i n =
           when (i + n >= numElems)
