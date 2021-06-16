@@ -1,6 +1,11 @@
 ## 12.0.0 (2021-03-19)
 
 * Update to LLVM 12.0
+* Eliminate hard-coded assumption of 32-bit `size_t`
+* Add a runtime variant of the `LLVM.AST.Constant.sizeof` utility in `LLVM.IRBuilder.Instruction.sizeof`. The size of opaque structure types is unknown until link-time and therefore cannot be computed as a constant.
+* Handle type resolution through `NamedTypeReference` correctly: type resolution in LLVM depends on module state by design
+* Support the LLVM `NoFree` attribute
+* Add support for some more DWARF operators: `DW_OP_bregx` and `DW_OP_push_object_address`
 
 ## 9.0.0 (2019-09-06)
 
