@@ -336,12 +336,14 @@ JITTargetAddress LLVM_Hs_JITSymbol_getAddress(LLVMJITSymbolRef symbol,
                                               char **errorMessage) {
     *errorMessage = nullptr;
     if (auto addrOrErr = symbol->getAddress()) {
-        return *addrOrErr;
-    } else {
-        std::string error = toString(addrOrErr.takeError());
-        *errorMessage = strdup(error.c_str());
-        return 0;
+        // I think this is a bug in LLVM: getAddress() is meant to return zero for undefined symbols
+        // according to https://llvm.org/doxygen/classllvm_1_1JITSymbol.html#a728b38fd41b0dfb04489af84087b8712
+        if (*addrOrErr) {
+            return *addrOrErr;
+        }
     }
+    *errorMessage = strdup("undefined symbol");
+    return 0;
 }
 
 LLVMJITSymbolFlags LLVM_Hs_JITSymbol_getFlags(LLVMJITSymbolRef symbol) {

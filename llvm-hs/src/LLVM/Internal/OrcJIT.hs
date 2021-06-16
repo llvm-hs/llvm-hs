@@ -114,8 +114,8 @@ instance (MonadIO m, MonadAnyCont IO m) => DecodeM m (Either JITSymbolError JITS
     rawFlags <- liftIO (FFI.getFlags jitSymbol)
     if addr == 0 || (rawFlags .&. FFI.jitSymbolFlagsHasError /= 0)
       then do
-        errMsg <- decodeM =<< liftIO (FFI.getErrorMsg jitSymbol)
-        pure (Left (JITSymbolError errMsg))
+        errMsg' <- decodeM errMsg
+        pure (Left (JITSymbolError errMsg'))
       else do
         flags <- decodeM rawFlags
         pure (Right (JITSymbol (fromIntegral addr) flags))

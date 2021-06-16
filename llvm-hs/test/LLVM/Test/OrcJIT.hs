@@ -79,6 +79,9 @@ resolver testFunc compileLayer symbol = do
 nullResolver :: MangledSymbol -> IO (Either JITSymbolError JITSymbol)
 nullResolver s = putStrLn "nullresolver" >> return (Left (JITSymbolError "unknown symbol"))
 
+simpleResolver :: CompileLayer l => l -> MangledSymbol -> IO (Either JITSymbolError JITSymbol)
+simpleResolver compileLayer symbol = CL.findSymbol compileLayer symbol True
+
 moduleTransform :: IORef Bool -> Ptr FFI.Module -> IO (Ptr FFI.Module)
 moduleTransform passmanagerSuccessful modulePtr = do
   withPassManager defaultCuratedPassSetSpec { optLevel = Just 2 } $ \(PassManager pm) -> do
@@ -110,7 +113,7 @@ tests =
                 result @?= 42
                 unknownSymbol <- mangleSymbol compileLayer "unknownSymbol"
                 unknownSymbolRes <- CL.findSymbol compileLayer unknownSymbol True
-                unknownSymbolRes @?= Left (JITSymbolError mempty),
+                unknownSymbolRes @?= Left (JITSymbolError "undefined symbol"),
 
     testCase "IRTransformLayer" $ do
       passmanagerSuccessful <- newIORef False
