@@ -336,8 +336,13 @@ JITTargetAddress LLVM_Hs_JITSymbol_getAddress(LLVMJITSymbolRef symbol,
                                               char **errorMessage) {
     *errorMessage = nullptr;
     if (auto addrOrErr = symbol->getAddress()) {
-        // I think this is a bug in LLVM: getAddress() is meant to return zero for undefined symbols
+        // I think this is a bug in LLVM: getAddress() is meant to return '0' for undefined symbols
         // according to https://llvm.org/doxygen/classllvm_1_1JITSymbol.html#a728b38fd41b0dfb04489af84087b8712
+        // Reading that more liberally, it should be returning an 'Expect<JITTargetAddress>' whose
+        // 'operator bool()' is false (since there is an error)
+        // https://llvm.org/doxygen/classllvm_1_1Expected.html#abedc24a1407796eedbee8ba9786d0387
+        // However, it clearly is not false since we get in here, and we need to actually
+        // attempt to get the value out of the 'Expect<T>' before we finally trigger a failure.
         if (*addrOrErr) {
             return *addrOrErr;
         }
