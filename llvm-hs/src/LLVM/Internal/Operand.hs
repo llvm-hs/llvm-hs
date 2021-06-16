@@ -194,6 +194,18 @@ instance DecodeM DecodeAST A.DINode (Ptr FFI.DINode) where
       [mdSubclassIdP|DITemplateTypeParameter|]  -> A.DITemplateParameter <$> decodeM (castPtr diN :: Ptr FFI.DITemplateParameter)
       [mdSubclassIdP|DITemplateValueParameter|] -> A.DITemplateParameter <$> decodeM (castPtr diN :: Ptr FFI.DITemplateParameter)
 
+      [mdSubclassIdP|MDString|] -> throwM (DecodeException ("Lifting to Haskell not implemented for toplevel DINode kind: " <> show sId <> " (MDString)"))
+      [mdSubclassIdP|ConstantAsMetadata|] -> throwM (DecodeException ("Lifting to Haskell not implemented for toplevel DINode kind: " <> show sId <> " (ConstantAsMetadata)"))
+      [mdSubclassIdP|LocalAsMetadata|] -> throwM (DecodeException ("Lifting to Haskell not implemented for toplevel DINode kind: " <> show sId <> " (LocalAsMetadata)"))
+      [mdSubclassIdP|DistinctMDOperandPlaceholder|] -> throwM (DecodeException ("Lifting to Haskell not implemented for toplevel DINode kind: " <> show sId <> " (DistinctMDOperandPlaceholder)"))
+      [mdSubclassIdP|MDTuple|] -> throwM (DecodeException ("Lifting to Haskell not implemented for toplevel DINode kind: " <> show sId <> " (MDTuple)"))
+      [mdSubclassIdP|DILocation|] -> throwM (DecodeException ("Lifting to Haskell not implemented for toplevel DINode kind: " <> show sId <> " (DILocation)"))
+      [mdSubclassIdP|DIExpression|] -> throwM (DecodeException ("Lifting to Haskell not implemented for toplevel DINode kind: " <> show sId <> " (DIExpression)"))
+      [mdSubclassIdP|DIGlobalVariableExpression|] -> throwM (DecodeException ("Lifting to Haskell not implemented for toplevel DINode kind: " <> show sId <> " (DIGlobalVariableExpression)"))
+      [mdSubclassIdP|GenericDINode|] -> throwM (DecodeException ("Lifting to Haskell not implemented for toplevel DINode kind: " <> show sId <> " (GenericDINode)"))
+      [mdSubclassIdP|DIMacro|] -> throwM (DecodeException ("Lifting to Haskell not implemented for toplevel DINode kind: " <> show sId <> " (DIMacro)"))
+      [mdSubclassIdP|DIMacroFile|] -> throwM (DecodeException ("Lifting to Haskell not implemented for toplevel DINode kind: " <> show sId <> " (DIMacroFile)"))
+
       _ -> throwM (DecodeException ("Unknown subclass id for DINode: " <> show sId))
 
 instance EncodeM EncodeAST A.DICount (Ptr FFI.Metadata) where
