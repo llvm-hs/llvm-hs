@@ -74,7 +74,6 @@ instance Arbitrary Options where
     trapUnreachable <- arbitrary
     emulatedThreadLocalStorage <- arbitrary
     enableInterProceduralRegisterAllocation <- arbitrary
-    stackAlignmentOverride <- arbitrary
     floatABIType <- arbitrary
     allowFloatingPointOperationFusion <- arbitrary
     threadModel <- arbitrary

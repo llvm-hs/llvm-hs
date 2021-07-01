@@ -349,14 +349,6 @@ unsigned LLVM_Hs_GetMCTargetOptionFlag(MCTargetOptions *to,
     }
 }
 
-void LLVM_Hs_SetStackAlignmentOverride(TargetOptions *to, unsigned v) {
-    to->StackAlignmentOverride = v;
-}
-
-unsigned LLVM_Hs_GetStackAlignmentOverride(TargetOptions *to) {
-    return to->StackAlignmentOverride;
-}
-
 void LLVM_Hs_SetFloatABIType(TargetOptions *to, LLVM_Hs_FloatABI v) {
     to->FloatABIType = unwrap(v);
 }
