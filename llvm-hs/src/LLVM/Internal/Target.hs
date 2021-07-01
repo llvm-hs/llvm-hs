@@ -188,7 +188,6 @@ pokeTargetOptions hOpts opts@(TargetOptions cOpts) = do
     (FFI.targetOptionFlagEmulatedTLS, TO.emulatedThreadLocalStorage),
     (FFI.targetOptionFlagEnableIPRA, TO.enableInterProceduralRegisterAllocation)
    ]
-  FFI.setStackAlignmentOverride cOpts =<< encodeM (TO.stackAlignmentOverride hOpts)
   FFI.setFloatABIType cOpts =<< encodeM (TO.floatABIType hOpts)
   FFI.setAllowFPOpFusion cOpts =<< encodeM (TO.allowFloatingPointOperationFusion hOpts)
   FFI.setCompressDebugSections cOpts =<< encodeM (TO.compressDebugSections hOpts)
@@ -259,7 +258,6 @@ peekTargetOptions opts@(TargetOptions tOpts) = do
     <- gof FFI.targetOptionFlagEmulatedTLS
   enableInterProceduralRegisterAllocation
     <- gof FFI.targetOptionFlagEnableIPRA
-  stackAlignmentOverride <- decodeM =<< FFI.getStackAlignmentOverride tOpts
   floatABIType <- decodeM =<< FFI.getFloatABIType tOpts
   allowFloatingPointOperationFusion <- decodeM =<< FFI.getAllowFPOpFusion tOpts
   threadModel <- decodeM =<< FFI.getThreadModel tOpts

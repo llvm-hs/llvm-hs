@@ -60,17 +60,17 @@ handString = "; ModuleID = '<string>'\n\
     \@one = thread_local(initialexec) alias i32, i32* @5\n\
     \\n\
     \define i32 @bar() prefix i32 1 {\n\
-    \  %1 = musttail call zeroext i32 @foo(i32 inreg align 16 1, i8 signext 4) #0\n\
+    \  %1 = musttail call zeroext i32 @foo(i32 inreg 1, i8 signext 4) #0\n\
     \  ret i32 %1\n\
     \}\n\
     \\n\
     \define i32 @baz() prefix i32 1 {\n\
-    \  %1 = notail call zeroext i32 @foo(i32 inreg align 16 1, i8 signext 4) #0\n\
+    \  %1 = notail call zeroext i32 @foo(i32 inreg 1, i8 signext 4) #0\n\
     \  ret i32 %1\n\
     \}\n\
     \\n\
     \; Function Attrs: nounwind readnone uwtable\n\
-    \define zeroext i32 @foo(i32 inreg align 16 %x, i8 signext %y) #0 {\n\
+    \define zeroext i32 @foo(i32 inreg %x, i8 signext %y) #0 {\n\
     \  %1 = mul nsw i32 %x, %x\n\
     \  br label %here\n\
     \\n\
@@ -169,7 +169,7 @@ handAST = Module "<string>" "<string>" Nothing Nothing [
              returnAttributes = [PA.ZeroExt],
              function = Right (ConstantOperand (C.GlobalReference (ptr (FunctionType i32 [i32, i8] False)) (Name "foo"))),
              arguments = [
-              (ConstantOperand (C.Int 32 1), [PA.InReg, PA.Alignment 16]),
+              (ConstantOperand (C.Int 32 1), [PA.InReg]),
               (ConstantOperand (C.Int 8 4), [PA.SignExt])
              ],
              functionAttributes = [Left (FA.GroupID 0)],
@@ -192,7 +192,7 @@ handAST = Module "<string>" "<string>" Nothing Nothing [
              returnAttributes = [PA.ZeroExt],
              function = Right (ConstantOperand (C.GlobalReference (ptr (FunctionType i32 [i32, i8] False)) (Name "foo"))),
              arguments = [
-              (ConstantOperand (C.Int 32 1), [PA.InReg, PA.Alignment 16]),
+              (ConstantOperand (C.Int 32 1), [PA.InReg]),
               (ConstantOperand (C.Int 8 4), [PA.SignExt])
              ],
              functionAttributes = [Left (FA.GroupID 0)],
@@ -208,7 +208,7 @@ handAST = Module "<string>" "<string>" Nothing Nothing [
         G.returnType = i32,
         G.name = Name "foo",
         G.parameters = ([
-          Parameter i32 (Name "x") [PA.InReg, PA.Alignment 16],
+          Parameter i32 (Name "x") [PA.InReg],
           Parameter i8 (Name "y") [PA.SignExt]
          ], False),
         G.functionAttributes = [Left (FA.GroupID 0)],

@@ -47,12 +47,6 @@ foreign import ccall unsafe "LLVM_Hs_GetCompressDebugSections" getCompressDebugS
 foreign import ccall unsafe "LLVM_Hs_SetCompressDebugSections" setCompressDebugSections ::
   Ptr TargetOptions -> DebugCompressionType -> IO ()
 
-foreign import ccall unsafe "LLVM_Hs_SetStackAlignmentOverride" setStackAlignmentOverride ::
-  Ptr TargetOptions -> CUInt -> IO ()
-
-foreign import ccall unsafe "LLVM_Hs_GetStackAlignmentOverride" getStackAlignmentOverride ::
-  Ptr TargetOptions -> IO CUInt
-
 foreign import ccall unsafe "LLVM_Hs_SetFloatABIType" setFloatABIType ::
   Ptr TargetOptions -> FloatABIType -> IO ()
 

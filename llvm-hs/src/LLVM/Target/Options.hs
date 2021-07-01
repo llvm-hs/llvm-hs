@@ -86,7 +86,6 @@ data Options = Options {
   trapUnreachable :: Bool,
   emulatedThreadLocalStorage :: Bool,
   enableInterProceduralRegisterAllocation :: Bool,
-  stackAlignmentOverride :: Word32,
   floatABIType :: FloatABI,
   allowFloatingPointOperationFusion :: FloatingPointOperationFusionMode,
   threadModel :: ThreadModel,

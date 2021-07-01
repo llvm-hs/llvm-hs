@@ -35,6 +35,7 @@
   macro(NoRecurse,F,F,T)                            \
   macro(NoRedZone,F,F,T)                            \
   macro(NoReturn,F,F,T)                             \
+  macro(NoSanitizeCoverage,F,F,T)                   \
   macro(NoSync,F,F,T)                               \
   macro(NoUndef,F,F,T)                              \
   macro(NoUnwind,F,F,T)                             \
@@ -62,6 +63,7 @@
   macro(StackProtectReq,F,F,T)                      \
   macro(StackProtectStrong,F,F,T)                   \
   macro(StrictFP,F,F,T)                             \
+  macro(SwiftAsync,T,F,F)                           \
   macro(SwiftError,T,F,F)                           \
   macro(SwiftSelf,T,F,F)                            \
   macro(UWTable,F,F,T)                              \
