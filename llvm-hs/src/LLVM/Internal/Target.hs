@@ -1,10 +1,10 @@
-{-# LANGUAGE
-  TemplateHaskell,
-  MultiParamTypeClasses,
-  RecordWildCards,
-  UndecidableInstances,
-  OverloadedStrings
-  #-}
+{-# LANGUAGE CPP                   #-}
+{-# LANGUAGE MultiParamTypeClasses #-}
+{-# LANGUAGE OverloadedStrings     #-}
+{-# LANGUAGE RecordWildCards       #-}
+{-# LANGUAGE TemplateHaskell       #-}
+{-# LANGUAGE UndecidableInstances  #-}
+
 module LLVM.Internal.Target where
 
 import LLVM.Prelude
@@ -16,12 +16,15 @@ import Control.Monad.Trans.Except
 
 import Data.Attoparsec.ByteString
 import Data.Attoparsec.ByteString.Char8
-import qualified Data.ByteString as ByteString
 import Data.Char
 import Data.Map (Map)
-import qualified Data.Map as Map
 import Foreign.C.String
 import Foreign.Ptr
+import qualified Data.ByteString as ByteString
+import qualified Data.Map as Map
+#if __GLASGOW_HASKELL__ < 808
+import Control.Monad.Fail (MonadFail)
+#endif
 
 import LLVM.Internal.Coding
 import LLVM.Internal.String ()
