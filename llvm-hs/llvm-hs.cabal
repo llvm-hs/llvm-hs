@@ -1,6 +1,7 @@
+cabal-version: 2.2
 name: llvm-hs
 version: 12.0.0
-license: BSD3
+license: BSD-3-Clause
 license-file: LICENSE
 author: Anthony Cowley, Stephen Diehl, Moritz Kiefer <moritz.kiefer@purelyfunctional.org>, Benjamin S. Scarlet
 maintainer: Anthony Cowley, Stephen Diehl, Moritz Kiefer <moritz.kiefer@purelyfunctional.org>
@@ -9,7 +10,6 @@ homepage: http://github.com/llvm-hs/llvm-hs/
 bug-reports: http://github.com/llvm-hs/llvm-hs/issues
 build-type: Custom
 stability: experimental
-cabal-version: 1.24
 category: Compilers/Interpreters, Code Generation
 synopsis: General purpose LLVM bindings
 description:
@@ -65,8 +65,15 @@ custom-setup
 
 library
   default-language: Haskell2010
-  build-tools: hsc2hs, llvm-config
-  ghc-options: -Wall -fno-warn-name-shadowing -fno-warn-orphans
+
+  build-tool-depends:
+    hsc2hs:hsc2hs
+
+  ghc-options:
+    -O2
+    -Wall
+    -fno-warn-name-shadowing
+    -fno-warn-orphans
 
   build-depends:
     base >= 4.9 && < 5,
@@ -224,11 +231,17 @@ library
     src/LLVM/Internal/FFI/TypeC.cpp
     src/LLVM/Internal/FFI/ValueC.cpp
 
-  cc-options: -std=c++14 -fno-rtti
-  extra-libraries: stdc++
+  extra-libraries:
+    stdc++
+
+  cxx-options:
+    -O3
+    -Wall
+    -std=c++14
+    -fno-rtti
 
   if flag(debug)
-    cc-options: -g
+    cxx-options: -g
 
 test-suite test
   default-language: Haskell2010

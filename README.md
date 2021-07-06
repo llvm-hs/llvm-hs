@@ -25,24 +25,6 @@ We love all kinds of contributions so feel free to open issues for
 missing LLVM features, report & fix bugs or report API
 inconveniences.
 
-## Build Problems with GHC 8.10/Cabal 3
-
-If you are building a project that uses llvm-hs, you may encounter compile-time
-and link-time failures using GHC 8.10 / Cabal 3.0 and later. Since llvm-hs
-binds to the LLVM C API via Haskell's FFI, we must build and link against
-some C++ code. Cabal does not propagate options to the backend C/C++ compiler
-correctly, so you must also pass these options at the level of your client
-project. If you are using stack and you see undefined references to `typeinfo`
-and `vtable`, you need to pass the following options in your `stack.yaml`
-
-```
-ghc-options:
-  llvm-hs: -optcxx=-std=c++14 -optcxx=-lstdc++ -optcxx=-fno-rtti
-```
-
-Similarly, if you are using Cabal directly, you need to pass these options via
-`cc-options` in your project `.cabal` file.
-
 ## Installing LLVM
 
 LLVM 12 is still not fully released, and as such is unavailable in most
