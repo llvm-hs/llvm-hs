@@ -1,4 +1,7 @@
-resolver: lts-17.12
+resolver: nightly-2021-07-04  # 9.0.1
+# resolver: lts-18.1  # 8.10.4
+# resolver: lts-16.31  # 8.8.4
+# resolver: lts-14.27  # 8.6.5
 
 packages:
 - llvm-hs

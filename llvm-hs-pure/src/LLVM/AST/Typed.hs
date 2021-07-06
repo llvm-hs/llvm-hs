@@ -45,7 +45,7 @@ instance Typed C.Constant where
                                   []    -> error "Vectors of size zero are not allowed. (Malformed AST)"
                                   (x:_) -> typeOf x
   typeOf (C.Undef t)     = t
-  typeOf (C.BlockAddress {..})   = ptr i8
+  typeOf (C.BlockAddress {})     = ptr i8
   typeOf (C.GlobalReference t _) = t
   typeOf (C.Add {..})     = typeOf operand0
   typeOf (C.FAdd {..})    = typeOf operand0

@@ -7,7 +7,7 @@ module Control.Monad.AnyCont (
     ScopeAnyCont(..),
     AnyContT(..),
     MonadTransAnyCont(..),
-    runAnyContT,
+    runAnyContT, runAnyContT',
     withAnyContT,
     mapAnyContT
   ) where
