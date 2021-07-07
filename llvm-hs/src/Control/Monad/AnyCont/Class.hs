@@ -24,7 +24,7 @@ instance MonadTransAnyCont b m => MonadAnyCont b (AnyContT m) where
   anyContToM c = AnyCont.anyContT (liftAnyCont c)
 
 instance Monad m => ScopeAnyCont (AnyContT m) where
-  scopeAnyCont = lift . flip AnyCont.runAnyContT return
+  scopeAnyCont = lift . AnyCont.runAnyContT' return
 
 
 instance (Monad m, MonadAnyCont b m) => MonadAnyCont b (StateT s m) where

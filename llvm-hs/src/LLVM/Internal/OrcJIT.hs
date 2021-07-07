@@ -155,7 +155,7 @@ addDynamicLibrarySearchGenerator compileLayer (JITDylib dylib) s = withCString s
 -- to fail due to differences in mangling schemes.
 lookupSymbol :: IRLayer l => ExecutionSession -> l -> JITDylib -> ShortByteString -> IO (Either JITSymbolError JITSymbol)
 lookupSymbol (ExecutionSession es _) irl (JITDylib dylib) name = SBS.useAsCString name $ \nameStr ->
-  flip runAnyContT return $ do
+  runAnyContT' return $ do
     symbol <- anyContToM $ bracket
       (FFI.lookupSymbol es dylib (getMangler irl) nameStr) FFI.disposeJITEvaluatedSymbol
     decodeM symbol

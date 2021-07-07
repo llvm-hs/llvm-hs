@@ -31,7 +31,7 @@ import qualified LLVM.AST as A
 import GHC.Stack
 
 removeModule :: Ptr FFI.ExecutionEngine -> Ptr FFI.Module -> IO ()
-removeModule e m = flip runAnyContT return $ do
+removeModule e m = runAnyContT' return $ do
   d0 <- alloca
   d1 <- alloca
   r <- liftIO $ FFI.removeModule e m d0 d1
@@ -50,7 +50,7 @@ instance ExecutionEngine (Ptr FFI.ExecutionEngine) (FunPtr ()) where
   withModuleInEngine e m f = do
     m' <- readModule m
     bracket_ (FFI.addModule e m') (removeModule e m') (f (ExecutableModule e m'))
-  getFunction (ExecutableModule e m) (A.Name name) = flip runAnyContT return $ do
+  getFunction (ExecutableModule e m) (A.Name name) = runAnyContT' return $ do
     name <- encodeM name
     f <- liftIO $ FFI.getNamedFunction m name
     if f == nullPtr 
@@ -68,7 +68,7 @@ withExecutionEngine ::
   (Ptr (Ptr FFI.ExecutionEngine) -> Ptr FFI.Module -> Ptr (FFI.OwnerTransfered CString) -> IO CUInt) ->
   (Ptr FFI.ExecutionEngine -> IO a) ->
   IO a
-withExecutionEngine c m createEngine f = flip runAnyContT return $ do
+withExecutionEngine c m createEngine f = runAnyContT' return $ do
   liftIO initializeNativeTarget
   outExecutionEngine <- alloca
   outErrorCStringPtr <- alloca
