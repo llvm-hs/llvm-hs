@@ -1105,10 +1105,7 @@ instance DecodeM DecodeAST A.Operand (Ptr FFI.MDValue) where
 instance DecodeM DecodeAST A.Metadata (Ptr FFI.MetadataAsVal) where
   decodeM = decodeM <=< liftIO . FFI.getMetadataOperand
 
-genCodingInstance [t|A.DIMacroInfo|] ''FFI.Macinfo [ (FFI.DW_Macinfo_Define, A.Define), (FFI.DW_Macinfo_Undef, A.Undef) ]
-
 decodeMDNode :: Ptr FFI.MDNode -> DecodeAST (Either String A.MDNode)
-
 decodeMDNode p = scopeAnyCont $ do
   sId <- liftIO $ FFI.getMetadataClassId p
   case sId of
