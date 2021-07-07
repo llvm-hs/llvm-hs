@@ -54,6 +54,10 @@ flag shared-llvm
   description: link against llvm shared rather than static library
   default: True
 
+flag llvm-with-rtti
+  description: assume llvm was built with LLVM_ENABLE_RTTI=ON (default is OFF)
+  default: False
+
 flag debug
   description: compile C(++) shims with debug info for ease of troubleshooting
   default: False
@@ -238,7 +242,11 @@ library
     -O3
     -Wall
     -std=c++14
-    -fno-rtti
+
+  if flag(llvm-with-rtti)
+    cxx-options: -frtti
+  else
+    cxx-options: -fno-rtti
 
   if flag(debug)
     cxx-options: -g
