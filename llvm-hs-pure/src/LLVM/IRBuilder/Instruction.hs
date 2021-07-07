@@ -28,7 +28,7 @@ import LLVM.IRBuilder.Monad
 import LLVM.IRBuilder.Module
 
 -- | See <https://llvm.org/docs/LangRef.html#fneg-instruction reference>.
-fneg :: MonadIRBuilder m => Operand -> m Operand
+fneg :: (MonadIRBuilder m, MonadModuleBuilder m) => Operand -> m Operand
 fneg a = do
   ta <- typeOf a
   emitInstr ta $ FNeg noFastMathFlags a []
@@ -262,7 +262,7 @@ insertElement v e i = do
   emitInstr tv $ InsertElement v e i []
 
 -- | See <https://llvm.org/docs/LangRef.html#shufflevector-instruction reference>.
-shuffleVector :: (HasCallStack, MonadIRBuilder m, MonadModuleBuilder m) => Operand -> Operand -> C.Constant -> m Operand
+shuffleVector :: (HasCallStack, MonadIRBuilder m, MonadModuleBuilder m) => Operand -> Operand -> [Int32] -> m Operand
 shuffleVector a b m = do
   ta <- typeOf a
   tm <- typeOf m
