@@ -7,11 +7,9 @@ packages:
 - llvm-hs
 - llvm-hs-pure
 
-flags:
-  llvm-hs:
-    shared-llvm: true
-    llvm-with-rtti: false
+# The default package flags:
+# flags:
+#   llvm-hs:
+#     shared-llvm: true
+#     llvm-with-rtti: false
 
-# We should not need to do this, but unfortunately, removing it breaks the stack build.
-ghc-options:
-  llvm-hs: -optcxx=-std=c++14 -optcxx=-lstdc++ -optcxx=-fno-rtti
