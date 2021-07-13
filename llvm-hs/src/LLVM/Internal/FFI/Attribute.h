@@ -19,6 +19,7 @@
   macro(InlineHint,F,F,T)                           \
   macro(JumpTable,F,F,T)                            \
   macro(MinSize,F,F,T)                              \
+  macro(MustProgress,F,F,T)                         \
   macro(Naked,F,F,T)                                \
   macro(Nest,T,F,F)                                 \
   macro(NoAlias,T,T,F)                              \
@@ -73,7 +74,6 @@
   macro(ByRef,T,F,F)                                \
   macro(ByVal,T,F,F)                                \
   macro(InAlloca,T,F,F)                             \
-  macro(MustProgress,F,F,T)                         \
   macro(Preallocated,F,F,T)                         \
   macro(StructRet,T,F,F)                            \
   macro(Alignment,T,T,F)                            \

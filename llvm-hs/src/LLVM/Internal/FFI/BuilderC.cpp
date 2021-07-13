@@ -48,6 +48,9 @@ LLVM_HS_FOR_EACH_FAST_MATH_FLAG(ENUM_CASE)
 	return r;
 }
 
+static llvm::Type* getPointeeType(LLVMValueRef ptr) {
+  return llvm::cast<llvm::PointerType>(unwrap(ptr)->getType())->getElementType();
+}
 }
 
 extern "C" {
@@ -274,14 +277,20 @@ LLVMValueRef LLVM_Hs_BuildGEP(LLVMBuilderRef B, LLVMValueRef Pointer,
                              LLVMValueRef *Indices, unsigned NumIndices,
                              const char *Name) {
   ArrayRef<Value *> IdxList(unwrap(Indices), NumIndices);
-  return wrap(unwrap(B)->Insert(GetElementPtrInst::Create(nullptr, unwrap(Pointer), IdxList), Name));
+  return wrap(
+      unwrap(B)->Insert(GetElementPtrInst::Create(getPointeeType(Pointer),
+                                                  unwrap(Pointer), IdxList),
+                        Name));
 }
 
 LLVMValueRef LLVM_Hs_BuildInBoundsGEP(LLVMBuilderRef B, LLVMValueRef Pointer,
                                       LLVMValueRef *Indices, unsigned NumIndices,
                                       const char *Name) {
   ArrayRef<Value *> IdxList(unwrap(Indices), NumIndices);
-  return wrap(unwrap(B)->Insert(GetElementPtrInst::CreateInBounds(nullptr, unwrap(Pointer), IdxList), Name));
+  return wrap(
+      unwrap(B)->Insert(GetElementPtrInst::CreateInBounds(
+                            getPointeeType(Pointer), unwrap(Pointer), IdxList),
+                        Name));
 }
 
 LLVMValueRef LLVM_Hs_BuildSelect(LLVMBuilderRef B, LLVMValueRef If,
