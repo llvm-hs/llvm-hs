@@ -4,8 +4,6 @@ module LLVM.IRBuilder.Instruction where
 
 import Prelude hiding (and, or, pred)
 
-import Control.Monad.State (gets)
-import qualified Data.Map.Lazy as Map
 import Data.Word
 import Data.Char (ord)
 import GHC.Stack
@@ -30,109 +28,145 @@ import LLVM.IRBuilder.Module
 fadd :: (MonadIRBuilder m, MonadModuleBuilder m) => Operand -> Operand -> m Operand
 fadd a b = do
   ta <- typeOf a
-  emitInstr ta $ FAdd noFastMathFlags a b []
+  case ta of
+    (Left s) -> error s
+    (Right ta') -> emitInstr ta' $ FAdd noFastMathFlags a b []
 
 -- | See <https://llvm.org/docs/LangRef.html#fmul-instruction reference>.
 fmul :: (MonadIRBuilder m, MonadModuleBuilder m) => Operand -> Operand -> m Operand
 fmul a b = do
   ta <- typeOf a
-  emitInstr ta $ FMul noFastMathFlags a b []
+  case ta of
+    (Left s) -> error s
+    (Right ta') -> emitInstr ta' $ FMul noFastMathFlags a b []
 
 -- | See <https://llvm.org/docs/LangRef.html#fsub-instruction reference>.
 fsub :: (MonadIRBuilder m, MonadModuleBuilder m) => Operand -> Operand -> m Operand
 fsub a b = do
   ta <- typeOf a
-  emitInstr ta $ FSub noFastMathFlags a b []
+  case ta of
+    (Left s) -> error s
+    (Right ta') -> emitInstr ta' $ FSub noFastMathFlags a b []
 
 -- | See <https://llvm.org/docs/LangRef.html#fdiv-instruction reference>.
 fdiv :: (MonadIRBuilder m, MonadModuleBuilder m) => Operand -> Operand -> m Operand
 fdiv a b = do
   ta <- typeOf a
-  emitInstr ta $ FDiv noFastMathFlags a b []
+  case ta of
+    (Left s) -> error s
+    (Right ta') -> emitInstr ta' $ FDiv noFastMathFlags a b []
 
 -- | See <https://llvm.org/docs/LangRef.html#frem-instruction reference>.
 frem :: (MonadIRBuilder m, MonadModuleBuilder m) => Operand -> Operand -> m Operand
 frem a b = do
   ta <- typeOf a
-  emitInstr ta $ FRem noFastMathFlags a b []
+  case ta of
+    (Left s) -> error s
+    (Right ta') -> emitInstr ta' $ FRem noFastMathFlags a b []
 
 -- | See <https://llvm.org/docs/LangRef.html#add-instruction reference>.
 add :: (MonadIRBuilder m, MonadModuleBuilder m) => Operand -> Operand -> m Operand
 add a b = do
   ta <- typeOf a
-  emitInstr ta $ Add False False a b []
+  case ta of
+    (Left s) -> error s
+    (Right ta') -> emitInstr ta' $ Add False False a b []
 
 -- | See <https://llvm.org/docs/LangRef.html#mul-instruction reference>.
 mul :: (MonadIRBuilder m, MonadModuleBuilder m) => Operand -> Operand -> m Operand
 mul a b = do
   ta <- typeOf a
-  emitInstr ta $ Mul False False a b []
+  case ta of
+    (Left s) -> error s
+    (Right ta') -> emitInstr ta' $ Mul False False a b []
 
 -- | See <https://llvm.org/docs/LangRef.html#sub-instruction reference>.
 sub :: (MonadIRBuilder m, MonadModuleBuilder m) => Operand -> Operand -> m Operand
 sub a b = do
   ta <- typeOf a
-  emitInstr ta $ Sub False False a b []
+  case ta of
+    (Left s) -> error s
+    (Right ta') -> emitInstr ta' $ Sub False False a b []
 
 -- | See <https://llvm.org/docs/LangRef.html#udiv-instruction reference>.
 udiv :: (MonadIRBuilder m, MonadModuleBuilder m) => Operand -> Operand -> m Operand
 udiv a b = do
   ta <- typeOf a
-  emitInstr ta $ UDiv False a b []
+  case ta of
+    (Left s) -> error s
+    (Right ta') -> emitInstr ta' $ UDiv False a b []
 
 -- | See <https://llvm.org/docs/LangRef.html#sdiv-instruction reference>.
 sdiv :: (MonadIRBuilder m, MonadModuleBuilder m) => Operand -> Operand -> m Operand
 sdiv a b = do
   ta <- typeOf a
-  emitInstr ta $ SDiv False a b []
+  case ta of
+    (Left s) -> error s
+    (Right ta') -> emitInstr ta' $ SDiv False a b []
 
 -- | See <https://llvm.org/docs/LangRef.html#urem-instruction reference>.
 urem :: (MonadIRBuilder m, MonadModuleBuilder m) => Operand -> Operand -> m Operand
 urem a b = do
   ta <- typeOf a
-  emitInstr ta $ URem a b []
+  case ta of
+    (Left s) -> error s
+    (Right ta') -> emitInstr ta' $ URem a b []
 
 -- | See <https://llvm.org/docs/LangRef.html#srem-instruction reference>.
 srem :: (MonadIRBuilder m, MonadModuleBuilder m) => Operand -> Operand -> m Operand
 srem a b = do
   ta <- typeOf a
-  emitInstr ta $ SRem a b []
+  case ta of
+    (Left s) -> error s
+    (Right ta') -> emitInstr ta' $ SRem a b []
 
 -- | See <https://llvm.org/docs/LangRef.html#shl-instruction reference>.
 shl :: (MonadIRBuilder m, MonadModuleBuilder m) => Operand -> Operand -> m Operand
 shl a b = do
   ta <- typeOf a
-  emitInstr ta $ Shl False False a b []
+  case ta of
+    (Left s) -> error s
+    (Right ta') -> emitInstr ta' $ Shl False False a b []
 
 -- | See <https://llvm.org/docs/LangRef.html#lshl-instruction reference>.
 lshr :: (MonadIRBuilder m, MonadModuleBuilder m) => Operand -> Operand -> m Operand
 lshr a b = do
   ta <- typeOf a
-  emitInstr ta $ LShr True a b []
+  case ta of
+    (Left s) -> error s
+    (Right ta') -> emitInstr ta' $ LShr True a b []
 
 -- | See <https://llvm.org/docs/LangRef.html#ashl-instruction reference>.
 ashr :: (MonadIRBuilder m, MonadModuleBuilder m) => Operand -> Operand -> m Operand
 ashr a b = do
   ta <- typeOf a
-  emitInstr ta $ AShr True a b []
+  case ta of
+    (Left s) -> error s
+    (Right ta') -> emitInstr ta' $ AShr True a b []
 
 -- | See <https://llvm.org/docs/LangRef.html#and-instruction reference>.
 and :: (MonadIRBuilder m, MonadModuleBuilder m) => Operand -> Operand -> m Operand
 and a b = do
   ta <- typeOf a
-  emitInstr ta $ And a b []
+  case ta of
+    (Left s) -> error s
+    (Right ta') -> emitInstr ta' $ And a b []
 
 -- | See <https://llvm.org/docs/LangRef.html#or-instruction reference>.
 or :: (MonadIRBuilder m, MonadModuleBuilder m) => Operand -> Operand -> m Operand
 or a b = do
   ta <- typeOf a
-  emitInstr ta $ Or a b []
+  case ta of
+    (Left s) -> error s
+    (Right ta') -> emitInstr ta' $ Or a b []
 
 -- | See <https://llvm.org/docs/LangRef.html#xor-instruction reference>.
 xor :: (MonadIRBuilder m, MonadModuleBuilder m) => Operand -> Operand -> m Operand
 xor a b = do
   ta <- typeOf a
-  emitInstr ta $ Xor a b []
+  case ta of
+    (Left s) -> error s
+    (Right ta') -> emitInstr ta' $ Xor a b []
 
 -- | See <https://llvm.org/docs/LangRef.html#alloca-instruction reference>.
 alloca :: MonadIRBuilder m => Type -> Maybe Operand -> Word32 -> m Operand
@@ -142,10 +176,13 @@ alloca ty count align = emitInstr (ptr ty) $ Alloca ty count align []
 load :: (HasCallStack, MonadIRBuilder m, MonadModuleBuilder m) => Operand -> Word32 -> m Operand
 load a align = do
   ta <- typeOf a
-  let retty = case ta of
-                PointerType ty _ -> ty
-                _ -> error "Cannot load non-pointer (Malformed AST)."
-  emitInstr retty $ Load False a Nothing align []
+  case ta of
+    (Left s) -> error s
+    (Right ta') -> do
+      let retty = case ta' of
+                    PointerType ty _ -> ty
+                    _ -> error "Cannot load non-pointer (Malformed AST)."
+      emitInstr retty $ Load False a Nothing align []
 
 -- | See <https://llvm.org/docs/LangRef.html#store-instruction reference>.
 store :: MonadIRBuilder m => Operand -> Word32 -> Operand -> m ()
@@ -156,28 +193,13 @@ store addr align val = emitInstrVoid $ Store False addr val Nothing align []
 gep :: (HasCallStack, MonadIRBuilder m, MonadModuleBuilder m) => Operand -> [Operand] -> m Operand
 gep addr is = do
   ta <- typeOf addr
-  ty <- ptr <$> gepType "gep" ta is
-  emitInstr ty (GetElementPtr False addr is [])
-
--- TODO: Perhaps use the function from llvm-hs-pretty (https://github.com/llvm-hs/llvm-hs-pretty/blob/master/src/LLVM/Typed.hs)
-gepType :: (HasCallStack, MonadModuleBuilder m) => String -> Type -> [Operand] -> m Type
-gepType caller = go
-  where
-    msg m = caller ++ ": " ++ m
-
-    go ty [] = pure ty
-    go (PointerType ty _) (_:is') = go ty is'
-    go (StructureType _ elTys) (ConstantOperand (C.Int 32 val):is') =
-      go (elTys !! fromIntegral val) is'
-    go (StructureType _ _) (i:_) = error $ msg ("Indices into structures should be 32-bit constants. " ++ show i)
-    go (VectorType _ elTy) (_:is') = go elTy is'
-    go (ArrayType _ elTy) (_:is') = go elTy is'
-    go (NamedTypeReference nm) is' = do
-      mayTy <- liftModuleState (gets (Map.lookup nm . builderTypeDefs))
-      case mayTy of
-        Nothing -> error $ msg ("Couldn’t resolve typedef for: " ++ show nm)
-        Just ty -> go ty is'
-    go t (_:_) = error $ msg ("Can't index into a " ++ show t)
+  case ta of
+    (Left s) -> error s
+    (Right ta') -> do
+      ty <- indexTypeByOperands ta' is
+      case ty of
+        (Left s) -> error s
+        (Right ty') -> emitInstr ty' (GetElementPtr False addr is [])
 
 -- | Emit the @trunc ... to@ instruction.
 -- See <https://llvm.org/docs/LangRef.html#trunc-to-instruction reference>.
@@ -244,15 +266,18 @@ extractElement :: (HasCallStack, MonadIRBuilder m, MonadModuleBuilder m) => Oper
 extractElement v i = do
   tv <- typeOf v
   let elemTyp = case tv of
-                  VectorType _ typ -> typ
-                  _ -> error "extractElement: Expected a vector type (malformed AST)."
+                  (Left s) -> error s
+                  (Right (VectorType _ typ)) -> typ
+                  (Right typ) -> error $ "extractElement: Expected a vector type but got " ++ show typ ++ " (Malformed AST)."
   emitInstr elemTyp $ ExtractElement v i []
 
 -- | See <https://llvm.org/docs/LangRef.html#insertelement-instruction reference>.
 insertElement :: (HasCallStack, MonadIRBuilder m, MonadModuleBuilder m) => Operand -> Operand -> Operand -> m Operand
 insertElement v e i = do
   tv <- typeOf v
-  emitInstr tv $ InsertElement v e i []
+  case tv of
+    (Left s) -> error s
+    (Right tv') -> emitInstr tv' $ InsertElement v e i []
 
 -- | See <https://llvm.org/docs/LangRef.html#shufflevector-instruction reference>.
 shuffleVector :: (HasCallStack, MonadIRBuilder m, MonadModuleBuilder m) => Operand -> Operand -> C.Constant -> m Operand
@@ -260,7 +285,7 @@ shuffleVector a b m = do
   ta <- typeOf a
   tm <- typeOf m
   let retType = case (ta, tm) of
-                  (VectorType _ elemTyp, VectorType maskLength _) -> VectorType maskLength elemTyp
+                  (Right (VectorType _ elemTyp), Right (VectorType maskLength _)) -> VectorType maskLength elemTyp
                   _ -> error "shuffleVector: Expected two vectors and a vector mask"
   emitInstr retType $ ShuffleVector a b m []
 
@@ -269,18 +294,23 @@ extractValue :: (HasCallStack, MonadIRBuilder m, MonadModuleBuilder m) => Operan
 extractValue a i = do
   ta <- typeOf a
   let aggType = case ta of
-                  typ@ArrayType{} -> typ
-                  typ@NamedTypeReference{} -> typ
-                  typ@StructureType{} -> typ
-                  _ -> error "extractValue: Expecting structure or array type. (Malformed AST)"
-  retType <- gepType "extractValue" aggType (map (ConstantOperand . C.Int 32 . fromIntegral) i)
-  emitInstr retType $ ExtractValue a i []
+                  (Left s) -> error s
+                  (Right typ@ArrayType{}) -> typ
+                  (Right typ@NamedTypeReference{}) -> typ
+                  (Right typ@StructureType{}) -> typ
+                  (Right typ) -> error $ "extractValue: Expecting structure or array type but got " ++ show typ ++ " (Malformed AST)."
+  retType <- indexTypeByOperands aggType (map (ConstantOperand . C.Int 32 . fromIntegral) i)
+  case retType of
+    (Left s) -> error s
+    (Right retType') -> emitInstr (pointerReferent retType') $ ExtractValue a i []
 
 -- | See <https://llvm.org/docs/LangRef.html#insertvalue-instruction reference>.
 insertValue :: (HasCallStack, MonadIRBuilder m, MonadModuleBuilder m) => Operand -> Operand -> [Word32] -> m Operand
 insertValue a e i = do
   ta <- typeOf a
-  emitInstr ta $ InsertValue a e i []
+  case ta of
+    (Left s) -> error s
+    (Right ta') -> emitInstr ta' $ InsertValue a e i []
 
 -- | See <https://llvm.org/docs/LangRef.html#icmp-instruction reference>.
 icmp :: MonadIRBuilder m => IP.IntegerPredicate -> Operand -> Operand -> m Operand
@@ -301,7 +331,9 @@ phi :: (HasCallStack, MonadIRBuilder m, MonadModuleBuilder m) => [(Operand, Name
 phi [] = emitInstr AST.void $ Phi AST.void [] []
 phi incoming@(i:_) = do
   ty <- typeOf (fst i)
-  emitInstr ty $ Phi ty incoming []
+  case ty of
+    (Left s) -> error s
+    (Right ty') -> emitInstr ty' $ Phi ty' incoming []
 
 -- | Emit a @ret void@ instruction.
 -- See <https://llvm.org/docs/LangRef.html#ret-instruction reference>.
@@ -322,13 +354,14 @@ call fun args = do
   }
   tf <- typeOf fun
   case tf of
-      FunctionType r _ _ -> case r of
-        VoidType -> emitInstrVoid instr >> (pure (ConstantOperand (C.Undef void)))
-        _        -> emitInstr r instr
-      PointerType (FunctionType r _ _) _ -> case r of
-        VoidType -> emitInstrVoid instr >> (pure (ConstantOperand (C.Undef void)))
-        _        -> emitInstr r instr
-      _ -> error "Cannot call non-function (Malformed AST)."
+    (Left s) -> error s
+    (Right (FunctionType r _ _)) -> case r of
+      VoidType -> emitInstrVoid instr >> (pure (ConstantOperand (C.Undef void)))
+      _        -> emitInstr r instr
+    (Right (PointerType (FunctionType r _ _) _)) -> case r of
+      VoidType -> emitInstrVoid instr >> (pure (ConstantOperand (C.Undef void)))
+      _        -> emitInstr r instr
+    (Right _) -> error "Cannot call non-function (Malformed AST)."
 
 -- | See <https://llvm.org/docs/LangRef.html#ret-instruction reference>.
 ret :: MonadIRBuilder m => Operand -> m ()
@@ -342,7 +375,9 @@ switch val def dests = emitTerm $ Switch val def dests []
 select :: (HasCallStack, MonadIRBuilder m, MonadModuleBuilder m) => Operand -> Operand -> Operand -> m Operand
 select cond t f = do
   tt <- typeOf t
-  emitInstr tt $ Select cond t f []
+  case tt of
+    (Left s) -> error s
+    (Right tt') -> emitInstr tt' $ Select cond t f []
 
 -- | Conditional branch (see 'br' for unconditional instructions).
 -- See <https://llvm.org/docs/LangRef.html#br-instruction reference>.
@@ -366,17 +401,20 @@ globalStringPtr str nm = do
       char      = IntegerType 8
       charArray = C.Array char llvmVals
   ty <- LLVM.AST.Typed.typeOf charArray
-  emitDefn $ GlobalDefinition globalVariableDefaults
-    { name                  = nm
-    , LLVM.AST.Global.type' = ty
-    , linkage               = External
-    , isConstant            = True
-    , initializer           = Just charArray
-    , unnamedAddr           = Just GlobalAddr
-    }
-  return $ C.GetElementPtr True
-                           (C.GlobalReference (ptr ty) nm)
-                           [(C.Int 32 0), (C.Int 32 0)]
+  case ty of
+    (Left s) -> error s
+    (Right ty') -> do
+      emitDefn $ GlobalDefinition globalVariableDefaults
+        { name                  = nm
+        , LLVM.AST.Global.type' = ty'
+        , linkage               = External
+        , isConstant            = True
+        , initializer           = Just charArray
+        , unnamedAddr           = Just GlobalAddr
+        }
+      return $ C.GetElementPtr True
+                              (C.GlobalReference (ptr ty') nm)
+                              [(C.Int 32 0), (C.Int 32 0)]
 
 sizeof :: (HasCallStack, MonadIRBuilder m, MonadModuleBuilder m) => Word32 -> Type -> m Operand
 sizeof szBits ty = do
