@@ -143,7 +143,7 @@ indexTypeByConstants (StructureType _ _) (i:_) =
   return $ Left $ "Indices into structures should be 32-bit integer constants. (Malformed AST): " ++ show i
 indexTypeByConstants (VectorType _ elTy) (_:is) = indexTypeByConstants elTy is
 indexTypeByConstants (ArrayType _ elTy) (_:is) = indexTypeByConstants elTy is
-indexTypeByConstants (NamedTypeReference n) (_:is) = do
+indexTypeByConstants (NamedTypeReference n) is = do
   mayTy <- liftModuleState (gets (Map.lookup n . builderTypeDefs))
   case mayTy of
     Nothing -> return $ Left $ "Couldn’t resolve typedef for: " ++ show n
