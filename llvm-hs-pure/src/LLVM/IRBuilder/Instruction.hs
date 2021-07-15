@@ -29,7 +29,9 @@ import LLVM.IRBuilder.Module
 fneg :: (MonadIRBuilder m, MonadModuleBuilder m) => Operand -> m Operand
 fneg a = do
   ta <- typeOf a
-  emitInstr ta $ FNeg noFastMathFlags a []
+  case ta of
+    (Left s) -> error s
+    (Right ta') -> emitInstr ta' $ FNeg noFastMathFlags a []
 
 -- | See <https://llvm.org/docs/LangRef.html#fadd-instruction reference>.
 fadd :: (MonadIRBuilder m, MonadModuleBuilder m) => Operand -> Operand -> m Operand
