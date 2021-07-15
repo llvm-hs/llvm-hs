@@ -8,6 +8,8 @@ import           LLVM.AST.Constant
 import           LLVM.AST.Float
 import           LLVM.IRBuilder.Module
 
+import GHC.Stack
+
 int64 :: Integer -> Operand
 int64 = ConstantOperand . Int 64
 int32 :: Integer -> Operand
@@ -29,7 +31,9 @@ half = ConstantOperand . Float . Half
 struct :: Maybe Name -> Bool -> [Constant] -> Operand
 struct nm packing members = ConstantOperand $ Struct nm packing members
 
-array :: MonadModuleBuilder m => [Constant] -> m Operand
+array :: (HasCallStack, MonadModuleBuilder m) => [Constant] -> m Operand
 array members = do
   thm <- typeOf $ head members
-  return $ ConstantOperand $ Array thm members
+  case thm of
+    (Left s) -> error s
+    (Right thm') -> return $ ConstantOperand $ Array thm' members
