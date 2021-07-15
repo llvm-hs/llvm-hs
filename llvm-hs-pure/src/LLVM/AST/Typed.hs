@@ -123,8 +123,8 @@ getElementPtrType ty [] = return $ ptr ty
 getElementPtrType (PointerType ty _) (_:is) = getElementPtrType ty is
 getElementPtrType (StructureType _ elTys) (C.Int 32 val:is) =
   getElementPtrType (elTys !! fromIntegral val) is
-getElementPtrType (StructureType _ _) (_:_) =
-  error "Indices into structures should be 32-bit constants. (Malformed AST)"
+getElementPtrType (StructureType _ _) (i:is) =
+  error $ "Indices into structures should be 32-bit integer constants. (Malformed AST): " ++ show i
 getElementPtrType (VectorType _ elTy) (_:is) = getElementPtrType elTy is
 getElementPtrType (ArrayType _ elTy) (_:is) = getElementPtrType elTy is
 getElementPtrType (NamedTypeReference n) (_:is) = do
