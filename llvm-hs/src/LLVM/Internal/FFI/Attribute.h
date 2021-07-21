@@ -73,6 +73,7 @@
   macro(ZExt,T,T,F)                                 \
   macro(ByRef,T,F,F)                                \
   macro(ByVal,T,F,F)                                \
+  macro(ElementType,T,F,F)                          \
   macro(InAlloca,T,F,F)                             \
   macro(Preallocated,F,F,T)                         \
   macro(StructRet,T,F,F)                            \

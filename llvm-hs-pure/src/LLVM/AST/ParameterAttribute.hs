@@ -2,15 +2,16 @@
 module LLVM.AST.ParameterAttribute where
 
 import LLVM.Prelude
+import LLVM.AST.Type
 
 -- | <http://llvm.org/docs/LangRef.html#parameter-attributes>
 data ParameterAttribute
     = Alignment Word64
-    | ByVal
+    | ByVal Type
     | Dereferenceable Word64
     | DereferenceableOrNull Word64
     | ImmArg
-    | InAlloca
+    | InAlloca Type
     | InReg
     | Nest
     | NoAlias
@@ -21,7 +22,7 @@ data ParameterAttribute
     | ReadOnly
     | Returned
     | SignExt
-    | SRet
+    | SRet Type
     | SwiftError
     | SwiftSelf
     | WriteOnly

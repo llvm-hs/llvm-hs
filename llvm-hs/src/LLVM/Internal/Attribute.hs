@@ -21,6 +21,7 @@ import Data.Maybe
 
 import qualified LLVM.Internal.FFI.Attribute as FFI
 import qualified LLVM.Internal.FFI.LLVMCTypes as FFI
+import LLVM.Internal.Type ()
 import LLVM.Internal.FFI.LLVMCTypes (parameterAttributeKindP, functionAttributeKindP)
 
 import qualified LLVM.AST.ParameterAttribute as A.PA
@@ -40,14 +41,21 @@ instance Monad m => EncodeM m A.PA.ParameterAttribute (Ptr FFI.ParameterAttrBuil
     (kindP, kindLen) <- encodeM kind
     (valueP, valueLen) <- encodeM value
     liftIO $ FFI.attrBuilderAddStringAttribute b kindP kindLen valueP valueLen
+  encodeM (A.PA.ByVal t) = return $ \b -> do
+    ty <- encodeM t
+    liftIO $ FFI.attrBuilderAddParameterTypeAttribute b FFI.parameterAttributeKindByVal ty
+  encodeM (A.PA.InAlloca t) = return $ \b -> do
+    ty <- encodeM t
+    liftIO $ FFI.attrBuilderAddParameterTypeAttribute b FFI.parameterAttributeKindInAlloca ty
+  encodeM (A.PA.SRet t) = return $ \b -> do
+    ty <- encodeM t
+    liftIO $ FFI.attrBuilderAddParameterTypeAttribute b FFI.parameterAttributeKindStructRet ty
   encodeM a = return $ \b -> liftIO $ case a of
     A.PA.Alignment v -> FFI.attrBuilderAddAlignment b v
     A.PA.Dereferenceable v -> FFI.attrBuilderAddDereferenceable b v
     A.PA.DereferenceableOrNull v -> FFI.attrBuilderAddDereferenceableOrNull b v
     _ -> FFI.attrBuilderAddParameterAttributeKind b $ case a of
-      A.PA.ByVal -> FFI.parameterAttributeKindByVal
       A.PA.ImmArg -> FFI.parameterAttributeKindImmArg
-      A.PA.InAlloca -> FFI.parameterAttributeKindInAlloca
       A.PA.InReg -> FFI.parameterAttributeKindInReg
       A.PA.Nest -> FFI.parameterAttributeKindNest
       A.PA.NoAlias -> FFI.parameterAttributeKindNoAlias
@@ -58,11 +66,13 @@ instance Monad m => EncodeM m A.PA.ParameterAttribute (Ptr FFI.ParameterAttrBuil
       A.PA.ReadOnly -> FFI.parameterAttributeKindReadOnly
       A.PA.Returned -> FFI.parameterAttributeKindReturned
       A.PA.SignExt -> FFI.parameterAttributeKindSExt
-      A.PA.SRet -> FFI.parameterAttributeKindStructRet
       A.PA.SwiftError -> FFI.parameterAttributeKindSwiftError
       A.PA.SwiftSelf -> FFI.parameterAttributeKindSwiftSelf
       A.PA.WriteOnly -> FFI.parameterAttributeKindWriteOnly
       A.PA.ZeroExt -> FFI.parameterAttributeKindZExt
+      A.PA.ByVal _ -> inconsistentCases "ParameterAttribute" a
+      A.PA.InAlloca _ -> inconsistentCases "ParameterAttribute" a
+      A.PA.SRet _ -> inconsistentCases "ParameterAttribute" a
       A.PA.Alignment _ -> inconsistentCases "ParameterAttribute" a
       A.PA.Dereferenceable _ -> inconsistentCases "ParameterAttribute" a
       A.PA.DereferenceableOrNull _ -> inconsistentCases "ParameterAttribute" a
@@ -152,11 +162,12 @@ instance DecodeM DecodeAST A.PA.ParameterAttribute FFI.ParameterAttribute where
         enum <- liftIO $ FFI.parameterAttributeKindAsEnum a
         case enum of
           [parameterAttributeKindP|Alignment|] -> return A.PA.Alignment `ap` (liftIO $ FFI.attributeValueAsInt a)
-          [parameterAttributeKindP|ByVal|] -> return A.PA.ByVal
+          [parameterAttributeKindP|ByVal|] -> A.PA.ByVal <$> (decodeM =<< liftIO (FFI.attributeValueAsType a))
+          [parameterAttributeKindP|InAlloca|] -> A.PA.InAlloca <$> (decodeM =<< liftIO (FFI.attributeValueAsType a))
+          [parameterAttributeKindP|StructRet|] -> A.PA.SRet <$> (decodeM =<< liftIO (FFI.attributeValueAsType a))
           [parameterAttributeKindP|DereferenceableOrNull|] -> return A.PA.DereferenceableOrNull `ap` (liftIO $ FFI.attributeValueAsInt a)
           [parameterAttributeKindP|Dereferenceable|] -> return A.PA.Dereferenceable `ap` (liftIO $ FFI.attributeValueAsInt a)
           [parameterAttributeKindP|ImmArg|] -> return A.PA.ImmArg
-          [parameterAttributeKindP|InAlloca|] -> return A.PA.InAlloca
           [parameterAttributeKindP|InReg|] -> return A.PA.InReg
           [parameterAttributeKindP|Nest|] -> return A.PA.Nest
           [parameterAttributeKindP|NoAlias|] -> return A.PA.NoAlias
@@ -167,7 +178,6 @@ instance DecodeM DecodeAST A.PA.ParameterAttribute FFI.ParameterAttribute where
           [parameterAttributeKindP|ReadOnly|] -> return A.PA.ReadOnly
           [parameterAttributeKindP|Returned|] -> return A.PA.Returned
           [parameterAttributeKindP|SExt|] -> return A.PA.SignExt
-          [parameterAttributeKindP|StructRet|] -> return A.PA.SRet
           [parameterAttributeKindP|SwiftError|] -> return A.PA.SwiftError
           [parameterAttributeKindP|SwiftSelf|] -> return A.PA.SwiftSelf
           [parameterAttributeKindP|WriteOnly|] -> return A.PA.WriteOnly

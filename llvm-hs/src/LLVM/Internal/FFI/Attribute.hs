@@ -11,6 +11,7 @@ import Foreign.Ptr
 
 import LLVM.Internal.FFI.Context
 import LLVM.Internal.FFI.LLVMCTypes
+import LLVM.Internal.FFI.PtrHierarchy
 
 type Slot = CUInt
 type IntValue = Word64
@@ -78,6 +79,9 @@ foreign import ccall unsafe "LLVM_Hs_AttributeValueAsString" attributeValueAsStr
 foreign import ccall unsafe "LLVM_Hs_AttributeValueAsInt" attributeValueAsInt ::
   Attribute a -> IO Word64
 
+foreign import ccall unsafe "LLVM_Hs_AttributeValueAsType" attributeValueAsType ::
+  Attribute a -> IO (Ptr Type)
+
 foreign import ccall unsafe "LLVM_Hs_getNumAttributes" getNumAttributes ::
   AttributeSet a -> IO CUInt
 
@@ -132,6 +136,9 @@ foreign import ccall unsafe "LLVM_Hs_AttrBuilderAddAttributeKind" attrBuilderAdd
 
 foreign import ccall unsafe "LLVM_Hs_AttrBuilderAddAttributeKind" attrBuilderAddParameterAttributeKind ::
   Ptr ParameterAttrBuilder -> ParameterAttributeKind -> IO ()
+
+foreign import ccall unsafe "LLVM_Hs_AttrBuilderAddTypeAttribute" attrBuilderAddParameterTypeAttribute ::
+  Ptr ParameterAttrBuilder -> ParameterAttributeKind -> Ptr Type -> IO ()
 
 foreign import ccall unsafe "LLVM_Hs_AttrBuilderAddStringAttribute" attrBuilderAddStringAttribute ::
   Ptr (AttrBuilder a) -> Ptr CChar -> CSize -> Ptr CChar -> CSize -> IO ()

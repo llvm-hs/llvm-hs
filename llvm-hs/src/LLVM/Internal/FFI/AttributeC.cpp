@@ -1,4 +1,6 @@
 #define __STDC_LIMIT_MACROS
+#include "llvm-c/Core.h"
+#include "llvm/IR/DerivedTypes.h"
 #include "LLVM/Internal/FFI/AttributeC.hpp"
 #include "llvm/IR/LLVMContext.h"
 
@@ -26,6 +28,10 @@ unsigned LLVM_Hs_AttributeKindAsEnum(LLVMAttributeRef a) {
 
 uint64_t LLVM_Hs_AttributeValueAsInt(LLVMAttributeRef a) {
     return unwrap(a).getValueAsInt();
+}
+
+LLVMTypeRef LLVM_Hs_AttributeValueAsType(LLVMAttributeRef a) {
+    return wrap(unwrap(a).getValueAsType());
 }
 
 LLVMBool LLVM_Hs_IsStringAttribute(LLVMAttributeRef a) {
@@ -116,6 +122,10 @@ void LLVM_Hs_DestroyAttrBuilder(AttrBuilder *a) { a->~AttrBuilder(); }
 
 void LLVM_Hs_AttrBuilderAddAttributeKind(AttrBuilder &ab, unsigned kind) {
     ab.addAttribute(Attribute::AttrKind(kind));
+}
+
+void LLVM_Hs_AttrBuilderAddTypeAttribute(AttrBuilder &ab, unsigned kind, LLVMTypeRef t) {
+    ab.addTypeAttr(Attribute::AttrKind(kind), unwrap(t));
 }
 
 void LLVM_Hs_AttrBuilderAddStringAttribute(AttrBuilder &ab, const char *kind,

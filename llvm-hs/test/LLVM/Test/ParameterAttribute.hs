@@ -9,6 +9,7 @@ import Test.Tasty.QuickCheck                              hiding ( (.&.) )
 import LLVM.Test.Support
 
 import LLVM.AST.ParameterAttribute
+import qualified LLVM.AST                                 as A
 import LLVM.Internal.Coding
 import LLVM.Internal.Context
 import LLVM.Internal.EncodeAST
@@ -30,11 +31,11 @@ instance Arbitrary ParameterAttribute where
     [ return ZeroExt
     , return SignExt
     , return InReg
-    , return SRet
+    , return $ SRet $ A.IntegerType 32
     -- LLVM doesn't allow alignments larger than 2^29!
     , Alignment <$> elements (map (2^) [0..29 :: Int])
     , return NoAlias
-    , return ByVal
+    , return $ ByVal $ A.IntegerType 32
     , return NoCapture
     , return NoFree
     , return Nest
@@ -42,7 +43,7 @@ instance Arbitrary ParameterAttribute where
     , return ReadOnly
     , return WriteOnly
     , return ImmArg
-    , return InAlloca
+    , return $ InAlloca $ A.IntegerType 32
     , return NonNull
     , Dereferenceable <$> suchThat arbitrary (/= 0)
     , DereferenceableOrNull <$> suchThat arbitrary (/= 0)
