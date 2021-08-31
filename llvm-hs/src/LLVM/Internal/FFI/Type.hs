@@ -77,16 +77,20 @@ foreign import ccall unsafe "LLVMStructTypeInContext" structTypeInContext' ::
 structTypeInContext :: Ptr Context -> (CUInt, Ptr (Ptr Type)) -> LLVMBool -> IO (Ptr Type)
 structTypeInContext ctx (n, ts) p = structTypeInContext' ctx ts n p
 
+-- | The reason we don't just use <https://llvm.org/doxygen/group__LLVMCCoreTypeStruct.html#gaf3bed4d4b79664d613acf8b9dbfbccb7>
+-- | is because we LLVM may adjust the typename, and we need to capture the new name if that happens.
 foreign import ccall unsafe "LLVM_Hs_StructCreateNamed" structCreateNamed ::
   Ptr Context -> CString -> Ptr (OwnerTransfered CString) -> IO (Ptr Type)
 
 foreign import ccall unsafe "LLVMGetStructName" getStructName ::
   Ptr Type -> IO CString
 
-foreign import ccall unsafe "LLVM_Hs_StructIsLiteral" structIsLiteral ::
+-- | <https://llvm.org/doxygen/group__LLVMCCoreTypeStruct.html#gaf7a24fcfbf80b61b478cafe81fc25a43>
+foreign import ccall unsafe "LLVMIsLiteralStruct" structIsLiteral ::
   Ptr Type -> IO LLVMBool
 
-foreign import ccall unsafe "LLVM_Hs_StructIsOpaque" structIsOpaque ::
+-- | <https://llvm.org/doxygen/group__LLVMCCoreTypeStruct.html#ga97ec8b94d2b1d055691b3a086dfcefea>
+foreign import ccall unsafe "LLVMIsOpaqueStruct" structIsOpaque ::
   Ptr Type -> IO LLVMBool
 
 -- | <http://llvm.org/doxygen/group__LLVMCCoreTypeStruct.html#ga3e940e660375ae0cbdde81c0d8ec91e3>
@@ -143,12 +147,12 @@ foreign import ccall unsafe "LLVMFP128TypeInContext" fP128TypeInContext ::
 foreign import ccall unsafe "LLVMPPCFP128TypeInContext" ppcFP128TypeInContext ::
   Ptr Context -> IO (Ptr Type)
 
--- | <http://llvm.org/doxygen/classllvm_1_1Type.html#a28fdf240b8220065bc60d6d1b1a2f174>
-foreign import ccall unsafe "LLVM_Hs_MetadataTypeInContext" metadataTypeInContext ::
+-- | <https://llvm.org/doxygen/group__LLVMCCoreTypeOther.html#ga59283de371ba6d44a2e2c8bd0db108e8>
+foreign import ccall unsafe "LLVMMetadataTypeInContext" metadataTypeInContext ::
   Ptr Context -> IO (Ptr Type)
 
--- | <http://llvm.org/docs/doxygen/html/Core_8cpp.html#a5d3702e198e2373db7e31bb18879efc3>
-foreign import ccall unsafe "LLVM_Hs_TokenTypeInContext" tokenTypeInContext ::
+-- | <https://llvm.org/doxygen/group__LLVMCCoreTypeOther.html#ga5d3702e198e2373db7e31bb18879efc3>
+foreign import ccall unsafe "LLVMTokenTypeInContext" tokenTypeInContext ::
   Ptr Context -> IO (Ptr Type)
 
 -- | <http://llvm.org/doxygen/group__LLVMCCoreTypeOther.html#ga7b7c56bf8406c50205fdd410b351ad81>

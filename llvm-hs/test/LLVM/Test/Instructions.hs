@@ -77,13 +77,13 @@ tests = testGroup "Instructions" [
         [
          (name, UnName 8 := instr, "%8 = " <> instrS)
          | (name, instr, instrS) <- [
-          ("fneg",
-           FNeg {
-             fastMathFlags = noFastMathFlags,
-             operand0 = a 1,
-             metadata = []
-           },
-           "fneg float %1"),
+          --("fneg",
+          -- FNeg {
+          --   fastMathFlags = noFastMathFlags,
+          --   operand0 = a 1,
+          --   metadata = []
+          -- },
+          -- "fneg float %1"),
           ("add",
            Add {
              nsw = False,
