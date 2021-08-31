@@ -60,24 +60,34 @@ data AttrSetDecoder a = AttrSetDecoder {
     attrSetDecoderCountParams :: a -> IO CUInt
   }
 
-foreign import ccall unsafe "LLVM_Hs_AttributeKindAsEnum" parameterAttributeKindAsEnum ::
+-- | <https://llvm.org/doxygen/group__LLVMCCoreContext.html#ga08d1304979a5ea706b1641c11937b80d>
+foreign import ccall unsafe "LLVMGetEnumAttributeKind" parameterAttributeKindAsEnum ::
   ParameterAttribute -> IO ParameterAttributeKind
 
-foreign import ccall unsafe "LLVM_Hs_AttributeKindAsEnum" functionAttributeKindAsEnum ::
+-- | <https://llvm.org/doxygen/group__LLVMCCoreContext.html#ga08d1304979a5ea706b1641c11937b80d>
+foreign import ccall unsafe "LLVMGetEnumAttributeKind" functionAttributeKindAsEnum ::
   FunctionAttribute -> IO FunctionAttributeKind
 
-foreign import ccall unsafe "LLVM_Hs_IsStringAttribute" isStringAttribute ::
+-- | <https://llvm.org/doxygen/group__LLVMCCoreContext.html#gab835d65835c777cd435e5502da143564>
+foreign import ccall unsafe "LLVMIsStringAttribute" isStringAttribute ::
   Attribute a -> IO LLVMBool
 
+-- | Unfortunately the LLVM C API function can only deal with a 32 bit (unsigned*) length, so we can't just call
+-- | <https://llvm.org/doxygen/group__LLVMCCoreContext.html#gab88856ea2394e46b10c145aa095e0c06>
 foreign import ccall unsafe "LLVM_Hs_AttributeKindAsString" attributeKindAsString ::
   Attribute a -> Ptr CSize -> IO (Ptr CChar)
 
+-- | Unfortunately the LLVM C API function can only deal with a 32 bit (unsigned*) length, so we can't just call
+-- | <https://llvm.org/doxygen/group__LLVMCCoreContext.html#ga6d78aed2879dccec9d81a1acfad170fd
 foreign import ccall unsafe "LLVM_Hs_AttributeValueAsString" attributeValueAsString ::
   Attribute a -> Ptr CSize -> IO (Ptr CChar)
 
+-- TODO-LLVM-VERSION-INCREASE: Check C API coverage (has this functionality been added?)
+-- | The LLVM C API does not expose this functionality
 foreign import ccall unsafe "LLVM_Hs_AttributeValueAsInt" attributeValueAsInt ::
   Attribute a -> IO Word64
 
+-- | The LLVM C API does not expose this functionality
 foreign import ccall unsafe "LLVM_Hs_getNumAttributes" getNumAttributes ::
   AttributeSet a -> IO CUInt
 
