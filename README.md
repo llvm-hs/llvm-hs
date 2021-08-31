@@ -19,19 +19,34 @@ compiler with the library. In general, we try to stay very close to
 the API and AST provided by LLVM itself, so the [LLVM language
 reference](http://llvm.org/docs/LangRef.html) is also very useful.
 
+## LLVM API Interface
+
+`llvm-hs` provides an LLVM binding at (roughly) the same level of abstraction
+as the official LLVM C API. Because of this, anything you might do with the
+LLVM C API, you should expect to be able to do with `llvm-hs`. In addition,
+some things which are not handled in the LLVM C API are supported. For example,
+the LLVM C API [does not provide any
+support](https://llvm.org/doxygen/group__LLVMCSupportTypes.html) for working
+with `AttributeSet` and `AttributeList` types, but `llvm-hs` does.
+
+However, the binding to LLVM is only half the story: a lot of advanced
+pure-Haskell functionality is built on top of this basic interface in the
+`llvm-hs-pure` module, most notably the monadic
+[IRBuilder](https://hackage.haskell.org/package/llvm-hs-pure) and
+[ModuleBuilder](https://hackage.haskell.org/package/llvm-hs-pure) interfaces
+which greatly simplify the task of generating LLVM code from a higher level
+abstract syntax. These high level interfaces are ideal for implementing the
+LLVM backend for your code generation project. A good example is Google's
+[Dex](https://github.com/google-research/dex-lang) research language.
+
 ## LLVM API Coverage
 
-In general, anything you might do via the LLVM C API, you can expect to be able
-to do with `llvm-hs`. In addition, many things which are not exposed via the
-LLVM C API are supported. For example, the LLVM C API [does not provide any
-support](https://llvm.org/doxygen/group__LLVMCSupportTypes.html) for working
-with `AttributeSet`s and `AttributeList`s, but `llvm-hs` does.
-
-This is made possible because the `llvm-hs` FFI layer incorporates extensions
-to the LLVM C API adding missing functionality from the C++ API which is not
-yet exposed via the C API by the upstream LLVM project. As the LLVM C API
-becomes more complete, we retire our extensions and wrap the newly added
-LLVM functions to keep our FFI layer as small as possible.
+The `llvm-hs` FFI layer in `LLVM/Internal/FFI` extends the upstream LLVM C API
+*adding missing functionality* which upstream has not yet exposed from the C++
+API. We also provide some *improved implementations of buggy or otherwise
+problematic functions* in the LLVM C API. As the LLVM C API becomes more
+complete, we retire our extensions and directly wrap the newly added C API
+functions, ensuring our FFI layer is as small as possible.
 
 If you find you need to use some LLVM functionality which is available via the
 C++ API but not via the C API or in  `llvm-hs`, please open an issue and
@@ -40,8 +55,8 @@ documentation.
 
 ## Contributing
 
-We love all kinds of contributions so feel free to open issues for missing LLVM
-features, report & fix bugs or report API inconveniences.
+We love all kinds of contributions so please feel free to open issues for
+missing LLVM features, report & fix bugs or report API inconveniences.
 
 ## Versioning
 
