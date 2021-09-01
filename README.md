@@ -35,9 +35,12 @@ pure-Haskell functionality is built on top of this basic interface in the
 [IRBuilder](https://hackage.haskell.org/package/llvm-hs-pure) and
 [ModuleBuilder](https://hackage.haskell.org/package/llvm-hs-pure) interfaces
 which greatly simplify the task of generating LLVM code from a higher level
-abstract syntax. These high level interfaces are ideal for implementing the
-LLVM backend for your code generation project. A good example is Google's
-[Dex](https://github.com/google-research/dex-lang) research language.
+abstract syntax. The
+[llvm-hs-examples](https://github.com/llvm-hs/llvm-hs-examples/blob/master/irbuilder/Main.hs)
+project contains example usage. These high level interfaces are ideal for
+implementing the LLVM backend for your code generation project. A good example
+is Google's [Dex](https://github.com/google-research/dex-lang) research
+language.
 
 ## LLVM API Coverage
 
