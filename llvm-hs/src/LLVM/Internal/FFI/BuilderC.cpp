@@ -4,153 +4,285 @@
 
 #include "llvm-c/Core.h"
 
-#include "LLVM/Internal/FFI/BinaryOperator.h"
-#include "LLVM/Internal/FFI/ErrorHandling.hpp"
 #include "LLVM/Internal/FFI/Instruction.h"
 
 using namespace llvm;
 
 namespace llvm {
 static AtomicOrdering unwrap(LLVMAtomicOrdering l) {
-	switch(l) {
-#define ENUM_CASE(x) case LLVMAtomicOrdering ## x: return AtomicOrdering::x;
-LLVM_HS_FOR_EACH_ATOMIC_ORDERING(ENUM_CASE)
-#undef ENUM_CASE
-	default: return AtomicOrdering(0);
-	}
+    switch(l) {
+        case LLVMAtomicOrderingNotAtomic: return AtomicOrdering::NotAtomic;
+        case LLVMAtomicOrderingUnordered: return AtomicOrdering::Unordered;
+        case LLVMAtomicOrderingMonotonic: return AtomicOrdering::Monotonic;
+        case LLVMAtomicOrderingAcquire: return AtomicOrdering::Acquire;
+        case LLVMAtomicOrderingRelease: return AtomicOrdering::Release;
+        case LLVMAtomicOrderingAcquireRelease:  return AtomicOrdering::AcquireRelease;
+        case LLVMAtomicOrderingSequentiallyConsistent: return AtomicOrdering::SequentiallyConsistent;
+        //FIXME: this function should be total and no default should be required
+        default: return AtomicOrdering(0);
+    }
 }
 
 static SyncScope::ID unwrap(LLVMSynchronizationScope l) {
-	switch(l) {
-#define ENUM_CASE(x) case LLVM ## x ## SynchronizationScope: return SyncScope::x;
-LLVM_HS_FOR_EACH_SYNCRONIZATION_SCOPE(ENUM_CASE)
-#undef ENUM_CASE
-	default: reportFatalError("Unknown synchronization scope");
-	}
+    switch(l) {
+        case LLVMSingleThreadSynchronizationScope: return SyncScope::SingleThread;
+        case LLVMSystemSynchronizationScope: return SyncScope::System;
+        //FIXME: this function should be total and no default should be required
+        default: return SyncScope::ID(0);
+    }
 }
 
 static AtomicRMWInst::BinOp unwrap(LLVMAtomicRMWBinOp_ l) {
-	switch(l) {
+    switch(l) {
 #define ENUM_CASE(x) case LLVMAtomicRMWBinOp_ ## x: return AtomicRMWInst::x;
 LLVM_HS_FOR_EACH_RMW_OPERATION(ENUM_CASE)
 #undef ENUM_CASE
-	default: return AtomicRMWInst::BinOp(0);
-	}
+    //FIXME: this function should be total and no default should be required
+    default: return AtomicRMWInst::BinOp(0);
+    }
 }
 
 static FastMathFlags unwrap(LLVMFastMathFlags f) {
-	FastMathFlags r = FastMathFlags();
+    FastMathFlags r = FastMathFlags();
 #define ENUM_CASE_F(x,l) if (f & LLVM ## x) r.set ## x();
 #define ENUM_CASE_T(x,l) if (f & LLVM ## x) r.set ## x(true);
 #define ENUM_CASE(x,l,takesArg) ENUM_CASE_ ## takesArg(x,l)
 LLVM_HS_FOR_EACH_FAST_MATH_FLAG(ENUM_CASE)
 #undef ENUM_CASE
-	return r;
+    return r;
 }
 
 }
 
 extern "C" {
 
-#define ENUM_CASE(Op)																										\
-LLVMValueRef LLVM_Hs_Build ## Op(																	\
-	LLVMBuilderRef b,																											\
-	LLVMBool nsw,																													\
-	LLVMBool nuw,																													\
-	LLVMValueRef o0,																											\
-	LLVMValueRef o1,																											\
-	const char *s																													\
-) {																																			\
-    BinaryOperator *BO = unwrap(b)->Insert(BinaryOperator::Create(Instruction::Op, unwrap(o0), unwrap(o1)), s); \
-    if (nuw) BO->setHasNoUnsignedWrap(); \
-    if (nsw) BO->setHasNoSignedWrap(); \
-    return wrap(BO);                   \
+LLVMValueRef LLVM_Hs_BuildAdd(
+    LLVMBuilderRef b,
+    LLVMBool nsw,
+    LLVMBool nuw,
+    LLVMValueRef o0,
+    LLVMValueRef o1,
+    const char *s
+) {
+    if (nuw) {
+        return LLVMBuildNUWAdd(b, o0, o1, s);
+    } else if (nsw) {
+        return LLVMBuildNSWAdd(b, o0, o1, s);
+    } else {
+        return LLVMBuildAdd(b, o0, o1, s);
+    }
 }
-LLVM_HS_FOR_EACH_OVERFLOWING_BINARY_OPERATOR(ENUM_CASE)
-#undef ENUM_CASE
 
-#define ENUM_CASE(Op)																										\
-LLVMValueRef LLVM_Hs_Build ## Op(																	\
-	LLVMBuilderRef b,																											\
-	LLVMBool exact,																												\
-	LLVMValueRef o0,																											\
-	LLVMValueRef o1,																											\
-	const char *s																													\
-) {																																			\
-    if (!exact) { \
-        return wrap(unwrap(b)->Insert(BinaryOperator::Create##Op(unwrap(o0), unwrap(o1)), s)); \
-    } \
-     return wrap(unwrap(b)->Insert(BinaryOperator::CreateExact##Op(unwrap(o0), unwrap(o1)), s)); \
+LLVMValueRef LLVM_Hs_BuildMul(
+    LLVMBuilderRef b,
+    LLVMBool nsw,
+    LLVMBool nuw,
+    LLVMValueRef o0,
+    LLVMValueRef o1,
+    const char *s
+) {
+    if (nuw) {
+        return LLVMBuildNUWMul(b, o0, o1, s);
+    } else if (nsw) {
+        return LLVMBuildNSWMul(b, o0, o1, s);
+    } else {
+        return LLVMBuildMul(b, o0, o1, s);
+    }
 }
-LLVM_HS_FOR_EACH_POSSIBLY_EXACT_BINARY_OPERATOR(ENUM_CASE)
-#undef ENUM_CASE
 
-#define LLVM_HS_FOR_EACH_CAST_INSTR(macro) \
-    macro(AddrSpaceCast) \
-    macro(BitCast) \
-    macro(FPExt) \
-    macro(FPToSI) \
-    macro(FPToUI) \
-    macro(FPTrunc) \
-    macro(IntToPtr) \
-    macro(PtrToInt) \
-    macro(SExt) \
-    macro(SIToFP) \
-    macro(Trunc) \
-    macro(UIToFP) \
-    macro(ZExt)
-
-#define ENUM_CASE(Op) \
-LLVMValueRef LLVM_Hs_Build##Op(LLVMBuilderRef b, LLVMValueRef val, LLVMTypeRef destTy, const char *name) {\
-    return wrap(unwrap(b)->Insert(CastInst::Create(Instruction::Op, unwrap(val), unwrap(destTy)), name));\
+LLVMValueRef LLVM_Hs_BuildShl(
+    LLVMBuilderRef b,
+    LLVMBool nsw,
+    LLVMBool nuw,
+    LLVMValueRef o0,
+    LLVMValueRef o1,
+    const char *s
+) {
+    // TODO-LLVM-VERSION-INCREASE: Check C API coverage (has this functionality been added?)
+    // For some reason, the LLVM C API does not provide NUW/NSW constructors for Shl
+    BinaryOperator *BO = unwrap(b)->Insert(BinaryOperator::Create(Instruction::Shl, unwrap(o0), unwrap(o1)), s);
+    if (nuw) BO->setHasNoUnsignedWrap();
+    if (nsw) BO->setHasNoSignedWrap();
+    return wrap(BO);
 }
-LLVM_HS_FOR_EACH_CAST_INSTR(ENUM_CASE)
-#undef ENUM_CASE
 
-#define LLVM_HS_FOR_EACH_BINOP(macro) \
-    macro(And) \
-    macro(Or) \
-    macro(SRem) \
-    macro(URem) \
-    macro(Xor)
-
-#define ENUM_CASE(Op) \
-LLVMValueRef LLVM_Hs_Build##Op(LLVMBuilderRef b, LLVMValueRef lhs, LLVMValueRef rhs, const char *name) {\
-    return wrap(unwrap(b)->Insert(BinaryOperator::Create##Op(unwrap(lhs), unwrap(rhs)), name)); \
+LLVMValueRef LLVM_Hs_BuildSub(
+    LLVMBuilderRef b,
+    LLVMBool nsw,
+    LLVMBool nuw,
+    LLVMValueRef o0,
+    LLVMValueRef o1,
+    const char *s
+) {
+    if (nuw) {
+        return LLVMBuildNUWSub(b, o0, o1, s);
+    } else if (nsw) {
+        return LLVMBuildNSWSub(b, o0, o1, s);
+    } else {
+        return LLVMBuildSub(b, o0, o1, s);
+    }
 }
-LLVM_HS_FOR_EACH_BINOP(ENUM_CASE)
-#undef ENUM_CASE
 
-#define LLVM_HS_FOR_EACH_FP_UNOP(macro) \
-    macro(FNeg)
-
-#define ENUM_CASE(Op) \
-LLVMValueRef LLVM_Hs_Build##Op(LLVMBuilderRef b, LLVMValueRef rhs, const char *name) { \
-    UnaryOperator* uo = UnaryOperator::Create(Instruction::Op, unwrap(rhs), name); \
-    uo->setFastMathFlags(unwrap(b)->getFastMathFlags()); \
-    return wrap(unwrap(b)->Insert(uo, name)); \
+LLVMValueRef LLVM_Hs_BuildUDiv(
+    LLVMBuilderRef b,
+    LLVMBool exact,
+    LLVMValueRef o0,
+    LLVMValueRef o1,
+    const char *s
+) {
+    if (!exact) {
+        return wrap(unwrap(b)->Insert(BinaryOperator::CreateUDiv(unwrap(o0), unwrap(o1)), s));
+    }
+    return wrap(unwrap(b)->Insert(BinaryOperator::CreateExactUDiv(unwrap(o0), unwrap(o1)), s));
 }
-LLVM_HS_FOR_EACH_FP_UNOP(ENUM_CASE)
-#undef ENUM_CASE
 
-#define LLVM_HS_FOR_EACH_FP_BINOP(macro) \
-    macro(FAdd) \
-    macro(FDiv) \
-    macro(FMul) \
-    macro(FRem) \
-    macro(FSub)
-
-#define ENUM_CASE(Op) \
-LLVMValueRef LLVM_Hs_Build##Op(LLVMBuilderRef b, LLVMValueRef lhs, LLVMValueRef rhs, const char *name) { \
-    BinaryOperator* bo = BinaryOperator::Create##Op(unwrap(lhs), unwrap(rhs)); \
-    bo->setFastMathFlags(unwrap(b)->getFastMathFlags()); \
-    return wrap(unwrap(b)->Insert(bo, name)); \
+LLVMValueRef LLVM_Hs_BuildSDiv(
+    LLVMBuilderRef b,
+    LLVMBool exact,
+    LLVMValueRef o0,
+    LLVMValueRef o1,
+    const char *s
+) {
+    if (!exact) {
+        return wrap(unwrap(b)->Insert(BinaryOperator::CreateSDiv(unwrap(o0), unwrap(o1)), s));
+    }
+    return wrap(unwrap(b)->Insert(BinaryOperator::CreateExactSDiv(unwrap(o0), unwrap(o1)), s));
 }
-LLVM_HS_FOR_EACH_FP_BINOP(ENUM_CASE)
-#undef ENUM_CASE
+
+LLVMValueRef LLVM_Hs_BuildLShr(
+    LLVMBuilderRef b,
+    LLVMBool exact,
+    LLVMValueRef o0,
+    LLVMValueRef o1,
+    const char *s
+) {
+    if (!exact) {
+        return wrap(unwrap(b)->Insert(BinaryOperator::CreateLShr(unwrap(o0), unwrap(o1)), s));
+    }
+    return wrap(unwrap(b)->Insert(BinaryOperator::CreateExactLShr(unwrap(o0), unwrap(o1)), s));
+}
+
+LLVMValueRef LLVM_Hs_BuildAShr(
+    LLVMBuilderRef b,
+    LLVMBool exact,
+    LLVMValueRef o0,
+    LLVMValueRef o1,
+    const char *s
+) {
+    if (!exact) {
+        return wrap(unwrap(b)->Insert(BinaryOperator::CreateAShr(unwrap(o0), unwrap(o1)), s));
+    }
+    return wrap(unwrap(b)->Insert(BinaryOperator::CreateExactAShr(unwrap(o0), unwrap(o1)), s));
+}
+
+LLVMValueRef LLVM_Hs_BuildAddrSpaceCast(LLVMBuilderRef b, LLVMValueRef val, LLVMTypeRef destTy, const char *name) {
+    return wrap(unwrap(b)->Insert(CastInst::Create(Instruction::AddrSpaceCast, unwrap(val), unwrap(destTy)), name));
+}
+
+LLVMValueRef LLVM_Hs_BuildBitCast(LLVMBuilderRef b, LLVMValueRef val, LLVMTypeRef destTy, const char *name) {
+    return wrap(unwrap(b)->Insert(CastInst::Create(Instruction::BitCast, unwrap(val), unwrap(destTy)), name));
+}
+
+LLVMValueRef LLVM_Hs_BuildFPExt(LLVMBuilderRef b, LLVMValueRef val, LLVMTypeRef destTy, const char *name) {
+    return wrap(unwrap(b)->Insert(CastInst::Create(Instruction::FPExt, unwrap(val), unwrap(destTy)), name));
+}
+
+LLVMValueRef LLVM_Hs_BuildFPToSI(LLVMBuilderRef b, LLVMValueRef val, LLVMTypeRef destTy, const char *name) {
+    return wrap(unwrap(b)->Insert(CastInst::Create(Instruction::FPToSI, unwrap(val), unwrap(destTy)), name));
+}
+
+LLVMValueRef LLVM_Hs_BuildFPToUI(LLVMBuilderRef b, LLVMValueRef val, LLVMTypeRef destTy, const char *name) {
+    return wrap(unwrap(b)->Insert(CastInst::Create(Instruction::FPToUI, unwrap(val), unwrap(destTy)), name));
+}
+
+LLVMValueRef LLVM_Hs_BuildFPTrunc(LLVMBuilderRef b, LLVMValueRef val, LLVMTypeRef destTy, const char *name) {
+    return wrap(unwrap(b)->Insert(CastInst::Create(Instruction::FPTrunc, unwrap(val), unwrap(destTy)), name));
+}
+
+LLVMValueRef LLVM_Hs_BuildIntToPtr(LLVMBuilderRef b, LLVMValueRef val, LLVMTypeRef destTy, const char *name) {
+    return wrap(unwrap(b)->Insert(CastInst::Create(Instruction::IntToPtr, unwrap(val), unwrap(destTy)), name));
+}
+
+LLVMValueRef LLVM_Hs_BuildPtrToInt(LLVMBuilderRef b, LLVMValueRef val, LLVMTypeRef destTy, const char *name) {
+    return wrap(unwrap(b)->Insert(CastInst::Create(Instruction::PtrToInt, unwrap(val), unwrap(destTy)), name));
+}
+
+LLVMValueRef LLVM_Hs_BuildSExt(LLVMBuilderRef b, LLVMValueRef val, LLVMTypeRef destTy, const char *name) {
+    return wrap(unwrap(b)->Insert(CastInst::Create(Instruction::SExt, unwrap(val), unwrap(destTy)), name));
+}
+
+LLVMValueRef LLVM_Hs_BuildSIToFP(LLVMBuilderRef b, LLVMValueRef val, LLVMTypeRef destTy, const char *name) {
+    return wrap(unwrap(b)->Insert(CastInst::Create(Instruction::SIToFP, unwrap(val), unwrap(destTy)), name));
+}
+
+LLVMValueRef LLVM_Hs_BuildTrunc(LLVMBuilderRef b, LLVMValueRef val, LLVMTypeRef destTy, const char *name) {
+    return wrap(unwrap(b)->Insert(CastInst::Create(Instruction::Trunc, unwrap(val), unwrap(destTy)), name));
+}
+
+LLVMValueRef LLVM_Hs_BuildUIToFP(LLVMBuilderRef b, LLVMValueRef val, LLVMTypeRef destTy, const char *name) {
+    return wrap(unwrap(b)->Insert(CastInst::Create(Instruction::UIToFP, unwrap(val), unwrap(destTy)), name));
+}
+
+LLVMValueRef LLVM_Hs_BuildZExt(LLVMBuilderRef b, LLVMValueRef val, LLVMTypeRef destTy, const char *name) {
+    return wrap(unwrap(b)->Insert(CastInst::Create(Instruction::ZExt, unwrap(val), unwrap(destTy)), name));
+}
+
+LLVMValueRef LLVM_Hs_BuildAnd(LLVMBuilderRef b, LLVMValueRef lhs, LLVMValueRef rhs, const char *name) {
+    return wrap(unwrap(b)->Insert(BinaryOperator::CreateAnd(unwrap(lhs), unwrap(rhs)), name));
+}
+
+LLVMValueRef LLVM_Hs_BuildOr(LLVMBuilderRef b, LLVMValueRef lhs, LLVMValueRef rhs, const char *name) {
+    return wrap(unwrap(b)->Insert(BinaryOperator::CreateOr(unwrap(lhs), unwrap(rhs)), name));
+}
+
+LLVMValueRef LLVM_Hs_BuildSRem(LLVMBuilderRef b, LLVMValueRef lhs, LLVMValueRef rhs, const char *name) {
+    return wrap(unwrap(b)->Insert(BinaryOperator::CreateSRem(unwrap(lhs), unwrap(rhs)), name));
+}
+
+LLVMValueRef LLVM_Hs_BuildURem(LLVMBuilderRef b, LLVMValueRef lhs, LLVMValueRef rhs, const char *name) {
+    return wrap(unwrap(b)->Insert(BinaryOperator::CreateURem(unwrap(lhs), unwrap(rhs)), name));
+}
+
+LLVMValueRef LLVM_Hs_BuildXor(LLVMBuilderRef b, LLVMValueRef lhs, LLVMValueRef rhs, const char *name) {
+    return wrap(unwrap(b)->Insert(BinaryOperator::CreateXor(unwrap(lhs), unwrap(rhs)), name));
+}
+
+LLVMValueRef LLVM_Hs_BuildFNeg(LLVMBuilderRef b, LLVMValueRef rhs, const char *name) {
+    return LLVMBuildFNeg(b, rhs, name);
+}
+
+LLVMValueRef LLVM_Hs_BuildFAdd(LLVMBuilderRef b, LLVMValueRef lhs, LLVMValueRef rhs, const char *name) {
+    BinaryOperator* bo = BinaryOperator::CreateFAdd(unwrap(lhs), unwrap(rhs));
+    bo->setFastMathFlags(unwrap(b)->getFastMathFlags());
+    return wrap(unwrap(b)->Insert(bo, name));
+}
+
+LLVMValueRef LLVM_Hs_BuildFDiv(LLVMBuilderRef b, LLVMValueRef lhs, LLVMValueRef rhs, const char *name) {
+    BinaryOperator* bo = BinaryOperator::CreateFDiv(unwrap(lhs), unwrap(rhs));
+    bo->setFastMathFlags(unwrap(b)->getFastMathFlags());
+    return wrap(unwrap(b)->Insert(bo, name));
+}
+
+LLVMValueRef LLVM_Hs_BuildFMul(LLVMBuilderRef b, LLVMValueRef lhs, LLVMValueRef rhs, const char *name) {
+    BinaryOperator* bo = BinaryOperator::CreateFMul(unwrap(lhs), unwrap(rhs));
+    bo->setFastMathFlags(unwrap(b)->getFastMathFlags());
+    return wrap(unwrap(b)->Insert(bo, name));
+}
+
+LLVMValueRef LLVM_Hs_BuildFRem(LLVMBuilderRef b, LLVMValueRef lhs, LLVMValueRef rhs, const char *name) {
+    BinaryOperator* bo = BinaryOperator::CreateFRem(unwrap(lhs), unwrap(rhs));
+    bo->setFastMathFlags(unwrap(b)->getFastMathFlags());
+    return wrap(unwrap(b)->Insert(bo, name));
+}
+
+LLVMValueRef LLVM_Hs_BuildFSub(LLVMBuilderRef b, LLVMValueRef lhs, LLVMValueRef rhs, const char *name) {
+    BinaryOperator* bo = BinaryOperator::CreateFSub(unwrap(lhs), unwrap(rhs));
+    bo->setFastMathFlags(unwrap(b)->getFastMathFlags());
+    return wrap(unwrap(b)->Insert(bo, name));
+}
 
 void LLVM_Hs_SetFastMathFlags(LLVMBuilderRef b, LLVMFastMathFlags f) {
-	unwrap(b)->setFastMathFlags(unwrap(f));
+    unwrap(b)->setFastMathFlags(unwrap(f));
 }
 
 LLVMValueRef LLVM_Hs_BuildICmp(LLVMBuilderRef b, LLVMIntPredicate op, LLVMValueRef lhs, LLVMValueRef rhs, const char* name) {
@@ -160,80 +292,80 @@ LLVMValueRef LLVM_Hs_BuildICmp(LLVMBuilderRef b, LLVMIntPredicate op, LLVMValueR
 }
 
 LLVMValueRef LLVM_Hs_BuildLoad(
-	LLVMBuilderRef b,
-	LLVMBool isVolatile,
-	LLVMValueRef p,
-	LLVMAtomicOrdering atomicOrdering,
-	LLVMSynchronizationScope synchScope,
-	unsigned align,
-	const char *name
+    LLVMBuilderRef b,
+    LLVMBool isVolatile,
+    LLVMValueRef p,
+    LLVMAtomicOrdering atomicOrdering,
+    LLVMSynchronizationScope synchScope,
+    unsigned align,
+    const char *name
 ) {
-	LoadInst *i = unwrap(b)->CreateAlignedLoad(unwrap(p), MaybeAlign(align), isVolatile, name);
-	i->setOrdering(unwrap(atomicOrdering));
-	if (atomicOrdering != LLVMAtomicOrderingNotAtomic) i->setSyncScopeID(unwrap(synchScope));
-	return wrap(i);
+    LoadInst *i = unwrap(b)->CreateAlignedLoad(unwrap(p), MaybeAlign(align), isVolatile, name);
+    i->setOrdering(unwrap(atomicOrdering));
+    if (atomicOrdering != LLVMAtomicOrderingNotAtomic) i->setSyncScopeID(unwrap(synchScope));
+    return wrap(i);
 }
 
 LLVMValueRef LLVM_Hs_BuildStore(
-	LLVMBuilderRef b,
-	LLVMBool isVolatile,
-	LLVMValueRef p,
-	LLVMValueRef v,
-	LLVMAtomicOrdering atomicOrdering,
-	LLVMSynchronizationScope synchScope,
-	unsigned align,
-	const char *name
+    LLVMBuilderRef b,
+    LLVMBool isVolatile,
+    LLVMValueRef p,
+    LLVMValueRef v,
+    LLVMAtomicOrdering atomicOrdering,
+    LLVMSynchronizationScope synchScope,
+    unsigned align,
+    const char *name
 ) {
-	StoreInst *i = unwrap(b)->CreateAlignedStore(unwrap(v), unwrap(p), MaybeAlign(align), isVolatile);
-	i->setName(name);
-	i->setOrdering(unwrap(atomicOrdering));
-	if (atomicOrdering != LLVMAtomicOrderingNotAtomic) i->setSyncScopeID(unwrap(synchScope));
-	return wrap(i);
+    StoreInst *i = unwrap(b)->CreateAlignedStore(unwrap(v), unwrap(p), MaybeAlign(align), isVolatile);
+    i->setName(name);
+    i->setOrdering(unwrap(atomicOrdering));
+    if (atomicOrdering != LLVMAtomicOrderingNotAtomic) i->setSyncScopeID(unwrap(synchScope));
+    return wrap(i);
 }
 
 LLVMValueRef LLVM_Hs_BuildFence(
-	LLVMBuilderRef b, LLVMAtomicOrdering lao, LLVMSynchronizationScope lss, const char *name
+    LLVMBuilderRef b, LLVMAtomicOrdering lao, LLVMSynchronizationScope lss, const char *name
 ) {
-	FenceInst *i = unwrap(b)->CreateFence(unwrap(lao), unwrap(lss));
-	i->setName(name);
-	return wrap(i);
+    FenceInst *i = unwrap(b)->CreateFence(unwrap(lao), unwrap(lss));
+    i->setName(name);
+    return wrap(i);
 }
 
 LLVMValueRef LLVM_Hs_BuildAtomicCmpXchg(
-	LLVMBuilderRef b,
-	LLVMBool v,
-	LLVMValueRef ptr,
-	LLVMValueRef cmp,
-	LLVMValueRef n,
-	LLVMAtomicOrdering successOrdering,
-	LLVMAtomicOrdering failureOrdering,
-	LLVMSynchronizationScope lss,
-	const char *name
+    LLVMBuilderRef b,
+    LLVMBool v,
+    LLVMValueRef ptr,
+    LLVMValueRef cmp,
+    LLVMValueRef n,
+    LLVMAtomicOrdering successOrdering,
+    LLVMAtomicOrdering failureOrdering,
+    LLVMSynchronizationScope lss,
+    const char *name
 ) {
-	AtomicCmpXchgInst *a = unwrap(b)->CreateAtomicCmpXchg(
-		unwrap(ptr), unwrap(cmp), unwrap(n), unwrap(successOrdering), unwrap(failureOrdering), unwrap(lss)
-	);
-	a->setVolatile(v);
-	a->setName(name);
-	return wrap(a);
+    AtomicCmpXchgInst *a = unwrap(b)->CreateAtomicCmpXchg(
+        unwrap(ptr), unwrap(cmp), unwrap(n), unwrap(successOrdering), unwrap(failureOrdering), unwrap(lss)
+    );
+    a->setVolatile(v);
+    a->setName(name);
+    return wrap(a);
 }
 
 LLVMValueRef LLVM_Hs_BuildAtomicRMW(
-	LLVMBuilderRef b,
-	LLVMBool v,
-	LLVMAtomicRMWBinOp_ rmwOp,
-	LLVMValueRef ptr,
-	LLVMValueRef val,
-	LLVMAtomicOrdering lao,
-	LLVMSynchronizationScope lss,
-	const char *name
+    LLVMBuilderRef b,
+    LLVMBool v,
+    LLVMAtomicRMWBinOp_ rmwOp,
+    LLVMValueRef ptr,
+    LLVMValueRef val,
+    LLVMAtomicOrdering lao,
+    LLVMSynchronizationScope lss,
+    const char *name
 ) {
-	AtomicRMWInst *a = unwrap(b)->CreateAtomicRMW(
-		unwrap(rmwOp), unwrap(ptr), unwrap(val), unwrap(lao), unwrap(lss)
-	);
-	a->setVolatile(v);
-	a->setName(name);
-	return wrap(a);
+    AtomicRMWInst *a = unwrap(b)->CreateAtomicRMW(
+        unwrap(rmwOp), unwrap(ptr), unwrap(val), unwrap(lao), unwrap(lss)
+    );
+    a->setVolatile(v);
+    a->setName(name);
+    return wrap(a);
 }
 
 LLVMValueRef LLVM_Hs_BuildCleanupPad(LLVMBuilderRef b, LLVMValueRef parentPad,
@@ -299,24 +431,24 @@ LLVMValueRef LLVM_Hs_BuildSelect(LLVMBuilderRef B, LLVMValueRef If,
 }
 
 LLVMValueRef LLVM_Hs_BuildExtractValue(
-	LLVMBuilderRef b,
-	LLVMValueRef a,
-	unsigned *idxs,
-	unsigned n,
-	const char *name
+    LLVMBuilderRef b,
+    LLVMValueRef a,
+    unsigned *idxs,
+    unsigned n,
+    const char *name
 ) {
-	return wrap(unwrap(b)->Insert(ExtractValueInst::Create(unwrap(a), ArrayRef<unsigned>(idxs, n)), name));
+    return wrap(unwrap(b)->Insert(ExtractValueInst::Create(unwrap(a), ArrayRef<unsigned>(idxs, n)), name));
 }
 
 LLVMValueRef LLVM_Hs_BuildInsertValue(
-	LLVMBuilderRef b,
-	LLVMValueRef a,
-	LLVMValueRef v,
-	unsigned *idxs,
-	unsigned n,
-	const char *name
+    LLVMBuilderRef b,
+    LLVMValueRef a,
+    LLVMValueRef v,
+    unsigned *idxs,
+    unsigned n,
+    const char *name
 ) {
-	return wrap(unwrap(b)->Insert(InsertValueInst::Create(unwrap(a), unwrap(v), ArrayRef<unsigned>(idxs, n)), name));
+    return wrap(unwrap(b)->Insert(InsertValueInst::Create(unwrap(a), unwrap(v), ArrayRef<unsigned>(idxs, n)), name));
 }
 
 LLVMValueRef LLVM_Hs_BuildExtractElement(LLVMBuilderRef B, LLVMValueRef VecVal,

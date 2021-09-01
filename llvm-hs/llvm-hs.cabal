@@ -21,7 +21,6 @@ extra-source-files:
   src/LLVM/Internal/FFI/Analysis.h
   src/LLVM/Internal/FFI/Attribute.h
   src/LLVM/Internal/FFI/AttributeC.hpp
-  src/LLVM/Internal/FFI/BinaryOperator.h
   src/LLVM/Internal/FFI/CallingConvention.h
   src/LLVM/Internal/FFI/Constant.h
   src/LLVM/Internal/FFI/ErrorHandling.hpp
