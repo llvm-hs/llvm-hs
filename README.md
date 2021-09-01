@@ -42,12 +42,12 @@ implementing the LLVM backend for your code generation project. A good example
 is Google's [Dex](https://github.com/google-research/dex-lang) research
 language.
 
-## LLVM API Coverage
+## LLVM API Coverage and Philosophy
 
 The `llvm-hs` FFI layer in `LLVM/Internal/FFI` extends the upstream LLVM C API
 *adding missing functionality* which upstream has not yet exposed from the C++
-API. We also provide some *improved implementations of buggy or otherwise
-problematic functions* in the LLVM C API. As the LLVM C API becomes more
+API. We also provide some *improved implementations* of buggy or otherwise
+problematic functions in the LLVM C API. As the LLVM C API becomes more
 complete, we retire our extensions and directly wrap the newly added C API
 functions, ensuring our FFI layer is as small as possible.
 
@@ -55,6 +55,10 @@ If you find you need to use some LLVM functionality which is available via the
 C++ API but not via the C API or in  `llvm-hs`, please open an issue and
 include links to the relevant entities in the LLVM doxygen-generated
 documentation.
+
+In general, if it is possible to implement something in Haskell using the LLVM
+C API primitives, that is preferable to implementing things in the FFI layer
+and merely exposing them to Haskell as wrapped C or C++ functions.
 
 ## Contributing
 
