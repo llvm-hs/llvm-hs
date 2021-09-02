@@ -1,15 +1,9 @@
-{-#
-  LANGUAGE
-  ForeignFunctionInterface,
-  TemplateHaskell,
-  ViewPatterns
-  #-}
--- | FFI glue for llvm::IRBuilder - llvm's IR construction state object
+{-# LANGUAGE ForeignFunctionInterface #-}
+{-# LANGUAGE ViewPatterns #-}
+
 module LLVM.Internal.FFI.Builder where
 
 import LLVM.Prelude
-
-import qualified Language.Haskell.TH as TH
 
 import Foreign.Ptr
 import Foreign.C
@@ -21,7 +15,6 @@ import qualified Data.Map as Map
 import qualified LLVM.AST.Instruction as A
 import LLVM.Internal.InstructionDefs as ID
 
-import LLVM.Internal.FFI.Cleanup
 import LLVM.Internal.FFI.Context
 import LLVM.Internal.FFI.LLVMCTypes
 import LLVM.Internal.FFI.PtrHierarchy
@@ -36,7 +29,6 @@ foreign import ccall unsafe "LLVMDisposeBuilder" disposeBuilder ::
 
 foreign import ccall unsafe "LLVMPositionBuilderAtEnd" positionBuilderAtEnd ::
   Ptr Builder -> Ptr BasicBlock -> IO ()
-
 
 foreign import ccall unsafe "LLVMBuildRet" buildRet ::
   Ptr Builder -> Ptr Value -> IO (Ptr Instruction)
@@ -72,26 +64,101 @@ foreign import ccall unsafe "LLVM_Hs_BuildCatchRet" buildCatchRet ::
 foreign import ccall unsafe "LLVM_Hs_BuildCatchSwitch" buildCatchSwitch ::
   Ptr Builder -> Ptr Value -> Ptr BasicBlock -> CUInt -> IO (Ptr Instruction)
 
-$(do
-  liftM concat $ sequence $ do
-    let instrInfo = ID.outerJoin ID.astInstructionRecs ID.instructionDefs
-    (lrn, ii) <- Map.toList instrInfo
-    (TH.RecC _ (unzip3 -> (_, _, fieldTypes)), ID.InstructionDef { ID.cAPIName = a, ID.instructionKind = k }) <- case ii of
-      (Just r, Just d) -> return (r,d)
-      (Just _, Nothing) -> error $ "An AST instruction was not found in the LLVM instruction defs"
-      (Nothing, Just ID.InstructionDef { ID.instructionKind = k }) | k /= ID.Terminator ->
-        error $ "LLVM instruction def " ++ lrn ++ " not found in the AST"
-      _ -> []
+foreign import ccall unsafe "LLVM_Hs_BuildAdd" buildAdd ::
+  Ptr Builder -> LLVMBool -> LLVMBool -> Ptr Value -> Ptr Value -> CString -> IO (Ptr BinaryOperator)
 
-    let ats = map typeMapping (fieldTypes List.\\ [TH.ConT ''A.InstructionMetadata, TH.ConT ''A.FastMathFlags])
-        cName = "LLVM_Hs_Build" ++ a
-    rt <- case k of
-            ID.Unary -> [[t| UnaryOperator |]]
-            ID.Binary -> [[t| BinaryOperator |]]
-            ID.Cast -> [[t| Instruction |]]
-            _ -> []
-    return $ foreignDecl cName ("build" ++ a) ([[t| Ptr Builder |]] ++ ats ++ [[t| CString |]]) [t| Ptr $(rt) |]
- )
+foreign import ccall unsafe "LLVM_Hs_BuildMul" buildMul ::
+  Ptr Builder -> LLVMBool -> LLVMBool -> Ptr Value -> Ptr Value -> CString -> IO (Ptr BinaryOperator)
+
+foreign import ccall unsafe "LLVM_Hs_BuildShl" buildShl ::
+  Ptr Builder -> LLVMBool -> LLVMBool -> Ptr Value -> Ptr Value -> CString -> IO (Ptr BinaryOperator)
+
+foreign import ccall unsafe "LLVM_Hs_BuildSub" buildSub ::
+  Ptr Builder -> LLVMBool -> LLVMBool -> Ptr Value -> Ptr Value -> CString -> IO (Ptr BinaryOperator)
+
+foreign import ccall unsafe "LLVM_Hs_BuildUDiv" buildUDiv ::
+  Ptr Builder -> LLVMBool -> Ptr Value -> Ptr Value -> CString -> IO (Ptr BinaryOperator)
+
+foreign import ccall unsafe "LLVM_Hs_BuildSDiv" buildSDiv ::
+  Ptr Builder -> LLVMBool -> Ptr Value -> Ptr Value -> CString -> IO (Ptr BinaryOperator)
+
+foreign import ccall unsafe "LLVM_Hs_BuildLShr" buildLShr ::
+  Ptr Builder -> LLVMBool -> Ptr Value -> Ptr Value -> CString -> IO (Ptr BinaryOperator)
+
+foreign import ccall unsafe "LLVM_Hs_BuildAShr" buildAShr ::
+  Ptr Builder -> LLVMBool -> Ptr Value -> Ptr Value -> CString -> IO (Ptr BinaryOperator)
+
+foreign import ccall unsafe "LLVM_Hs_BuildAddrSpaceCast" buildAddrSpaceCast ::
+  Ptr Builder -> Ptr Value -> Ptr Type -> CString -> IO (Ptr Instruction)
+
+foreign import ccall unsafe "LLVM_Hs_BuildBitCast" buildBitCast ::
+  Ptr Builder -> Ptr Value -> Ptr Type -> CString -> IO (Ptr Instruction)
+
+foreign import ccall unsafe "LLVM_Hs_BuildFPExt" buildFPExt ::
+  Ptr Builder -> Ptr Value -> Ptr Type -> CString -> IO (Ptr Instruction)
+
+foreign import ccall unsafe "LLVM_Hs_BuildFPToSI" buildFPToSI ::
+  Ptr Builder -> Ptr Value -> Ptr Type -> CString -> IO (Ptr Instruction)
+
+foreign import ccall unsafe "LLVM_Hs_BuildFPToUI" buildFPToUI ::
+  Ptr Builder -> Ptr Value -> Ptr Type -> CString -> IO (Ptr Instruction)
+
+foreign import ccall unsafe "LLVM_Hs_BuildFPTrunc" buildFPTrunc ::
+  Ptr Builder -> Ptr Value -> Ptr Type -> CString -> IO (Ptr Instruction)
+
+foreign import ccall unsafe "LLVM_Hs_BuildIntToPtr" buildIntToPtr ::
+  Ptr Builder -> Ptr Value -> Ptr Type -> CString -> IO (Ptr Instruction)
+
+foreign import ccall unsafe "LLVM_Hs_BuildPtrToInt" buildPtrToInt ::
+  Ptr Builder -> Ptr Value -> Ptr Type -> CString -> IO (Ptr Instruction)
+
+foreign import ccall unsafe "LLVM_Hs_BuildSExt" buildSExt ::
+  Ptr Builder -> Ptr Value -> Ptr Type -> CString -> IO (Ptr Instruction)
+
+foreign import ccall unsafe "LLVM_Hs_BuildSIToFP" buildSIToFP ::
+  Ptr Builder -> Ptr Value -> Ptr Type -> CString -> IO (Ptr Instruction)
+
+foreign import ccall unsafe "LLVM_Hs_BuildTrunc" buildTrunc ::
+  Ptr Builder -> Ptr Value -> Ptr Type -> CString -> IO (Ptr Instruction)
+
+foreign import ccall unsafe "LLVM_Hs_BuildUIToFP" buildUIToFP ::
+  Ptr Builder -> Ptr Value -> Ptr Type -> CString -> IO (Ptr Instruction)
+
+foreign import ccall unsafe "LLVM_Hs_BuildZExt" buildZExt ::
+  Ptr Builder -> Ptr Value -> Ptr Type -> CString -> IO (Ptr Instruction)
+
+foreign import ccall unsafe "LLVM_Hs_BuildAnd" buildAnd ::
+  Ptr Builder -> Ptr Value -> Ptr Value -> CString -> IO (Ptr BinaryOperator)
+
+foreign import ccall unsafe "LLVM_Hs_BuildOr" buildOr ::
+  Ptr Builder -> Ptr Value -> Ptr Value -> CString -> IO (Ptr BinaryOperator)
+
+foreign import ccall unsafe "LLVM_Hs_BuildSRem" buildSRem ::
+  Ptr Builder -> Ptr Value -> Ptr Value -> CString -> IO (Ptr BinaryOperator)
+
+foreign import ccall unsafe "LLVM_Hs_BuildURem" buildURem ::
+  Ptr Builder -> Ptr Value -> Ptr Value -> CString -> IO (Ptr BinaryOperator)
+
+foreign import ccall unsafe "LLVM_Hs_BuildXor" buildXor ::
+  Ptr Builder -> Ptr Value -> Ptr Value -> CString -> IO (Ptr BinaryOperator)
+
+foreign import ccall unsafe "LLVM_Hs_BuildFNeg" buildFNeg ::
+  Ptr Builder -> Ptr Value -> CString -> IO (Ptr UnaryOperator)
+
+foreign import ccall unsafe "LLVM_Hs_BuildFAdd" buildFAdd ::
+  Ptr Builder -> Ptr Value -> Ptr Value -> CString -> IO (Ptr BinaryOperator)
+
+foreign import ccall unsafe "LLVM_Hs_BuildFDiv" buildFDiv ::
+  Ptr Builder -> Ptr Value -> Ptr Value -> CString -> IO (Ptr BinaryOperator)
+
+foreign import ccall unsafe "LLVM_Hs_BuildFMul" buildFMul ::
+  Ptr Builder -> Ptr Value -> Ptr Value -> CString -> IO (Ptr BinaryOperator)
+
+foreign import ccall unsafe "LLVM_Hs_BuildFRem" buildFRem ::
+  Ptr Builder -> Ptr Value -> Ptr Value -> CString -> IO (Ptr BinaryOperator)
+
+foreign import ccall unsafe "LLVM_Hs_BuildFSub" buildFSub ::
+  Ptr Builder -> Ptr Value -> Ptr Value -> CString -> IO (Ptr BinaryOperator)
 
 foreign import ccall unsafe "LLVMBuildArrayAlloca" buildAlloca ::
   Ptr Builder -> Ptr Type -> Ptr Value -> CString -> IO (Ptr Instruction)
