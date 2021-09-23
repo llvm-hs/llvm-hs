@@ -14,6 +14,8 @@ int64 :: Integer -> Operand
 int64 = ConstantOperand . Int 64
 int32 :: Integer -> Operand
 int32 = ConstantOperand . Int 32
+int16 :: Integer -> Operand
+int16 = ConstantOperand . Int 16
 int8 :: Integer -> Operand
 int8  = ConstantOperand . Int 8
 bit :: Integer -> Operand
