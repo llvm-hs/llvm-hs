@@ -1,3 +1,9 @@
+## 9.1.0 (UNRELEASED)
+
+* IRBuilder: first emitted terminator (`br`, `condBr`, `ret`, ...) is only
+  generated in final IR. This allows for greater composition of IR (and matches
+  with LLVM semantics, since later instructions are unreachable).
+
 ## 9.0.0 (2019-09-06)
 
 * The functions in `LLVM.IRBuilder.Constant` no longer return a
