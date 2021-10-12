@@ -1,4 +1,4 @@
-## 9.1.0 (2021-09-XX)
+## 9.1.0 (2021-10-XX)
 
 * Eliminate hard-coded assumption of 32-bit `size_t`
 * Add a runtime variant of the `LLVM.AST.Constant.sizeof` utility in `LLVM.IRBuilder.Instruction.sizeof`. The size of opaque structure types is unknown until link-time and therefore cannot be computed as a constant.
