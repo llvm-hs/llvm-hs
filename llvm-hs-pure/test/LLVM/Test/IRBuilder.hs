@@ -445,6 +445,7 @@ terminatorHandling :: Assertion
 terminatorHandling = do
   firstTerminatorWins @?= firstWinsAst
   terminatorsCompose @?= terminatorsComposeAst
+  nestedControlFlowWorks @?= nestedControlFlowAst
   where
     firstTerminatorWins = buildModule "firstTerminatorWinsModule" $ mdo
       function "f" [(AST.i32, "a"), (AST.i32, "b")] AST.i32 $ \[a, b] -> mdo
@@ -462,10 +463,20 @@ terminatorHandling = do
             ret (bit 0)
 
           ret (bit 1)
+    nestedControlFlowWorks = buildModule "nestedControlFlowWorksModule" $ mdo
+      function "f" [(AST.i1, "a"), (AST.i1, "b")] AST.i1 $ \[a, b] -> mdo
+
+        entry <- block `named` "entry"; do
+          if' a $ do
+            if' b $ do
+              ret (bit 0)
+
+          ret (bit 1)
     if' cond asm = mdo
       condBr cond ifBlock end
       ifBlock <- block `named` "if.begin"
       asm
+      br end
       end <- block `named` "if.end"
       return ()
 
@@ -511,7 +522,30 @@ terminatorHandling = do
                             (Do (Ret {returnOperand = Just (ConstantOperand (C.Int {C.integerBits = 1, C.integerValue = 1})), metadata' = []}))]
           }
         ]}
-
+    nestedControlFlowAst = defaultModule
+      { moduleName = "nestedControlFlowWorksModule"
+      , moduleDefinitions =
+        [ GlobalDefinition functionDefaults
+          { LLVM.AST.Global.name = "f"
+          , LLVM.AST.Global.parameters = ([ Parameter AST.i1 "a_0" [], Parameter AST.i1 "b_0" []], False)
+          , LLVM.AST.Global.returnType = AST.i1
+          , LLVM.AST.Global.basicBlocks =
+            [ BasicBlock (Name "entry_0")
+              []
+              (Do (CondBr { condition = LocalReference (IntegerType {typeBits = 1}) (Name "a_0")
+                          , trueDest = Name "if.begin_0"
+                          , falseDest = Name "if.end_1"
+                          , metadata' = []}))
+                          , BasicBlock (Name "if.begin_0") [] (Do (CondBr { condition = LocalReference (IntegerType {typeBits = 1}) (Name "b_0")
+                                                                          , trueDest = Name "if.begin_1"
+                                                                          , falseDest = Name "if.end_0"
+                                                                          , metadata' = []}))
+                                                                          , BasicBlock (Name "if.begin_1") [] (Do (Ret {returnOperand = Just (ConstantOperand (C.Int {C.integerBits = 1, C.integerValue = 0})), metadata' = []}))
+                                                                          , BasicBlock (Name "if.end_0") [] (Do (Br {dest = Name "if.end_1", metadata' = []}))
+                          , BasicBlock (Name "if.end_1") [] (Do (Ret {returnOperand = Just (ConstantOperand (C.Int {C.integerBits = 1, C.integerValue = 1})), metadata' = []}))
+            ]
+          }
+        ]}
 
 simple :: Module
 simple = buildModule "exampleModule" $ mdo
