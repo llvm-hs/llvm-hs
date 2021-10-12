@@ -55,6 +55,7 @@ tests =
       , testCase "supports recursive function calls" recursiveFunctionCalls
       , testCase "resolves typedefs" resolvesTypeDefs
       , testCase "resolves constant typedefs" resolvesConstantTypeDefs
+      , testCase "handling of terminator" terminatorHandling
       , testCase "builds the example" $ do
         let f10 = ConstantOperand (C.Float (F.Double 10))
             fadd a b = FAdd { operand0 = a, operand1 = b, fastMathFlags = noFastMathFlags, metadata = [] }
@@ -439,6 +440,78 @@ resolvesConstantTypeDefs = do
                 ]
               }
             ]}
+
+terminatorHandling :: Assertion
+terminatorHandling = do
+  firstTerminatorWins @?= firstWinsAst
+  terminatorsCompose @?= terminatorsComposeAst
+  where
+    firstTerminatorWins = buildModule "firstTerminatorWinsModule" $ mdo
+      function "f" [(AST.i32, "a"), (AST.i32, "b")] AST.i32 $ \[a, b] -> mdo
+
+        entry <- block `named` "entry"; do
+          c <- add a b
+          d <- add a c
+          ret c
+          ret d
+    terminatorsCompose = buildModule "terminatorsComposeModule" $ mdo
+      function "f" [(AST.i1, "a")] AST.i1 $ \[a] -> mdo
+
+        entry <- block `named` "entry"; do
+          if' a $ do
+            ret (bit 0)
+
+          ret (bit 1)
+    if' cond asm = mdo
+      condBr cond ifBlock end
+      ifBlock <- block `named` "if.begin"
+      asm
+      end <- block `named` "if.end"
+      return ()
+
+    firstWinsAst = defaultModule
+      { moduleName = "firstTerminatorWinsModule"
+      , moduleDefinitions =
+        [ GlobalDefinition functionDefaults
+          { LLVM.AST.Global.name = "f"
+          , LLVM.AST.Global.parameters = ([ Parameter AST.i32 "a_0" [], Parameter AST.i32 "b_0" []], False)
+          , LLVM.AST.Global.returnType = AST.i32
+          , LLVM.AST.Global.basicBlocks =
+            [ BasicBlock (Name "entry_0")
+              [ UnName 0 := Add { nsw = False, nuw = False, metadata = []
+                                , operand0 = LocalReference (IntegerType {typeBits = 32}) (Name "a_0")
+                                , operand1 = LocalReference (IntegerType {typeBits = 32}) (Name "b_0")
+                                }
+              , UnName 1 := Add { nsw = False, nuw = False, metadata = []
+                                , operand0 = LocalReference (IntegerType {typeBits = 32}) (Name "a_0")
+                                , operand1 = LocalReference (IntegerType {typeBits = 32}) (UnName 0)
+                                }
+              ]
+              (Do (Ret {returnOperand = Just (LocalReference (IntegerType {typeBits = 32}) (UnName 0)), metadata' = []}))]
+          }
+        ]}
+    terminatorsComposeAst = defaultModule
+      { moduleName = "terminatorsComposeModule"
+      , moduleDefinitions =
+        [ GlobalDefinition functionDefaults
+          { LLVM.AST.Global.name = "f"
+          , LLVM.AST.Global.parameters = ([ Parameter AST.i1 "a_0" []], False)
+          , LLVM.AST.Global.returnType = AST.i1
+          , LLVM.AST.Global.basicBlocks =
+            [ BasicBlock (Name "entry_0")
+              []
+              (Do (CondBr {condition = LocalReference (IntegerType {typeBits = 1}) (Name "a_0")
+                          , trueDest = Name "if.begin_0"
+                          , falseDest = Name "if.end_0", metadata' = []}))
+                          , BasicBlock (Name "if.begin_0")
+                            []
+                            (Do (Ret {returnOperand = Just (ConstantOperand (C.Int {C.integerBits = 1, C.integerValue = 0})), metadata' = []}))
+                          , BasicBlock (Name "if.end_0")
+                            []
+                            (Do (Ret {returnOperand = Just (ConstantOperand (C.Int {C.integerBits = 1, C.integerValue = 1})), metadata' = []}))]
+          }
+        ]}
+
 
 simple :: Module
 simple = buildModule "exampleModule" $ mdo
