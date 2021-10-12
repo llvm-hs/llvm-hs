@@ -178,8 +178,8 @@ void LLVM_Hs_releaseVModule(ExecutionSession *es, VModuleKey k) {
 
 /* Constructor functions for the different compile layers */
 
-CompileLayer *LLVM_Hs_createIRCompileLayer(LinkingLayer *linkingLayer,
-                                           LLVMTargetMachineRef tm) {
+CompileLayer *LLVM_Hs_createLegacyIRCompileLayer(LinkingLayer *linkingLayer,
+                                                 LLVMTargetMachineRef tm) {
     TargetMachine *tmm = unwrap(tm);
     return new CompileLayerT<LegacyIRCompileLayer<LinkingLayer, SimpleCompiler>>(
         LegacyIRCompileLayer<LinkingLayer, SimpleCompiler>(*linkingLayer,
@@ -336,12 +336,19 @@ JITTargetAddress LLVM_Hs_JITSymbol_getAddress(LLVMJITSymbolRef symbol,
                                               char **errorMessage) {
     *errorMessage = nullptr;
     if (auto addrOrErr = symbol->getAddress()) {
-        return *addrOrErr;
-    } else {
-        std::string error = toString(addrOrErr.takeError());
-        *errorMessage = strdup(error.c_str());
-        return 0;
+        // I think this is a bug in LLVM: getAddress() is meant to return '0' for undefined symbols
+        // according to https://llvm.org/doxygen/classllvm_1_1JITSymbol.html#a728b38fd41b0dfb04489af84087b8712
+        // Reading that more liberally, it should be returning an 'Expect<JITTargetAddress>' whose
+        // 'operator bool()' is false (since there is an error)
+        // https://llvm.org/doxygen/classllvm_1_1Expected.html#abedc24a1407796eedbee8ba9786d0387
+        // However, it clearly is not false since we get in here, and we need to actually
+        // attempt to get the value out of the 'Expect<T>' before we finally trigger a failure.
+        if (*addrOrErr) {
+            return *addrOrErr;
+        }
     }
+    *errorMessage = strdup("undefined symbol");
+    return 0;
 }
 
 LLVMJITSymbolFlags LLVM_Hs_JITSymbol_getFlags(LLVMJITSymbolRef symbol) {

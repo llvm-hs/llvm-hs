@@ -137,7 +137,7 @@ tests = testGroup "Constants" [
     ), (
       "selectvalue",
       i32,
-      C.Select (C.PtrToInt (C.GlobalReference (ptr i32) (UnName 1)) i1) 
+      C.Select (C.PtrToInt (C.GlobalReference (ptr i32) (UnName 1)) i1)
          (C.Int 32 1)
          (C.Int 32 2),
       "global i32 select (i1 ptrtoint (i32* @1 to i1), i32 1, i32 2)"
@@ -155,29 +155,30 @@ tests = testGroup "Constants" [
      (PointerType i32 (AddrSpace 1)),
      C.AddrSpaceCast (C.GlobalReference (ptr i32) (UnName 1)) (PointerType i32 (AddrSpace 1)),
      "global i32 addrspace(1)* addrspacecast (i32* @1 to i32 addrspace(1)*)"
-{-
-    ), (
---  This test made llvm abort as of llvm-3.2.  Now, as a new feature in llvm-3.4, it makes it report a fatal error!
+{-    ), (
+-- This test fails since LLVM 3.2!
+-- LLVM parses the extractValue instruction from a file via llvm-as properly, but it does not here.
+-- Rewritten by Andrew April 2021 to match the specific example in the LLVM language reference:
+-- https://llvm.org/docs/LangRef.html#extractvalue-instruction
+-- Bug filed with upstream here: https://bugs.llvm.org/show_bug.cgi?id=50092
       "extractvalue",
-      i8,
+      i32,
       C.ExtractValue
-        (C.Select (C.PtrToInt (C.GlobalReference (p i32) (UnName 1)) i1) 
-         (C.Array i8 [C.Int 8 0])
-         (C.Array i8 [C.Int 8 1]))
+        (C.Struct Nothing False [C.Int 32 0, C.Int 32 1])
         [0],
-      "global i8 extractvalue ([1 x i8] select (i1 ptrtoint (i32* @1 to i1), [1 x i8] [ i8 1 ], [1 x i8] [ i8 2 ]), 0)"
+      "global i32 extractvalue ({i32, i32} {i32 0, i32 1}, 0)"
 -}
     )
    ],
    let mAST = Module "<string>" "<string>" Nothing Nothing [
              GlobalDefinition $ globalVariableDefaults {
-               G.name = UnName 0, G.type' = type', G.initializer = Just value 
+               G.name = UnName 0, G.type' = type', G.initializer = Just value
              },
              GlobalDefinition $ globalVariableDefaults {
-               G.name = UnName 1, G.type' = i32, G.initializer = Nothing 
+               G.name = UnName 1, G.type' = i32, G.initializer = Nothing
              },
              GlobalDefinition $ globalVariableDefaults {
-               G.name = UnName 2, G.type' = i32, G.initializer = Nothing 
+               G.name = UnName 2, G.type' = i32, G.initializer = Nothing
              }
            ]
        mStr = "; ModuleID = '<string>'\nsource_filename = \"<string>\"\n\n@0 = " <> str <> "\n\

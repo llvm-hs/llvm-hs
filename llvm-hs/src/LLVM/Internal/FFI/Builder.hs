@@ -13,6 +13,7 @@ import qualified Language.Haskell.TH as TH
 
 import Foreign.Ptr
 import Foreign.C
+import GHC.Stack
 
 import qualified Data.List as List
 import qualified Data.Map as Map
@@ -112,7 +113,7 @@ foreign import ccall unsafe "LLVM_Hs_BuildGEP" buildGetElementPtr' ::
 foreign import ccall unsafe "LLVM_Hs_BuildInBoundsGEP" buildInBoundsGetElementPtr' ::
   Ptr Builder -> Ptr Value -> Ptr (Ptr Value) -> CUInt -> CString -> IO (Ptr Instruction)
 
-buildGetElementPtr :: Ptr Builder -> LLVMBool -> Ptr Value -> (CUInt, Ptr (Ptr Value)) -> CString -> IO (Ptr Instruction)
+buildGetElementPtr :: HasCallStack => Ptr Builder -> LLVMBool -> Ptr Value -> (CUInt, Ptr (Ptr Value)) -> CString -> IO (Ptr Instruction)
 buildGetElementPtr builder (LLVMBool 1) a (n, is) s = buildInBoundsGetElementPtr' builder a is n s
 buildGetElementPtr builder (LLVMBool 0) a (n, is) s = buildGetElementPtr' builder a is n s
 buildGetElementPtr _ (LLVMBool i) _ _ _ = error ("LLVMBool should be 0 or 1 but is " <> show i)

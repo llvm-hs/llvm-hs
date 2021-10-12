@@ -166,32 +166,44 @@ instance DecodeM DecodeAST A.Metadata (Ptr FFI.Metadata) where
                     then A.MDValue <$> decodeM v
                     else throwM (DecodeException "Metadata was not one of [MDString, MDValue, MDNode]")
 
-instance DecodeM DecodeAST A.DINode (Ptr FFI.DINode) where
+instance DecodeM DecodeAST (Either String A.DINode) (Ptr FFI.DINode) where
   decodeM diN = do
     sId <- liftIO $ FFI.getMetadataClassId (FFI.upCast diN)
     case sId of
       [mdSubclassIdP|DIEnumerator|] ->
-        A.DIEnumerator <$> decodeM (castPtr diN :: Ptr FFI.DIEnumerator)
-      [mdSubclassIdP|DIImportedEntity|] -> A.DIImportedEntity <$> decodeM (castPtr diN :: Ptr FFI.DIImportedEntity)
-      [mdSubclassIdP|DIObjCProperty|]   -> A.DIObjCProperty <$> decodeM (castPtr diN :: Ptr FFI.DIObjCProperty)
-      [mdSubclassIdP|DISubrange|]       -> A.DISubrange <$> decodeM (castPtr diN :: Ptr FFI.DISubrange)
-      [mdSubclassIdP|DIBasicType|]        -> A.DIScope <$> decodeM (castPtr diN :: Ptr FFI.DIScope)
-      [mdSubclassIdP|DICompositeType|]    -> A.DIScope <$> decodeM (castPtr diN :: Ptr FFI.DIScope)
-      [mdSubclassIdP|DIDerivedType|]      -> A.DIScope <$> decodeM (castPtr diN :: Ptr FFI.DIScope)
-      [mdSubclassIdP|DISubroutineType|]   -> A.DIScope <$> decodeM (castPtr diN :: Ptr FFI.DIScope)
-      [mdSubclassIdP|DILexicalBlock|]     -> A.DIScope <$> decodeM (castPtr diN :: Ptr FFI.DIScope)
-      [mdSubclassIdP|DILexicalBlockFile|] -> A.DIScope <$> decodeM (castPtr diN :: Ptr FFI.DIScope)
-      [mdSubclassIdP|DIFile|]             -> A.DIScope <$> decodeM (castPtr diN :: Ptr FFI.DIScope)
-      [mdSubclassIdP|DINamespace|]        -> A.DIScope <$> decodeM (castPtr diN :: Ptr FFI.DIScope)
-      [mdSubclassIdP|DISubprogram|]       -> A.DIScope <$> decodeM (castPtr diN :: Ptr FFI.DIScope)
-      [mdSubclassIdP|DICompileUnit|]      -> A.DIScope <$> decodeM (castPtr diN :: Ptr FFI.DIScope)
-      [mdSubclassIdP|DIModule|]           -> A.DIScope <$> decodeM (castPtr diN :: Ptr FFI.DIScope)
+        liftM Right $ A.DIEnumerator <$> decodeM (castPtr diN :: Ptr FFI.DIEnumerator)
+      [mdSubclassIdP|DIImportedEntity|]   -> liftM Right $ A.DIImportedEntity <$> decodeM (castPtr diN :: Ptr FFI.DIImportedEntity)
+      [mdSubclassIdP|DIObjCProperty|]     -> liftM Right $ A.DIObjCProperty <$> decodeM (castPtr diN :: Ptr FFI.DIObjCProperty)
+      [mdSubclassIdP|DISubrange|]         -> liftM Right $ A.DISubrange <$> decodeM (castPtr diN :: Ptr FFI.DISubrange)
+      [mdSubclassIdP|DIBasicType|]        -> liftM Right $ A.DIScope <$> decodeM (castPtr diN :: Ptr FFI.DIScope)
+      [mdSubclassIdP|DICompositeType|]    -> liftM Right $ A.DIScope <$> decodeM (castPtr diN :: Ptr FFI.DIScope)
+      [mdSubclassIdP|DIDerivedType|]      -> liftM Right $ A.DIScope <$> decodeM (castPtr diN :: Ptr FFI.DIScope)
+      [mdSubclassIdP|DISubroutineType|]   -> liftM Right $ A.DIScope <$> decodeM (castPtr diN :: Ptr FFI.DIScope)
+      [mdSubclassIdP|DILexicalBlock|]     -> liftM Right $ A.DIScope <$> decodeM (castPtr diN :: Ptr FFI.DIScope)
+      [mdSubclassIdP|DILexicalBlockFile|] -> liftM Right $ A.DIScope <$> decodeM (castPtr diN :: Ptr FFI.DIScope)
+      [mdSubclassIdP|DIFile|]             -> liftM Right $ A.DIScope <$> decodeM (castPtr diN :: Ptr FFI.DIScope)
+      [mdSubclassIdP|DINamespace|]        -> liftM Right $ A.DIScope <$> decodeM (castPtr diN :: Ptr FFI.DIScope)
+      [mdSubclassIdP|DISubprogram|]       -> liftM Right $ A.DIScope <$> decodeM (castPtr diN :: Ptr FFI.DIScope)
+      [mdSubclassIdP|DICompileUnit|]      -> liftM Right $ A.DIScope <$> decodeM (castPtr diN :: Ptr FFI.DIScope)
+      [mdSubclassIdP|DIModule|]           -> liftM Right $ A.DIScope <$> decodeM (castPtr diN :: Ptr FFI.DIScope)
 
-      [mdSubclassIdP|DIGlobalVariable|] -> A.DIVariable <$> decodeM (castPtr diN :: Ptr FFI.DIVariable)
-      [mdSubclassIdP|DILocalVariable|]  -> A.DIVariable <$> decodeM (castPtr diN :: Ptr FFI.DIVariable)
+      [mdSubclassIdP|DIGlobalVariable|]   -> liftM Right $ A.DIVariable <$> decodeM (castPtr diN :: Ptr FFI.DIVariable)
+      [mdSubclassIdP|DILocalVariable|]    -> liftM Right $ A.DIVariable <$> decodeM (castPtr diN :: Ptr FFI.DIVariable)
 
-      [mdSubclassIdP|DITemplateTypeParameter|]  -> A.DITemplateParameter <$> decodeM (castPtr diN :: Ptr FFI.DITemplateParameter)
-      [mdSubclassIdP|DITemplateValueParameter|] -> A.DITemplateParameter <$> decodeM (castPtr diN :: Ptr FFI.DITemplateParameter)
+      [mdSubclassIdP|DITemplateTypeParameter|]  -> liftM Right $ A.DITemplateParameter <$> decodeM (castPtr diN :: Ptr FFI.DITemplateParameter)
+      [mdSubclassIdP|DITemplateValueParameter|] -> liftM Right $ A.DITemplateParameter <$> decodeM (castPtr diN :: Ptr FFI.DITemplateParameter)
+
+      [mdSubclassIdP|MDString|] -> liftM Left $ pure ("Lifting to Haskell not implemented for toplevel DINode kind: " <> show sId <> " (MDString)")
+      [mdSubclassIdP|ConstantAsMetadata|] -> liftM Left $ pure ("Lifting to Haskell not implemented for toplevel DINode kind: " <> show sId <> " (ConstantAsMetadata)")
+      [mdSubclassIdP|LocalAsMetadata|] -> liftM Left $ pure ("Lifting to Haskell not implemented for toplevel DINode kind: " <> show sId <> " (LocalAsMetadata)")
+      [mdSubclassIdP|DistinctMDOperandPlaceholder|] -> liftM Left $ pure ("Lifting to Haskell not implemented for toplevel DINode kind: " <> show sId <> " (DistinctMDOperandPlaceholder)")
+      [mdSubclassIdP|MDTuple|] -> liftM Left $ pure ("Lifting to Haskell not implemented for toplevel DINode kind: " <> show sId <> " (MDTuple)")
+      [mdSubclassIdP|DILocation|] -> liftM Left $ pure ("Lifting to Haskell not implemented for toplevel DINode kind: " <> show sId <> " (DILocation)")
+      [mdSubclassIdP|DIExpression|] -> liftM Left $ pure ("Lifting to Haskell not implemented for toplevel DINode kind: " <> show sId <> " (DIExpression)")
+      [mdSubclassIdP|DIGlobalVariableExpression|] -> liftM Left $ pure ("Lifting to Haskell not implemented for toplevel DINode kind: " <> show sId <> " (DIGlobalVariableExpression)")
+      [mdSubclassIdP|GenericDINode|] -> liftM Left $ pure ("Lifting to Haskell not implemented for toplevel DINode kind: " <> show sId <> " (GenericDINode)")
+      [mdSubclassIdP|DIMacro|] -> liftM Left $ pure ("Lifting to Haskell not implemented for toplevel DINode kind: " <> show sId <> " (DIMacro)")
+      [mdSubclassIdP|DIMacroFile|] -> liftM Left $ pure ("Lifting to Haskell not implemented for toplevel DINode kind: " <> show sId <> " (DIMacroFile)")
 
       _ -> throwM (DecodeException ("Unknown subclass id for DINode: " <> show sId))
 
@@ -769,7 +781,7 @@ instance EncodeM EncodeAST A.DITemplateParameter (Ptr FFI.DITemplateParameter) w
     ty <- encodeM (A.type' (p :: A.DITemplateParameter))
     Context c <- gets encodeStateContext
     case p of
-      A.DITemplateTypeParameter {} -> 
+      A.DITemplateTypeParameter {} ->
         FFI.upCast <$> liftIO (FFI.getDITemplateTypeParameter c name' ty)
       A.DITemplateValueParameter {..} -> do
         tag <- encodeM tag
@@ -1000,27 +1012,29 @@ instance (MonadIO m, MonadAnyCont IO m, DecodeM m a (Ptr a')) => DecodeM m [a] (
 encodeDWOp :: A.DWOp -> [Word64]
 encodeDWOp op =
   case op of
-    A.DwOpFragment (A.DW_OP_LLVM_Fragment offset size) -> [FFI.DwOp_LLVM_fragment, offset, size]
-    A.DW_OP_StackValue -> [FFI.DwOp_stack_value]
-    A.DW_OP_Swap -> [FFI.DwOp_swap]
+    A.DW_OP_And -> [FFI.DwOp_and]
+    A.DW_OP_Bregx -> [FFI.DwOp_bregx]
     A.DW_OP_ConstU arg -> [FFI.DwOp_constu, arg]
-    A.DW_OP_Lit0 -> [FFI.DwOp_lit0]
-    A.DW_OP_PlusUConst arg -> [FFI.DwOp_plus_uconst, arg]
-    A.DW_OP_Plus -> [FFI.DwOp_plus]
-    A.DW_OP_Minus -> [FFI.DwOp_minus]
-    A.DW_OP_Mul -> [FFI.DwOp_mul]
+    A.DW_OP_Deref -> [FFI.DwOp_deref]
     A.DW_OP_Div -> [FFI.DwOp_div]
+    A.DW_OP_Dup -> [FFI.DwOp_dup]
+    A.DwOpFragment (A.DW_OP_LLVM_Fragment offset size) -> [FFI.DwOp_LLVM_fragment, offset, size]
+    A.DW_OP_Lit0 -> [FFI.DwOp_lit0]
+    A.DW_OP_Minus -> [FFI.DwOp_minus]
     A.DW_OP_Mod -> [FFI.DwOp_mod]
+    A.DW_OP_Mul -> [FFI.DwOp_mul]
     A.DW_OP_Not -> [FFI.DwOp_not]
     A.DW_OP_Or -> [FFI.DwOp_or]
-    A.DW_OP_Xor -> [FFI.DwOp_xor]
-    A.DW_OP_And -> [FFI.DwOp_and]
-    A.DW_OP_Shr -> [FFI.DwOp_shr]
-    A.DW_OP_Shra -> [FFI.DwOp_shra]
+    A.DW_OP_Plus -> [FFI.DwOp_plus]
+    A.DW_OP_PlusUConst arg -> [FFI.DwOp_plus_uconst, arg]
+    A.DW_OP_PushObjectAddress -> [FFI.DwOp_push_object_address]
     A.DW_OP_Shl -> [FFI.DwOp_shl]
-    A.DW_OP_Dup -> [FFI.DwOp_dup]
-    A.DW_OP_Deref -> [FFI.DwOp_deref]
+    A.DW_OP_Shra -> [FFI.DwOp_shra]
+    A.DW_OP_Shr -> [FFI.DwOp_shr]
+    A.DW_OP_StackValue -> [FFI.DwOp_stack_value]
+    A.DW_OP_Swap -> [FFI.DwOp_swap]
     A.DW_OP_XDeref -> [FFI.DwOp_xderef]
+    A.DW_OP_Xor -> [FFI.DwOp_xor]
 
 instance DecodeM DecodeAST [Maybe A.Metadata] (Ptr FFI.MDNode) where
   decodeM p = decodeArray FFI.getMDNodeNumOperands FFI.getMDNodeOperand p
@@ -1033,19 +1047,23 @@ instance DecodeM DecodeAST A.Metadata (Ptr FFI.MetadataAsVal) where
 
 genCodingInstance [t|A.DIMacroInfo|] ''FFI.Macinfo [ (FFI.DW_Macinfo_Define, A.Define), (FFI.DW_Macinfo_Undef, A.Undef) ]
 
-decodeMDNode :: Ptr FFI.MDNode -> DecodeAST A.MDNode
+decodeMDNode :: Ptr FFI.MDNode -> DecodeAST (Either String A.MDNode)
 decodeMDNode p = scopeAnyCont $ do
   sId <- liftIO $ FFI.getMetadataClassId p
   case sId of
-      [mdSubclassIdP|MDTuple|] -> A.MDTuple <$> decodeM p
+      [mdSubclassIdP|MDTuple|] -> liftM Right $ A.MDTuple <$> decodeM p
       [mdSubclassIdP|DIExpression|] ->
-        A.DIExpression <$> decodeM (castPtr p :: Ptr FFI.DIExpression)
+        liftM Right $ A.DIExpression <$> decodeM (castPtr p :: Ptr FFI.DIExpression)
       [mdSubclassIdP|DIGlobalVariableExpression|] ->
-        A.DIGlobalVariableExpression <$> decodeM (castPtr p :: Ptr FFI.DIGlobalVariableExpression)
-      [mdSubclassIdP|DILocation|] -> A.DILocation <$> decodeM (castPtr p :: Ptr FFI.DILocation)
-      [mdSubclassIdP|DIMacro|] -> A.DIMacroNode <$> decodeM (castPtr p :: Ptr FFI.DIMacroNode)
-      [mdSubclassIdP|DIMacroFile|] -> A.DIMacroNode <$> decodeM (castPtr p :: Ptr FFI.DIMacroNode)
-      _ -> A.DINode <$> decodeM (castPtr p :: Ptr FFI.DINode)
+        liftM Right $ A.DIGlobalVariableExpression <$> decodeM (castPtr p :: Ptr FFI.DIGlobalVariableExpression)
+      [mdSubclassIdP|DILocation|] -> liftM Right $ A.DILocation <$> decodeM (castPtr p :: Ptr FFI.DILocation)
+      [mdSubclassIdP|DIMacro|] -> liftM Right $ A.DIMacroNode <$> decodeM (castPtr p :: Ptr FFI.DIMacroNode)
+      [mdSubclassIdP|DIMacroFile|] -> liftM Right $ A.DIMacroNode <$> decodeM (castPtr p :: Ptr FFI.DIMacroNode)
+      _ -> do
+        decoded <- decodeM (castPtr p :: Ptr FFI.DINode)
+        case decoded of
+          (Right din) -> liftM Right $ pure $ A.DINode din
+          (Left err) -> pure $ Left err
 
 instance DecodeM DecodeAST A.DIMacroNode (Ptr FFI.DIMacroNode) where
   decodeM p = do
@@ -1124,6 +1142,8 @@ instance DecodeM DecodeAST A.DIExpression (Ptr FFI.DIExpression) where
                 FFI.DwOp_dup -> (A.DW_OP_Dup :) <$> go (i + 1)
                 FFI.DwOp_deref -> (A.DW_OP_Deref :) <$> go (i + 1)
                 FFI.DwOp_xderef -> (A.DW_OP_XDeref :) <$> go (i + 1)
+                FFI.DwOp_bregx -> (A.DW_OP_Bregx :) <$> go (i + 1)
+                FFI.DwOp_push_object_address -> (A.DW_OP_PushObjectAddress :) <$> go (i + 1)
                 _ -> throwM (DecodeException ("Unknown DW_OP " <> show op))
         expectElems name i n =
           when (i + n >= numElems)
@@ -1163,11 +1183,13 @@ instance DecodeM DecodeAST A.DIImportedEntity (Ptr FFI.DIImportedEntity) where
   decodeM e = do
     tag <- decodeM =<< liftIO (FFI.getTag (FFI.upCast e))
     scope <- decodeM =<< liftIO (FFI.getDIImportedEntityScope e)
-    entity <- decodeM =<< liftIO (FFI.getDIImportedEntityEntity e)
+    entity :: Either String A.DINode <- decodeM =<< liftIO (FFI.getDIImportedEntityEntity e)
     file <- decodeM =<< liftIO (FFI.getDIImportedEntityFile e)
     name <- decodeM =<< liftIO (FFI.getDIImportedEntityName e)
     line <- liftIO (FFI.getDIImportedEntityLine e)
-    pure (A.ImportedEntity tag name scope entity file line)
+    case entity of
+      (Right din) -> pure (A.ImportedEntity tag name scope (Just $ A.MDInline din) file line)
+      (Left _) -> pure (A.ImportedEntity tag name scope Nothing file line)
 
 instance EncodeM EncodeAST A.DIObjCProperty (Ptr FFI.DIObjCProperty) where
   encodeM A.ObjCProperty {..} = do
@@ -1210,7 +1232,11 @@ getMetadataDefinitions = fix $ \continue -> do
   mdntd <- takeMetadataNodeToDefine
   case mdntd of
     Nothing -> pure []
-    Just (mid, p) ->
-      (:)
-        <$> (A.MetadataNodeDefinition mid <$> decodeMDNode p)
-        <*> continue
+    Just (mid, p) -> do
+      decoded <- decodeMDNode p
+      case decoded of
+        (Right mdn) ->
+          (:)
+            <$> (pure $ A.MetadataNodeDefinition mid mdn)
+            <*> continue
+        (Left _) -> continue

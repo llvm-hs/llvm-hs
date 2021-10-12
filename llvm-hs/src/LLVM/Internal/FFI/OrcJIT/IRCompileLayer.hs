@@ -13,5 +13,5 @@ import Foreign.Ptr
 data IRCompileLayer
 instance ChildOf CompileLayer IRCompileLayer
 
-foreign import ccall safe "LLVM_Hs_createIRCompileLayer" createIRCompileLayer ::
+foreign import ccall safe "LLVM_Hs_createLegacyIRCompileLayer" createIRCompileLayer ::
   Ptr LinkingLayer -> Ptr TargetMachine -> IO (Ptr IRCompileLayer)

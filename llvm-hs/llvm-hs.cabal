@@ -1,9 +1,9 @@
 name: llvm-hs
-version: 9.0.0
+version: 9.0.1.1
 license: BSD3
 license-file: LICENSE
-author: Anthony Cowley, Stephen Diehl, Moritz Kiefer <moritz.kiefer@purelyfunctional.org>, Benjamin S. Scarlet
-maintainer: Anthony Cowley, Stephen Diehl, Moritz Kiefer <moritz.kiefer@purelyfunctional.org>
+author: Anthony Cowley, Stephen Diehl, Moritz Kiefer <moritz.kiefer@purelyfunctional.org>, Andrew Anderson <aanderso@tcd.ie>, Benjamin S. Scarlet
+maintainer: Anthony Cowley, Stephen Diehl, Moritz Kiefer <moritz.kiefer@purelyfunctional.org>, Andrew Anderson <aanderso@tcd.ie>
 copyright: (c) 2013 Benjamin S. Scarlet and Google Inc.
 homepage: http://github.com/llvm-hs/llvm-hs/
 bug-reports: http://github.com/llvm-hs/llvm-hs/issues
@@ -42,7 +42,7 @@ extra-source-files:
   test/debug_metadata_4.ll
   test/debug_metadata_5.ll
   test/main_return_38.c
-tested-with: GHC == 8.0.2, GHC == 8.2.2, GHC == 8.4.4, GHC == 8.6.5
+tested-with: GHC == 8.0.2, GHC == 8.2.2, GHC == 8.4.4, GHC == 8.6.5, GHC == 8.10.4
 extra-source-files: CHANGELOG.md
 
 source-repository head
@@ -129,6 +129,7 @@ library
     LLVM.Internal.Module
     LLVM.Internal.ObjectFile
     LLVM.Internal.OrcJIT
+    LLVM.Internal.OrcJITV2
     LLVM.Internal.OrcJIT.CompileLayer
     LLVM.Internal.OrcJIT.LinkingLayer
     LLVM.Internal.OrcJIT.CompileOnDemandLayer
@@ -173,6 +174,7 @@ library
     LLVM.Internal.FFI.Module
     LLVM.Internal.FFI.ObjectFile
     LLVM.Internal.FFI.OrcJIT
+    LLVM.Internal.FFI.OrcJITV2
     LLVM.Internal.FFI.OrcJIT.CompileLayer
     LLVM.Internal.FFI.OrcJIT.LinkingLayer
     LLVM.Internal.FFI.OrcJIT.CompileOnDemandLayer
@@ -228,6 +230,7 @@ library
     src/LLVM/Internal/FFI/MetadataC.cpp
     src/LLVM/Internal/FFI/ModuleC.cpp
     src/LLVM/Internal/FFI/OrcJITC.cpp
+    src/LLVM/Internal/FFI/OrcJITV2C.cpp
     src/LLVM/Internal/FFI/RawOStreamC.cpp
     src/LLVM/Internal/FFI/PassManagerC.cpp
     src/LLVM/Internal/FFI/RTDyldMemoryManager.cpp
@@ -236,7 +239,7 @@ library
     src/LLVM/Internal/FFI/TypeC.cpp
     src/LLVM/Internal/FFI/ValueC.cpp
 
-  cc-options: -std=c++11
+  cc-options: -std=c++11 -Wno-stringop-overflow -Wno-init-list-lifetime
 
   if flag(debug)
     cc-options: -g
@@ -284,6 +287,7 @@ test-suite test
     LLVM.Test.ObjectCode
     LLVM.Test.OrcJIT
     LLVM.Test.Optimization
+    LLVM.Test.ParameterAttribute
     LLVM.Test.Regression
     LLVM.Test.Support
     LLVM.Test.Target

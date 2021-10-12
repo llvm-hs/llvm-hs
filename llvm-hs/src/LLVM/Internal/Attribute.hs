@@ -52,6 +52,7 @@ instance Monad m => EncodeM m A.PA.ParameterAttribute (Ptr FFI.ParameterAttrBuil
       A.PA.NoAlias -> FFI.parameterAttributeKindNoAlias
       A.PA.ByVal -> FFI.parameterAttributeKindByVal
       A.PA.NoCapture -> FFI.parameterAttributeKindNoCapture
+      A.PA.NoFree -> FFI.parameterAttributeKindNoFree
       A.PA.Nest -> FFI.parameterAttributeKindNest
       A.PA.ReadOnly -> FFI.parameterAttributeKindReadOnly
       A.PA.ReadNone -> FFI.parameterAttributeKindReadNone
@@ -110,6 +111,7 @@ instance Monad m => EncodeM m A.FA.FunctionAttribute (Ptr FFI.FunctionAttrBuilde
       A.FA.Cold -> FFI.functionAttributeKindCold
       A.FA.JumpTable -> FFI.functionAttributeKindJumpTable
       A.FA.NoDuplicate -> FFI.functionAttributeKindNoDuplicate
+      A.FA.NoFree -> FFI.functionAttributeKindNoFree
       A.FA.SanitizeAddress -> FFI.functionAttributeKindSanitizeAddress
       A.FA.SanitizeHWAddress -> FFI.functionAttributeKindSanitizeHWAddress
       A.FA.SanitizeThread -> FFI.functionAttributeKindSanitizeThread
@@ -139,6 +141,7 @@ instance DecodeM DecodeAST A.PA.ParameterAttribute FFI.ParameterAttribute where
           [parameterAttributeKindP|NoAlias|] -> return A.PA.NoAlias
           [parameterAttributeKindP|ByVal|] -> return A.PA.ByVal
           [parameterAttributeKindP|NoCapture|] -> return A.PA.NoCapture
+          [parameterAttributeKindP|NoFree|] -> return A.PA.NoFree
           [parameterAttributeKindP|Nest|] -> return A.PA.Nest
           [parameterAttributeKindP|ReadOnly|] -> return A.PA.ReadOnly
           [parameterAttributeKindP|ReadNone|] -> return A.PA.ReadNone
@@ -196,6 +199,7 @@ instance DecodeM DecodeAST A.FA.FunctionAttribute FFI.FunctionAttribute where
            [functionAttributeKindP|Cold|] -> return A.FA.Cold
            [functionAttributeKindP|JumpTable|] -> return A.FA.JumpTable
            [functionAttributeKindP|NoDuplicate|] -> return A.FA.NoDuplicate
+           [functionAttributeKindP|NoFree|] -> return A.FA.NoFree
            [functionAttributeKindP|SanitizeAddress|] -> return A.FA.SanitizeAddress
            [functionAttributeKindP|SanitizeHWAddress|] -> return A.FA.SanitizeHWAddress
            [functionAttributeKindP|SanitizeThread|] -> return A.FA.SanitizeThread

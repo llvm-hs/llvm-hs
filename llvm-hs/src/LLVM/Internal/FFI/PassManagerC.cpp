@@ -31,11 +31,11 @@ typedef struct LLVMOpaqueTargetMachine *LLVMTargetMachineRef;
 }
 
 namespace llvm {
-inline TargetLowering *unwrap(LLVMTargetLoweringRef P) { 
+inline TargetLowering *unwrap(LLVMTargetLoweringRef P) {
 	return reinterpret_cast<TargetLowering *>(P);
 }
 
-inline LLVMTargetLoweringRef wrap(const TargetLowering *P) { 
+inline LLVMTargetLoweringRef wrap(const TargetLowering *P) {
 	return reinterpret_cast<LLVMTargetLoweringRef>(const_cast<TargetLowering *>(P));
 }
 
@@ -86,7 +86,7 @@ LLVM_HS_FOR_EACH_PASS_WITHOUT_LLVM_C_BINDING(ENUM_CASE)
 void LLVM_Hs_AddCodeGenPreparePass(LLVMPassManagerRef PM) {
 	unwrap(PM)->add(createCodeGenPreparePass());
 }
-	
+
 void LLVM_Hs_AddGlobalValueNumberingPass(LLVMPassManagerRef PM, LLVMBool noLoads) {
 	unwrap(PM)->add(createGVNPass(noLoads));
 }
@@ -114,7 +114,7 @@ void LLVM_Hs_AddLoopStrengthReducePass(LLVMPassManagerRef PM) {
 void LLVM_Hs_AddLowerInvokePass(LLVMPassManagerRef PM) {
 	unwrap(PM)->add(createLowerInvokePass());
 }
-	
+
 void LLVM_Hs_AddSROAPass(LLVMPassManagerRef PM) {
 	unwrap(PM)->add(createSROAPass());
 }
@@ -156,7 +156,7 @@ void LLVM_Hs_AddMemorySanitizerPass(
     LLVMBool recover,
     LLVMBool kernel
 ) {
-	unwrap(PM)->add(createMemorySanitizerLegacyPassPass({trackOrigins, recover, kernel}));
+	unwrap(PM)->add(createMemorySanitizerLegacyPassPass({trackOrigins, static_cast<bool>(recover), static_cast<bool>(kernel)}));
 }
 
 void LLVM_Hs_AddThreadSanitizerPass(

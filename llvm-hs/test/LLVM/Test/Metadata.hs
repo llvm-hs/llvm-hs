@@ -1,5 +1,6 @@
 {-# LANGUAGE DuplicateRecordFields #-}
 {-# LANGUAGE OverloadedStrings #-}
+{-# LANGUAGE ScopedTypeVariables #-}
 module LLVM.Test.Metadata where
 
 import LLVM.Prelude
@@ -68,9 +69,6 @@ tests = testGroup "Metadata"
   , diFlagName
   , testFile
   ]
-
-arbitrarySbs :: Gen ShortByteString
-arbitrarySbs = BSS.pack <$> listOf arbitrary
 
 instance Arbitrary Encoding where
   arbitrary =
@@ -349,8 +347,8 @@ roundtripDINode :: TestTree
 roundtripDINode = testProperty "roundtrip DINode" $ \diNode -> ioProperty $
   withContext $ \context -> runEncodeAST context $ do
     encodedDINode <- encodeM (diNode :: DINode)
-    decodedDINode <- liftIO (runDecodeAST (decodeM (encodedDINode :: Ptr FFI.DINode)))
-    pure (decodedDINode === diNode)
+    decodedDINode :: Either String DINode <- liftIO (runDecodeAST (decodeM (encodedDINode :: Ptr FFI.DINode)))
+    pure (decodedDINode === (Right diNode))
 
 roundtripDICompileUnit :: TestTree
 roundtripDICompileUnit = testProperty "roundtrip DICompileUnit" $ \diFile retainedType ->

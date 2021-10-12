@@ -28,6 +28,7 @@ import LLVM.Internal.Coding
 import qualified LLVM.CodeModel as CodeModel
 import LLVM.Internal.Target
 import qualified LLVM.AST as A
+import GHC.Stack
 
 removeModule :: Ptr FFI.ExecutionEngine -> Ptr FFI.Module -> IO ()
 removeModule e m = flip runAnyContT return $ do
@@ -43,7 +44,7 @@ data ExecutableModule e = ExecutableModule e (Ptr FFI.Module)
 -- | <http://llvm.org/doxygen/classllvm_1_1ExecutionEngine.html>
 class ExecutionEngine e f | e -> f where
   withModuleInEngine :: e -> Module -> (ExecutableModule e -> IO a) -> IO a
-  getFunction :: ExecutableModule e -> A.Name -> IO (Maybe f)
+  getFunction :: HasCallStack => ExecutableModule e -> A.Name -> IO (Maybe f)
 
 instance ExecutionEngine (Ptr FFI.ExecutionEngine) (FunPtr ()) where
   withModuleInEngine e m f = do

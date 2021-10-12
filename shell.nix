@@ -2,13 +2,13 @@ let
   default_nixpkgs = (import <nixpkgs> {}).fetchFromGitHub {
     owner = "NixOS";
     repo = "nixpkgs";
-    rev = "2797ddee7ddebbb1292ea7673c42d77bc82b8515";
-    sha256 = "1gym77dlfpvflv6l5iq7nq5cqzlxw29pw6gv904s1qd88hw3y5rp";
+    rev = "d587092e9e7df9786495c19f710cf6469d72eecb";
+    sha256 = "1ygabmi2lmgy93a1zlmd7hw4ky83rjb6hn6ji40pj8flb437b8c4";
   };
 in
 
 { nixpkgs ? default_nixpkgs
-, compiler ? "ghc865" }:
+, compiler ? "ghc881" }:
 let
   hsOverlay = self: super: {
     llvm_9 = (super.llvm_9.override { debugVersion = true; }).overrideAttrs(_: { doCheck = false; });

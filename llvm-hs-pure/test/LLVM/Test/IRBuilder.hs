@@ -10,7 +10,8 @@ import           Test.Tasty.HUnit
 import           LLVM.AST hiding (function)
 import qualified LLVM.AST.Constant as C
 import qualified LLVM.AST.Float as F
-import           LLVM.AST.Global (basicBlocks, name, parameters, returnType)
+import qualified LLVM.AST.Global
+import           LLVM.AST.Linkage (Linkage(..))
 import qualified LLVM.AST.Type as AST
 import qualified LLVM.AST.CallingConvention as CC
 import qualified LLVM.AST.Instruction as I (function)
@@ -26,15 +27,15 @@ tests =
           moduleName = "exampleModule",
           moduleDefinitions =
             [ GlobalDefinition functionDefaults {
-                name = "add",
-                parameters =
+                LLVM.AST.Global.name = "add",
+                LLVM.AST.Global.parameters =
                   ( [ Parameter AST.i32 "a_0" []
                     , Parameter AST.i32 "b_0" []
                     ]
                   , False
                   ),
-                returnType = AST.i32,
-                basicBlocks =
+                LLVM.AST.Global.returnType = AST.i32,
+                LLVM.AST.Global.basicBlocks =
                   [ BasicBlock
                       "entry_0"
                       [ UnName 0 := Add {
@@ -53,6 +54,7 @@ tests =
       , testCase "calls constant globals" callWorksWithConstantGlobals
       , testCase "supports recursive function calls" recursiveFunctionCalls
       , testCase "resolves typedefs" resolvesTypeDefs
+      , testCase "resolves constant typedefs" resolvesConstantTypeDefs
       , testCase "handling of terminator" terminatorHandling
       , testCase "builds the example" $ do
         let f10 = ConstantOperand (C.Float (F.Double 10))
@@ -63,9 +65,9 @@ tests =
             moduleName = "exampleModule",
             moduleDefinitions =
               [ GlobalDefinition functionDefaults {
-                  name = "foo",
-                  returnType = AST.double,
-                  basicBlocks =
+                  LLVM.AST.Global.name = "foo",
+                  LLVM.AST.Global.returnType = AST.double,
+                  LLVM.AST.Global.basicBlocks =
                     [ BasicBlock (UnName 0) [ "xxx_0" := fadd f10 f10]
                         (Do (Ret Nothing []))
                     , BasicBlock
@@ -98,9 +100,9 @@ tests =
                     ]
                 }
               , GlobalDefinition functionDefaults {
-                  name = "bar",
-                  returnType = AST.double,
-                  basicBlocks =
+                  LLVM.AST.Global.name = "bar",
+                  LLVM.AST.Global.returnType = AST.double,
+                  LLVM.AST.Global.basicBlocks =
                     [ BasicBlock
                        (UnName 0)
                        [ UnName 1 := fadd f10 f10
@@ -110,15 +112,15 @@ tests =
                     ]
                 }
               , GlobalDefinition functionDefaults {
-                  name = "baz",
-                  parameters =
+                  LLVM.AST.Global.name = "baz",
+                  LLVM.AST.Global.parameters =
                     ( [ Parameter AST.i32 (UnName 0) []
                       , Parameter AST.double "arg_0" []
                       , Parameter AST.i32 (UnName 1) []
                       , Parameter AST.double "arg_1" []]
                     , False),
-                  returnType = AST.double,
-                  basicBlocks =
+                  LLVM.AST.Global.returnType = AST.double,
+                  LLVM.AST.Global.basicBlocks =
                     [ BasicBlock
                         (UnName 2)
                         []
@@ -176,10 +178,10 @@ recursiveFunctionCalls = do
     { moduleName = "exampleModule"
     , moduleDefinitions =
       [ GlobalDefinition functionDefaults
-          { returnType = AST.i32
-          , name = Name "f"
-          , parameters = ([Parameter AST.i32 "a_0" []], False)
-          , basicBlocks =
+          { LLVM.AST.Global.returnType = AST.i32
+          , LLVM.AST.Global.name = Name "f"
+          , LLVM.AST.Global.parameters = ([Parameter AST.i32 "a_0" []], False)
+          , LLVM.AST.Global.basicBlocks =
               [ BasicBlock (Name "entry_0")
                  [ UnName 0 := Call
                     { tailCallKind = Nothing
@@ -211,16 +213,16 @@ callWorksWithConstantGlobals = do
     { moduleName = "exampleModule"
     , moduleDefinitions =
       [ GlobalDefinition functionDefaults {
-          returnType = AST.ptr AST.i8,
-          name = Name "malloc",
-          parameters = ([Parameter (IntegerType {typeBits = 64}) (Name "") []],False),
-          basicBlocks = []
+          LLVM.AST.Global.returnType = AST.ptr AST.i8,
+          LLVM.AST.Global.name = Name "malloc",
+          LLVM.AST.Global.parameters = ([Parameter (IntegerType {typeBits = 64}) (Name "") []],False),
+          LLVM.AST.Global.basicBlocks = []
         }
       , GlobalDefinition functionDefaults {
-          returnType = VoidType,
-          name = Name "omg",
-          parameters = ([],False),
-          basicBlocks = [
+          LLVM.AST.Global.returnType = VoidType,
+          LLVM.AST.Global.name = Name "omg",
+          LLVM.AST.Global.parameters = ([],False),
+          LLVM.AST.Global.basicBlocks = [
             BasicBlock (UnName 0) [
               UnName 1 := Call { tailCallKind = Nothing
                 , I.function = Right (
@@ -253,19 +255,24 @@ resolvesTypeDefs = do
             yPtr <- gep ptr [ConstantOperand (C.Int 32 0), ConstantOperand (C.Int 32 1)]
             store xPtr 0 x
             store yPtr 0 y
+          function "g" [(pairTy, "pair")] AST.i32 $ \[pair] -> do
+            x <- extractValue pair [0]
+            y <- extractValue pair [1]
+            z <- add x y
+            ret z
           pure ()
         ast = defaultModule
           { moduleName = "<string>"
           , moduleDefinitions =
             [ TypeDefinition "pair" (Just (StructureType False [AST.i32, AST.i32]))
             , GlobalDefinition functionDefaults
-              { name = "f"
-              , parameters = ( [ Parameter (AST.ptr (NamedTypeReference "pair")) "ptr_0" []
+              { LLVM.AST.Global.name = "f"
+              , LLVM.AST.Global.parameters = ( [ Parameter (AST.ptr (NamedTypeReference "pair")) "ptr_0" []
                                , Parameter AST.i32 "x_0" []
                                , Parameter AST.i32 "y_0" []]
                              , False)
-              , returnType = AST.void
-              , basicBlocks =
+              , LLVM.AST.Global.returnType = AST.void
+              , LLVM.AST.Global.basicBlocks =
                 [ BasicBlock (UnName 0)
                   [ UnName 1 := GetElementPtr
                       { inBounds = False
@@ -297,6 +304,139 @@ resolvesTypeDefs = do
                       }
                   ]
                   (Do (Ret Nothing []))
+                ]
+              }
+            , GlobalDefinition functionDefaults
+              { LLVM.AST.Global.name = "g"
+              , LLVM.AST.Global.parameters = ( [Parameter (NamedTypeReference "pair") "pair_0" []]
+                             , False)
+              , LLVM.AST.Global.returnType = AST.i32
+              , LLVM.AST.Global.basicBlocks =
+                [ BasicBlock (UnName 0)
+                  [ UnName 1 := ExtractValue
+                      { aggregate = LocalReference (NamedTypeReference "pair") "pair_0"
+                      , indices' = [0]
+                      , metadata = []
+                      }
+                  , UnName 2 := ExtractValue
+                      { aggregate = LocalReference (NamedTypeReference "pair") "pair_0"
+                      , indices' = [1]
+                      , metadata = []
+                      }
+                  , UnName 3 := Add
+                      { nsw = False
+                      , nuw = False
+                      , operand0 = LocalReference AST.i32 (UnName 1)
+                      , operand1 = LocalReference AST.i32 (UnName 2)
+                      , metadata = []
+                      }
+                  ]
+                  (Do (Ret (Just (LocalReference AST.i32 (UnName 3))) []))
+                ]
+              }
+            ]}
+
+resolvesConstantTypeDefs :: Assertion
+resolvesConstantTypeDefs = do
+  buildModule "<string>" builder @?= ast
+  where builder = mdo
+          pairTy <- typedef "pair" (Just (StructureType False [AST.i32, AST.i32]))
+          globalPair <- global "gpair" pairTy (C.AggregateZero pairTy)
+          function "f" [(AST.i32, "x"), (AST.i32, "y")] AST.void $ \[x, y] -> do
+            let ptr = ConstantOperand $ C.GlobalReference (AST.ptr pairTy) "gpair"
+            xPtr <- gep ptr [ConstantOperand (C.Int 32 0), ConstantOperand (C.Int 32 0)]
+            yPtr <- gep ptr [ConstantOperand (C.Int 32 0), ConstantOperand (C.Int 32 1)]
+            store xPtr 0 x
+            store yPtr 0 y
+          function "g" [] AST.i32 $ \[] -> do
+            pair <- load (ConstantOperand $ C.GlobalReference (AST.ptr pairTy) "gpair") 0
+            x <- extractValue pair [0]
+            y <- extractValue pair [1]
+            z <- add x y
+            ret z
+          pure ()
+        ast = defaultModule
+          { moduleName = "<string>"
+          , moduleDefinitions =
+            [ TypeDefinition "pair" (Just (StructureType False [AST.i32, AST.i32]))
+            , GlobalDefinition globalVariableDefaults
+              { LLVM.AST.Global.name = "gpair"
+              , LLVM.AST.Global.type' = NamedTypeReference "pair"
+              , LLVM.AST.Global.linkage = External
+              , LLVM.AST.Global.initializer = Just (C.AggregateZero (NamedTypeReference "pair"))
+              }
+            , GlobalDefinition functionDefaults
+              { LLVM.AST.Global.name = "f"
+              , LLVM.AST.Global.parameters = ( [ Parameter AST.i32 "x_0" []
+                                               , Parameter AST.i32 "y_0" []]
+                             , False)
+              , LLVM.AST.Global.returnType = AST.void
+              , LLVM.AST.Global.basicBlocks =
+                [ BasicBlock (UnName 0)
+                  [ UnName 1 := GetElementPtr
+                      { inBounds = False
+                      , address = ConstantOperand (C.GlobalReference (AST.ptr (NamedTypeReference "pair")) "gpair")
+                      , indices = [ConstantOperand (C.Int 32 0), ConstantOperand (C.Int 32 0)]
+                      , metadata = []
+                      }
+                  , UnName 2 := GetElementPtr
+                      { inBounds = False
+                      , address = ConstantOperand (C.GlobalReference (AST.ptr (NamedTypeReference "pair")) "gpair")
+                      , indices = [ConstantOperand (C.Int 32 0), ConstantOperand (C.Int 32 1)]
+                      , metadata = []
+                      }
+                  , Do $ Store
+                      { volatile = False
+                      , address = LocalReference (AST.ptr AST.i32) (UnName 1)
+                      , value = LocalReference AST.i32 "x_0"
+                      , maybeAtomicity = Nothing
+                      , alignment = 0
+                      , metadata = []
+                      }
+                  , Do $ Store
+                      { volatile = False
+                      , address = LocalReference (AST.ptr AST.i32) (UnName 2)
+                      , value = LocalReference AST.i32 "y_0"
+                      , maybeAtomicity = Nothing
+                      , alignment = 0
+                      , metadata = []
+                      }
+                  ]
+                  (Do (Ret Nothing []))
+                ]
+              }
+            , GlobalDefinition functionDefaults
+              { LLVM.AST.Global.name = "g"
+              , LLVM.AST.Global.parameters = ([], False)
+              , LLVM.AST.Global.returnType = AST.i32
+              , LLVM.AST.Global.basicBlocks =
+                [ BasicBlock (UnName 0)
+                  [ UnName 1 := Load
+                      { volatile = False,
+                        address = ConstantOperand (C.GlobalReference (AST.ptr (NamedTypeReference "pair")) "gpair"),
+                        maybeAtomicity = Nothing,
+                        alignment = 0,
+                        metadata = []
+                      }
+                  , UnName 2 := ExtractValue
+                      { aggregate = LocalReference (NamedTypeReference "pair") (UnName 1)
+                      , indices' = [0]
+                      , metadata = []
+                      }
+                  , UnName 3 := ExtractValue
+                      { aggregate = LocalReference (NamedTypeReference "pair") (UnName 1)
+                      , indices' = [1]
+                      , metadata = []
+                      }
+                  , UnName 4 := Add
+                      { nsw = False
+                      , nuw = False
+                      , operand0 = LocalReference AST.i32 (UnName 2)
+                      , operand1 = LocalReference AST.i32 (UnName 3)
+                      , metadata = []
+                      }
+                  ]
+                  (Do (Ret (Just (LocalReference AST.i32 (UnName 4))) []))
                 ]
               }
             ]}
@@ -333,10 +473,10 @@ terminatorHandling = do
       { moduleName = "firstTerminatorWinsModule"
       , moduleDefinitions =
         [ GlobalDefinition functionDefaults
-          { name = "f"
-          , parameters = ([ Parameter AST.i32 "a_0" [], Parameter AST.i32 "b_0" []], False)
-          , returnType = AST.i32
-          , basicBlocks =
+          { LLVM.AST.Global.name = "f"
+          , LLVM.AST.Global.parameters = ([ Parameter AST.i32 "a_0" [], Parameter AST.i32 "b_0" []], False)
+          , LLVM.AST.Global.returnType = AST.i32
+          , LLVM.AST.Global.basicBlocks =
             [ BasicBlock (Name "entry_0")
               [ UnName 0 := Add { nsw = False, nuw = False, metadata = []
                                 , operand0 = LocalReference (IntegerType {typeBits = 32}) (Name "a_0")
@@ -354,10 +494,10 @@ terminatorHandling = do
       { moduleName = "terminatorsComposeModule"
       , moduleDefinitions =
         [ GlobalDefinition functionDefaults
-          { name = "f"
-          , parameters = ([ Parameter AST.i1 "a_0" []], False)
-          , returnType = AST.i1
-          , basicBlocks =
+          { LLVM.AST.Global.name = "f"
+          , LLVM.AST.Global.parameters = ([ Parameter AST.i1 "a_0" []], False)
+          , LLVM.AST.Global.returnType = AST.i1
+          , LLVM.AST.Global.basicBlocks =
             [ BasicBlock (Name "entry_0")
               []
               (Do (CondBr {condition = LocalReference (IntegerType {typeBits = 1}) (Name "a_0")
