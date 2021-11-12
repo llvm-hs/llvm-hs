@@ -23,26 +23,23 @@ withFileRawOStream ::
   (MonadThrow m, MonadIO m, MonadAnyCont IO m)
   => String
   -> Bool
-  -> Bool
   -> (Ptr FFI.RawOStream -> IO ())
   -> m ()
-withFileRawOStream path excl text c =
-  withFileRawPWriteStream path excl text (c . FFI.upCast)
+withFileRawOStream path text c =
+  withFileRawPWriteStream path text (c . FFI.upCast)
 
 -- May throw 'FdStreamException'.
 withFileRawPWriteStream ::
   (MonadThrow m, MonadIO m, MonadAnyCont IO m)
   => String
   -> Bool
-  -> Bool
   -> (Ptr FFI.RawPWriteStream -> IO ())
   -> m ()
-withFileRawPWriteStream path excl text c = do
+withFileRawPWriteStream path text c = do
   path <- encodeM path
-  excl <- encodeM excl
   text <- encodeM text
   msgPtr <- alloca
-  succeeded <- decodeM =<< (liftIO $ FFI.withFileRawPWriteStream path excl text msgPtr c)
+  succeeded <- decodeM =<< (liftIO $ FFI.withFileRawPWriteStream path text msgPtr c)
   unless succeeded $ do
     s <- decodeM msgPtr
     throwM $ FdStreamException s
