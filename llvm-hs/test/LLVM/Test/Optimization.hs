@@ -282,7 +282,6 @@ tests = testGroup "Optimization" [
              ]
            }
       mOut <- do
-        initializeAllTargets
         let triple = "x86_64"
         (target, _) <- lookupTarget Nothing triple
         withTargetOptions $ \targetOptions -> do
