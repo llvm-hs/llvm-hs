@@ -9,7 +9,9 @@ import LLVM.Test.Support
 import Control.Exception
 import Control.Monad.Trans.Except
 import Data.Bits
+import qualified Data.ByteString.Lazy as LBS
 import Data.Word
+import System.IO.Temp
 
 import qualified Data.Map as Map
 
@@ -535,7 +537,27 @@ tests = testGroup "Module" [
                 G.alignment = 4
               }
              ]
-        strCheck ast s
+        strCheck ast s,
+
+      testCase "overwriting assembly files" $
+        -- Test that we use the correct flags when opening an output file,
+        -- so that the file is truncated to 0 before writing and the
+        -- previous content is not (partially) preserved
+        withSystemTempDirectory "llvm-test" $ \dir_path ->
+        withContext $ \context -> do
+          let file_path = dir_path ++ "/test.ll"
+          -- fill the file with some garbage
+          LBS.writeFile file_path $ LBS.replicate 1000 120 -- 1Kb of 'x'
+          let s = "declare i32 @puts(i8* nocapture) nounwind"
+          withModuleFromLLVMAssembly' context s $ \module0 -> do
+            -- write some LLVM assembly to the same file
+            writeLLVMAssemblyToFile (File file_path) module0
+            ast0 <- moduleAST module0
+            -- try to read the code back
+            withModuleFromLLVMAssembly context (File file_path) $ \module1 -> do
+              ast1 <- moduleAST module1
+              ast1 { moduleName = "<string>", moduleSourceFileName = "<string>" }
+                `assertEqPretty` ast0
    ],
         
   testGroup "failures" [

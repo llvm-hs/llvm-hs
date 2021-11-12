@@ -155,7 +155,7 @@ moduleLLVMAssembly m = do
 writeLLVMAssemblyToFile :: File -> Module -> IO ()
 writeLLVMAssemblyToFile (File path) m = flip runAnyContT return $ do
   m' <- readModule m
-  withFileRawOStream path False True $ FFI.writeLLVMAssembly m'
+  withFileRawOStream path True $ FFI.writeLLVMAssembly m'
 
 class BitcodeInput b where
   bitcodeMemoryBuffer :: (MonadThrow m, MonadIO m, MonadAnyCont IO m)
@@ -187,7 +187,7 @@ moduleBitcode m = do
 writeBitcodeToFile :: File -> Module -> IO ()
 writeBitcodeToFile (File path) m = flip runAnyContT return $ do
   m' <- readModule m
-  withFileRawOStream path False False $ FFI.writeBitcode m'
+  withFileRawOStream path False $ FFI.writeBitcode m'
 
 -- | May throw 'TargetMachineEmitException'.
 targetMachineEmit :: FFI.CodeGenFileType -> TargetMachine -> Module -> Ptr FFI.RawPWriteStream -> IO ()
@@ -200,7 +200,7 @@ targetMachineEmit fileType (TargetMachine tm) m os = flip runAnyContT return $ d
 -- | May throw 'FdStreamException' and 'TargetMachineEmitException'.
 emitToFile :: FFI.CodeGenFileType -> TargetMachine -> File -> Module -> IO ()
 emitToFile fileType tm (File path) m = flip runAnyContT return $ do
-  withFileRawPWriteStream path False False $ targetMachineEmit fileType tm m
+  withFileRawPWriteStream path False $ targetMachineEmit fileType tm m
 
 -- | May throw 'TargetMachineEmitException'.
 emitToByteString :: FFI.CodeGenFileType -> TargetMachine -> Module -> IO BS.ByteString

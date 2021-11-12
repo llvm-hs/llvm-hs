@@ -19,11 +19,15 @@ foreign import ccall "wrapper" wrapRawPWriteStreamCallback ::
   RawPWriteStreamCallback -> IO (FunPtr RawPWriteStreamCallback)
 
 foreign import ccall safe "LLVM_Hs_WithFileRawPWriteStream" withFileRawPWriteStream' ::
-  CString -> LLVMBool -> LLVMBool -> Ptr (OwnerTransfered CString) -> FunPtr RawPWriteStreamCallback -> IO LLVMBool
+  CString -> LLVMBool -> Ptr (OwnerTransfered CString) -> FunPtr RawPWriteStreamCallback -> IO LLVMBool
 
-withFileRawPWriteStream :: CString -> LLVMBool -> LLVMBool -> Ptr (OwnerTransfered CString) -> RawPWriteStreamCallback -> IO LLVMBool
-withFileRawPWriteStream p ex bin err c =
-  bracket (wrapRawPWriteStreamCallback c) freeHaskellFunPtr (withFileRawPWriteStream' p ex bin err)
+withFileRawPWriteStream
+  :: CString -- ^ path
+  -> LLVMBool -- ^ open in binary or text mode? ('True' = text)
+  -> Ptr (OwnerTransfered CString)
+  -> RawPWriteStreamCallback -> IO LLVMBool
+withFileRawPWriteStream p text err c =
+  bracket (wrapRawPWriteStreamCallback c) freeHaskellFunPtr (withFileRawPWriteStream' p text err)
 
 foreign import ccall safe "LLVM_Hs_WithBufferRawPWriteStream" withBufferRawPWriteStream' ::
   FunPtr ByteRangeCallback -> FunPtr RawPWriteStreamCallback -> IO ()

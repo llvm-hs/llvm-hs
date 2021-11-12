@@ -8,12 +8,12 @@ using namespace llvm;
 extern "C" {
 
 LLVMBool
-LLVM_Hs_WithFileRawPWriteStream(const char *filename, LLVMBool excl,
+LLVM_Hs_WithFileRawPWriteStream(const char *filename,
                                 LLVMBool text, char **error,
                                 void (&callback)(raw_pwrite_stream &ostream)) {
     std::error_code e;
     raw_fd_ostream os(filename, e,
-                      excl ? sys::fs::CD_CreateNew : sys::fs::CD_OpenAlways,
+                      sys::fs::CD_CreateAlways,
                       sys::fs::FA_Write,
                       text ? sys::fs::OF_Text : sys::fs::OF_None);
     if (e) {
