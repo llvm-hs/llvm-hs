@@ -52,7 +52,8 @@ extern "C" {
 // ExecutionSession
 
 ExecutionSession *LLVM_Hs_createExecutionSession() {
-    return new ExecutionSession();
+    // TODO: llvm-hs does not yet expose LLVM 13's executor process control API
+    return new ExecutionSession(std::make_unique<UnsupportedExecutorProcessControl>());
 }
 
 void LLVM_Hs_disposeExecutionSession(ExecutionSession *es) {
