@@ -43,5 +43,29 @@ tests = testGroup "Global" [
           gn (G.Function {}) = "function"
           gn (G.GlobalVariable {}) = "variable"
           name = gn g <> ", align " <> show a <> (maybe "" (("  section " <>) . ByteString.unpack . fromShort) s)
+   ],
+   testGroup "UnnamedAddr" [
+    testCase name $ withContext $ \context -> do
+      let ast = Module "<string>" "<string>" Nothing Nothing [ GlobalDefinition g ]
+      ast' <- withModuleFromAST context ast moduleAST
+      ast' @?= ast
+    | a <- [Nothing, Just LocalAddr, Just GlobalAddr],
+      g <- [
+       globalVariableDefaults {
+        G.name = UnName 0,
+        G.type' = i32,
+        G.unnamedAddr = a
+        },
+       functionDefaults {
+         G.returnType = A.T.void,
+         G.name = UnName 0,
+         G.parameters = ([], False),
+         G.unnamedAddr = a
+       }
+       ],
+      let
+          gn (G.Function {}) = "function"
+          gn (G.GlobalVariable {}) = "variable"
+          name = gn g <> ", unnamedAddr " <> show a
    ]
  ]
