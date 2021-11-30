@@ -338,12 +338,15 @@ createModuleFromAST context@(Context c) (A.Module moduleId sourceFileName dataLa
            setThreadLocalMode a' (A.G.threadLocalMode a)
            (liftIO . FFI.setAliasee a') =<< encodeM (A.G.aliasee a)
            return (FFI.upCast a')
-       (A.Function _ _ _ cc rAttrs resultType fName (args, isVarArgs) attrs _ _ _ gc prefix blocks personality metadata) -> do
+       fn@(A.Function _ _ _ _ cc rAttrs resultType fName (args, isVarArgs) attrs _ _ _ gc prefix blocks personality metadata) -> do
          typ <- encodeM $ A.FunctionType resultType [t | A.Parameter t _ _ <- args] isVarArgs
          f <- liftIO . withName fName $ \fName -> FFI.addFunction ffiMod fName typ
          defineGlobal fName f
          cc <- encodeM cc
-         liftIO $ FFI.setFunctionCallingConvention f cc
+         liftIO $ do
+           FFI.setFunctionCallingConvention f cc
+           hua <- encodeM (A.G.unnamedAddr fn)
+           FFI.setUnnamedAddr (FFI.upCast f) hua
          setFunctionAttributes f (AttributeList attrs rAttrs [pa | A.Parameter _ _ pa <- args])
          setPrefixData f prefix
          setSection f (A.G.section g)
@@ -487,6 +490,7 @@ decodeFunctions mod = do
           <$> getLinkage f
           <*> getVisibility f
           <*> getDLLStorageClass f
+          <*> (liftIO $ decodeM =<< FFI.getUnnamedAddr (FFI.upCast f))
           <*> (liftIO $ decodeM =<< FFI.getFunctionCallingConvention f)
           <*> return rAttrs
           <*> return returnType
