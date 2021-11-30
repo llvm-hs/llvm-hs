@@ -119,6 +119,7 @@ tests = testGroup "Optimization" [
          G.name = Name "foo",
          G.parameters = ([Parameter i32 (Name "x") []], False),
          G.functionAttributes = [Left (A.GroupID 0)],
+         G.unnamedAddr = Just LocalAddr,
          G.basicBlocks = [
            BasicBlock (Name "here") [
               ] (
