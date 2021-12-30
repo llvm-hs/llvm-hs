@@ -27,9 +27,9 @@
         config = { };
         mkOverlay = ghc: final: _:
           with final;
+          with haskell.lib;
           with haskell.packages."ghc${ghc}".extend (final: _:
-            with final;
-            with haskell.lib; {
+            with final; rec {
               llvm-hs-pure = overrideCabal (callCabal2nix "llvm-hs-pure"
                 (with nf.lib; filter { root = ./llvm-hs-pure; }) { })
                 (o: { version = "${o.version}-${version ghc}"; });
@@ -45,20 +45,16 @@
                   version = "${o.version}-${version ghc}";
                   patches = [ ./patches/1-llvm-hs-pretty.patch ];
                 }));
-              llvm-hs-combinators = dontCheck (overrideCabal (addBuildTools
-                (callCabal2nix "llvm-hs-combinators" (with nf.lib;
-                  "${lhc}"
-                  # filter {
-                  #   root = lhc;
-                  #   exclude = [ (matchExt "cabal") "stack.yaml" ];
-                  # }
-                ) { inherit llvm-hs-pure; }) [ hpack ])
-                (o: { version = "${o.version}-${version ghc}"; }));
             }); {
-              "llvm-hs-pure-${ghc}" = llvm-hs-pure;
-              "llvm-hs-pretty-${ghc}" = llvm-hs-pretty;
-              "llvm-hs-${ghc}" = llvm-hs;
-              "llvm-hs-combinators-${ghc}" = llvm-hs-combinators;
+              "${ghc}" = rec {
+                inherit (haskell.packages."ghc${ghc}")
+                  llvm-hs llvm-hs-pure llvm-hs-pretty;
+                llvm-hs-combinators = dontCheck (overrideCabal (addBuildTools
+                  (callCabal2nix "llvm-hs-combinators" "${lhc}" {
+                    inherit llvm-hs-pure;
+                  }) [ hpack ])
+                  (o: { version = "${o.version}-${version ghc}"; }));
+              };
             };
         mkOverlays = ghcs: map mkOverlay ghcs;
         eachGHC = ghcs:
@@ -70,15 +66,9 @@
           in with pkgs; rec {
             inherit (pkgs) overlays;
             packages = flattenTree (recurseIntoAttrs (with lib.lists;
-              foldr (ghc: s:
-                {
-                  "llvm-hs-${ghc}" = getAttr "llvm-hs-${ghc}" pkgs;
-                  "llvm-hs-pure-${ghc}" = getAttr "llvm-hs-pure-${ghc}" pkgs;
-                  "llvm-hs-pretty-${ghc}" =
-                    getAttr "llvm-hs-pretty-${ghc}" pkgs;
-                  "llvm-hs-combinators-${ghc}" =
-                    getAttr "llvm-hs-combinators-${ghc}" pkgs;
-                } // s) { } ghcs));
+              foldr
+              (ghc: s: { "ghc${ghc}" = recurseIntoAttrs (pkgs."${ghc}"); } // s)
+              { } ghcs));
           };
       in eachGHC [ "902" "8107" ]);
 }
