@@ -5,9 +5,18 @@
     fu.url = "github:numtide/flake-utils?ref=master";
     nf.url = "github:numtide/nix-filter?ref=master";
     hls.url = "github:haskell/haskell-language-server?ref=master";
+    lhc = {
+      url = "github:luc-tielen/llvm-hs-combinators";
+      flake = false;
+    };
+    lhp = {
+      url = "github:llvm-hs/llvm-hs-pretty";
+      flake = false;
+    };
   };
-  outputs = { self, np, fu, nf, hls }:
+  outputs = { self, np, fu, nf, hls, lhc, lhp }:
     with fu.lib;
+    with builtins;
     eachSystem [ "x86_64-linux" ] (system:
       let
         version = ghc:
@@ -29,9 +38,27 @@
                   inherit llvm-hs-pure;
                   llvm-config = llvmPackages_9.llvm;
                 }) (o: { version = "${o.version}-${version ghc}"; });
+              llvm-hs-pretty = dontCheck (overrideCabal (addBuildTools
+                (callCabal2nix "llvm-hs-pretty" "${lhp}" {
+                  inherit llvm-hs llvm-hs-pure;
+                }) [ hpack ]) (o: {
+                  version = "${o.version}-${version ghc}";
+                  patches = [ ./patches/1-llvm-hs-pretty.patch ];
+                }));
+              llvm-hs-combinators = dontCheck (overrideCabal (addBuildTools
+                (callCabal2nix "llvm-hs-combinators" (with nf.lib;
+                  "${lhc}"
+                  # filter {
+                  #   root = lhc;
+                  #   exclude = [ (matchExt "cabal") "stack.yaml" ];
+                  # }
+                ) { inherit llvm-hs-pure; }) [ hpack ])
+                (o: { version = "${o.version}-${version ghc}"; }));
             }); {
-              "llvm-hs-pure-${ghc}" = llvm-hs;
-              "llvm-hs-${ghc}" = llvm-hs-pure;
+              "llvm-hs-pure-${ghc}" = llvm-hs-pure;
+              "llvm-hs-pretty-${ghc}" = llvm-hs-pretty;
+              "llvm-hs-${ghc}" = llvm-hs;
+              "llvm-hs-combinators-${ghc}" = llvm-hs-combinators;
             };
         mkOverlays = ghcs: map mkOverlay ghcs;
         eachGHC = ghcs:
@@ -40,14 +67,17 @@
               inherit config system;
               overlays = (mkOverlays ghcs);
             });
-          in with pkgs;
-          with builtins; rec {
+          in with pkgs; rec {
             inherit (pkgs) overlays;
             packages = flattenTree (recurseIntoAttrs (with lib.lists;
               foldr (ghc: s:
                 {
                   "llvm-hs-${ghc}" = getAttr "llvm-hs-${ghc}" pkgs;
                   "llvm-hs-pure-${ghc}" = getAttr "llvm-hs-pure-${ghc}" pkgs;
+                  "llvm-hs-pretty-${ghc}" =
+                    getAttr "llvm-hs-pretty-${ghc}" pkgs;
+                  "llvm-hs-combinators-${ghc}" =
+                    getAttr "llvm-hs-combinators-${ghc}" pkgs;
                 } // s) { } ghcs));
           };
       in eachGHC [ "902" "8107" ]);

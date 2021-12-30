@@ -101,6 +101,38 @@
         "type": "github"
       }
     },
+    "lhc": {
+      "flake": false,
+      "locked": {
+        "lastModified": 1640610238,
+        "narHash": "sha256-qdUHqdqR9vJqzWgmXRmkvKJelEhlu67ubX7DmNGFJ0s=",
+        "owner": "luc-tielen",
+        "repo": "llvm-hs-combinators",
+        "rev": "5814c4f8ba3c675a059cda3c56c56e8ed558f27c",
+        "type": "github"
+      },
+      "original": {
+        "owner": "luc-tielen",
+        "repo": "llvm-hs-combinators",
+        "type": "github"
+      }
+    },
+    "lhp": {
+      "flake": false,
+      "locked": {
+        "lastModified": 1634299651,
+        "narHash": "sha256-EvSI03u8W3khNvh+nlHAIp/fFSCZk+jYk2b/D4hFC08=",
+        "owner": "llvm-hs",
+        "repo": "llvm-hs-pretty",
+        "rev": "990bb6981f6214d9c1bbf46fd9e9ce5596d3bf30",
+        "type": "github"
+      },
+      "original": {
+        "owner": "llvm-hs",
+        "repo": "llvm-hs-pretty",
+        "type": "github"
+      }
+    },
     "nf": {
       "locked": {
         "lastModified": 1620202920,
@@ -186,6 +218,8 @@
       "inputs": {
         "fu": "fu",
         "hls": "hls",
+        "lhc": "lhc",
+        "lhp": "lhp",
         "nf": "nf",
         "np": "np"
       }
