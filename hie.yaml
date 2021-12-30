@@ -1,0 +1,13 @@
+cradle:
+  cabal:
+    - path: "./llvm-hs/src"
+      component: "lib:llvm-hs"
+
+    - path: "./llvm-hs/test"
+      component: "llvm-hs:test:test"
+
+    - path: "./llvm-hs-pure/src"
+      component: "lib:llvm-hs-pure"
+
+    - path: "./llvm-hs-pure/test"
+      component: "llvm-hs-pure:test:test"
