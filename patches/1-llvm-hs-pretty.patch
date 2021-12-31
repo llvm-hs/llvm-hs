@@ -1,0 +1,13 @@
+diff --git a/llvm-hs-pretty.cabal b/llvm-hs-pretty.cabal
+index 72589ae..c982478 100644
+--- a/llvm-hs-pretty.cabal
++++ b/llvm-hs-pretty.cabal
+@@ -30,7 +30,7 @@ library
+     bytestring           >= 0.1   && < 0.11,
+     llvm-hs-pure         >= 9.0   && < 10.0,
+     text                 >= 1.2   && < 2.0,
+-    prettyprinter        >= 1.2   && < 1.6
++    prettyprinter        >= 1.2   
+ 
+ Test-suite test
+   type:                exitcode-stdio-1.0
