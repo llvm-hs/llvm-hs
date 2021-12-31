@@ -120,16 +120,16 @@
     "lhp": {
       "flake": false,
       "locked": {
-        "lastModified": 1626880009,
-        "narHash": "sha256-uuIP3gIUMbBpZ/K6Xyn0uHJWFq+EUdqM7ISL2E/wvbY=",
-        "owner": "llvm-hs",
+        "lastModified": 1640926554,
+        "narHash": "sha256-R3RCT+t3l9Rxo/knKFrowaDQWkk3lEGA0fBJ06iGW2w=",
+        "owner": "smunix",
         "repo": "llvm-hs-pretty",
-        "rev": "655ff4d47b3a584b4c9a5863f6121b954825920c",
+        "rev": "ace3c52ce575b1ba3a677436cc8efafb21fc10a3",
         "type": "github"
       },
       "original": {
-        "owner": "llvm-hs",
-        "ref": "llvm-12",
+        "owner": "smunix",
+        "ref": "pre.llvm-12",
         "repo": "llvm-hs-pretty",
         "type": "github"
       }
@@ -182,11 +182,11 @@
     },
     "np": {
       "locked": {
-        "lastModified": 1640822900,
-        "narHash": "sha256-H44cm4EYvJOLOzw+4aTEgoVV1R+NmZ+S/++0KSKPICc=",
+        "lastModified": 1640909298,
+        "narHash": "sha256-0YoyFfvPQopwzB8dwPw++DA9lRrdOBfbMgSAXYhfhlY=",
         "owner": "nixos",
         "repo": "nixpkgs",
-        "rev": "4884725b151701282e8c539efc13cfe67dbb3add",
+        "rev": "1537d1a8989e094415bb8825a03c5bf2cd26f063",
         "type": "github"
       },
       "original": {
