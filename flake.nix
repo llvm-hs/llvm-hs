@@ -10,7 +10,7 @@
       flake = false;
     };
     lhp = {
-      url = "github:llvm-hs/llvm-hs-pretty/llvm-12";
+      url = "github:smunix/llvm-hs-pretty/pre.llvm-12";
       flake = false;
     };
   };
