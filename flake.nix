@@ -28,8 +28,10 @@
         mkOverlay = ghc: final: _:
           with final;
           with haskell.lib;
-          with haskell.packages."ghc${ghc}".extend (final: _:
-            with final; rec {
+          with haskell.packages."ghc${ghc}".extend (final: _: rec { }); {
+            "${ghc}" = rec {
+              # inherit (haskell.packages."ghc${ghc}")
+              #   llvm-hs llvm-hs-pure llvm-hs-pretty;
               llvm-hs-pure = overrideCabal (callCabal2nix "llvm-hs-pure"
                 (with nf.lib; filter { root = ./llvm-hs-pure; }) { })
                 (o: { version = "${o.version}-${version ghc}"; });
@@ -45,17 +47,13 @@
                   version = "${o.version}-${version ghc}";
                   patches = [ ./patches/1-llvm-hs-pretty.patch ];
                 }));
-            }); {
-              "${ghc}" = rec {
-                inherit (haskell.packages."ghc${ghc}")
-                  llvm-hs llvm-hs-pure llvm-hs-pretty;
-                llvm-hs-combinators = dontCheck (overrideCabal (addBuildTools
-                  (callCabal2nix "llvm-hs-combinators" "${lhc}" {
-                    inherit llvm-hs-pure;
-                  }) [ hpack ])
-                  (o: { version = "${o.version}-${version ghc}"; }));
-              };
+              llvm-hs-combinators = dontCheck (overrideCabal (addBuildTools
+                (callCabal2nix "llvm-hs-combinators" "${lhc}" {
+                  inherit llvm-hs-pure;
+                }) [ hpack ])
+                (o: { version = "${o.version}-${version ghc}"; }));
             };
+          };
         mkOverlays = ghcs: map mkOverlay ghcs;
         eachGHC = ghcs:
           let
