@@ -10,7 +10,7 @@
       flake = false;
     };
     lhp = {
-      url = "github:llvm-hs/llvm-hs-pretty";
+      url = "github:llvm-hs/llvm-hs-pretty/llvm-12";
       flake = false;
     };
   };
@@ -41,10 +41,8 @@
               llvm-hs-pretty = dontCheck (overrideCabal (addBuildTools
                 (callCabal2nix "llvm-hs-pretty" "${lhp}" {
                   inherit llvm-hs llvm-hs-pure;
-                }) [ hpack ]) (o: {
-                  version = "${o.version}-${version ghc}";
-                  patches = [ ./patches/1-llvm-hs-pretty.patch ];
-                }));
+                }) [ hpack ])
+                (o: { version = "${o.version}-${version ghc}"; }));
               llvm-hs-combinators = dontCheck (overrideCabal (addBuildTools
                 (callCabal2nix "llvm-hs-combinators" "${lhc}" {
                   inherit llvm-hs-pure;
