@@ -30,8 +30,6 @@
           with haskell.lib;
           with haskell.packages."ghc${ghc}".extend (final: _: rec { }); {
             "${ghc}" = rec {
-              # inherit (haskell.packages."ghc${ghc}")
-              #   llvm-hs llvm-hs-pure llvm-hs-pretty;
               llvm-hs-pure = overrideCabal (callCabal2nix "llvm-hs-pure"
                 (with nf.lib; filter { root = ./llvm-hs-pure; }) { })
                 (o: { version = "${o.version}-${version ghc}"; });
@@ -67,6 +65,22 @@
               foldr
               (ghc: s: { "ghc${ghc}" = recurseIntoAttrs (pkgs."${ghc}"); } // s)
               { } ghcs));
+            defaultPackage = packages."ghc${head ghcs}/llvm-hs";
+            devShell = with haskell.packages."ghc${head ghcs}";
+              shellFor {
+                packages = _: [
+                  packages."ghc${head ghcs}/llvm-hs"
+                  packages."ghc${head ghcs}/llvm-hs-pure"
+                  packages."ghc${head ghcs}/llvm-hs-combinators"
+                  packages."ghc${head ghcs}/llvm-hs-pretty"
+                ];
+                buildInputs = [
+                  cabal-install
+                  ghc
+                  haskell-language-server
+                  llvmPackages_9.llvm
+                ];
+              };
           };
       in eachGHC [ "902" "8107" ]);
 }
