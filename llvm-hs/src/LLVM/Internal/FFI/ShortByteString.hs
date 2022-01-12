@@ -8,7 +8,7 @@ module LLVM.Internal.FFI.ShortByteString
 import LLVM.Prelude
 
 import Data.ByteString.Internal (c_strlen)
-import Data.ByteString.Short.Internal
+import Data.ByteString.Short.Internal (createFromPtr, copyToPtr)
 import qualified Data.ByteString.Short as ByteString
 import Foreign.C.String
 import Foreign.Marshal.Alloc

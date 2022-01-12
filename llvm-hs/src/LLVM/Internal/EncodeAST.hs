@@ -15,7 +15,7 @@ import Control.Monad.State
 import Foreign.Ptr
 import Foreign.C
 
-import qualified LLVM.Internal.FFI.ShortByteString as ShortByteString
+import LLVM.Internal.FFI.ShortByteString (useAsCString)
 import qualified Data.ByteString.Short as ShortByteString
 
 import Data.Map (Map)
@@ -95,7 +95,7 @@ runEncodeAST context@(Context ctx) (EncodeAST a) =
       flip evalStateT initEncodeState . flip runAnyContT return $ a
 
 withName :: A.Name -> (CString -> IO a) -> IO a
-withName (A.Name n) = ShortByteString.useAsCString n
+withName (A.Name n) = useAsCString n
 withName (A.UnName _) = withCString ""
 
 instance MonadAnyCont IO m => EncodeM m A.Name CString where
