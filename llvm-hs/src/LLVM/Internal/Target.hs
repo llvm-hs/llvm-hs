@@ -124,7 +124,7 @@ newtype CPUFeature = CPUFeature ByteString
 instance EncodeM e ByteString es => EncodeM e (Map CPUFeature Bool) es where
   encodeM = encodeM . ByteString.intercalate "," . map (\(CPUFeature f, enabled) -> (if enabled then "+" else "-") <> f) . Map.toList
 
-instance (Monad d, DecodeM d ByteString es) => DecodeM d (Map CPUFeature Bool) es where
+instance (MonadFail d, DecodeM d ByteString es) => DecodeM d (Map CPUFeature Bool) es where
   decodeM es = do
     s <- decodeM es
     let flag = do
