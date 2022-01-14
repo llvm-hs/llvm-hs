@@ -1,3 +1,11 @@
+## 7.1.1 (unreleased)
+
+* Relax LLVM version constarin to 7.X
+
+## 7.1.0 (unreleased)
+
+* Bump LLVM version to 7.1.0
+
 ## 7.0.2 (unreleased)
 
 * It is now possible to define multiple variables with an empty name

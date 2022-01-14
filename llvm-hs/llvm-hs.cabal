@@ -1,5 +1,5 @@
 name: llvm-hs
-version: 7.0.1
+version: 7.1.1
 license: BSD3
 license-file: LICENSE
 author: Anthony Cowley, Stephen Diehl, Moritz Kiefer <moritz.kiefer@purelyfunctional.org>, Benjamin S. Scarlet
