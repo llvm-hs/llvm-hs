@@ -30,6 +30,7 @@ module LLVM.OrcJIT (
     disposeThreadSafeModule,
     -- * Object layers
     ObjectLayer,
+    addObjectFile,
     -- ** RTDyldObjectLinkingLayer
     RTDyldObjectLinkingLayer,
     createRTDyldObjectLinkingLayer,

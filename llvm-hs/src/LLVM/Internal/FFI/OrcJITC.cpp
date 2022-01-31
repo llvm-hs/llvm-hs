@@ -107,6 +107,13 @@ ObjectLayer* LLVM_Hs_createRTDyldObjectLinkingLayer(ExecutionSession* es) {
     });
 }
 
+void LLVM_Hs_ObjectLayerAddObjectFile(ObjectLayer* ol, JITDylib* dylib, const char* path) {
+  ExitOnError ExitOnErr;
+  if (auto errorOrBuffer = MemoryBuffer::getFile(path)) {
+    ExitOnErr(ol->add(*dylib, std::move(errorOrBuffer.get())));
+  } else exit(1);
+}
+
 void LLVM_Hs_disposeObjectLayer(ObjectLayer* ol) {
     delete ol;
 }
