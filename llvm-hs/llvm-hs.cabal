@@ -234,7 +234,7 @@ library
     Control.Monad.Trans.AnyCont
 
   include-dirs: src
-  c-sources:
+  cxx-sources:
     src/LLVM/Internal/FFI/AssemblyC.cpp
     src/LLVM/Internal/FFI/AttributeC.cpp
     src/LLVM/Internal/FFI/BitcodeC.cpp
