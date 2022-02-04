@@ -16,6 +16,7 @@ data FunctionAttribute
     | InlineHint
     | JumpTable
     | MinimizeSize
+    | MustProgress
     | Naked
     | NoBuiltin
     | NoDuplicate

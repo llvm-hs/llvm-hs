@@ -21,13 +21,13 @@ import Data.Maybe
 
 import qualified LLVM.Internal.FFI.Attribute as FFI
 import qualified LLVM.Internal.FFI.LLVMCTypes as FFI
-import LLVM.Internal.FFI.LLVMCTypes (parameterAttributeKindP, functionAttributeKindP)  
+import LLVM.Internal.FFI.LLVMCTypes (parameterAttributeKindP, functionAttributeKindP)
 
-import qualified LLVM.AST.ParameterAttribute as A.PA  
-import qualified LLVM.AST.FunctionAttribute as A.FA  
+import qualified LLVM.AST.ParameterAttribute as A.PA
+import qualified LLVM.AST.FunctionAttribute as A.FA
 
 import LLVM.Internal.Coding
-import LLVM.Internal.Context  
+import LLVM.Internal.Context
 import LLVM.Internal.EncodeAST
 import LLVM.Internal.DecodeAST
 
@@ -92,6 +92,7 @@ instance Monad m => EncodeM m A.FA.FunctionAttribute (Ptr FFI.FunctionAttrBuilde
       A.FA.InlineHint -> FFI.functionAttributeKindInlineHint
       A.FA.JumpTable -> FFI.functionAttributeKindJumpTable
       A.FA.MinimizeSize -> FFI.functionAttributeKindMinSize
+      A.FA.MustProgress -> FFI.functionAttributeKindMustProgress
       A.FA.Naked -> FFI.functionAttributeKindNaked
       A.FA.NoBuiltin -> FFI.functionAttributeKindNoBuiltin
       A.FA.NoDuplicate -> FFI.functionAttributeKindNoDuplicate
@@ -169,7 +170,7 @@ instance DecodeM DecodeAST A.FA.FunctionAttribute FFI.FunctionAttribute where
        then
          return A.FA.StringAttribute
                   `ap` (decodeM $ FFI.attributeKindAsString a)
-                  `ap` (decodeM $ FFI.attributeValueAsString a)                   
+                  `ap` (decodeM $ FFI.attributeValueAsString a)
        else do
          enum <- liftIO $ FFI.functionAttributeKindAsEnum a
          case enum of
@@ -188,6 +189,7 @@ instance DecodeM DecodeAST A.FA.FunctionAttribute FFI.FunctionAttribute where
            [functionAttributeKindP|InlineHint|] -> return A.FA.InlineHint
            [functionAttributeKindP|JumpTable|] -> return A.FA.JumpTable
            [functionAttributeKindP|MinSize|] -> return A.FA.MinimizeSize
+           [functionAttributeKindP|MustProgress|] -> return A.FA.MustProgress
            [functionAttributeKindP|Naked|] -> return A.FA.Naked
            [functionAttributeKindP|NoBuiltin|] -> return A.FA.NoBuiltin
            [functionAttributeKindP|NoDuplicate|] -> return A.FA.NoDuplicate
@@ -246,7 +248,7 @@ instance forall a b. DecodeM DecodeAST a (FFI.Attribute b) => DecodeM DecodeAST 
     attrs <- allocaArray numAttributes
     liftIO (FFI.getAttributes as attrs)
     decodeM (numAttributes, attrs :: Ptr (FFI.Attribute b))
-            
+
 data AttributeList = AttributeList {
     functionAttributes :: [Either A.FA.GroupID A.FA.FunctionAttribute],
     returnAttributes :: [A.PA.ParameterAttribute],
@@ -258,7 +260,7 @@ data PreSlot
   = IndirectFunctionAttributes A.FA.GroupID
   | DirectFunctionAttributes [A.FA.FunctionAttribute]
   | ReturnAttributes [A.PA.ParameterAttribute]
-  | ParameterAttributes CUInt [A.PA.ParameterAttribute]    
+  | ParameterAttributes CUInt [A.PA.ParameterAttribute]
 
 instance {-# OVERLAPPING #-} EncodeM EncodeAST [Either A.FA.GroupID A.FA.FunctionAttribute] FFI.FunctionAttributeSet where
   encodeM attrs = do
