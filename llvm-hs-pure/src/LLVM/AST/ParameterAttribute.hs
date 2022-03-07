@@ -17,6 +17,7 @@ data ParameterAttribute
     | NoAlias
     | NoCapture
     | NoFree
+    | NoUndef
     | NonNull
     | ReadNone
     | ReadOnly

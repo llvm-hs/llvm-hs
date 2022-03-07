@@ -106,10 +106,10 @@ moduleAst =
           , StackProtect
           , StackProtectReq
           , StackProtectStrong
-          , UWTable
           , WriteOnly
           , AllocSize 8 (Just 16)
           , StackAlignment 8
+          , UWTable
           , StringAttribute "bar" "baz"
           , StringAttribute "foo" ""
           , StringAttribute "qux" ""

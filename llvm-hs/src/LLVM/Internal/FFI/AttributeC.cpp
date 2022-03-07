@@ -30,6 +30,10 @@ uint64_t LLVM_Hs_AttributeValueAsInt(LLVMAttributeRef a) {
     return unwrap(a).getValueAsInt();
 }
 
+void LLVM_Hs_AttributeEnsureUWTableKindDefault(LLVMAttributeRef a) {
+    assert(unwrap(a).getUWTableKind() == UWTableKind::Default);
+}
+
 LLVMTypeRef LLVM_Hs_AttributeValueAsType(LLVMAttributeRef a) {
     return wrap(unwrap(a).getValueAsType());
 }
@@ -104,12 +108,12 @@ void LLVM_Hs_getAttributes(LLVMAttributeSetRef attributeSet,
 
 size_t LLVM_Hs_GetAttrBuilderSize() { return sizeof(AttrBuilder); }
 
-AttrBuilder *LLVM_Hs_ConstructAttrBuilder(char *p) {
-    return new (p) AttrBuilder();
+AttrBuilder *LLVM_Hs_ConstructAttrBuilder(LLVMContextRef context, char *p) {
+    return new (p) AttrBuilder(*unwrap(context));
 }
 
-AttrBuilder *LLVM_Hs_AttrBuilderFromAttrSet(LLVMAttributeSetRef as) {
-    return new AttrBuilder(*as);
+AttrBuilder *LLVM_Hs_AttrBuilderFromAttrSet(LLVMContextRef context, LLVMAttributeSetRef as) {
+    return new AttrBuilder(*unwrap(context), *as);
 }
 
 void LLVM_Hs_DisposeAttrBuilder(AttrBuilder *as) { delete as; }
@@ -140,6 +144,10 @@ void LLVM_Hs_AttrBuilderAddAlignment(AttrBuilder &ab, uint64_t v) {
 
 void LLVM_Hs_AttrBuilderAddStackAlignment(AttrBuilder &ab, uint64_t v) {
     ab.addStackAlignmentAttr(MaybeAlign(v));
+}
+
+void LLVM_Hs_AttrBuilderAddUWTable(AttrBuilder &ab) {
+    ab.addUWTableAttr(UWTableKind::Default);
 }
 
 void LLVM_Hs_AttrBuilderAddAllocSize(AttrBuilder &ab, unsigned x, unsigned y,
@@ -173,7 +181,8 @@ LLVMBool LLVM_Hs_AttributeGetAllocSizeArgs(LLVMAttributeRef a, unsigned *x,
 }
 
 void LLVM_Hs_AttributeGetVScaleRangeArgs(LLVMAttributeRef a, unsigned *min, unsigned *max) {
-  std::tie(*min, *max) = unwrap(a).getVScaleRangeArgs();
+  *min = unwrap(a).getVScaleRangeMin();
+  *max = unwrap(a).getVScaleRangeMax().getValueOr(0);
 }
 
 void LLVM_Hs_AttrBuilderAddVScaleRange(AttrBuilder &ab, unsigned min, unsigned max) {

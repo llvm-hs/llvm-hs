@@ -79,6 +79,9 @@ foreign import ccall unsafe "LLVM_Hs_AttributeValueAsString" attributeValueAsStr
 foreign import ccall unsafe "LLVM_Hs_AttributeValueAsInt" attributeValueAsInt ::
   Attribute a -> IO Word64
 
+foreign import ccall unsafe "LLVM_Hs_AttributeEnsureUWTableKindDefault" attributeEnsureUWTableKindDefault ::
+  Attribute a -> IO ()
+
 foreign import ccall unsafe "LLVM_Hs_AttributeValueAsType" attributeValueAsType ::
   Attribute a -> IO (Ptr Type)
 
@@ -117,7 +120,7 @@ foreign import ccall unsafe "LLVM_Hs_GetAttrBuilderSize" getAttrBuilderSize ::
   CSize
 
 foreign import ccall unsafe "LLVM_Hs_AttrBuilderFromAttrSet" attrBuilderFromSet ::
-  AttributeSet a -> IO (Ptr (AttrBuilder a))
+  Ptr Context -> AttributeSet a -> IO (Ptr (AttrBuilder a))
 
 foreign import ccall unsafe "LLVM_Hs_DisposeAttrBuilder" disposeAttrBuilder ::
   Ptr (AttrBuilder a) -> IO ()
@@ -126,7 +129,7 @@ foreign import ccall unsafe "LLVM_Hs_AttrBuilderMerge" mergeAttrBuilder ::
   Ptr (AttrBuilder a) -> Ptr (AttrBuilder a) -> IO ()
 
 foreign import ccall unsafe "LLVM_Hs_ConstructAttrBuilder" constructAttrBuilder ::
-  Ptr Word8 -> IO (Ptr (AttrBuilder a))
+  Ptr Context -> Ptr Word8 -> IO (Ptr (AttrBuilder a))
 
 foreign import ccall unsafe "LLVM_Hs_DestroyAttrBuilder" destroyAttrBuilder ::
   Ptr (AttrBuilder a) -> IO ()
@@ -148,6 +151,9 @@ foreign import ccall unsafe "LLVM_Hs_AttrBuilderAddAlignment" attrBuilderAddAlig
 
 foreign import ccall unsafe "LLVM_Hs_AttrBuilderAddStackAlignment" attrBuilderAddStackAlignment ::
   Ptr FunctionAttrBuilder -> Word64 -> IO ()
+
+foreign import ccall unsafe "LLVM_Hs_AttrBuilderAddUWTable" attrBuilderAddUWTable ::
+  Ptr FunctionAttrBuilder -> IO ()
 
 -- The CInt is 0 if the last value is null and 1 otherwise
 foreign import ccall unsafe "LLVM_Hs_AttrBuilderAddAllocSize" attrBuilderAddAllocSize' ::
