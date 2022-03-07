@@ -48,8 +48,9 @@ LLVM_HS_FOR_EACH_FAST_MATH_FLAG(ENUM_CASE)
 	return r;
 }
 
+// TODO: Pass in pointee types when building GEPs and remove this.
 static llvm::Type* getPointeeType(LLVMValueRef ptr) {
-  return llvm::cast<llvm::PointerType>(unwrap(ptr)->getType())->getElementType();
+  return unwrap(ptr)->getType()->getPointerElementType();
 }
 }
 

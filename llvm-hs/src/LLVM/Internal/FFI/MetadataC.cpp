@@ -3,6 +3,7 @@
 #include <iostream>
 #include "llvm/Support/FormattedStream.h"
 
+#include "llvm/BinaryFormat/Dwarf.h"
 #include "llvm/Config/llvm-config.h"
 #include "llvm/IR/LLVMContext.h"
 #include "llvm/IR/Metadata.h"
@@ -634,7 +635,7 @@ DILocalVariable* LLVM_Hs_Get_DILocalVariable(LLVMContextRef ctx,
                                              DINode::DIFlags flags, uint32_t alignInBits) {
     LLVMContext &c = *unwrap(ctx);
     return DILocalVariable::get(c, static_cast<DILocalScope*>(scope), name, file, line, type,
-                                arg, flags, alignInBits);
+                                arg, flags, alignInBits, nullptr);
 }
 
 uint16_t LLVM_Hs_DILocalVariable_GetArg(DILocalVariable* v) {
@@ -659,7 +660,7 @@ DIGlobalVariable* LLVM_Hs_Get_DIGlobalVariable(LLVMContextRef ctx,
                                  file, line, type,
                                  isLocalToUnit, isDefinition,
                                  declaration, templateParams,
-                                 alignInBits);
+                                 alignInBits, nullptr);
 }
 
 LLVMBool LLVM_Hs_DIGlobalVariable_GetLocal(DIGlobalVariable* v) {

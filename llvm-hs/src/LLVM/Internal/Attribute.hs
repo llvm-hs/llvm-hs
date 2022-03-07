@@ -20,6 +20,7 @@ import Foreign.Ptr
 import Data.Maybe
 
 import qualified LLVM.Internal.FFI.Attribute as FFI
+import qualified LLVM.Internal.FFI.Context as FFI
 import qualified LLVM.Internal.FFI.LLVMCTypes as FFI
 import LLVM.Internal.Type ()
 import LLVM.Internal.FFI.LLVMCTypes (parameterAttributeKindP, functionAttributeKindP)
@@ -61,6 +62,7 @@ instance Monad m => EncodeM m A.PA.ParameterAttribute (Ptr FFI.ParameterAttrBuil
       A.PA.NoAlias -> FFI.parameterAttributeKindNoAlias
       A.PA.NoCapture -> FFI.parameterAttributeKindNoCapture
       A.PA.NoFree -> FFI.parameterAttributeKindNoFree
+      A.PA.NoUndef -> FFI.parameterAttributeKindNoUndef
       A.PA.NonNull -> FFI.parameterAttributeKindNonNull
       A.PA.ReadNone -> FFI.parameterAttributeKindReadNone
       A.PA.ReadOnly -> FFI.parameterAttributeKindReadOnly
@@ -93,6 +95,7 @@ instance Monad m => EncodeM m A.FA.FunctionAttribute (Ptr FFI.FunctionAttrBuilde
       vsMax' <- encodeM vsMax
       liftIO $ FFI.attrBuilderAddVScaleRange b vsMin' vsMax'
     A.FA.StackAlignment v -> liftIO $ FFI.attrBuilderAddStackAlignment b v
+    A.FA.UWTable -> liftIO $ FFI.attrBuilderAddUWTable b
     _ -> liftIO $ FFI.attrBuilderAddFunctionAttributeKind b $ case a of
       A.FA.AlwaysInline -> FFI.functionAttributeKindAlwaysInline
       A.FA.ArgMemOnly -> FFI.functionAttributeKindArgMemOnly
@@ -142,7 +145,6 @@ instance Monad m => EncodeM m A.FA.FunctionAttribute (Ptr FFI.FunctionAttrBuilde
       A.FA.StackProtectReq -> FFI.functionAttributeKindStackProtectReq
       A.FA.StackProtectStrong -> FFI.functionAttributeKindStackProtectStrong
       A.FA.StrictFP -> FFI.functionAttributeKindStrictFP
-      A.FA.UWTable -> FFI.functionAttributeKindUWTable
       A.FA.WillReturn -> FFI.functionAttributeKindWillReturn
       A.FA.WriteOnly -> FFI.functionAttributeKindWriteOnly
       A.FA.AllocSize _ _ -> inconsistentCases "FunctionAttribute" a
@@ -174,6 +176,7 @@ instance DecodeM DecodeAST A.PA.ParameterAttribute FFI.ParameterAttribute where
           [parameterAttributeKindP|NoCapture|] -> return A.PA.NoCapture
           [parameterAttributeKindP|NoFree|] -> return A.PA.NoFree
           [parameterAttributeKindP|NonNull|] -> return A.PA.NonNull
+          [parameterAttributeKindP|NoUndef|] -> return A.PA.NoUndef
           [parameterAttributeKindP|ReadNone|] -> return A.PA.ReadNone
           [parameterAttributeKindP|ReadOnly|] -> return A.PA.ReadOnly
           [parameterAttributeKindP|Returned|] -> return A.PA.Returned
@@ -249,7 +252,9 @@ instance DecodeM DecodeAST A.FA.FunctionAttribute FFI.FunctionAttribute where
            [functionAttributeKindP|StackProtectStrong|] -> return A.FA.StackProtectStrong
            [functionAttributeKindP|StackProtect|] -> return A.FA.StackProtect
            [functionAttributeKindP|StrictFP|] -> return A.FA.StrictFP
-           [functionAttributeKindP|UWTable|] -> return A.FA.UWTable
+           [functionAttributeKindP|UWTable|] -> do
+             liftIO $ FFI.attributeEnsureUWTableKindDefault a
+             return A.FA.UWTable
            [functionAttributeKindP|WillReturn|] -> return A.FA.WillReturn
            [functionAttributeKindP|WriteOnly|] -> return A.FA.WriteOnly
            [functionAttributeKindP|VScaleRange|] -> do
@@ -259,11 +264,11 @@ instance DecodeM DecodeAST A.FA.FunctionAttribute FFI.FunctionAttribute where
              A.FA.VScaleRange <$> (decodeM =<< peek vsMin) <*> (decodeM =<< peek vsMax)
            _ -> error $ "unhandled function attribute enum value: " ++ show enum
 
-allocaAttrBuilder :: (Monad m, MonadAnyCont IO m) => m (Ptr (FFI.AttrBuilder a))
-allocaAttrBuilder = do
+allocaAttrBuilder :: (Monad m, MonadAnyCont IO m) => Ptr (FFI.Context) -> m (Ptr (FFI.AttrBuilder a))
+allocaAttrBuilder (context) = do
   p <- allocaArray FFI.getAttrBuilderSize
   anyContToM $ \f -> do
-    ab <- FFI.constructAttrBuilder p
+    ab <- FFI.constructAttrBuilder context p
     r <- f ab
     FFI.destroyAttrBuilder ab
     return r
@@ -271,10 +276,10 @@ allocaAttrBuilder = do
 instance forall a b. EncodeM EncodeAST a (Ptr (FFI.AttrBuilder b) -> EncodeAST ()) =>
          EncodeM EncodeAST [a] (FFI.AttributeSet b) where
   encodeM as = do
-    ab <- allocaAttrBuilder
+    Context context <- gets encodeStateContext
+    ab <- allocaAttrBuilder context
     builds <- mapM encodeM as
     void (forM builds ($ ab) :: EncodeAST [()])
-    Context context <- gets encodeStateContext
     anyContToM
       (bracket (FFI.getAttributeSet context ab) FFI.disposeAttributeSet)
 
@@ -300,17 +305,17 @@ data PreSlot
 
 instance {-# OVERLAPPING #-} EncodeM EncodeAST [Either A.FA.GroupID A.FA.FunctionAttribute] FFI.FunctionAttributeSet where
   encodeM attrs = do
-    ab <- allocaAttrBuilder
+    Context context <- gets encodeStateContext
+    ab <- allocaAttrBuilder context
     forM_ attrs $ \attr ->
       case attr of
         Left groupId -> do
           attrSet <- referAttributeGroup groupId
-          ab' <- anyContToM (bracket (FFI.attrBuilderFromSet attrSet) FFI.disposeAttrBuilder)
+          ab' <- anyContToM (bracket (FFI.attrBuilderFromSet context attrSet) FFI.disposeAttrBuilder)
           liftIO (FFI.mergeAttrBuilder ab ab')
         Right attr -> do
           addAttr <- encodeM attr
           addAttr ab :: EncodeAST ()
-    Context context <- gets encodeStateContext
     anyContToM
       (bracket (FFI.getAttributeSet context ab) FFI.disposeAttributeSet)
 

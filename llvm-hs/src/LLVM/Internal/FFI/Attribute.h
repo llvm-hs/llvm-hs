@@ -11,6 +11,7 @@
   macro(Builtin,F,F,T)                              \
   macro(Cold,F,F,T)                                 \
   macro(Convergent,F,F,T)                           \
+  macro(DisableSanitizerInstrumentation,F,F,T)      \
   macro(Hot,F,F,T)                                  \
   macro(ImmArg,T,F,F)                               \
   macro(InReg,T,T,F)                                \
@@ -36,9 +37,10 @@
   macro(NoRecurse,F,F,T)                            \
   macro(NoRedZone,F,F,T)                            \
   macro(NoReturn,F,F,T)                             \
+  macro(NoSanitizeBounds,F,F,T)                     \
   macro(NoSanitizeCoverage,F,F,T)                   \
   macro(NoSync,F,F,T)                               \
-  macro(NoUndef,F,F,T)                              \
+  macro(NoUndef,T,F,T)                              \
   macro(NoUnwind,F,F,T)                             \
   macro(NonLazyBind,F,F,T)                          \
   macro(NonNull,T,T,F)                              \
@@ -67,7 +69,6 @@
   macro(SwiftAsync,T,F,F)                           \
   macro(SwiftError,T,F,F)                           \
   macro(SwiftSelf,T,F,F)                            \
-  macro(UWTable,F,F,T)                              \
   macro(WillReturn,F,F,T)                           \
   macro(WriteOnly,T,F,T)                            \
   macro(ZExt,T,T,F)                                 \
@@ -82,6 +83,7 @@
   macro(Dereferenceable,T,T,F)                      \
   macro(DereferenceableOrNull,T,T,F)                \
   macro(StackAlignment,F,F,T)                       \
+  macro(UWTable,F,F,T)                              \
   macro(VScaleRange,F,F,T)                          \
   macro(EndAttrKinds,F,F,F)
 
