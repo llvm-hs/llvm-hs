@@ -1,5 +1,6 @@
 {-# LANGUAGE DuplicateRecordFields #-}
 {-# LANGUAGE OverloadedStrings #-}
+{-# LANGUAGE ScopedTypeVariables #-}
 module LLVM.Test.Metadata where
 
 import LLVM.Prelude
@@ -350,8 +351,8 @@ roundtripDINode :: TestTree
 roundtripDINode = testProperty "roundtrip DINode" $ \diNode -> ioProperty $
   withContext $ \context -> runEncodeAST context $ do
     encodedDINode <- encodeM (diNode :: DINode)
-    decodedDINode <- liftIO (runDecodeAST (decodeM (encodedDINode :: Ptr FFI.DINode)))
-    pure (decodedDINode === diNode)
+    decodedDINode :: Either String DINode <- liftIO (runDecodeAST (decodeM (encodedDINode :: Ptr FFI.DINode)))
+    pure (decodedDINode === (Right diNode))
 
 roundtripDICompileUnit :: TestTree
 roundtripDICompileUnit = testProperty "roundtrip DICompileUnit" $ \diFile retainedType ->
@@ -940,7 +941,7 @@ globalObjectMetadata = testGroup "Metadata on GlobalObject" $
                       , splitDebugInlining = True
                       , debugInfoForProfiling = False
                       , nameTableKind = NameTableKindDefault
-                      , debugBaseAddress = False
+                      , rangesBaseAddress = False
                       }
                   , MetadataNodeDefinition (MetadataNodeID 3) $
                     DINode . DIScope . DIFile $
@@ -1002,7 +1003,7 @@ globalObjectMetadata = testGroup "Metadata on GlobalObject" $
                       , splitDebugInlining = True
                       , debugInfoForProfiling = False
                       , nameTableKind = NameTableKindDefault
-                      , debugBaseAddress = False
+                      , rangesBaseAddress = False
                       }
                   , MetadataNodeDefinition (MetadataNodeID 3) $
                     DINode . DIVariable . DIGlobalVariable $

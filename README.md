@@ -19,6 +19,47 @@ compiler with the library. In general, we try to stay very close to
 the API and AST provided by LLVM itself, so the [LLVM language
 reference](http://llvm.org/docs/LangRef.html) is also very useful.
 
+## LLVM API Interface
+
+`llvm-hs` provides an LLVM binding at (roughly) the same level of abstraction
+as the official LLVM C API. Because of this, anything you might do with the
+LLVM C API, you should expect to be able to do with `llvm-hs`. In addition,
+some things which are not handled in the LLVM C API are supported. For example,
+the LLVM C API [does not provide any
+support](https://llvm.org/doxygen/group__LLVMCSupportTypes.html) for working
+with `AttributeSet` and `AttributeList` types, but `llvm-hs` does.
+
+However, the binding to LLVM is only half the story: a lot of advanced
+pure-Haskell functionality is built on top of this basic interface in the
+`llvm-hs-pure` module, most notably the monadic
+[IRBuilder](https://hackage.haskell.org/package/llvm-hs-pure) and
+[ModuleBuilder](https://hackage.haskell.org/package/llvm-hs-pure) interfaces
+which greatly simplify the task of generating LLVM code from a higher level
+abstract syntax. The
+[llvm-hs-examples](https://github.com/llvm-hs/llvm-hs-examples/blob/master/irbuilder/Main.hs)
+project contains example usage. These high level interfaces are ideal for
+implementing the LLVM backend for your code generation project. A good example
+is Google's [Dex](https://github.com/google-research/dex-lang) research
+language.
+
+## LLVM API Coverage and Philosophy
+
+The `llvm-hs` FFI layer in `LLVM/Internal/FFI` extends the upstream LLVM C API
+*adding missing functionality* which upstream has not yet exposed from the C++
+API. We also provide some *improved implementations* of buggy or otherwise
+problematic functions in the LLVM C API. As the LLVM C API becomes more
+complete, we retire our extensions and directly wrap the newly added C API
+functions, ensuring our FFI layer is as small as possible.
+
+If you find you need to use some LLVM functionality which is available via the
+C++ API but not via the C API or in  `llvm-hs`, please open an issue and
+include links to the relevant entities in the LLVM doxygen-generated
+documentation.
+
+In general, if it is possible to implement something in Haskell using the LLVM
+C API primitives, that is preferable to implementing things in the FFI layer
+and merely exposing them to Haskell as wrapped C or C++ functions.
+
 ## Contributing
 
 We love all kinds of contributions so feel free to open issues for
@@ -64,13 +105,11 @@ compiler are required, at least Clang 3.1, GCC 4.8, or Visual Studio 2015
      cmake --build . --target install
      ```
 
-
 ## Versioning
 
 Trying to represent the version of LLVM in the version number but also
 allowing for version bumps in the bindings themselves while respecting
-the [PVP](http://pvp.haskell.org/) can be tricky. Luckily LLVM is
-switching to a
+the [PVP](http://pvp.haskell.org/) can be tricky. Luckily LLVM switched to a
 [new versioning scheme](http://blog.llvm.org/2016/12/llvms-new-versioning-scheme.html)
 of `major.0.patch` starting from version `4.0`. This means that we can
 use the last two components for these bindings while the first
@@ -80,48 +119,6 @@ to earlier versions are not provided.
 
 ## How is this related to llvm-general?
 
-This project is a fork of the venerable `llvm-general` that aims to improve the public release story, and better provide the interfaces needed for any Haskell project looking to leverage LLVM. Contributions are encouraged.
-
-## IRBuilder
-
-A IRBuilder, starting out as a thin reinterpretation of the C++ IRBuilder inside
-of a Haskell State monad. Goal is to eliminate a lot of boilerplate around the
-most common uses of `llvm-hs` as a compiler backend.
-
-Example LLVM module that adds two numbers:
-
-```llvm
-; ModuleID = 'exampleModule'
-
-define external ccc i32 @add(i32 %a, i32 %b){
-entry:
-  %0 = add i32 %a, %b
-  ret i32 %0
-}
-```
-
-```haskell
-{-# LANGUAGE OverloadedStrings #-}
-{-# LANGUAGE RecursiveDo #-}
-
-import Data.Text.Lazy.IO as T
-
-import LLVM.Pretty  -- from the llvm-hs-pretty package
-import LLVM.AST hiding (function)
-import LLVM.AST.Type as AST
-import qualified LLVM.AST.Float as F
-import qualified LLVM.AST.Constant as C
-
-import LLVM.IRBuilder.Module
-import LLVM.IRBuilder.Monad
-import LLVM.IRBuilder.Instruction
-
-simple :: IO ()
-simple = T.putStrLn $ ppllvm $ buildModule "exampleModule" $ mdo
-
-  function "add" [(i32, "a"), (i32, "b")] i32 $ \[a, b] -> mdo
-
-    entry <- block `named` "entry"; do
-      c <- add a b
-      ret c
-```
+This project is a fork of the venerable `llvm-general` that aims to improve the
+public release story, and better provide the interfaces needed for any Haskell
+project looking to leverage LLVM. Contributions are encouraged.

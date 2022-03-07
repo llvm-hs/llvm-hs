@@ -97,7 +97,7 @@ linkModules ::
      Module -- ^ The module into which to link
   -> Module -- ^ The module to link into the other (this module is destroyed)
   -> IO ()
-linkModules dest src  = flip runAnyContT return $ do
+linkModules dest src  = runAnyContT' return $ do
   dest' <- readModule dest
   src' <- readModule src
   result <- decodeM =<< liftIO (FFI.linkModules dest' src')
@@ -130,7 +130,7 @@ instance LLVMAssemblyInput File where
 -- | parse 'Module' from LLVM assembly. May throw 'ParseFailureException'.
 withModuleFromLLVMAssembly :: LLVMAssemblyInput s
                               => Context -> s -> (Module -> IO a) -> IO a
-withModuleFromLLVMAssembly (Context c) s f = flip runAnyContT return $ do
+withModuleFromLLVMAssembly (Context c) s f = runAnyContT' return $ do
   mb <- llvmAssemblyMemoryBuffer s
   msgPtr <- alloca
   m <- anyContToM $ bracket (newModule =<< FFI.parseLLVMAssembly c mb msgPtr) (FFI.disposeModule <=< readModule)
@@ -153,7 +153,7 @@ moduleLLVMAssembly m = do
 
 -- | write LLVM assembly for a 'Module' to a file
 writeLLVMAssemblyToFile :: File -> Module -> IO ()
-writeLLVMAssemblyToFile (File path) m = flip runAnyContT return $ do
+writeLLVMAssemblyToFile (File path) m = runAnyContT' return $ do
   m' <- readModule m
   withFileRawOStream path False True $ FFI.writeLLVMAssembly m'
 
@@ -169,7 +169,7 @@ instance BitcodeInput File where
 
 -- | parse 'Module' from LLVM bitcode. May throw 'ParseFailureException'.
 withModuleFromBitcode :: BitcodeInput b => Context -> b -> (Module -> IO a) -> IO a
-withModuleFromBitcode (Context c) b f = flip runAnyContT return $ do
+withModuleFromBitcode (Context c) b f = runAnyContT' return $ do
   mb <- bitcodeMemoryBuffer b
   msgPtr <- alloca
   m <- anyContToM $ bracket (newModule =<< FFI.parseBitcode c mb msgPtr) (FFI.disposeModule <=< readModule)
@@ -185,13 +185,13 @@ moduleBitcode m = do
 
 -- | write LLVM bitcode from a 'Module' into a file
 writeBitcodeToFile :: File -> Module -> IO ()
-writeBitcodeToFile (File path) m = flip runAnyContT return $ do
+writeBitcodeToFile (File path) m = runAnyContT' return $ do
   m' <- readModule m
   withFileRawOStream path False False $ FFI.writeBitcode m'
 
 -- | May throw 'TargetMachineEmitException'.
 targetMachineEmit :: FFI.CodeGenFileType -> TargetMachine -> Module -> Ptr FFI.RawPWriteStream -> IO ()
-targetMachineEmit fileType (TargetMachine tm) m os = flip runAnyContT return $ do
+targetMachineEmit fileType (TargetMachine tm) m os = runAnyContT' return $ do
   msgPtr <- alloca
   m' <- readModule m
   r <- decodeM =<< (liftIO $ FFI.targetMachineEmit tm m' os fileType msgPtr)
@@ -199,12 +199,12 @@ targetMachineEmit fileType (TargetMachine tm) m os = flip runAnyContT return $ d
 
 -- | May throw 'FdStreamException' and 'TargetMachineEmitException'.
 emitToFile :: FFI.CodeGenFileType -> TargetMachine -> File -> Module -> IO ()
-emitToFile fileType tm (File path) m = flip runAnyContT return $ do
+emitToFile fileType tm (File path) m = runAnyContT' return $ do
   withFileRawPWriteStream path False False $ targetMachineEmit fileType tm m
 
 -- | May throw 'TargetMachineEmitException'.
 emitToByteString :: FFI.CodeGenFileType -> TargetMachine -> Module -> IO BS.ByteString
-emitToByteString fileType tm m = flip runAnyContT return $ do
+emitToByteString fileType tm m = runAnyContT' return $ do
   withBufferRawPWriteStream $ targetMachineEmit fileType tm m
 
 -- | write target-specific assembly directly into a file

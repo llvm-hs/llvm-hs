@@ -108,14 +108,9 @@ modules and call functions in the resulting `Module` from Haskell.
 LLVM has several JIT compilers but ORC JIT is the one that is actively
 being developed and the one best supported by @llvm-hs@.
 
-To use ORC JIT you first have to create a
-`LLVM.OrcJIT.CompileLayer`. You can then use `LLVM.OrcJIT.withModule`
-to add an LLVM module to the compile layer and finally use
-`LLVM.Internal.OrcJIT.CompileLayer.findSymbol` to get the address of a
-symbol in the module.  In most cases, you want to lookup the address
-of a function so you have to first convert the `Foreign.Ptr.WordPtr`
-to a `Foreign.Ptr.FunPtr` using `Foreign.Ptr.wordPtrToPtr` and
-`Foreign.Ptr.castPtrToFunPtr`. Then you can use a foreign dynamic
-import to construct a Haskell function which will call the function
-located at the `Foreign.Ptr.FunPtr`.
+Since ORC JIT is still in active development in LLVM, the API is likely to
+change regularly. See the
+[Kaleidoscope](https://github.com/llvm-hs/llvm-hs-kaleidoscope) project for the
+most up-to-date example of using ORC JIT.
+
 -}

@@ -17,7 +17,7 @@ import LLVM.Internal.String ()
 -- in LLVM which are accessible only as command line flags setting global state,
 -- as if the command line tools were the only use of LLVM. Very sad.
 parseCommandLineOptions :: [ShortByteString] -> Maybe ShortByteString -> IO ()
-parseCommandLineOptions args overview = flip runAnyContT return $ do
+parseCommandLineOptions args overview = runAnyContT' return $ do
   args <- encodeM args
   overview <- maybe (return nullPtr) encodeM overview
   liftIO $ FFI.parseCommandLineOptions args overview

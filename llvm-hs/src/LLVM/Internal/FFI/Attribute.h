@@ -4,7 +4,7 @@
 
 // The last three arguments are flags indicating if this is a
 // parameter attribute, function result attribute or function attribute.
-#define LLVM_HS_FOR_EACH_ATTRIBUTE_KIND(macro)	\
+#define LLVM_HS_FOR_EACH_ATTRIBUTE_KIND(macro) \
   macro(None,F,F,F)                                 \
   macro(AlwaysInline,F,F,T)                         \
   macro(ArgMemOnly,F,F,T)                           \

@@ -8,6 +8,7 @@ import LLVM.Internal.FFI.LLVMCTypes
 
 #define FIRST_TERM_INST(num) struct inst { const char *kind; int opcode; const char *name; const char *clas; } insts[] = { { "Terminator", },
 
+#define FIRST_UNARY_INST(num) { "Unary" },
 #define FIRST_BINARY_INST(num) { "Binary" },
 #define FIRST_MEMORY_INST(num) { "Memory" },
 #define FIRST_CAST_INST(num) { "Cast" },
@@ -40,7 +41,7 @@ define hsc_inject() {                                       \
 }
 }
 
-data InstructionKind = Terminator | Binary | Memory | Cast | FuncletPad | Other
+data InstructionKind = Terminator | Unary | Binary | Memory | Cast | FuncletPad | Other
   deriving (Eq, Ord, Show)
 
 data InstructionDef = InstructionDef {
@@ -52,7 +53,7 @@ data InstructionDef = InstructionDef {
   deriving (Eq, Ord, Show)
 
 instructionDefs :: [InstructionDef]
-instructionDefs = [ 
+instructionDefs = [
  InstructionDef o an acn k
  | (o, an, acn, k) <-
    #{inject},
