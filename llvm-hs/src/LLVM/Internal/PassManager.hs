@@ -93,7 +93,7 @@ instance (Monad m, MonadThrow m, MonadAnyCont IO m) => EncodeM m GCOVVersion CSt
     | otherwise = throwM (EncodeException "GCOVVersion should consist of exactly 4 characters")
 
 createPassManager :: HasCallStack => PassSetSpec -> IO (Ptr FFI.PassManager)
-createPassManager pss = flip runAnyContT return $ do
+createPassManager pss = runAnyContT' return $ do
   pm <- liftIO $ FFI.createPassManager
   forM_ (targetLibraryInfo pss) $ \(TargetLibraryInfo tli) -> do
     liftIO $ FFI.addTargetLibraryInfoPass pm tli

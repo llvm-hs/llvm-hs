@@ -1,9 +1,9 @@
-{-# LANGUAGE
-  GeneralizedNewtypeDeriving,
-  MultiParamTypeClasses,
-  UndecidableInstances,
-  OverloadedStrings
-  #-}
+{-# LANGUAGE CPP                        #-}
+{-# LANGUAGE GeneralizedNewtypeDeriving #-}
+{-# LANGUAGE MultiParamTypeClasses      #-}
+{-# LANGUAGE OverloadedStrings          #-}
+{-# LANGUAGE UndecidableInstances       #-}
+
 module LLVM.Internal.DecodeAST where
 
 import LLVM.Prelude
@@ -15,12 +15,15 @@ import Control.Monad.AnyCont
 import Foreign.Ptr
 import Foreign.C
 
-import Data.Sequence (Seq)
-import qualified Data.Sequence as Seq
-import Data.Map (Map)
-import qualified Data.Map as Map
 import Data.Array (Array)
+import Data.Map (Map)
+import Data.Sequence (Seq)
 import qualified Data.Array as Array
+import qualified Data.Map as Map
+import qualified Data.Sequence as Seq
+#if __GLASGOW_HASKELL__ < 808
+import Control.Monad.Fail (MonadFail)
+#endif
 
 import qualified LLVM.Internal.FFI.Attribute as FFI
 import qualified LLVM.Internal.FFI.GlobalValue as FFI
@@ -80,7 +83,7 @@ newtype DecodeAST a = DecodeAST { unDecodeAST :: AnyContT (StateT DecodeState IO
   )
 
 runDecodeAST :: DecodeAST a -> IO a
-runDecodeAST d = flip evalStateT initialDecode . flip runAnyContT return . unDecodeAST $ d
+runDecodeAST d = flip evalStateT initialDecode . runAnyContT' return . unDecodeAST $ d
 
 localScope :: DecodeAST a -> DecodeAST a
 localScope (DecodeAST x) = DecodeAST (tweak x)
@@ -99,7 +102,7 @@ getName getCString v getNameMap generate = do
   name <- liftIO $ do
             n <- getCString v
             if n == nullPtr then return "" else decodeM n
-  if name /= "" 
+  if name /= ""
      then
        return $ A.Name name
      else
@@ -148,7 +151,7 @@ getMetadataNodeID p = do
     Just r -> return r
     Nothing -> do
       let r = A.MetadataNodeID (fromIntegral (Map.size mdns))
-      modify $ \s -> s { 
+      modify $ \s -> s {
         metadataNodesToDefine = (r, p) Seq.<| metadataNodesToDefine s,
         metadataNodes = Map.insert p r (metadataNodes s)
       }
@@ -162,7 +165,7 @@ takeTypeToDefine = state $ \s -> case Seq.viewr (typesToDefine s) of
 takeMetadataNodeToDefine :: DecodeAST (Maybe (A.MetadataNodeID, Ptr FFI.MDNode))
 takeMetadataNodeToDefine = state $ \s -> case Seq.viewr (metadataNodesToDefine s) of
   remaining Seq.:> md -> (Just md, s { metadataNodesToDefine = remaining })
-  _ -> (Nothing, s)                              
+  _ -> (Nothing, s)
 
 instance DecodeM DecodeAST A.Name (Ptr FFI.BasicBlock) where
   decodeM = getLocalName

@@ -23,13 +23,14 @@ module LLVM.OrcJIT (
     createThreadSafeContext,
     disposeThreadSafeContext,
     -- * ThreadSafeModule
-    ThreadSafeModule,
+    ThreadSafeModule(..),
     -- ** Lifetime management
     withClonedThreadSafeModule,
     cloneAsThreadSafeModule,
     disposeThreadSafeModule,
     -- * Object layers
     ObjectLayer,
+    addObjectFile,
     -- ** RTDyldObjectLinkingLayer
     RTDyldObjectLinkingLayer,
     createRTDyldObjectLinkingLayer,

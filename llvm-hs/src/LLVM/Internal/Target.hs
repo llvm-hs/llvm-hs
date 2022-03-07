@@ -1,10 +1,10 @@
-{-# LANGUAGE
-  TemplateHaskell,
-  MultiParamTypeClasses,
-  RecordWildCards,
-  UndecidableInstances,
-  OverloadedStrings
-  #-}
+{-# LANGUAGE CPP                   #-}
+{-# LANGUAGE MultiParamTypeClasses #-}
+{-# LANGUAGE OverloadedStrings     #-}
+{-# LANGUAGE RecordWildCards       #-}
+{-# LANGUAGE TemplateHaskell       #-}
+{-# LANGUAGE UndecidableInstances  #-}
+
 module LLVM.Internal.Target where
 
 import LLVM.Prelude
@@ -16,12 +16,15 @@ import Control.Monad.Trans.Except
 
 import Data.Attoparsec.ByteString
 import Data.Attoparsec.ByteString.Char8
-import qualified Data.ByteString as ByteString
 import Data.Char
 import Data.Map (Map)
-import qualified Data.Map as Map
 import Foreign.C.String
 import Foreign.Ptr
+import qualified Data.ByteString as ByteString
+import qualified Data.Map as Map
+#if __GLASGOW_HASKELL__ < 808
+import Control.Monad.Fail (MonadFail)
+#endif
 
 import LLVM.Internal.Coding
 import LLVM.Internal.String ()
@@ -135,7 +138,7 @@ instance (MonadFail d, DecodeM d ByteString es) => DecodeM d (Map CPUFeature Boo
     case parseOnly (features <* endOfInput) s of
       Right features -> return features
       Left err -> fail ("failure to parse CPUFeature string: " <> err)
-                       
+
 -- | Find a 'Target' given an architecture and/or a \"triple\".
 -- | <http://llvm.org/doxygen/structllvm_1_1TargetRegistry.html#a3105b45e546c9cc3cf78d0f2ec18ad89>
 -- | Be sure to run either 'initializeAllTargets' or
@@ -146,7 +149,7 @@ lookupTarget ::
   Maybe ShortByteString -- ^ arch
   -> ShortByteString -- ^ \"triple\" - e.g. x86_64-unknown-linux-gnu
   -> IO (Target, ShortByteString)
-lookupTarget arch triple = flip runAnyContT return $ do
+lookupTarget arch triple = runAnyContT' return $ do
   cErrorP <- alloca
   cNewTripleP <- alloca
   arch <- encodeM (maybe "" id arch)
@@ -432,7 +435,7 @@ newtype TargetLibraryInfo = TargetLibraryInfo (Ptr FFI.TargetLibraryInfo)
 
 -- | Look up a 'LibraryFunction' by its standard name
 getLibraryFunction :: TargetLibraryInfo -> ShortByteString -> IO (Maybe LibraryFunction)
-getLibraryFunction (TargetLibraryInfo f) name = flip runAnyContT return $ do
+getLibraryFunction (TargetLibraryInfo f) name = runAnyContT' return $ do
   libFuncP <- alloca :: AnyContT IO (Ptr FFI.LibFunc)
   name <- (encodeM name :: AnyContT IO CString)
   r <- decodeM =<< (liftIO $ FFI.getLibFunc f name libFuncP)
@@ -440,7 +443,7 @@ getLibraryFunction (TargetLibraryInfo f) name = flip runAnyContT return $ do
 
 -- | Get a the current name to be emitted for a 'LibraryFunction'
 getLibraryFunctionName :: TargetLibraryInfo -> LibraryFunction -> IO ShortByteString
-getLibraryFunctionName (TargetLibraryInfo f) l = flip runAnyContT return $ do
+getLibraryFunctionName (TargetLibraryInfo f) l = runAnyContT' return $ do
   l <- encodeM l
   decodeM $ FFI.libFuncGetName f l
 
@@ -450,7 +453,7 @@ setLibraryFunctionAvailableWithName ::
   -> LibraryFunction
   -> ShortByteString -- ^ The function name to be emitted
   -> IO ()
-setLibraryFunctionAvailableWithName (TargetLibraryInfo f) libraryFunction name = flip runAnyContT return $ do
+setLibraryFunctionAvailableWithName (TargetLibraryInfo f) libraryFunction name = runAnyContT' return $ do
   name <- encodeM name
   libraryFunction <- encodeM libraryFunction
   liftIO $ FFI.libFuncSetAvailableWithName f libraryFunction name
@@ -460,6 +463,6 @@ withTargetLibraryInfo ::
   ShortByteString -- ^ triple
   -> (TargetLibraryInfo -> IO a)
   -> IO a
-withTargetLibraryInfo triple f = flip runAnyContT return $ do
+withTargetLibraryInfo triple f = runAnyContT' return $ do
   triple <- encodeM triple
   liftIO $ bracket (FFI.createTargetLibraryInfo triple) FFI.disposeTargetLibraryInfo (f . TargetLibraryInfo)

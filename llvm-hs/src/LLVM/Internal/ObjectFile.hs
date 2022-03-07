@@ -24,7 +24,7 @@ disposeObjectFile (ObjectFile obj) = FFI.disposeObjectFile obj
 -- Note that the file at `path` should already be a compiled object file i.e a
 -- `.o` file. This does *not* compile source files.
 createObjectFile :: HasCallStack => FilePath -> IO ObjectFile
-createObjectFile path = flip runAnyContT return $ do
+createObjectFile path = runAnyContT' return $ do
   -- The ownership of the object file is transfered to the object
   -- file, so we need to make sure that we do not free it here.
   FFI.OwnerTransfered buf <- encodeM (File path)

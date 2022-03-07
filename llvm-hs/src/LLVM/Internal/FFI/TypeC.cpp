@@ -8,6 +8,7 @@ using namespace llvm;
 
 extern "C" {
 
+// LLVM may rename the type, which we must capture.
 LLVMTypeRef LLVM_Hs_StructCreateNamed(LLVMContextRef C, const char *Name, char** renamedName) {
     if (Name) {
         auto t = StructType::create(*unwrap(C), Name);
@@ -19,14 +20,6 @@ LLVMTypeRef LLVM_Hs_StructCreateNamed(LLVMContextRef C, const char *Name, char**
     }
 }
 
-LLVMBool LLVM_Hs_StructIsLiteral(LLVMTypeRef t) {
-    return unwrap<StructType>(t)->isLiteral();
-}
-
-LLVMBool LLVM_Hs_StructIsOpaque(LLVMTypeRef t) {
-    return unwrap<StructType>(t)->isOpaque();
-}
-
 LLVMTypeRef LLVM_Hs_ArrayType(LLVMTypeRef ElementType, uint64_t ElementCount) {
     return wrap(ArrayType::get(unwrap(ElementType), ElementCount));
 }
@@ -35,11 +28,4 @@ uint64_t LLVM_Hs_GetArrayLength(LLVMTypeRef ArrayTy) {
     return unwrap<ArrayType>(ArrayTy)->getNumElements();
 }
 
-LLVMTypeRef LLVM_Hs_MetadataTypeInContext(LLVMContextRef C) {
-    return wrap(Type::getMetadataTy(*unwrap(C)));
-}
-
-LLVMTypeRef LLVM_Hs_TokenTypeInContext(LLVMContextRef C) {
-    return wrap(Type::getTokenTy(*unwrap(C)));
-}
 }

@@ -92,7 +92,7 @@ runEncodeAST context@(Context ctx) (EncodeAST a) =
               encodeStateAttributeGroups = Map.empty,
               encodeStateCOMDATs = Map.empty
             }
-      flip evalStateT initEncodeState . flip runAnyContT return $ a
+      flip evalStateT initEncodeState . runAnyContT' return $ a
 
 withName :: A.Name -> (CString -> IO a) -> IO a
 withName (A.Name n) = ShortByteString.useAsCString n

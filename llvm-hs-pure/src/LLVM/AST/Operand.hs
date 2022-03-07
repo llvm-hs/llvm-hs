@@ -61,27 +61,29 @@ data DWOpFragment = DW_OP_LLVM_Fragment
 
 -- | <https://llvm.org/docs/LangRef.html#diexpression>
 data DWOp
-  = DwOpFragment DWOpFragment -- ^ Must appear at the end
-  | DW_OP_StackValue -- ^ Must be the last one or followed by a DW_OP_LLVM_Fragment
-  | DW_OP_Swap
+  = DW_OP_And
+  | DW_OP_Bregx
   | DW_OP_ConstU Word64
-  | DW_OP_Lit0
-  | DW_OP_PlusUConst Word64
-  | DW_OP_Plus
-  | DW_OP_Minus
-  | DW_OP_Mul
+  | DW_OP_Deref
   | DW_OP_Div
+  | DW_OP_Dup
+  | DwOpFragment DWOpFragment -- ^ Must appear at the end
+  | DW_OP_Lit0
+  | DW_OP_Minus
   | DW_OP_Mod
+  | DW_OP_Mul
   | DW_OP_Not
   | DW_OP_Or
-  | DW_OP_Xor
-  | DW_OP_And
+  | DW_OP_Plus
+  | DW_OP_PlusUConst Word64
+  | DW_OP_PushObjectAddress
+  | DW_OP_Shl
   | DW_OP_Shr
   | DW_OP_Shra
-  | DW_OP_Shl
-  | DW_OP_Dup
-  | DW_OP_Deref
+  | DW_OP_StackValue -- ^ Must be the last one or followed by a DW_OP_LLVM_Fragment
+  | DW_OP_Swap
   | DW_OP_XDeref
+  | DW_OP_Xor
   deriving (Eq, Ord, Read, Show, Typeable, Data, Generic)
 
 -- | <http://llvm.org/docs/LangRef.html#metadata>
@@ -285,7 +287,7 @@ data DICompileUnit = CompileUnit
   , splitDebugInlining :: Bool
   , debugInfoForProfiling :: Bool
   , nameTableKind :: DebugNameTableKind
-  , debugBaseAddress :: Bool
+  , rangesBaseAddress :: Bool
   } deriving (Eq, Ord, Read, Show, Typeable, Data, Generic)
 
 -- | <https://llvm.org/docs/LangRef.html#difile>

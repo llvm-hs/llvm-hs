@@ -22,10 +22,6 @@ static_assert(sizeof(Attribute) == sizeof(AttributeImpl *),
 LLVM_HS_FOR_EACH_ATTRIBUTE_KIND(CHECK)
 #undef CHECK
 
-unsigned LLVM_Hs_AttributeKindAsEnum(LLVMAttributeRef a) {
-    return unwrap(a).getKindAsEnum();
-}
-
 uint64_t LLVM_Hs_AttributeValueAsInt(LLVMAttributeRef a) {
     return unwrap(a).getValueAsInt();
 }
@@ -54,17 +50,17 @@ const char *LLVM_Hs_AttributeValueAsString(LLVMAttributeRef a, size_t &l) {
     return s.data();
 }
 
-LLVMAttributeListRef LLVM_Hs_GetAttributeList(LLVMContextRef context,
-                                              unsigned index,
-                                              LLVMAttributeSetRef as) {
+AttributeList * LLVM_Hs_GetAttributeList(LLVMContextRef context,
+                                         unsigned index,
+                                         AttributeSet *as) {
     return new AttributeList(AttributeList::get(*unwrap(context), index, *as));
 }
 
-LLVMAttributeListRef LLVM_Hs_BuildAttributeList(LLVMContextRef context,
-                                                LLVMAttributeSetRef fAttrs,
-                                                LLVMAttributeSetRef rAttrs,
-                                                LLVMAttributeSetRef *pAttrs,
-                                                unsigned numPAttrs) {
+AttributeList * LLVM_Hs_BuildAttributeList(LLVMContextRef context,
+                                           AttributeSet *fAttrs,
+                                           AttributeSet *rAttrs,
+                                           AttributeSet **pAttrs,
+                                           unsigned numPAttrs) {
     std::vector<AttributeSet> pAttrSets{numPAttrs};
     for (unsigned i = 0; i < numPAttrs; ++i) {
         pAttrSets[i] = *pAttrs[i];
@@ -73,33 +69,33 @@ LLVMAttributeListRef LLVM_Hs_BuildAttributeList(LLVMContextRef context,
         AttributeList::get(*unwrap(context), *fAttrs, *rAttrs, pAttrSets));
 }
 
-void LLVM_Hs_DisposeAttributeList(LLVMAttributeListRef attributeList) {
+void LLVM_Hs_DisposeAttributeList(AttributeList *attributeList) {
     delete attributeList;
 }
 
-LLVMAttributeSetRef LLVM_Hs_GetAttributeSet(LLVMContextRef context,
-                                            const AttrBuilder &ab) {
+AttributeSet *LLVM_Hs_GetAttributeSet(LLVMContextRef context,
+                                      const AttrBuilder &ab) {
     return new AttributeSet(AttributeSet::get(*unwrap(context), ab));
 }
 
-void LLVM_Hs_DisposeAttributeSet(LLVMAttributeListRef attributeList) {
+void LLVM_Hs_DisposeAttributeSet(AttributeList *attributeList) {
     delete attributeList;
 }
 
-LLVMBool LLVM_Hs_AttributeSetsEqual(LLVMAttributeSetRef as1,
-                                    LLVMAttributeSetRef as2) {
+LLVMBool LLVM_Hs_AttributeSetsEqual(AttributeSet *as1,
+                                    AttributeSet *as2) {
     return *as1 == *as2;
 }
 
-LLVMBool LLVM_Hs_AttributeSetHasAttributes(LLVMAttributeSetRef as) {
+LLVMBool LLVM_Hs_AttributeSetHasAttributes(AttributeSet *as) {
     return as->hasAttributes();
 }
 
-unsigned LLVM_Hs_getNumAttributes(LLVMAttributeSetRef attributeSet) {
+unsigned LLVM_Hs_getNumAttributes(AttributeSet *attributeSet) {
     return attributeSet->getNumAttributes();
 }
 
-void LLVM_Hs_getAttributes(LLVMAttributeSetRef attributeSet,
+void LLVM_Hs_getAttributes(AttributeSet *attributeSet,
                            LLVMAttributeRef *attrs) {
     for (auto a : *attributeSet) {
         *attrs++ = wrap(a);

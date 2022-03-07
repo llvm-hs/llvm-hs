@@ -140,12 +140,18 @@ data TailCallKind = Tail | MustTail | NoTail
     deriving (Eq, Ord, Read, Show, Typeable, Data, Generic)
 
 -- | non-terminator instructions:
+-- <http://llvm.org/docs/LangRef.html#unaryops>
 -- <http://llvm.org/docs/LangRef.html#binaryops>
 -- <http://llvm.org/docs/LangRef.html#bitwiseops>
 -- <http://llvm.org/docs/LangRef.html#memoryops>
 -- <http://llvm.org/docs/LangRef.html#otherops>
 data Instruction
-  = Add {
+  = FNeg {
+    fastMathFlags :: FastMathFlags,
+    operand0 :: Operand,
+    metadata :: InstructionMetadata
+    }
+  | Add {
       nsw :: Bool,
       nuw :: Bool,
       operand0 :: Operand,

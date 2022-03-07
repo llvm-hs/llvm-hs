@@ -17,6 +17,7 @@ import           LLVM.Context
 import           LLVM.Exception
 import           LLVM.Module
 
+import           Data.ByteString as B (readFile)
 import           Control.Exception
 
 example1 :: AST.Module
@@ -221,4 +222,10 @@ tests =
         "Empty names do not collide" $ do
            moduleStr <- withContext $ \cxt -> withModuleFromAST cxt emptyName moduleLLVMAssembly
            moduleStr @?= "; ModuleID = '<string>'\nsource_filename = \"<string>\"\n\ndeclare void @f(i32, i64)\n"
+--    , testCase
+--        "FNeg is parsed correctly" $ do
+--           fStr <- B.readFile "test/fneg_test.ll"
+--           withContext $ \context -> do
+--             a <- withModuleFromLLVMAssembly context fStr moduleAST
+--             pure ()
     ]

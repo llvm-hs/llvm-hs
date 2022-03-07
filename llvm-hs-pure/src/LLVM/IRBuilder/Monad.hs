@@ -1,11 +1,11 @@
-{-# LANGUAGE DefaultSignatures #-}
-{-# LANGUAGE FlexibleContexts #-}
-{-# LANGUAGE FlexibleInstances #-}
-{-# LANGUAGE GADTs #-}
+{-# LANGUAGE CPP                        #-}
+{-# LANGUAGE DefaultSignatures          #-}
+{-# LANGUAGE FlexibleContexts           #-}
+{-# LANGUAGE FlexibleInstances          #-}
+{-# LANGUAGE GADTs                      #-}
 {-# LANGUAGE GeneralizedNewtypeDeriving #-}
-{-# LANGUAGE MultiParamTypeClasses #-}
-{-# LANGUAGE UndecidableInstances #-} -- For MonadState s (ModuleBuilderT m) instance
-{-# LANGUAGE CPP #-}
+{-# LANGUAGE MultiParamTypeClasses      #-}
+{-# LANGUAGE UndecidableInstances       #-} -- For MonadState s (ModuleBuilderT m) instance
 
 module LLVM.IRBuilder.Monad where
 
@@ -27,8 +27,12 @@ import Control.Monad.Trans.Maybe
 #if !(MIN_VERSION_mtl(2,2,2))
 import Control.Monad.Trans.Identity
 #endif
+#if __GLASGOW_HASKELL__ < 808
+import Control.Monad.Fail (MonadFail)
+#endif
 
 import Data.Bifunctor
+import Data.Monoid (First(..))
 import Data.String
 import Data.Map.Strict(Map)
 import qualified Data.Map.Strict as M
@@ -68,11 +72,11 @@ instance Monad m => MonadIRBuilder (IRBuilderT m) where
 data PartialBlock = PartialBlock
   { partialBlockName :: !Name
   , partialBlockInstrs :: SnocList (Named Instruction)
-  , partialBlockTerm :: Maybe (Named Terminator)
+  , partialBlockTerm :: First (Named Terminator)
   }
 
 emptyPartialBlock :: Name -> PartialBlock
-emptyPartialBlock nm = PartialBlock nm mempty Nothing
+emptyPartialBlock nm = PartialBlock nm mempty (First Nothing)
 
 -- | Builder monad state
 data IRBuilderState = IRBuilderState
@@ -198,7 +202,7 @@ emitTerm
   => Terminator
   -> m ()
 emitTerm term = modifyBlock $ \bb -> bb
-  { partialBlockTerm = Just (Do term)
+  { partialBlockTerm = partialBlockTerm bb <> First (Just (Do term))
   }
 
 -- | Starts a new block labelled using the given name and ends the previous
@@ -214,7 +218,7 @@ emitBlockStart nm = do
     Just bb -> do
       let
         instrs = getSnocList $ partialBlockInstrs bb
-        newBb = case partialBlockTerm bb of
+        newBb = case getFirst (partialBlockTerm bb) of
           Nothing   -> BasicBlock (partialBlockName bb) instrs (Do (Ret Nothing []))
           Just term -> BasicBlock (partialBlockName bb) instrs term
       liftIRState $ modify $ \s -> s
@@ -270,7 +274,7 @@ hasTerminator = do
   current <- liftIRState $ gets builderBlock
   case current of
     Nothing    -> error "Called hasTerminator when no block was active"
-    Just blk -> case partialBlockTerm blk of
+    Just blk -> case getFirst (partialBlockTerm blk) of
       Nothing  -> return False
       Just _   -> return True
 

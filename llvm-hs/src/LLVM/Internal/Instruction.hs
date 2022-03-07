@@ -398,7 +398,7 @@ $(do
                                        then return []
                                        else forM [0..numArgs-1] $ \op ->
                                               decodeM =<< liftIO (FFI.getArgOperand i op) |])
-                _ -> ([], [| error $ "unrecognized instruction field or depenency thereof: " ++ show s |])
+                _ -> ([], [| error $ "unrecognized instruction field or dependency thereof: " ++ show s |])
           in
           TH.caseE [| n |] $
             [ TH.match opcodeP (TH.normalB (TH.doE handlerBody)) []
@@ -571,6 +571,7 @@ $(do
                    |
                    (name, ID.instructionKind -> k) <- Map.toList ID.instructionDefs,
                    case (k, name) of
+                     (ID.Unary, _) -> True
                      (ID.Binary, _) -> True
                      (ID.Cast, _) -> True
                      (ID.Memory, "Alloca") -> False

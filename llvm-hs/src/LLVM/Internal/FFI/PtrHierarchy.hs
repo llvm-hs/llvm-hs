@@ -74,6 +74,15 @@ data Instruction
 
 instance ChildOf User Instruction
 
+-- | <http://llvm.org/doxygen/classllvm_1_1UnaryOperator.html>
+data UnaryOperator
+
+-- This is not strictly true in the sense of the definition of the typeclass
+-- ChildOf, since Instruction -> UnaryInstruction -> UnaryOperator is the
+-- derivation. However, we never need to reference UnaryInstruction methods
+-- so we can elide it. It is valid to cast a UnaryOperator* to an Instruction*.
+instance ChildOf Instruction UnaryOperator
+
 -- | <http://llvm.org/doxygen/classllvm_1_1BinaryOperator.html>
 data BinaryOperator
 
