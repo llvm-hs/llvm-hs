@@ -22,9 +22,13 @@ import Control.Monad.Error.Class
 
 instance MonadState s m => MonadState s (AnyContT m) where
   get = lift get
+  {-# INLINE get #-}
   put = lift . put
+  {-# INLINE put #-}
   state = lift . state
+  {-# INLINE state #-}
 
 instance MonadError e m => MonadError e (AnyContT m) where
   throwError = lift . throwError
+  {-# INLINE throwError #-}
   x `catchError` h = anyContT $ \f -> (runAnyContT x f) `catchError` (\e -> runAnyContT (h e) f)
