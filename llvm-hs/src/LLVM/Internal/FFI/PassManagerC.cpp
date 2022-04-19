@@ -115,57 +115,10 @@ void LLVM_Hs_AddSROAPass(LLVMPassManagerRef PM) {
 	unwrap(PM)->add(createSROAPass());
 }
 
-void LLVM_Hs_AddGCOVProfilerPass(
-	LLVMPassManagerRef PM,
-	LLVMBool emitNotes,
-	LLVMBool emitData,
-	const char *version,
-	LLVMBool noRedZone,
-	LLVMBool atomic,
-	const char *filter,
-	const char *exclude
-) {
-	auto options = GCOVOptions::getDefault();
-	options.EmitNotes = emitNotes;
-	options.EmitData = emitData;
-	std::copy(version, version+4, options.Version);
-	options.NoRedZone = noRedZone;
-	options.Atomic = atomic;
-	options.Filter = filter;
-	options.Exclude = exclude;
-	unwrap(PM)->add(createGCOVProfilerPass(options));
-}
-
 void LLVM_Hs_AddAddressSanitizerFunctionPass(
 	LLVMPassManagerRef PM
 ) {
 	unwrap(PM)->add(createAddressSanitizerFunctionPass());
-}
-
-void LLVM_Hs_AddAddressSanitizerModulePass(
-	LLVMPassManagerRef PM
-) {
-	unwrap(PM)->add(createModuleAddressSanitizerLegacyPassPass());
-}
-
-void LLVM_Hs_AddMemorySanitizerPass(
-	LLVMPassManagerRef PM,
-	LLVMBool trackOrigins,
-	LLVMBool recover,
-	LLVMBool kernel
-) {
-	unwrap(PM)->add(createMemorySanitizerLegacyPassPass(
-    {trackOrigins, static_cast<bool>(recover), static_cast<bool>(kernel)}));
-}
-
-void LLVM_Hs_AddThreadSanitizerPass(
-	LLVMPassManagerRef PM
-) {
-	unwrap(PM)->add(createThreadSanitizerLegacyPassPass());
-}
-
-void LLVM_Hs_AddBoundsCheckingPass(LLVMPassManagerRef PM) {
-	unwrap(PM)->add(createBoundsCheckingLegacyPass());
 }
 
 void LLVM_Hs_AddIPSCCPPass(LLVMPassManagerRef PM) {

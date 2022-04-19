@@ -87,11 +87,6 @@ defaultPassSetSpec = PassSetSpec {
   targetMachine = Nothing
 }
 
-instance (Monad m, MonadThrow m, MonadAnyCont IO m) => EncodeM m GCOVVersion CString where
-  encodeM (GCOVVersion cs)
-    | ByteString.length cs == 4 = encodeM cs
-    | otherwise = throwM (EncodeException "GCOVVersion should consist of exactly 4 characters")
-
 createPassManager :: HasCallStack => PassSetSpec -> IO (Ptr FFI.PassManager)
 createPassManager pss = runAnyContT' return $ do
   pm <- liftIO $ FFI.createPassManager
@@ -101,7 +96,7 @@ createPassManager pss = runAnyContT' return $ do
   case pss of
     s@CuratedPassSetSpec {} -> liftIO $ do
       bracket FFI.passManagerBuilderCreate FFI.passManagerBuilderDispose $ \b -> do
-        let handleOption g m = forM_ (m s) (g b <=< encodeM) 
+        let handleOption g m = forM_ (m s) (g b <=< encodeM)
         handleOption FFI.passManagerBuilderSetOptLevel optLevel
         handleOption FFI.passManagerBuilderSetSizeLevel sizeLevel
         handleOption FFI.passManagerBuilderSetDisableUnitAtATime (liftM not . unitAtATime)
@@ -125,7 +120,7 @@ createPassManager pss = runAnyContT' return $ do
                             TH.RecC n fs -> (n, [ TH.nameBase fn | (fn, _, _) <- fs ])
                             TH.NormalC n [] -> (n, [])
                             _ -> error "pass descriptor constructors with fields need to be records"
-              actions = 
+              actions =
                 [ TH.bindS (TH.varP . TH.mkName $ fn) [| encodeM $(TH.dyn fn) |] | fn <- fns ]
                 ++ [
                  TH.noBindS [|

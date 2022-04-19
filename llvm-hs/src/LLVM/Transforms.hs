@@ -83,26 +83,6 @@ data Pass
       vectorizeOnlyWhenForced :: Bool
     }
   | SuperwordLevelParallelismVectorize
-
-  -- here begin the instrumentation passes
-  | GCOVProfiler {
-      emitNotes :: Bool,
-      emitData :: Bool,
-      version :: GCOVVersion,
-      noRedZone :: Bool,
-      atomic :: Bool,
-      filter :: String,
-      exclude :: String
-    }
-  | AddressSanitizer
-  | AddressSanitizerModule
-  | MemorySanitizer {
-      trackOrigins :: Bool,
-      recover :: Bool,
-      kernel :: Bool
-    }
-  | ThreadSanitizer
-  | BoundsChecking
   deriving (Eq, Ord, Read, Show, Typeable, Data, Generic)
 
 -- | Defaults for the 'LoopVectorize' pass
@@ -111,39 +91,3 @@ defaultLoopVectorize = LoopVectorize {
     interleaveOnlyWhenForced = False,
     vectorizeOnlyWhenForced = False
   }
-
--- | See <http://gcc.gnu.org/viewcvs/gcc/trunk/gcc/gcov-io.h?view=markup>.
-newtype GCOVVersion = GCOVVersion ShortByteString
-  deriving (Eq, Ord, Read, Show, Typeable, Data, Generic)
-
--- | Defaults for 'GCOVProfiler'.
-defaultGCOVProfiler :: Pass
-defaultGCOVProfiler = GCOVProfiler {
-    emitNotes = True,
-    emitData = True,
-    version = GCOVVersion "402*",
-    noRedZone = False,
-    atomic = True,
-    LLVM.Transforms.filter = "",
-    exclude = ""
-  }
-
--- | Defaults for 'AddressSanitizer'.
-defaultAddressSanitizer :: Pass
-defaultAddressSanitizer = AddressSanitizer
-
--- | Defaults for 'AddressSanitizerModule'.
-defaultAddressSanitizerModule :: Pass
-defaultAddressSanitizerModule = AddressSanitizerModule
-
--- | Defaults for 'MemorySanitizer'.
-defaultMemorySanitizer :: Pass
-defaultMemorySanitizer = MemorySanitizer {
-  trackOrigins = False,
-  recover = False,
-  kernel = False
-}
-
--- | Defaults for 'ThreadSanitizer'.
-defaultThreadSanitizer :: Pass
-defaultThreadSanitizer = ThreadSanitizer
