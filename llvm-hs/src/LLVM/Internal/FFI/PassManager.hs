@@ -61,7 +61,6 @@ $(do
             passTypeMapping :: TH.Type -> TH.TypeQ
             passTypeMapping t = case t of
               TH.ConT h | h == ''Word -> [t| CUInt |]
-                        | h == ''G.GCOVVersion -> [t| CString |]
               -- some of the LLVM methods for making passes use "-1" as a special value
               -- handle those here
               TH.AppT (TH.ConT mby) t' | mby == ''Maybe ->
