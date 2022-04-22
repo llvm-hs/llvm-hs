@@ -120,9 +120,6 @@ foreign import ccall unsafe "LLVMPassManagerBuilderPopulateFunctionPassManager" 
 foreign import ccall unsafe "LLVMPassManagerBuilderPopulateModulePassManager" passManagerBuilderPopulateModulePassManager ::
     Ptr PassManagerBuilder -> Ptr PassManager -> IO ()
 
-foreign import ccall unsafe "LLVMPassManagerBuilderPopulateLTOPassManager" passManagerBuilderPopulateLTOPassManager ::
-    Ptr PassManagerBuilder -> Ptr PassManager -> CUChar -> CUChar -> IO ()
-
 foreign import ccall unsafe "LLVM_Hs_PassManagerBuilderSetLibraryInfo" passManagerBuilderSetLibraryInfo ::
     Ptr PassManagerBuilder -> Ptr TargetLibraryInfo -> IO ()
 
