@@ -17,8 +17,7 @@ import qualified Data.Map as Map
 
 import LLVM.Module
 import LLVM.Context
-import LLVM.PassManager
-import LLVM.Transforms
+import LLVM.Passes
 import LLVM.Target
 
 import LLVM.AST as A
@@ -37,7 +36,7 @@ import qualified LLVM.AST.Constant as C
 
 instrument :: PassSetSpec -> A.Module -> IO A.Module
 instrument s m = withContext $ \context -> withModuleFromAST context m $ \mIn' -> do
-  withPassManager s $ \pm -> runPassManager pm mIn'
+  runPasses s mIn'
   moduleAST mIn'
 
 ast = do
@@ -153,7 +152,7 @@ isMemorySanitizerSupported = do
   let os' = os triple'
   return $ Set.member os' (Set.fromList [FreeBSD, NetBSD, Linux])
 
-instrumentationPasses :: [(TestName, Pass, IO Bool)]
+instrumentationPasses :: [(TestName, PassSetSpec, IO Bool)]
 instrumentationPasses = [
     -- TODO: Add back instrumentation passes
     --("GCOVProfiler", defaultGCOVProfiler, return True),
@@ -176,7 +175,7 @@ tests =
           withTargetLibraryInfo triple $ \tli -> do
             dl <- withHostTargetMachineDefault getTargetMachineDataLayout
             ast <- ast
-            ast' <- instrument (defaultPassSetSpec { transforms = [p], dataLayout = Just dl, targetLibraryInfo = Just tli }) ast
+            ast' <- instrument p ast
             let names ast = [ n | GlobalDefinition d <- moduleDefinitions ast, Name n <- return (G.name d) ]
             names ast' `List.intersect` names ast @?= names ast
     |
