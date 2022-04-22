@@ -15,6 +15,7 @@ import Data.Word
 import Foreign.Ptr
 import System.Process (callProcess)
 import System.IO.Temp (withSystemTempFile)
+import System.Directory
 import System.IO
 
 import LLVM.Internal.ObjectFile (withObjectFile)
@@ -88,11 +89,15 @@ tests =
           dylib <- createJITDylib es "testDylib"
           let inputPath = "./test/main_return_38.c"
           withSystemTempFile "main.o" $ \outputPath _ -> do
-            callProcess "gcc" ["-shared", "-fPIC", inputPath, "-o", outputPath]
-            addDynamicLibrarySearchGenerator il dylib outputPath
-            Right (JITSymbol mainFn _) <- lookupSymbol es il dylib "main"
-            result <- mkMain (castPtrToFunPtr (wordPtrToPtr mainFn))
-            result @?= 38,
+            findExecutable "gcc" >>= \gccPath ->
+              case gccPath of
+                Nothing -> return ()  -- Tasty.HUnit doesn't seem to support skips?
+                Just _  -> do
+                  callProcess "gcc" ["-shared", "-fPIC", inputPath, "-o", outputPath]
+                  addDynamicLibrarySearchGenerator il dylib outputPath
+                  Right (JITSymbol mainFn _) <- lookupSymbol es il dylib "main"
+                  result <- mkMain (castPtrToFunPtr (wordPtrToPtr mainFn))
+                  result @?= 38,
 
     testCase "run optimization passes on a JIT module" $ do
       passmanagerSuccessful <- newIORef False
