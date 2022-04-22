@@ -9,10 +9,6 @@
 #include "llvm/Transforms/IPO/PassManagerBuilder.h"
 #include "llvm/Transforms/Vectorize.h"
 #include "llvm/Transforms/Instrumentation.h"
-#include "llvm/Transforms/Instrumentation/AddressSanitizer.h"
-#include "llvm/Transforms/Instrumentation/BoundsChecking.h"
-#include "llvm/Transforms/Instrumentation/MemorySanitizer.h"
-#include "llvm/Transforms/Instrumentation/ThreadSanitizer.h"
 #include "llvm/Transforms/Utils.h"
 #include "llvm/LinkAllPasses.h"
 #include "llvm/CodeGen/Passes.h"
@@ -113,12 +109,6 @@ void LLVM_Hs_AddLowerInvokePass(LLVMPassManagerRef PM) {
 
 void LLVM_Hs_AddSROAPass(LLVMPassManagerRef PM) {
 	unwrap(PM)->add(createSROAPass());
-}
-
-void LLVM_Hs_AddAddressSanitizerFunctionPass(
-	LLVMPassManagerRef PM
-) {
-	unwrap(PM)->add(createAddressSanitizerFunctionPass());
 }
 
 void LLVM_Hs_AddIPSCCPPass(LLVMPassManagerRef PM) {
