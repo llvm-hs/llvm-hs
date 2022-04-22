@@ -17,9 +17,8 @@ import System.Process (callProcess)
 import System.IO.Temp (withSystemTempFile)
 import System.IO
 
-import LLVM.Internal.PassManager
 import LLVM.Internal.ObjectFile (withObjectFile)
-import LLVM.PassManager
+import LLVM.Passes
 import LLVM.Context
 import LLVM.Module
 import qualified LLVM.Internal.FFI.Module as FFI
@@ -103,15 +102,14 @@ tests =
           il <- createIRCompileLayer es ol tm
           dylib <- createJITDylib es "testDylib"
           withTest2Module $ \m -> do
-           withPassManager defaultCuratedPassSetSpec { optLevel = Just 2 } $ \pm -> do
-             success <- runPassManager pm m
-             writeIORef passmanagerSuccessful success
-             withClonedThreadSafeModule m $ \tsm -> do
-               addModule tsm dylib il
-               Right (JITSymbol mainFn _) <- lookupSymbol es il dylib "main"
-               result <- mkMain (castPtrToFunPtr (wordPtrToPtr mainFn))
-               result @?= 42
-               readIORef passmanagerSuccessful @? "passmanager failed"
+            success <- runPasses (CuratedPassSetSpec 2 Nothing) m
+            writeIORef passmanagerSuccessful success
+            withClonedThreadSafeModule m $ \tsm -> do
+              addModule tsm dylib il
+              Right (JITSymbol mainFn _) <- lookupSymbol es il dylib "main"
+              result <- mkMain (castPtrToFunPtr (wordPtrToPtr mainFn))
+              result @?= 42
+              readIORef passmanagerSuccessful @? "passmanager failed"
 
     -- TODO: Make it possible to use Haskell functions as definition generators
     --       and update to OrcJITv2

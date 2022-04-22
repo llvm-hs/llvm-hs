@@ -167,7 +167,7 @@ library
     LLVM.Internal.ObjectFile
     LLVM.Internal.OrcJIT
     LLVM.Internal.Operand
-    LLVM.Internal.PassManager
+    LLVM.Internal.Passes
     LLVM.Internal.RawOStream
     LLVM.Internal.RMWOperation
     LLVM.Internal.String
@@ -177,8 +177,8 @@ library
     LLVM.Internal.Type
     LLVM.Internal.Value
     LLVM.Internal.FFI.Analysis
-    LLVM.Internal.FFI.Attribute
     LLVM.Internal.FFI.Assembly
+    LLVM.Internal.FFI.Attribute
     LLVM.Internal.FFI.BasicBlock
     LLVM.Internal.FFI.BinaryOperator
     LLVM.Internal.FFI.Bitcode
@@ -190,6 +190,7 @@ library
     LLVM.Internal.FFI.Context
     LLVM.Internal.FFI.DataLayout
     LLVM.Internal.FFI.DynamicLibrary
+    LLVM.Internal.FFI.Error
     LLVM.Internal.FFI.ExecutionEngine
     LLVM.Internal.FFI.Function
     LLVM.Internal.FFI.GlobalAlias
@@ -205,15 +206,14 @@ library
     LLVM.Internal.FFI.Module
     LLVM.Internal.FFI.ObjectFile
     LLVM.Internal.FFI.OrcJIT
-    LLVM.Internal.FFI.PassManager
+    LLVM.Internal.FFI.Passes
     LLVM.Internal.FFI.PtrHierarchy
-    LLVM.Internal.FFI.RawOStream
     LLVM.Internal.FFI.RTDyldMemoryManager
-    LLVM.Internal.FFI.ShortByteString
+    LLVM.Internal.FFI.RawOStream
     LLVM.Internal.FFI.SMDiagnostic
+    LLVM.Internal.FFI.ShortByteString
     LLVM.Internal.FFI.Target
     LLVM.Internal.FFI.Threading
-    LLVM.Internal.FFI.Transforms
     LLVM.Internal.FFI.Type
     LLVM.Internal.FFI.User
     LLVM.Internal.FFI.Value
@@ -221,13 +221,12 @@ library
     LLVM.Linking
     LLVM.Module
     LLVM.OrcJIT
-    LLVM.PassManager
+    LLVM.Passes
     LLVM.Relocation
     LLVM.Target
     LLVM.Target.LibraryFunction
     LLVM.Target.Options
     LLVM.Threading
-    LLVM.Transforms
 
   other-modules:
     Control.Monad.AnyCont
@@ -254,7 +253,6 @@ library
     src/LLVM/Internal/FFI/ModuleC.cpp
     src/LLVM/Internal/FFI/OrcJITC.cpp
     src/LLVM/Internal/FFI/RawOStreamC.cpp
-    src/LLVM/Internal/FFI/PassManagerC.cpp
     src/LLVM/Internal/FFI/RTDyldMemoryManager.cpp
     src/LLVM/Internal/FFI/SMDiagnosticC.cpp
     src/LLVM/Internal/FFI/TargetC.cpp
