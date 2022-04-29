@@ -68,25 +68,24 @@ typedef enum {
 #undef ENUM_CASE
 } LLVM_Hs_TargetOptionFlag;
 
-#define LLVM_HS_FOR_EACH_MC_TARGET_OPTION_FLAG(macro)  \
-  macro(MCRelaxAll)                                     \
-  macro(MCNoExecStack)                                  \
-  macro(MCFatalWarnings)                                \
-  macro(MCNoWarn)                                       \
-  macro(MCNoDeprecatedWarn)                             \
-  macro(MCSaveTempLabels)                               \
-  macro(MCUseDwarfDirectory)                            \
-  macro(MCIncrementalLinkerCompatible)                  \
-  macro(ShowMCEncoding)                                 \
-  macro(ShowMCInst)                                     \
-  macro(AsmVerbose)                                     \
+#define LLVM_HS_FOR_EACH_MC_TARGET_OPTION_BOOL_FLAG(macro)  \
+  macro(MCRelaxAll)                                         \
+  macro(MCNoExecStack)                                      \
+  macro(MCFatalWarnings)                                    \
+  macro(MCNoWarn)                                           \
+  macro(MCNoDeprecatedWarn)                                 \
+  macro(MCSaveTempLabels)                                   \
+  macro(MCIncrementalLinkerCompatible)                      \
+  macro(ShowMCEncoding)                                     \
+  macro(ShowMCInst)                                         \
+  macro(AsmVerbose)                                         \
   macro(PreserveAsmComments)
 
 typedef enum {
-#define ENUM_CASE(n) LLVM_Hs_MCTargetOptionFlag_ ## n,
-  LLVM_HS_FOR_EACH_MC_TARGET_OPTION_FLAG(ENUM_CASE)
+#define ENUM_CASE(n) LLVM_Hs_MCTargetOptionBoolFlag_ ## n,
+  LLVM_HS_FOR_EACH_MC_TARGET_OPTION_BOOL_FLAG(ENUM_CASE)
 #undef ENUM_CASE
-} LLVM_Hs_MCTargetOptionFlag;
+} LLVM_Hs_MCTargetOptionBoolFlag;
 
 #define LLVM_HS_FOR_EACH_DEBUG_COMPRESSION_TYPE(macro) \
     macro(None) \

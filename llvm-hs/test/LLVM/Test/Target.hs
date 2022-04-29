@@ -84,6 +84,9 @@ instance Arbitrary Options where
     machineCodeOptions <- arbitrary
     return Options { .. }
 
+instance Arbitrary DwarfDirectory where
+  arbitrary = elements [minBound .. maxBound]
+
 instance Arbitrary MachineCodeOptions where
   arbitrary = do
     relaxAll <- arbitrary
