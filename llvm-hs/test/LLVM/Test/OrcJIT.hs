@@ -100,21 +100,18 @@ tests =
                   result @?= 38,
 
     testCase "run optimization passes on a JIT module" $ do
-      passmanagerSuccessful <- newIORef False
       withHostTargetMachine Reloc.PIC CodeModel.Default CodeGenOpt.Default $ \tm ->
         withExecutionSession $ \es -> do
           ol <- createRTDyldObjectLinkingLayer es
           il <- createIRCompileLayer es ol tm
           dylib <- createJITDylib es "testDylib"
           withTest2Module $ \m -> do
-            success <- runPasses (CuratedPassSetSpec 2 Nothing) m
-            writeIORef passmanagerSuccessful success
+            runPasses (PassSetSpec [CuratedPassSet 2] Nothing) m
             withClonedThreadSafeModule m $ \tsm -> do
               addModule tsm dylib il
               Right (JITSymbol mainFn _) <- lookupSymbol es il dylib "main"
               result <- mkMain (castPtrToFunPtr (wordPtrToPtr mainFn))
               result @?= 42
-              readIORef passmanagerSuccessful @? "passmanager failed"
 
     -- TODO: Make it possible to use Haskell functions as definition generators
     --       and update to OrcJITv2

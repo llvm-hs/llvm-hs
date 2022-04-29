@@ -105,7 +105,7 @@ optimize pss m = withContext $ \context -> withModuleFromAST context m $ \mIn' -
 
 tests = testGroup "Optimization" [
   testCase "curated" $ do
-    mOut <- optimize (CuratedPassSetSpec 2 Nothing) handAST
+    mOut <- optimize (PassSetSpec [CuratedPassSet 2] Nothing) handAST
 
     mOut @?= Module "<string>" "<string>" Nothing Nothing [
       GlobalDefinition $ functionDefaults {
