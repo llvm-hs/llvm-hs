@@ -252,6 +252,7 @@ library
     src/LLVM/Internal/FFI/MetadataC.cpp
     src/LLVM/Internal/FFI/ModuleC.cpp
     src/LLVM/Internal/FFI/OrcJITC.cpp
+    src/LLVM/Internal/FFI/PassesC.cpp
     src/LLVM/Internal/FFI/RawOStreamC.cpp
     src/LLVM/Internal/FFI/RTDyldMemoryManager.cpp
     src/LLVM/Internal/FFI/SMDiagnosticC.cpp
