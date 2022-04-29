@@ -7,6 +7,7 @@
 #define LLVM_HS_FOR_EACH_ATTRIBUTE_KIND(macro) \
   macro(None,F,F,F)                                 \
   macro(AllocAlign,T,F,F)                           \
+  macro(AllocatedPointer,T,F,F)                     \
   macro(AlwaysInline,F,F,T)                         \
   macro(ArgMemOnly,F,F,T)                           \
   macro(Builtin,F,F,T)                              \

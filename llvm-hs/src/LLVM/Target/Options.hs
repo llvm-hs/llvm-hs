@@ -97,6 +97,12 @@ data Options = Options {
   }
   deriving (Eq, Ord, Read, Show)
 
+data DwarfDirectory
+  = DisableDwarfDirectory
+  | EnableDwarfDirectory
+  | DefaultDwarfDirectory  -- ^ target specific
+  deriving (Eq, Ord, Read, Show, Enum, Bounded)
+
 -- | <http://llvm.org/doxygen/classllvm_1_1MCTargetOptions.html>
 data MachineCodeOptions = MachineCodeOptions {
   relaxAll :: Bool,
@@ -105,7 +111,7 @@ data MachineCodeOptions = MachineCodeOptions {
   noWarnings :: Bool,
   noDeprecatedWarning :: Bool,
   saveTemporaryLabels :: Bool,
-  useDwarfDirectory :: Bool,
+  useDwarfDirectory :: DwarfDirectory,
   incrementalLinkerCompatible :: Bool,
   showMachineCodeEncoding :: Bool,
   showMachineCodeInstructions :: Bool,

@@ -202,21 +202,21 @@ pokeTargetOptions hOpts opts@(TargetOptions cOpts) = do
   pokeMachineCodeOptions (TO.machineCodeOptions hOpts) =<< machineCodeOptions opts
 
 pokeMachineCodeOptions :: TO.MachineCodeOptions -> MCTargetOptions -> IO ()
-pokeMachineCodeOptions hOpts (MCTargetOptions cOpts) =
-  mapM_ (\(c, ha) -> FFI.setMCTargetOptionFlag cOpts c =<< encodeM (ha hOpts)) [
+pokeMachineCodeOptions hOpts (MCTargetOptions cOpts) = do
+  mapM_ (\(c, ha) -> FFI.setMCTargetOptionBoolFlag cOpts c =<< encodeM (ha hOpts)) [
     (FFI.mcTargetOptionFlagMCRelaxAll, TO.relaxAll),
     (FFI.mcTargetOptionFlagMCNoExecStack, TO.noExecutableStack),
     (FFI.mcTargetOptionFlagMCFatalWarnings, TO.fatalWarnings),
     (FFI.mcTargetOptionFlagMCNoWarn, TO.noWarnings),
     (FFI.mcTargetOptionFlagMCNoDeprecatedWarn, TO.noDeprecatedWarning),
     (FFI.mcTargetOptionFlagMCSaveTempLabels, TO.saveTemporaryLabels),
-    (FFI.mcTargetOptionFlagMCUseDwarfDirectory, TO.useDwarfDirectory),
     (FFI.mcTargetOptionFlagMCIncrementalLinkerCompatible, TO.incrementalLinkerCompatible),
     (FFI.mcTargetOptionFlagShowMCEncoding, TO.showMachineCodeEncoding),
     (FFI.mcTargetOptionFlagShowMCInst, TO.showMachineCodeInstructions),
     (FFI.mcTargetOptionFlagAsmVerbose, TO.verboseAssembly),
     (FFI.mcTargetOptionFlagPreserveAsmComments, TO.preserveComentsInAssembly)
    ]
+  FFI.setMCTargetOptionFlagUseDwarfDirectory cOpts $ fromIntegral $ fromEnum $ TO.useDwarfDirectory hOpts
 
 -- | get all target options
 peekTargetOptions :: TargetOptions -> IO TO.Options
@@ -274,7 +274,7 @@ peekTargetOptions opts@(TargetOptions tOpts) = do
 -- | get all machine code options
 peekMachineCodeOptions :: MCTargetOptions -> IO TO.MachineCodeOptions
 peekMachineCodeOptions (MCTargetOptions tOpts) = do
-  let gof = decodeM <=< FFI.getMCTargetOptionsFlag tOpts
+  let gof = decodeM <=< FFI.getMCTargetOptionsBoolFlag tOpts
   relaxAll
     <- gof FFI.mcTargetOptionFlagMCRelaxAll
   noExecutableStack
@@ -288,7 +288,7 @@ peekMachineCodeOptions (MCTargetOptions tOpts) = do
   saveTemporaryLabels
     <- gof FFI.mcTargetOptionFlagMCSaveTempLabels
   useDwarfDirectory
-    <- gof FFI.mcTargetOptionFlagMCUseDwarfDirectory
+    <- toEnum . fromIntegral <$> FFI.getMCTargetOptionFlagUseDwarfDirectory tOpts
   incrementalLinkerCompatible
     <- gof FFI.mcTargetOptionFlagMCIncrementalLinkerCompatible
   showMachineCodeEncoding
