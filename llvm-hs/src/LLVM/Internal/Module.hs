@@ -48,6 +48,7 @@ import LLVM.Internal.DecodeAST
 import LLVM.Internal.EncodeAST
 import LLVM.Internal.Function
 import LLVM.Internal.Global
+import LLVM.Internal.Type
 import LLVM.Internal.Instruction ()
 import qualified LLVM.Internal.MemoryBuffer as MB
 import LLVM.Internal.Metadata
@@ -55,8 +56,6 @@ import LLVM.Internal.Operand
 import LLVM.Internal.RawOStream
 import LLVM.Internal.String
 import LLVM.Internal.Target
-import LLVM.Internal.Type
-import LLVM.Internal.Value
 
 import LLVM.DataLayout
 import LLVM.Exception
@@ -399,7 +398,8 @@ decodeGlobalVariables :: Ptr FFI.Module -> DecodeAST (DecodeAST [A.G.Global])
 decodeGlobalVariables mod = do
   ffiGlobals <- liftIO $ FFI.getXs (FFI.getFirstGlobal mod) FFI.getNextGlobal
   fmap sequence . forM ffiGlobals $ \g -> do
-    A.PointerType t as <- typeOf g
+    t <- typeOfGlobal g
+    as <- decodeM =<< (liftIO $ FFI.getGlobalValueAddressSpace $ FFI.upCast g)
     n <- getGlobalName g
     return $
       A.GlobalVariable
@@ -429,7 +429,8 @@ decodeGlobalAliases mod = do
   ffiAliases <- liftIO $ FFI.getXs (FFI.getFirstAlias mod) FFI.getNextAlias
   fmap sequence . forM ffiAliases $ \a -> do
     n <- getGlobalName a
-    A.PointerType t as <- typeOf a
+    t <- typeOfGlobal a
+    as <- decodeM =<< (liftIO $ FFI.getGlobalValueAddressSpace $ FFI.upCast a)
     return $
       A.G.GlobalAlias
         <$> return n
@@ -466,7 +467,7 @@ decodeFunctions mod = do
     liftIO $ FFI.getXs (FFI.getFirstFunction mod) FFI.getNextFunction
   fmap sequence . forM ffiFunctions $ \f ->
     localScope $ do
-      A.PointerType (A.FunctionType returnType _ isVarArg) _ <- typeOf f
+      A.FunctionType returnType _ isVarArg <- typeOfGlobal f
       n <- getGlobalName f
       AttributeList fAttrs rAttrs pAttrs <- getAttributeList f
       parameters <- getParameters f pAttrs

@@ -47,8 +47,7 @@ import LLVM.Internal.DecodeAST
 import LLVM.Internal.EncodeAST
 import LLVM.Internal.FloatingPointPredicate ()
 import LLVM.Internal.IntegerPredicate ()
-import LLVM.Internal.Type (renameType)
-import LLVM.Internal.Value
+import LLVM.Internal.Type ()
 
 allocaWords :: forall a m . (Storable a, MonadAnyCont IO m, Monad m, MonadIO m) => Word32 -> m (Ptr a)
 allocaWords nBits = do
@@ -96,15 +95,7 @@ instance EncodeM EncodeAST A.Constant (Ptr FFI.Constant) where
                     A.F.PPC_FP128 _ _ -> FFI.floatSemanticsPPCDoubleDouble
       nBits <- encodeM nBits
       liftIO $ FFI.constantFloatOfArbitraryPrecision context nBits words fpSem
-    A.C.GlobalReference ty n -> do
-      ref <- FFI.upCast <$> referGlobal n
-      ty' <- (liftIO . runDecodeAST . typeOf) ref
-      renamedTy <- renameType ty
-      if renamedTy /= ty'
-        then throwM
-               (EncodeException
-                  ("The serialized GlobalReference " ++ show n  ++ " has type " ++ show ty ++ " but should have type " ++ show ty'))
-        else return ref
+    A.C.GlobalReference n -> FFI.upCast <$> referGlobal n
     A.C.BlockAddress f b -> do
       f' <- referGlobal f
       b' <- getBlockForAddress f b
@@ -204,9 +195,7 @@ instance DecodeM DecodeAST A.Constant (Ptr FFI.Constant) where
     t <- decodeM ft
     valueSubclassId <- liftIO $ FFI.getValueSubclassId v
     nOps <- liftIO $ FFI.getNumOperands u
-    let globalRef = return A.C.GlobalReference
-                    `ap` (return t)
-                    `ap` (getGlobalName =<< liftIO (FFI.isAGlobalValue v))
+    let globalRef = A.C.GlobalReference <$> (getGlobalName =<< liftIO (FFI.isAGlobalValue v))
         op = decodeM <=< liftIO . FFI.getConstantOperand c
         getConstantOperands = mapM op [0..nOps-1]
         getConstantData = do
@@ -281,6 +270,8 @@ instance DecodeM DecodeAST A.Constant (Ptr FFI.Constant) where
                                                    operandNumber <- get
                                                    modify (+1)
                                                    return [| op $(TH.litE . TH.integerL $ operandNumber) |]
+                                   | h == ''A.Type && n == 'A.C.GetElementPtr ->
+                                     return [| decodeM =<< liftIO (FFI.getConstantGEPSourceType c) |]
                                    | h == ''A.Type -> return [| pure t |]
                                    | h == ''A.IntegerPredicate ->
                                      return [| liftIO $ decodeM =<< FFI.getConstantICmpPredicate c |]

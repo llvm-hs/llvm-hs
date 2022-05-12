@@ -78,10 +78,9 @@ instance EncodeM EncodeAST A.Type (Ptr FFI.Type) where
         argTypes <- encodeM argTypeASTs
         isVarArg <- encodeM isVarArg
         liftIO $ FFI.functionType returnType argTypes isVarArg
-      A.PointerType elementType addressSpace -> do
-        e <- encodeM elementType
+      A.PointerType addressSpace -> do
         a <- encodeM addressSpace
-        liftIO $ FFI.pointerType e a
+        liftIO $ FFI.opaquePointerType context a
       A.VoidType -> liftIO $ FFI.voidTypeInContext context
       A.FloatingPointType A.HalfFP      -> liftIO $ FFI.halfTypeInContext context
       A.FloatingPointType A.FloatFP     -> liftIO $ FFI.floatTypeInContext context
@@ -122,10 +121,9 @@ instance DecodeM DecodeAST A.Type (Ptr FFI.Type) where
                       decodeM (n, ts)
                    )
                `ap` (decodeM =<< liftIO (FFI.isFunctionVarArg t))
-      [typeKindP|Pointer|] ->
-          return A.PointerType
-             `ap` (decodeM =<< liftIO (FFI.getElementType t))
-             `ap` (decodeM =<< liftIO (FFI.getPointerAddressSpace t))
+      [typeKindP|Pointer|] -> do
+        addrSpace <- decodeM =<< liftIO (FFI.getPointerAddressSpace t)
+        return $ A.PointerType addrSpace
       [typeKindP|Half|]      -> return $ A.FloatingPointType A.HalfFP
       [typeKindP|Float|]     -> return $ A.FloatingPointType A.FloatFP
       [typeKindP|Double|]    -> return $ A.FloatingPointType A.DoubleFP
@@ -166,7 +164,7 @@ createNamedType n = do
 renameType :: A.Type -> EncodeAST A.Type
 renameType A.VoidType = pure A.VoidType
 renameType t@(A.IntegerType _) = pure t
-renameType (A.PointerType r a) = fmap (\r' -> A.PointerType r' a) (renameType r)
+renameType t@(A.PointerType _) = pure t
 renameType t@(A.FloatingPointType _) = pure t
 renameType (A.FunctionType r as varArg) =
   liftA2

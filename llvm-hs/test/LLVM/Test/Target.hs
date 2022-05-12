@@ -133,6 +133,7 @@ tests = testGroup "Target" [
                reloc = Reloc.Default
                codeModel = CodeModel.Default
                codeGenOpt = CodeGenOpt.Default
+           initializeAllTargets
            (target, _) <- lookupTarget Nothing triple
            withTargetMachine target triple cpu features to reloc codeModel codeGenOpt $ \tm -> do
              options' <- peekTargetOptions =<< targetMachineOptions tm

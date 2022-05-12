@@ -827,7 +827,7 @@ cyclicMetadata = testGroup "cyclic" [
              },
             MetadataNodeDefinition
               (MetadataNodeID 0)
-              (MDTuple [Just $ MDValue $ ConstantOperand (C.GlobalReference (ptr (FunctionType A.T.void [] False)) (Name "foo"))])
+              (MDTuple [Just $ MDValue $ ConstantOperand (C.GlobalReference (Name "foo"))])
            ]
       let s = "; ModuleID = '<string>'\n\
               \source_filename = \"<string>\"\n\
@@ -836,7 +836,7 @@ cyclicMetadata = testGroup "cyclic" [
               \  ret void, !my-metadatum !0\n\
               \}\n\
               \\n\
-              \!0 = !{void ()* @foo}\n"
+              \!0 = !{ptr @foo}\n"
       strCheck ast s
    ]
 

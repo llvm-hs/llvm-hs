@@ -241,6 +241,7 @@ library
     src/LLVM/Internal/FFI/BuilderC.cpp
     src/LLVM/Internal/FFI/CallingConventionC.cpp
     src/LLVM/Internal/FFI/ConstantC.cpp
+    src/LLVM/Internal/FFI/ContextC.cpp
     src/LLVM/Internal/FFI/CommandLineC.cpp
     src/LLVM/Internal/FFI/ErrorHandling.cpp
     src/LLVM/Internal/FFI/ExecutionEngineC.cpp

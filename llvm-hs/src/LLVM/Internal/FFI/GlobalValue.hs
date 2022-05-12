@@ -13,11 +13,18 @@ import Foreign.C
 
 import LLVM.Internal.FFI.PtrHierarchy
 import LLVM.Internal.FFI.LLVMCTypes
+import LLVM.Internal.FFI.Type
 
 data COMDAT
 
 foreign import ccall unsafe "LLVMIsAGlobalValue" isAGlobalValue ::
   Ptr Value -> IO (Ptr GlobalValue)
+
+foreign import ccall unsafe "LLVM_Hs_GetGlobalValueType" getGlobalValueType ::
+  Ptr GlobalValue -> IO (Ptr Type)
+
+foreign import ccall unsafe "LLVM_Hs_GetGlobalValueAddressSpace" getGlobalValueAddressSpace ::
+  Ptr GlobalValue -> IO AddrSpace
 
 foreign import ccall unsafe "LLVMGetLinkage" getLinkage ::
   Ptr GlobalValue -> IO Linkage

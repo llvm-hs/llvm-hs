@@ -117,7 +117,7 @@ ast = do
     G.name = Name "main",
     G.parameters = ([
       Parameter i32 (Name "argc") [],
-      Parameter (ptr (ptr i8)) (Name "argv") []
+      Parameter ptr (Name "argv") []
      ],False),
     G.basicBlocks = [
       BasicBlock (UnName 0) [
@@ -125,12 +125,10 @@ ast = do
           tailCallKind = Nothing,
           callingConvention = CC.C,
           returnAttributes = [],
+          type' = FunctionType i32 [i128] False,
           function = Right
             (ConstantOperand
               (C.GlobalReference
-                 (PointerType
-                    { pointerReferent = FunctionType i32 [i128] False
-                    , pointerAddrSpace = AddrSpace 0})
                  (Name "foo"))),
           arguments = [
            (ConstantOperand (C.Int 128 9491828328), [])

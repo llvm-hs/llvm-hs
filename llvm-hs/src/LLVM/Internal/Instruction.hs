@@ -137,6 +137,7 @@ instance DecodeM DecodeAST A.Terminator (Ptr FFI.Instruction) where
         cc <- decodeM =<< liftIO (FFI.getCallSiteCallingConvention i)
         attrs <- callInstAttributeList i
         fv <- liftIO $ FFI.getCallSiteCalledValue i
+        ty <- decodeM =<< liftIO (FFI.getCalledFunctionType i)
         f <- decodeM fv
         let argIndices = if nOps >= 4 then [0 .. nOps - 4] else []
         args <-
@@ -147,6 +148,7 @@ instance DecodeM DecodeAST A.Terminator (Ptr FFI.Instruction) where
         return A.Invoke {
           A.callingConvention' = cc,
           A.returnAttributes' = returnAttributes attrs,
+          A.type'' = ty,
           A.function' = f,
           A.arguments' = args,
           A.functionAttributes' = functionAttributes attrs,
@@ -236,6 +238,7 @@ instance EncodeM EncodeAST A.Terminator (Ptr FFI.Instruction) where
       A.Invoke {
         A.callingConvention' = cc,
         A.returnAttributes' = rAttrs,
+        A.type'' = ty,
         A.function' = fun,
         A.arguments' = args,
         A.functionAttributes' = fAttrs,
@@ -243,11 +246,12 @@ instance EncodeM EncodeAST A.Terminator (Ptr FFI.Instruction) where
         A.exceptionDest = ed
       } -> do
         fv <- encodeM fun
+        tb <- encodeM ty
         rb <- encodeM rd
         eb <- encodeM ed
         let (argvs, argAttrs) = unzip args
         (n, argvs) <- encodeM argvs
-        i <- liftIO $ FFI.buildInvoke builder fv argvs n rb eb s
+        i <- liftIO $ FFI.buildInvoke builder tb fv argvs n rb eb s
         attrs <- encodeM $ AttributeList fAttrs rAttrs argAttrs
         liftIO $ FFI.setCallSiteAttributeList i attrs
         cc <- encodeM cc
@@ -360,7 +364,10 @@ $(do
                             t <- typeOf v
                             return $ case t of { A.ArrayType _ _ -> A.Filter; _ -> A.Catch} $ c |])
                 "functionAttributes" -> (["attrs"], [| return $ functionAttributes $(TH.dyn "attrs") |])
-                "type'" -> ([], [| return t |])
+                "type'" -> ([], case lrn of
+                                  "GetElementPtr" -> [| decodeM =<< liftIO (FFI.getGEPSourceElementType i) |]
+                                  "Call" -> [| decodeM =<< liftIO (FFI.getCalledFunctionType i) |]
+                                  _ -> [| return t |])
                 "incomingValues" ->
                     ([], [| do
                             n <- liftIO $ FFI.countIncoming i
@@ -476,6 +483,7 @@ $(do
             A.tailCallKind = tck,
             A.callingConvention = cc,
             A.returnAttributes = rAttrs,
+            A.type' = ty,
             A.function = f,
             A.arguments = args,
             A.functionAttributes = fAttrs
@@ -483,7 +491,8 @@ $(do
             fv <- encodeM f
             let (argvs, argAttrs) = unzip args
             (n, argvs) <- encodeM argvs
-            i <- liftIO $ FFI.buildCall builder fv argvs n s
+            tb <- encodeM ty
+            i <- liftIO $ FFI.buildCall builder tb fv argvs n s
             attrs <- encodeM $ AttributeList fAttrs rAttrs argAttrs
             liftIO $ FFI.setCallSiteAttributeList i attrs
             tck <- encodeM tck

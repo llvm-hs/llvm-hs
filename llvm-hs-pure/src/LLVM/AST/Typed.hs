@@ -3,7 +3,6 @@
 -- | Querying the type of LLVM expressions
 module LLVM.AST.Typed (
   Typed(..),
-  getElementType,
   indexTypeByConstants,
   indexTypeByOperands,
   extractValueType,
@@ -61,8 +60,8 @@ instance Typed C.Constant where
                                  (Right t') -> return $ Right $ VectorType (fromIntegral $ length memberValues) t'
 
   typeOf (C.Undef t)     = return $ Right t
-  typeOf (C.BlockAddress {}) = return $ Right $ ptr i8
-  typeOf (C.GlobalReference t _) = return $ Right t
+  typeOf (C.BlockAddress {}) = return $ Right ptr
+  typeOf (C.GlobalReference _) = return $ Right ptr
   typeOf (C.Add {..})     = typeOf operand0
   typeOf (C.FAdd {..})    = typeOf operand0
   typeOf (C.FDiv {..})    = typeOf operand0
@@ -81,11 +80,7 @@ instance Typed C.Constant where
   typeOf (C.And {..})     = typeOf operand0
   typeOf (C.Or  {..})     = typeOf operand0
   typeOf (C.Xor {..})     = typeOf operand0
-  typeOf (C.GetElementPtr {..}) = do
-    aty <- typeOf address
-    case aty of
-      (Left _) -> return aty
-      (Right aty') -> indexTypeByConstants aty' indices
+  typeOf (C.GetElementPtr {}) = return $ Right ptr
   typeOf (C.Trunc {..})    = return $ Right type'
   typeOf (C.ZExt {..})     = return $ Right type'
   typeOf (C.SExt {..})     = return $ Right type'
@@ -133,10 +128,9 @@ instance Typed C.Constant where
   typeOf (C.TokenNone)          = return $ Right TokenType
   typeOf (C.AddrSpaceCast {..}) = return $ Right type'
 
--- | Index into a type using a list of 'Constant' values. Returns a pointer type whose referent is the indexed type, or an error message if indexing was not possible.
+-- | Index into a type using a list of 'Constant' values. Returns the indexed type, or an error message if indexing was not possible.
 indexTypeByConstants :: (HasCallStack, MonadModuleBuilder m) => Type -> [C.Constant] -> m (Either String Type)
-indexTypeByConstants ty [] = return $ Right $ ptr ty
-indexTypeByConstants (PointerType ty _) (_:is) = indexTypeByConstants ty is
+indexTypeByConstants ty [] = return $ Right ty
 indexTypeByConstants (StructureType _ elTys) (C.Int 32 val:is) =
   indexTypeByConstants (elTys !! fromIntegral val) is
 indexTypeByConstants (StructureType _ _) (i:_) =
@@ -150,10 +144,9 @@ indexTypeByConstants (NamedTypeReference n) is = do
     Just ty -> indexTypeByConstants ty is
 indexTypeByConstants ty _ = return $ Left $ "Expecting aggregate type. (Malformed AST): " ++ show ty
 
--- | Index into a type using a list of 'Operand' values. Returns a pointer type whose referent is the indexed type, or an error message if indexing was not possible.
+-- | Index into a type using a list of 'Operand' values. Returns the indexed type, or an error message if indexing was not possible.
 indexTypeByOperands :: (HasCallStack, MonadModuleBuilder m) => Type -> [Operand] -> m (Either String Type)
-indexTypeByOperands ty [] = return $ Right $ ptr ty
-indexTypeByOperands (PointerType ty _) (_:is) = indexTypeByOperands ty is
+indexTypeByOperands ty [] = return $ Right ty
 indexTypeByOperands (StructureType _ elTys) (ConstantOperand (C.Int 32 val):is) =
   indexTypeByOperands (elTys !! fromIntegral val) is
 indexTypeByOperands (StructureType _ _) (i:_) =
@@ -166,10 +159,6 @@ indexTypeByOperands (NamedTypeReference n) is = do
     Nothing -> return $ Left $ "Couldn’t resolve typedef for: " ++ show n
     Just ty -> indexTypeByOperands ty is
 indexTypeByOperands ty _ = return $ Left $ "Expecting aggregate type. (Malformed AST): " ++ show ty
-
-getElementType :: Type -> Either String Type
-getElementType (PointerType t _) = Right t
-getElementType t = Left $ "Expecting pointer type. (Malformed AST): " ++ show t
 
 extractValueType :: (HasCallStack, MonadModuleBuilder m) => [Word32] -> Type -> m (Either String Type)
 extractValueType [] ty = return $ Right ty

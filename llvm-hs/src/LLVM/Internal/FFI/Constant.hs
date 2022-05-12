@@ -107,19 +107,22 @@ $(do
        foreignDecl (prefix ++ "Const" ++ name) ("constant" ++ name) (map typeMapping fieldTypes) [t| Ptr Constant |]
   )
 
-foreign import ccall unsafe "LLVMConstGEP" constantGetElementPtr' ::
-  Ptr Constant -> Ptr (Ptr Constant) -> CUInt -> IO (Ptr Constant)
+foreign import ccall unsafe "LLVMConstGEP2" constantGetElementPtr' ::
+  Ptr Type -> Ptr Constant -> Ptr (Ptr Constant) -> CUInt -> IO (Ptr Constant)
 
-foreign import ccall unsafe "LLVMConstInBoundsGEP" constantInBoundsGetElementPtr' ::
-  Ptr Constant -> Ptr (Ptr Constant) -> CUInt -> IO (Ptr Constant)
+foreign import ccall unsafe "LLVMConstInBoundsGEP2" constantInBoundsGetElementPtr' ::
+  Ptr Type -> Ptr Constant -> Ptr (Ptr Constant) -> CUInt -> IO (Ptr Constant)
 
-constantGetElementPtr :: LLVMBool -> Ptr Constant -> (CUInt, Ptr (Ptr Constant)) -> IO (Ptr Constant)
-constantGetElementPtr (LLVMBool ib) a (n, is) =
+constantGetElementPtr :: LLVMBool -> Ptr Type -> Ptr Constant -> (CUInt, Ptr (Ptr Constant)) -> IO (Ptr Constant)
+constantGetElementPtr (LLVMBool ib) ty a (n, is) =
   (case ib of
      0 -> constantGetElementPtr'
      1 -> constantInBoundsGetElementPtr'
      _ -> error ("LLVMBool should be 0 or 1 but is " <> show ib)
-  ) a is n
+  ) ty a is n
+
+foreign import ccall unsafe "LLVM_Hs_GetConstGEPSourceType" getConstantGEPSourceType ::
+  Ptr Constant -> IO (Ptr Type)
 
 foreign import ccall unsafe "LLVM_Hs_GetConstCPPOpcode" getConstantCPPOpcode ::
   Ptr Constant -> IO CPPOpcode

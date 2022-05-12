@@ -51,11 +51,6 @@ LLVM_HS_FOR_EACH_FAST_MATH_FLAG(ENUM_CASE)
 #undef ENUM_CASE
     return r;
 }
-
-// TODO: Pass in pointee types when building GEPs and remove this.
-static llvm::Type* getPointeeType(LLVMValueRef ptr) {
-  return unwrap(ptr)->getType()->getPointerElementType();
-}
 }
 
 extern "C" {
@@ -298,6 +293,7 @@ LLVMValueRef LLVM_Hs_BuildICmp(LLVMBuilderRef b, LLVMIntPredicate op, LLVMValueR
 LLVMValueRef LLVM_Hs_BuildLoad(
     LLVMBuilderRef b,
     LLVMBool isVolatile,
+    LLVMTypeRef ty,
     LLVMValueRef p,
     LLVMAtomicOrdering atomicOrdering,
     LLVMSynchronizationScope synchScope,
@@ -305,8 +301,7 @@ LLVMValueRef LLVM_Hs_BuildLoad(
     const char *name
 ) {
 	LoadInst *i = unwrap(b)->CreateAlignedLoad(
-	    unwrap(p)->getType()->getPointerElementType(),
-	    unwrap(p), MaybeAlign(align), isVolatile, name);
+	    unwrap(ty), unwrap(p), MaybeAlign(align), isVolatile, name);
 	i->setOrdering(unwrap(atomicOrdering));
 	if (atomicOrdering != LLVMAtomicOrderingNotAtomic) i->setSyncScopeID(unwrap(synchScope));
 	return wrap(i);
@@ -418,23 +413,23 @@ LLVMValueRef LLVM_Hs_BuildCatchSwitch(LLVMBuilderRef b, LLVMValueRef parentPad,
                                              unwrap(unwindDest), numHandlers));
 }
 
-LLVMValueRef LLVM_Hs_BuildGEP(LLVMBuilderRef B, LLVMValueRef Pointer,
+LLVMValueRef LLVM_Hs_BuildGEP(LLVMBuilderRef B, LLVMTypeRef PointeeType, LLVMValueRef Pointer,
                              LLVMValueRef *Indices, unsigned NumIndices,
                              const char *Name) {
   ArrayRef<Value *> IdxList(unwrap(Indices), NumIndices);
   return wrap(
-      unwrap(B)->Insert(GetElementPtrInst::Create(getPointeeType(Pointer),
+      unwrap(B)->Insert(GetElementPtrInst::Create(unwrap(PointeeType),
                                                   unwrap(Pointer), IdxList),
                         Name));
 }
 
-LLVMValueRef LLVM_Hs_BuildInBoundsGEP(LLVMBuilderRef B, LLVMValueRef Pointer,
+LLVMValueRef LLVM_Hs_BuildInBoundsGEP(LLVMBuilderRef B, LLVMTypeRef PointeeType, LLVMValueRef Pointer,
                                       LLVMValueRef *Indices, unsigned NumIndices,
                                       const char *Name) {
   ArrayRef<Value *> IdxList(unwrap(Indices), NumIndices);
   return wrap(
       unwrap(B)->Insert(GetElementPtrInst::CreateInBounds(
-                            getPointeeType(Pointer), unwrap(Pointer), IdxList),
+                            unwrap(PointeeType), unwrap(Pointer), IdxList),
                         Name));
 }
 
