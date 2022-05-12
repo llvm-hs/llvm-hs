@@ -49,17 +49,16 @@ moduleAst =
                      { tailCallKind = Nothing
                      , callingConvention = C
                      , returnAttributes = []
+                     , type' =
+                         FunctionType
+                           { resultType = i32
+                           , argumentTypes = []
+                           , isVarArg = False
+                           }
                      , function =
                          Right
                            (ConstantOperand
-                              (GlobalReference
-                                 (ptr
-                                    (FunctionType
-                                     { resultType = i32
-                                     , argumentTypes = []
-                                     , isVarArg = False
-                                     }))
-                                 ("f")))
+                              (GlobalReference "f"))
                      , arguments = []
                      , functionAttributes = [Left (GroupID 0)]
                      , metadata = []

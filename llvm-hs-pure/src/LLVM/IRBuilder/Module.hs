@@ -147,9 +147,8 @@ function label argtys retty body = do
       , returnType  = retty
       , basicBlocks = blocks
       }
-    funty = ptr $ FunctionType retty (fst <$> argtys) False
   emitDefn def
-  pure $ ConstantOperand $ C.GlobalReference funty label
+  pure $ ConstantOperand $ C.GlobalReference label
 
 -- | An external function definition
 extern
@@ -165,8 +164,7 @@ extern nm argtys retty = do
     , parameters  = ([Parameter ty (mkName "") [] | ty <- argtys], False)
     , returnType  = retty
     }
-  let funty = ptr $ FunctionType retty argtys False
-  pure $ ConstantOperand $ C.GlobalReference funty nm
+  pure $ ConstantOperand $ C.GlobalReference nm
 
 -- | An external variadic argument function definition
 externVarArgs
@@ -182,8 +180,7 @@ externVarArgs nm argtys retty = do
     , parameters  = ([Parameter ty (mkName "") [] | ty <- argtys], True)
     , returnType  = retty
     }
-  let funty = ptr $ FunctionType retty argtys True
-  pure $ ConstantOperand $ C.GlobalReference funty nm
+  pure $ ConstantOperand $ C.GlobalReference nm
 
 -- | A global variable definition
 global
@@ -199,7 +196,7 @@ global nm ty initVal = do
     , linkage               = External
     , initializer           = Just initVal
     }
-  pure $ ConstantOperand $ C.GlobalReference (ptr ty) nm
+  pure $ ConstantOperand $ C.GlobalReference nm
 
 -- | A named type definition
 typedef

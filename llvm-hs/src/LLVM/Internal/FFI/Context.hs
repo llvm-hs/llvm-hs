@@ -23,6 +23,9 @@ foreign import ccall unsafe "LLVMContextCreate" contextCreate ::
 foreign import ccall unsafe "LLVMGetGlobalContext" getGlobalContext ::
     IO (Ptr Context)
 
+foreign import ccall unsafe "LLVM_Hs_SetOpaquePointers" contextSetOpaquePointers ::
+    Ptr Context -> IO ()
+
 -- | <http://llvm.org/doxygen/group__LLVMCCoreContext.html#ga9cf8b0fb4a546d4cdb6f64b8055f5f57>
 foreign import ccall unsafe "LLVMContextDispose" contextDispose ::
     Ptr Context -> IO ()

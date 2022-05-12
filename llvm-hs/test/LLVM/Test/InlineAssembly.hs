@@ -21,7 +21,7 @@ import qualified LLVM.AST.Global as G
 tests = testGroup "InlineAssembly" [
   testCase "expression" $ do
     let ast = Module "<string>" "<string>" Nothing Nothing [
-                GlobalDefinition $ 
+                GlobalDefinition $
                   functionDefaults {
                     G.returnType = i32,
                     G.name = Name "foo",
@@ -32,6 +32,7 @@ tests = testGroup "InlineAssembly" [
                           tailCallKind = Nothing,
                           callingConvention = CC.C,
                           returnAttributes = [],
+                          LLVM.AST.type' = FunctionType i32 [i32] False,
                           function = Left $ InlineAssembly {
                                        IA.type' = FunctionType i32 [i32] False,
                                        assembly = "bswap $0",

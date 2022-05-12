@@ -179,19 +179,11 @@ xor a b = do
 
 -- | See <https://llvm.org/docs/LangRef.html#alloca-instruction reference>.
 alloca :: MonadIRBuilder m => Type -> Maybe Operand -> Word32 -> m Operand
-alloca ty count align = emitInstr (ptr ty) $ Alloca ty count align []
+alloca ty count align = emitInstr ptr $ Alloca ty count align []
 
 -- | See <https://llvm.org/docs/LangRef.html#load-instruction reference>.
-load :: (HasCallStack, MonadIRBuilder m, MonadModuleBuilder m) => Operand -> Word32 -> m Operand
-load a align = do
-  ta <- typeOf a
-  case ta of
-    (Left s) -> error s
-    (Right ta') -> do
-      let retty = case ta' of
-                    PointerType ty _ -> ty
-                    _ -> error "Cannot load non-pointer (Malformed AST)."
-      emitInstr retty $ Load False a Nothing align []
+load :: (HasCallStack, MonadIRBuilder m, MonadModuleBuilder m) => Type -> Operand -> Word32 -> m Operand
+load ty a align = emitInstr ty $ Load False ty a Nothing align []
 
 -- | See <https://llvm.org/docs/LangRef.html#store-instruction reference>.
 store :: MonadIRBuilder m => Operand -> Word32 -> Operand -> m ()
@@ -199,16 +191,8 @@ store addr align val = emitInstrVoid $ Store False addr val Nothing align []
 
 -- | Emit the @getelementptr@ instruction.
 -- See <https://llvm.org/docs/LangRef.html#getelementptr-instruction reference>.
-gep :: (HasCallStack, MonadIRBuilder m, MonadModuleBuilder m) => Operand -> [Operand] -> m Operand
-gep addr is = do
-  ta <- typeOf addr
-  case ta of
-    (Left s) -> error s
-    (Right ta') -> do
-      ty <- indexTypeByOperands ta' is
-      case ty of
-        (Left s) -> error s
-        (Right ty') -> emitInstr ty' (GetElementPtr False addr is [])
+gep :: (HasCallStack, MonadIRBuilder m, MonadModuleBuilder m) => Type -> Operand -> [Operand] -> m Operand
+gep ty addr is = emitInstr ptr $ GetElementPtr False ty addr is []
 
 -- | Emit the @trunc ... to@ instruction.
 -- See <https://llvm.org/docs/LangRef.html#trunc-to-instruction reference>.
@@ -311,7 +295,7 @@ extractValue a i = do
   retType <- indexTypeByOperands aggType (map (ConstantOperand . C.Int 32 . fromIntegral) i)
   case retType of
     (Left s) -> error s
-    (Right retType') -> emitInstr (pointerReferent retType') $ ExtractValue a i []
+    (Right retType') -> emitInstr retType' $ ExtractValue a i []
 
 -- | See <https://llvm.org/docs/LangRef.html#insertvalue-instruction reference>.
 insertValue :: (HasCallStack, MonadIRBuilder m, MonadModuleBuilder m) => Operand -> Operand -> [Word32] -> m Operand
@@ -350,27 +334,23 @@ retVoid :: MonadIRBuilder m => m ()
 retVoid = emitTerm (Ret Nothing [])
 
 -- | See <https://llvm.org/docs/LangRef.html#call-instruction reference>.
-call :: (HasCallStack, MonadIRBuilder m, MonadModuleBuilder m) => Operand -> [(Operand, [ParameterAttribute])] -> m Operand
-call fun args = do
+call :: (HasCallStack, MonadIRBuilder m, MonadModuleBuilder m) => Type -> Operand -> [(Operand, [ParameterAttribute])] -> m Operand
+call funty fun args = do
   let instr = Call {
     AST.tailCallKind = Nothing
   , AST.callingConvention = CC.C
   , AST.returnAttributes = []
+  , AST.type' = funty
   , AST.function = Right fun
   , AST.arguments = args
   , AST.functionAttributes = []
   , AST.metadata = []
   }
-  tf <- typeOf fun
-  case tf of
-    (Left s) -> error s
-    (Right (FunctionType r _ _)) -> case r of
+  case funty of
+    FunctionType r _ _ -> case r of
       VoidType -> emitInstrVoid instr >> (pure (ConstantOperand (C.Undef void)))
       _        -> emitInstr r instr
-    (Right (PointerType (FunctionType r _ _) _)) -> case r of
-      VoidType -> emitInstrVoid instr >> (pure (ConstantOperand (C.Undef void)))
-      _        -> emitInstr r instr
-    (Right _) -> error "Cannot call non-function (Malformed AST)."
+    _ -> error "Cannot call non-function (Malformed AST)."
 
 -- | See <https://llvm.org/docs/LangRef.html#ret-instruction reference>.
 ret :: MonadIRBuilder m => Operand -> m ()
@@ -422,11 +402,9 @@ globalStringPtr str nm = do
         , unnamedAddr           = Just GlobalAddr
         }
       return $ C.GetElementPtr True
-                              (C.GlobalReference (ptr ty') nm)
-                              [(C.Int 32 0), (C.Int 32 0)]
+                               ty'
+                               (C.GlobalReference nm)
+                               [(C.Int 32 0), (C.Int 32 0)]
 
 sizeof :: (HasCallStack, MonadIRBuilder m, MonadModuleBuilder m) => Word32 -> Type -> m Operand
-sizeof szBits ty = do
-  tyNullPtr <- inttoptr (ConstantOperand $ C.Int szBits 0) (ptr ty)
-  tySzPtr <- gep tyNullPtr [ConstantOperand $ C.Int szBits 1]
-  ptrtoint tySzPtr $ IntegerType szBits
+sizeof szBits ty = return $ ConstantOperand $ C.sizeof szBits ty

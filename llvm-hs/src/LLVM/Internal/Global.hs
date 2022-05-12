@@ -19,6 +19,7 @@ import qualified LLVM.Internal.FFI.GlobalValue as FFI
 import LLVM.Internal.Coding
 import LLVM.Internal.DecodeAST
 import LLVM.Internal.EncodeAST
+import LLVM.Internal.Type ()
 
 import qualified LLVM.AST.Linkage as A.L
 import qualified LLVM.AST.Visibility as A.V
@@ -26,6 +27,7 @@ import qualified LLVM.AST.COMDAT as A.COMDAT
 import qualified LLVM.AST.DLL as A.DLL
 import qualified LLVM.AST.ThreadLocalStorage as A.TLS
 import qualified LLVM.AST.Global as A.G
+import qualified LLVM.AST.Type as A.T
 
 genCodingInstance [t| A.L.Linkage |] ''FFI.Linkage [
   (FFI.linkageExternal, A.L.External),
@@ -46,7 +48,7 @@ getLinkage g = liftIO $ decodeM =<< FFI.getLinkage (FFI.upCast g)
 
 setLinkage :: FFI.DescendentOf FFI.GlobalValue v => Ptr v -> A.L.Linkage -> EncodeAST ()
 setLinkage g l = liftIO . FFI.setLinkage (FFI.upCast g) =<< encodeM l
-                                                                       
+
 genCodingInstance [t| A.V.Visibility |] ''FFI.Visibility [
   (FFI.visibilityDefault, A.V.Default),
   (FFI.visibilityHidden, A.V.Hidden),
@@ -146,3 +148,6 @@ genCodingInstance [t| Maybe A.G.UnnamedAddr |] ''FFI.UnnamedAddr [
   (FFI.unnamedAddrLocal, Just A.G.LocalAddr),
   (FFI.unnamedAddrGlobal, Just A.G.GlobalAddr)
  ]
+
+typeOfGlobal :: FFI.DescendentOf FFI.GlobalValue v => Ptr v -> DecodeAST A.T.Type
+typeOfGlobal = decodeM <=< liftIO . FFI.getGlobalValueType . FFI.upCast

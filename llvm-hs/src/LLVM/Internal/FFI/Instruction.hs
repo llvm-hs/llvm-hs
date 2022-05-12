@@ -49,6 +49,12 @@ foreign import ccall unsafe "LLVM_Hs_SetTailCallKind" setTailCallKind ::
 foreign import ccall unsafe "LLVMGetCalledValue" getCallSiteCalledValue ::
   Ptr Instruction -> IO (Ptr Value)
 
+foreign import ccall unsafe "LLVMGetCalledFunctionType" getCalledFunctionType ::
+  Ptr Instruction -> IO (Ptr Type)
+
+foreign import ccall unsafe "LLVMGetGEPSourceElementType" getGEPSourceElementType ::
+  Ptr Instruction -> IO (Ptr Type)
+
 foreign import ccall unsafe "LLVMGetNumArgOperands" getCallSiteNumArgOperands ::
   Ptr Instruction -> IO CUInt
 

@@ -2,6 +2,7 @@
 #include "llvm/IR/LLVMContext.h"
 #include "llvm/IR/Constants.h"
 #include "llvm/IR/Function.h"
+#include "llvm/IR/Operator.h"
 
 #include "llvm-c/Core.h"
 #include "LLVM/Internal/FFI/Value.h"
@@ -127,5 +128,8 @@ LLVMValueRef LLVM_Hs_GetConstTokenNone(LLVMContextRef context) {
     return wrap(ConstantTokenNone::get(*unwrap(context)));
 }
 
+LLVMTypeRef LLVM_Hs_GetConstGEPSourceType(LLVMValueRef v) {
+    return wrap(unwrap<GEPOperator>(v)->getSourceElementType());
+}
 
 }

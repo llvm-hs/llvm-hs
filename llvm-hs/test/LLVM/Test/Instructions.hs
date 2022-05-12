@@ -58,7 +58,7 @@ tests = testGroup "Instructions" [
           mStr = "; ModuleID = '<string>'\n\
                  \source_filename = \"<string>\"\n\
                  \\n\
-                 \define void @0(i32 %0, float %1, i32* %2, i64 %3, i1 %4, <2 x i32> %5, { i32, i32 } %6) {\n\
+                 \define void @0(i32 %0, float %1, ptr %2, i64 %3, i1 %4, <2 x i32> %5, { i32, i32 } %6) {\n\
                  \  " <> namedInstrS <> "\n\
                  \  ret void\n\
                  \}\n"
@@ -66,7 +66,7 @@ tests = testGroup "Instructions" [
     | let ts = [
            i32,
            float,
-           ptr i32,
+           ptr,
            i64,
            i1,
            VectorType 2 i32,
@@ -288,55 +288,61 @@ tests = testGroup "Instructions" [
           ("load",
            Load {
              volatile = False,
+             type' = i32,
              address = a 2,
              maybeAtomicity = Nothing,
              alignment = 4,
              metadata = []
            },
-           "load i32, i32* %2, align 4"),
+           "load i32, ptr %2, align 4"),
           ("volatile",
            Load {
              volatile = True,
+             type' = i32,
              address = a 2,
              maybeAtomicity = Nothing,
              alignment = 4,
              metadata = []
            },
-           "load volatile i32, i32* %2, align 4"),
+           "load volatile i32, ptr %2, align 4"),
           ("acquire",
            Load {
              volatile = False,
+             type' = i32,
              address = a 2,
              maybeAtomicity = Just (System, Acquire),
              alignment = 1,
              metadata = []
            },
-           "load atomic i32, i32* %2 acquire, align 1"),
+           "load atomic i32, ptr %2 acquire, align 1"),
           ("singlethread",
            Load {
              volatile = False,
+             type' = i32,
              address = a 2,
              maybeAtomicity = Just (SingleThread, Monotonic),
              alignment = 1,
              metadata = []
            },
-           "load atomic i32, i32* %2 syncscope(\"singlethread\") monotonic, align 1"),
+           "load atomic i32, ptr %2 syncscope(\"singlethread\") monotonic, align 1"),
           ("GEP",
            GetElementPtr {
              inBounds = False,
+             type' = i32,
              address = a 2,
              indices = [ a 0 ],
              metadata = []
            },
-           "getelementptr i32, i32* %2, i32 %0"),
+           "getelementptr i32, ptr %2, i32 %0"),
           ("inBounds",
            GetElementPtr {
              inBounds = True,
+             type' = i32,
              address = a 2,
              indices = [ a 0 ],
              metadata = []
            },
-           "getelementptr inbounds i32, i32* %2, i32 %0"),
+           "getelementptr inbounds i32, ptr %2, i32 %0"),
           ("cmpxchg",
            CmpXchg {
              volatile = False,
@@ -348,7 +354,7 @@ tests = testGroup "Instructions" [
              failureMemoryOrdering = Monotonic,
              metadata = []
            },
-           "cmpxchg i32* %2, i32 %0, i32 %0 monotonic monotonic, align 16"),
+           "cmpxchg ptr %2, i32 %0, i32 %0 monotonic monotonic, align 16"),
           ("atomicrmw",
            AtomicRMW {
              volatile = False,
@@ -359,7 +365,7 @@ tests = testGroup "Instructions" [
              atomicity = (System, Release),
              metadata = []
            },
-           "atomicrmw umax i32* %2, i32 %0 release, align 16"),
+           "atomicrmw umax ptr %2, i32 %0 release, align 16"),
 
           ("trunc",
            Trunc {
@@ -430,14 +436,14 @@ tests = testGroup "Instructions" [
              type' = i32,
              metadata = []
            },
-           "ptrtoint i32* %2 to i32"),
+           "ptrtoint ptr %2 to i32"),
           ("inttoptr",
            IntToPtr {
              operand0 = a 0,
-             type' = ptr i32,
+             type' = ptr,
              metadata = []
            },
-           "inttoptr i32 %0 to i32*"),
+           "inttoptr i32 %0 to ptr"),
           ("bitcast",
            BitCast {
              operand0 = a 0,
@@ -448,10 +454,10 @@ tests = testGroup "Instructions" [
           ("addrspacecast",
            AddrSpaceCast {
              operand0 = a 2,
-             type' = PointerType i32 (AddrSpace 2),
+             type' = PointerType (AddrSpace 2),
              metadata = []
            },
-           "addrspacecast i32* %2 to i32 addrspace(2)*"),
+           "addrspacecast ptr %2 to ptr addrspace(2)"),
           ("select",
            Select {
              condition' = a 4,
@@ -466,7 +472,7 @@ tests = testGroup "Instructions" [
              type' = i16,
              metadata = []
            },
-           "va_arg i32* %2, i16"),
+           "va_arg ptr %2, i16"),
           ("extractelement",
            ExtractElement {
              vector = a 5,
@@ -509,21 +515,21 @@ tests = testGroup "Instructions" [
           ("landingpad-" ++ n,
            LandingPad {
              type' = StructureType False [
-                ptr i8,
+                ptr,
                 i32
                ],
              cleanup = cp,
              clauses = cls,
              metadata = []
            },
-           "landingpad { i8*, i32 }" <> s)
+           "landingpad { ptr, i32 }" <> s)
           | (clsn,cls,clss) <- [
            ("catch",
-            [Catch (C.Null (ptr i8))],
-            "\n          catch i8* null"),
+            [Catch (C.Null ptr)],
+            "\n          catch ptr null"),
            ("filter",
-            [Filter (C.AggregateZero (ArrayType 1 (ptr i8)))],
-            "\n          filter [1 x i8*] zeroinitializer")
+            [Filter (C.AggregateZero (ArrayType 1 ptr))],
+            "\n          filter [1 x ptr] zeroinitializer")
           ],
           (cpn, cp, cps) <- [ ("-cleanup", True, "\n          cleanup"), ("", False, "") ],
           let s = cps <> clss
@@ -577,7 +583,7 @@ tests = testGroup "Instructions" [
             alignment = 4,
             metadata = []
           },
-          "store i32 %0, i32* %2, align 4"),
+          "store i32 %0, ptr %2, align 4"),
          ("fence",
           Do $ Fence {
             atomicity = (System, Acquire),
@@ -589,12 +595,13 @@ tests = testGroup "Instructions" [
              tailCallKind = Nothing,
              callingConvention = CC.C,
              returnAttributes = [],
-             function = Right (ConstantOperand (C.GlobalReference (ptr (FunctionType A.T.void ts False)) (UnName 0))),
+             type' = FunctionType A.T.void ts False,
+             function = Right (ConstantOperand (C.GlobalReference (UnName 0))),
              arguments = [ (a i, []) | i <- [0..6] ],
              functionAttributes = [],
              metadata = []
            },
-           "call void @0(i32 %0, float %1, i32* %2, i64 %3, i1 %4, <2 x i32> %5, { i32, i32 } %6)")
+           "call void @0(i32 %0, float %1, ptr %2, i64 %3, i1 %4, <2 x i32> %5, { i32, i32 } %6)")
         ]
       )
    ],
@@ -613,13 +620,15 @@ tests = testGroup "Instructions" [
               BasicBlock (UnName 1) [
                 UnName 2 := GetElementPtr {
                   inBounds = True,
-                  address = ConstantOperand (C.GlobalReference (ptr i32) (Name "fortytwo")),
+                  type' = i32,
+                  address = ConstantOperand (C.GlobalReference (Name "fortytwo")),
                   indices = [ ConstantOperand (C.Int 32 0) ],
                   metadata = []
                 },
                 UnName 3 := Load {
                   volatile = False,
-                  address = LocalReference (ptr i32) (UnName 2),
+                  type' = i32,
+                  address = LocalReference ptr (UnName 2),
                   maybeAtomicity = Nothing,
                   alignment = 1,
                   metadata = []
@@ -636,8 +645,8 @@ tests = testGroup "Instructions" [
                \@fortytwo = constant i32 42\n\
                \\n\
                \define i32 @0() {\n\
-               \  %1 = getelementptr inbounds i32, i32* @fortytwo, i32 0\n\
-               \  %2 = load i32, i32* %1, align 1\n\
+               \  %1 = getelementptr inbounds i32, ptr @fortytwo, i32 0\n\
+               \  %2 = load i32, ptr %1, align 1\n\
                \  ret i32 %2\n\
                \}\n"
     s <- withContext $ \context -> withModuleFromAST context mAST moduleLLVMAssembly
@@ -760,7 +769,7 @@ tests = testGroup "Instructions" [
        Module "<string>" "<string>" Nothing Nothing [
         GlobalDefinition $ globalVariableDefaults {
           G.name = UnName 0,
-          G.type' = ptr i8,
+          G.type' = ptr,
           G.initializer = Just (C.BlockAddress (Name "foo") (UnName 2))
         },
         GlobalDefinition $ functionDefaults {
@@ -770,14 +779,15 @@ tests = testGroup "Instructions" [
             BasicBlock (UnName 0) [
               UnName 1 := Load {
                        volatile = False,
-                       address = ConstantOperand (C.GlobalReference (ptr (ptr i8)) (UnName 0)),
+                       type' = ptr,
+                       address = ConstantOperand (C.GlobalReference (UnName 0)),
                        maybeAtomicity = Nothing,
                        alignment = 8,
                        metadata = []
                      }
             ] (
               Do $ IndirectBr {
-                operand0' = LocalReference (ptr i8) (UnName 1),
+                operand0' = LocalReference ptr (UnName 1),
                 possibleDests = [UnName 2],
                 metadata' = []
              }
@@ -791,11 +801,11 @@ tests = testGroup "Instructions" [
        "; ModuleID = '<string>'\n\
        \source_filename = \"<string>\"\n\
        \\n\
-       \@0 = global i8* blockaddress(@foo, %2)\n\
+       \@0 = global ptr blockaddress(@foo, %2)\n\
        \\n\
        \define void @foo() {\n\
-       \  %1 = load i8*, i8** @0, align 8\n\
-       \  indirectbr i8* %1, [label %2]\n\
+       \  %1 = load ptr, ptr @0, align 8\n\
+       \  indirectbr ptr %1, [label %2]\n\
        \\n\
        \2:                                                ; preds = %0\n\
        \  ret void\n\
@@ -806,9 +816,7 @@ tests = testGroup "Instructions" [
         GlobalDefinition $ functionDefaults {
           G.returnType = A.T.void,
           G.name = UnName 0,
-          G.personalityFunction = Just $ C.GlobalReference
-            (ptr (FunctionType A.T.void [i32,i16] False))
-            (UnName 0)
+          G.personalityFunction = Just $ C.GlobalReference (UnName 0)
           ,
           G.parameters = ([
             Parameter i32 (UnName 0) [],
@@ -819,7 +827,8 @@ tests = testGroup "Instructions" [
               Do $ Invoke {
                callingConvention' = CC.C,
                returnAttributes' = [],
-               function' = Right (ConstantOperand (C.GlobalReference (ptr (FunctionType A.T.void [i32, i16] False)) (UnName 0))),
+               type'' = FunctionType A.T.void [i32, i16] False,
+               function' = Right (ConstantOperand (C.GlobalReference (UnName 0))),
                arguments' = [
                 (ConstantOperand (C.Int 32 4), []),
                 (ConstantOperand (C.Int 16 8), [])
@@ -836,11 +845,11 @@ tests = testGroup "Instructions" [
             BasicBlock (Name "bar") [
              UnName 3 := LandingPad {
                type' = StructureType False [
-                  ptr i8,
+                  ptr,
                   i32
                  ],
                cleanup = True,
-               clauses = [Catch (C.Null (ptr i8))],
+               clauses = [Catch (C.Null ptr)],
                metadata = []
              }
              ] (
@@ -852,7 +861,7 @@ tests = testGroup "Instructions" [
        "; ModuleID = '<string>'\n\
        \source_filename = \"<string>\"\n\
        \\n\
-       \define void @0(i32 %0, i16 %1) personality void (i32, i16)* @0 {\n\
+       \define void @0(i32 %0, i16 %1) personality ptr @0 {\n\
        \  invoke void @0(i32 4, i16 8)\n\
        \          to label %foo unwind label %bar\n\
        \\n\
@@ -860,9 +869,9 @@ tests = testGroup "Instructions" [
        \  ret void\n\
        \\n\
        \bar:                                              ; preds = %2\n\
-       \  %3 = landingpad { i8*, i32 }\n\
+       \  %3 = landingpad { ptr, i32 }\n\
        \          cleanup\n\
-       \          catch i8* null\n\
+       \          catch ptr null\n\
        \  ret void\n\
        \}\n"
       ), (
@@ -928,12 +937,10 @@ tests = testGroup "Instructions" [
                  Do Invoke {
                    callingConvention' = CC.C,
                    returnAttributes' = [],
+                   type'' = FunctionType {resultType = VoidType, argumentTypes = [], isVarArg = False},
                    function' = Right (
                      ConstantOperand (
-                       C.GlobalReference PointerType {
-                         pointerReferent = FunctionType {resultType = VoidType, argumentTypes = [], isVarArg = False},
-                         pointerAddrSpace = AddrSpace 0
-                       } (Name "_Z3quxv")
+                       C.GlobalReference (Name "_Z3quxv")
                      )
                    ),
                    arguments' = [],
@@ -956,10 +963,7 @@ tests = testGroup "Instructions" [
                G.BasicBlock (Name "exit") [] (Do Ret { returnOperand = Nothing, metadata' = [] })
              ],
              G.personalityFunction = Just (
-               C.GlobalReference PointerType {
-                 pointerReferent = FunctionType {resultType = IntegerType { typeBits = 32 }, argumentTypes = [], isVarArg = True},
-                 pointerAddrSpace = AddrSpace 0
-               } (Name "__gxx_personality_v0")
+               C.GlobalReference (Name "__gxx_personality_v0")
              )
            }
          ]
@@ -971,7 +975,7 @@ tests = testGroup "Instructions" [
        \\n\
        \declare i32 @__gxx_personality_v0(...)\n\
        \\n\
-       \define void @cleanupret0() personality i32 (...)* @__gxx_personality_v0 {\n\
+       \define void @cleanupret0() personality ptr @__gxx_personality_v0 {\n\
        \entry:\n\
        \  invoke void @_Z3quxv()\n\
        \          to label %exit unwind label %pad\n\
@@ -1008,12 +1012,10 @@ tests = testGroup "Instructions" [
                  Do Invoke {
                    callingConvention' = CC.C,
                    returnAttributes' = [],
+                   type'' = FunctionType {resultType = VoidType, argumentTypes = [], isVarArg = False},
                    function' = Right (
                      ConstantOperand (
-                       C.GlobalReference PointerType {
-                         pointerReferent = FunctionType {resultType = VoidType, argumentTypes = [], isVarArg = False},
-                         pointerAddrSpace = AddrSpace 0
-                       } (Name "_Z3quxv")
+                       C.GlobalReference (Name "_Z3quxv")
                      )
                    ),
                    arguments' = [],
@@ -1038,10 +1040,7 @@ tests = testGroup "Instructions" [
                G.BasicBlock (Name "exit") [] (Do Ret { returnOperand = Nothing, metadata' = [] })
              ],
              G.personalityFunction = Just (
-               C.GlobalReference PointerType {
-                 pointerReferent = FunctionType {resultType = IntegerType { typeBits = 32 }, argumentTypes = [], isVarArg = True},
-                 pointerAddrSpace = AddrSpace 0
-               } (Name "__gxx_personality_v0")
+               C.GlobalReference (Name "__gxx_personality_v0")
              )
            }
          ]
@@ -1053,7 +1052,7 @@ tests = testGroup "Instructions" [
        \\n\
        \declare i32 @__gxx_personality_v0(...)\n\
        \\n\
-       \define void @cleanupret1() personality i32 (...)* @__gxx_personality_v0 {\n\
+       \define void @cleanupret1() personality ptr @__gxx_personality_v0 {\n\
        \entry:\n\
        \  invoke void @_Z3quxv()\n\
        \          to label %exit unwind label %pad\n\
@@ -1093,12 +1092,10 @@ tests = testGroup "Instructions" [
                  Do Invoke {
                    callingConvention' = CC.C,
                    returnAttributes' = [],
+                   type'' = FunctionType {resultType = VoidType, argumentTypes = [], isVarArg = False},
                    function' = Right (
                      ConstantOperand (
-                       C.GlobalReference PointerType {
-                         pointerReferent = FunctionType {resultType = VoidType, argumentTypes = [], isVarArg = False},
-                         pointerAddrSpace = AddrSpace 0
-                       } (Name "_Z3quxv")
+                       C.GlobalReference (Name "_Z3quxv")
                      )
                    ),
                    arguments' = [],
@@ -1128,10 +1125,7 @@ tests = testGroup "Instructions" [
                G.BasicBlock (Name "exit") [] (Do Ret { returnOperand = Nothing, metadata' = [] })
              ],
              G.personalityFunction = Just (
-               C.GlobalReference PointerType {
-                 pointerReferent = FunctionType {resultType = IntegerType { typeBits = 32 }, argumentTypes = [], isVarArg = True},
-                 pointerAddrSpace = AddrSpace 0
-               } (Name "__gxx_personality_v0")
+               C.GlobalReference (Name "__gxx_personality_v0")
              )
            }
          ]
@@ -1143,7 +1137,7 @@ tests = testGroup "Instructions" [
        \\n\
        \declare i32 @__gxx_personality_v0(...)\n\
        \\n\
-       \define void @catchret0() personality i32 (...)* @__gxx_personality_v0 {\n\
+       \define void @catchret0() personality ptr @__gxx_personality_v0 {\n\
        \entry:\n\
        \  invoke void @_Z3quxv()\n\
        \          to label %exit unwind label %pad\n\
@@ -1183,12 +1177,10 @@ tests = testGroup "Instructions" [
                  Do Invoke {
                    callingConvention' = CC.C,
                    returnAttributes' = [],
+                   type'' = FunctionType {resultType = VoidType, argumentTypes = [], isVarArg = False},
                    function' = Right (
                      ConstantOperand (
-                       C.GlobalReference PointerType {
-                         pointerReferent = FunctionType {resultType = VoidType, argumentTypes = [], isVarArg = False},
-                         pointerAddrSpace = AddrSpace 0
-                       } (Name "_Z3quxv")
+                       C.GlobalReference (Name "_Z3quxv")
                      )
                    ),
                    arguments' = [],
@@ -1221,10 +1213,7 @@ tests = testGroup "Instructions" [
                G.BasicBlock (Name "exit") [] (Do Ret { returnOperand = Nothing, metadata' = [] })
              ],
              G.personalityFunction = Just (
-               C.GlobalReference PointerType {
-                 pointerReferent = FunctionType {resultType = IntegerType { typeBits = 32 }, argumentTypes = [], isVarArg = True},
-                 pointerAddrSpace = AddrSpace 0
-               } (Name "__gxx_personality_v0")
+               C.GlobalReference (Name "__gxx_personality_v0")
              )
            }
          ]
@@ -1236,7 +1225,7 @@ tests = testGroup "Instructions" [
        \\n\
        \declare i32 @__gxx_personality_v0(...)\n\
        \\n\
-       \define void @catchret0() personality i32 (...)* @__gxx_personality_v0 {\n\
+       \define void @catchret0() personality ptr @__gxx_personality_v0 {\n\
        \entry:\n\
        \  invoke void @_Z3quxv()\n\
        \          to label %exit unwind label %pad\n\

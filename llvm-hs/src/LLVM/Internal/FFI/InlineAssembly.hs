@@ -33,3 +33,5 @@ foreign import ccall unsafe "LLVM_Hs_InlineAsmIsAlignStack" inlineAsmIsAlignStac
 foreign import ccall unsafe "LLVM_Hs_GetInlineAsmDialect" getInlineAsmDialect ::
   Ptr InlineAsm -> IO AsmDialect
 
+foreign import ccall unsafe "LLVM_Hs_GetInlineAsmFunctionType" getInlineAsmFunctionType ::
+  Ptr InlineAsm -> IO (Ptr Type)

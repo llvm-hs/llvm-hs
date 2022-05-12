@@ -51,6 +51,7 @@ data Terminator
   | Invoke {
       callingConvention' :: CallingConvention,
       returnAttributes' :: [PA.ParameterAttribute],
+      type'' :: Type,
       function' :: CallableOperand,
       arguments' :: [(Operand, [PA.ParameterAttribute])],
       functionAttributes' :: [Either FA.GroupID FA.FunctionAttribute],
@@ -266,6 +267,7 @@ data Instruction
     }
   | Load {
       volatile :: Bool,
+      type' :: Type,
       address :: Operand,
       maybeAtomicity :: Maybe Atomicity,
       alignment :: Word32,
@@ -281,6 +283,7 @@ data Instruction
     }
   | GetElementPtr {
       inBounds :: Bool,
+      type' :: Type,
       address :: Operand,
       indices :: [Operand],
       metadata :: InstructionMetadata
@@ -405,6 +408,7 @@ data Instruction
       tailCallKind :: Maybe TailCallKind,
       callingConvention :: CallingConvention,
       returnAttributes :: [PA.ParameterAttribute],
+      type' :: Type,
       function :: CallableOperand,
       arguments :: [(Operand, [PA.ParameterAttribute])],
       functionAttributes :: [Either FA.GroupID FA.FunctionAttribute],

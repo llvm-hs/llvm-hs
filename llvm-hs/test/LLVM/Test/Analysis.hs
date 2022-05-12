@@ -38,8 +38,8 @@ tests = testGroup "Analysis" [
             GlobalDefinition $ Function L.External V.Default CC.C [] A.T.void (Name "foo") ([
                 Parameter i32 (Name "x") []
                ],False)
-             [] 
-             Nothing 0 Nothing         
+             []
+             Nothing 0 Nothing
              [
               BasicBlock (UnName 0) [
                 UnName 1 := Call {
@@ -71,31 +71,33 @@ tests = testGroup "Analysis" [
        let str = "; ModuleID = '<string>'\n\
                  \source_filename = \"<string>\"\n\
                  \\n\
-                 \define double @my_function2(double* %input_0) {\n\
+                 \define double @my_function2(ptr %input_0) {\n\
                  \foo:\n\
-                 \  %tmp_input_w0 = getelementptr inbounds double, double* %input_0, i64 0\n\
-                 \  %0 = load double, double* %tmp_input_w0, align 8\n\
+                 \  %tmp_input_w0 = getelementptr inbounds double, ptr %input_0, i64 0\n\
+                 \  %0 = load double, ptr %tmp_input_w0, align 8\n\
                  \  ret double %0\n\
                  \}\n"
-           ast = 
+           ast =
              Module "<string>" "<string>" Nothing Nothing [
                GlobalDefinition $ functionDefaults {
                  G.returnType = double,
                  G.name = Name "my_function2",
                  G.parameters = ([
-                   Parameter (ptr double) (Name "input_0") []
+                   Parameter ptr (Name "input_0") []
                   ],False),
                  G.basicBlocks = [
-                   BasicBlock (Name "foo") [ 
+                   BasicBlock (Name "foo") [
                     Name "tmp_input_w0" := GetElementPtr {
                       inBounds = True,
-                      address = LocalReference (ptr double) (Name "input_0"),
+                      type' = double,
+                      address = LocalReference ptr (Name "input_0"),
                       indices = [ConstantOperand (C.Int 64 0)],
                       metadata = []
                     },
                     UnName 0 := Load {
                       volatile = False,
-                      address = LocalReference (ptr double) (Name "tmp_input_w0"),
+                      type' = double,
+                      address = LocalReference ptr (Name "tmp_input_w0"),
                       maybeAtomicity = Nothing,
                       alignment = 8,
                       metadata = []
