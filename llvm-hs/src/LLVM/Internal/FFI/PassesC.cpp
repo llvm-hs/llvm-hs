@@ -72,6 +72,7 @@ void LLVM_Hs_AddAlwaysInlinePass(ModulePassManager* mpm, int insert_lifetimes) {
 
 void LLVM_Hs_AddInternalizeFunctionsPass(ModulePassManager* mpm, int num_exports, char** exports) {
   std::vector<std::string> owned_exports;
+  owned_exports.reserve(num_exports);
   for (int i = 0; i < num_exports; ++i) {
     owned_exports.push_back(std::string(exports[i]));
   }
