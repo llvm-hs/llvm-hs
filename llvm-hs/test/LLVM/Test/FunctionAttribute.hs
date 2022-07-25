@@ -78,7 +78,7 @@ instance Arbitrary FunctionAttribute where
     , StackAlignment <$> elements (map (2^) [0..8 :: Int])
     , StringAttribute <$> (B.pack <$> arbitrary) <*> (B.pack <$> arbitrary)
     , suchThat (AllocSize <$> arbitrary <*> arbitrary) (/= AllocSize 0 (Just 0))
-    , suchThat (VScaleRange <$> arbitrary <*> arbitrary) (\(VScaleRange l h) -> l <= h)
+    , suchThat (VScaleRange <$> arbitrary <*> arbitrary) (\(VScaleRange l h) -> l <= h && h /= 0)
     ]
 
   shrink = \case
