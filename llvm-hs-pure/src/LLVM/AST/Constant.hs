@@ -64,16 +64,6 @@ data Constant
         operand0 :: Constant,
         operand1 :: Constant
       }
-    | UDiv {
-        exact :: Bool,
-        operand0 :: Constant,
-        operand1 :: Constant
-      }
-    | SDiv {
-        exact :: Bool,
-        operand0 :: Constant,
-        operand1 :: Constant
-      }
     | FDiv {
         operand0 :: Constant,
         operand1 :: Constant
@@ -204,15 +194,6 @@ data Constant
         operand0 :: Constant,
         operand1 :: Constant,
         mask :: Constant
-      }
-    | ExtractValue {
-        aggregate :: Constant,
-        indices' :: [Word32]
-      }
-    | InsertValue {
-        aggregate :: Constant,
-        element :: Constant,
-        indices' :: [Word32]
       }
     deriving (Eq, Ord, Read, Show, Typeable, Data, Generic)
 

@@ -14,6 +14,7 @@
   macro(Cold,F,F,T)                                 \
   macro(Convergent,F,F,T)                           \
   macro(DisableSanitizerInstrumentation,F,F,T)      \
+  macro(FnRetThunkExtern,F,F,T)                     \
   macro(Hot,F,F,T)                                  \
   macro(ImmArg,T,F,F)                               \
   macro(InReg,T,T,F)                                \
@@ -50,6 +51,7 @@
   macro(OptForFuzzing,F,F,T)                        \
   macro(OptimizeForSize,F,F,T)                      \
   macro(OptimizeNone,F,F,T)                         \
+  macro(PresplitCoroutine,F,F,T)                    \
   macro(ReadNone,T,F,T)                             \
   macro(ReadOnly,T,F,T)                             \
   macro(Returned,T,F,F)                             \
@@ -81,6 +83,7 @@
   macro(Preallocated,F,F,T)                         \
   macro(StructRet,T,F,F)                            \
   macro(Alignment,T,T,F)                            \
+  macro(AllocKind,F,F,T)                            \
   macro(AllocSize,F,F,T)                            \
   macro(Dereferenceable,T,T,F)                      \
   macro(DereferenceableOrNull,T,T,F)                \

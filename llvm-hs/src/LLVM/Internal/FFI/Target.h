@@ -89,7 +89,6 @@ typedef enum {
 
 #define LLVM_HS_FOR_EACH_DEBUG_COMPRESSION_TYPE(macro) \
     macro(None) \
-    macro(GNU) \
     macro(Z)
 
 typedef enum {
