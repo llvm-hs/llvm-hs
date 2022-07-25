@@ -133,9 +133,6 @@ foreign import ccall unsafe "LLVM_Hs_GetConstPredicate" getConstantICmpPredicate
 foreign import ccall unsafe "LLVM_Hs_GetConstPredicate" getConstantFCmpPredicate ::
   Ptr Constant -> IO FCmpPredicate
 
-foreign import ccall unsafe "LLVM_Hs_GetConstIndices" getConstantIndices ::
-  Ptr Constant -> Ptr CUInt -> IO (Ptr CUInt)
-
 foreign import ccall unsafe "LLVMGetUndef" constantUndef ::
   Ptr Type -> IO (Ptr Constant)
 

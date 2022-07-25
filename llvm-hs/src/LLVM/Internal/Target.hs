@@ -79,7 +79,6 @@ genCodingInstance [t| TO.FloatingPointOperationFusionMode |] ''FFI.FPOpFusionMod
 
 genCodingInstance[t| TO.DebugCompressionType |] ''FFI.DebugCompressionType [
   (FFI.debugCompressionTypeNone, TO.CompressNone),
-  (FFI.debugCompressionTypeGNU, TO.CompressGNU),
   (FFI.debugCompressionTypeZ, TO.CompressZ)
   ]
 

@@ -70,8 +70,6 @@ instance Typed C.Constant where
   typeOf (C.FSub {..})    = typeOf operand0
   typeOf (C.Mul {..})     = typeOf operand0
   typeOf (C.FMul {..})    = typeOf operand0
-  typeOf (C.UDiv {..})    = typeOf operand0
-  typeOf (C.SDiv {..})    = typeOf operand0
   typeOf (C.URem {..})    = typeOf operand0
   typeOf (C.SRem {..})    = typeOf operand0
   typeOf (C.Shl {..})     = typeOf operand0
@@ -119,12 +117,6 @@ instance Typed C.Constant where
     case (t0, tm) of
       (Right (VectorType _ t), Right (VectorType m _)) -> return $ Right $ VectorType m t
       _ -> return $ Left "The first operand of an shufflevector instruction is a value of vector type. (Malformed AST)"
-  typeOf (C.ExtractValue {..})    = do
-    t <- typeOf aggregate
-    case t of
-      (Left _) -> return t
-      (Right t') -> extractValueType indices' t'
-  typeOf (C.InsertValue {..})   = typeOf aggregate
   typeOf (C.TokenNone)          = return $ Right TokenType
   typeOf (C.AddrSpaceCast {..}) = return $ Right type'
 

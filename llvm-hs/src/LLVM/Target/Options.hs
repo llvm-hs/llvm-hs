@@ -20,7 +20,6 @@ data FloatingPointOperationFusionMode
 -- | <https://llvm.org/doxygen/namespacellvm.html#aa100a124c9d33561b0950011928aae00>
 data DebugCompressionType
   = CompressNone -- ^ No compression
-  | CompressGNU -- ^ zlib-gnu style compression
   | CompressZ -- ^ zlib style compression
   deriving (Eq, Ord, Read, Show, Enum, Bounded, Typeable, Data, Generic)
 

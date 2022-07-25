@@ -284,14 +284,6 @@ instance DecodeM DecodeAST A.Constant (Ptr FFI.Constant) where
                                                       "nuw" -> return [| liftIO $ decodeM =<< FFI.hasNoUnsignedWrap v |]
                                                       x -> error $ "constant bool field " ++ show x ++ " not handled yet"
                                  TH.AppT TH.ListT (TH.ConT h)
-                                   | h == ''Word32 ->
-                                      return [|
-                                            do
-                                              np <- alloca
-                                              isp <- liftIO $ FFI.getConstantIndices c np
-                                              n <- peek np
-                                              decodeM (n, isp)
-                                            |]
                                    | h == ''A.Constant &&
                                      TH.nameBase fn == "indices" -> do
                                        operandNumber <- get

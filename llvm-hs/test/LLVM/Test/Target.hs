@@ -104,7 +104,7 @@ instance Arbitrary MachineCodeOptions where
     return MachineCodeOptions { .. }
 
 instance Arbitrary DebugCompressionType where
-  arbitrary = elements [CompressNone, CompressGNU, CompressZ]
+  arbitrary = elements [CompressNone, CompressZ]
 
 arbitraryASCIIString :: Gen String
 #if MIN_VERSION_QuickCheck(2,10,0)
