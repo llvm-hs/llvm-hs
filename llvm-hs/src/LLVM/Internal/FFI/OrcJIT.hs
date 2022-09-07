@@ -12,7 +12,7 @@ import Foreign.C
 
 newtype TargetAddress = TargetAddress Word64
 
-data LLVMJITEvaluatedSymbol
+data JITEvaluatedSymbol
 data ExpectedJITEvaluatedSymbol
 data MangleAndInterner
 data ThreadSafeContext
@@ -73,6 +73,9 @@ foreign import ccall safe "LLVM_Hs_JITDylib_addDynamicLibrarySearchGenerator_loa
   addDynamicLibrarySearchGenerator ::
     Ptr JITDylib -> Ptr DataLayout -> CString -> IO ()
 
+foreign import ccall safe "LLVM_Hs_JITDylib_defineAbsoluteSymbols"
+  defineAbsoluteSymbols :: Ptr JITDylib -> CUInt -> Ptr (Ptr SymbolStringPtr) -> Ptr (Ptr JITEvaluatedSymbol) -> IO ()
+
 foreign import ccall safe "LLVM_Hs_IRLayer_addModule" irLayerAddModule ::
   Ptr ThreadSafeModule -> Ptr JITDylib -> Ptr DataLayout -> Ptr IRLayer -> IO ()
 
@@ -82,8 +85,14 @@ foreign import ccall safe "LLVM_Hs_getExpectedJITEvaluatedSymbolAddress" getExpe
 foreign import ccall safe "LLVM_Hs_getExpectedJITEvaluatedSymbolFlags" getExpectedSymbolFlags ::
   Ptr ExpectedJITEvaluatedSymbol -> IO JITSymbolFlags
 
-foreign import ccall safe "LLVM_Hs_disposeJITEvaluatedSymbol" disposeJITEvaluatedSymbol ::
+foreign import ccall safe "LLVM_Hs_disposeExpectedJITEvaluatedSymbol" disposeExpectedJITEvaluatedSymbol ::
   Ptr ExpectedJITEvaluatedSymbol -> IO ()
+
+foreign import ccall safe "LLVM_Hs_createJITEvaluatedSymbol" createJITEvaluatedSymbol ::
+  TargetAddress -> JITSymbolFlags -> IO (Ptr JITEvaluatedSymbol)
+
+foreign import ccall safe "LLVM_Hs_disposeJITEvaluatedSymbol" disposeJITEvaluatedSymbol ::
+  Ptr JITEvaluatedSymbol -> IO ()
 
 foreign import ccall safe "LLVM_Hs_createMangleAndInterner" createMangleAndInterner ::
   Ptr ExecutionSession -> Ptr DataLayout -> IO (Ptr MangleAndInterner)

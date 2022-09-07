@@ -10,9 +10,12 @@ import qualified Data.Map.Strict as Map
 import Control.Applicative
 import Data.ByteString (ByteString)
 import Data.Foldable
+import Data.Int
 import Data.IORef
 import Data.Word
 import Foreign.Ptr
+import Foreign.Storable
+import Foreign.Marshal.Alloc
 import System.Process (callProcess)
 import System.IO.Temp (withSystemTempFile)
 import System.IO
@@ -48,11 +51,19 @@ test2Module =
   \  ret i32 42\n\
   \}\n"
 
-withTestModule :: (Module -> IO a) -> IO a
-withTestModule f = withContext $ \context -> withModuleFromLLVMAssembly' context testModule f
+test3Module :: ByteString
+test3Module =
+  "; ModuleID = '<string>'\n\
+  \source_filename = \"<string>\"\n\
+  \@data = external global i32\n\
+  \\n\
+  \define i32 @main() {\n\
+  \  %1 = load i32, i32* @data\n\
+  \  ret i32 %1\n\
+  \}\n"
 
-withTest2Module :: (Module -> IO a) -> IO a
-withTest2Module f = withContext $ \context -> withModuleFromLLVMAssembly' context test2Module f
+withTestModule :: ByteString -> (Module -> IO a) -> IO a
+withTestModule txt f = withContext $ \context -> withModuleFromLLVMAssembly' context txt f
 
 myTestFuncImpl :: IO Word32
 myTestFuncImpl = return 42
@@ -72,7 +83,7 @@ tests =
           ol <- createRTDyldObjectLinkingLayer es
           il <- createIRCompileLayer es ol tm
           dylib <- createJITDylib es "testDylib"
-          withTest2Module $ \m ->
+          withTestModule test2Module $ \m ->
             withClonedThreadSafeModule m $ \tsm -> do
               addModule tsm dylib il
               Right (JITSymbol addr _) <- lookupSymbol es il dylib "main"
@@ -101,7 +112,7 @@ tests =
           ol <- createRTDyldObjectLinkingLayer es
           il <- createIRCompileLayer es ol tm
           dylib <- createJITDylib es "testDylib"
-          withTest2Module $ \m -> do
+          withTestModule test2Module $ \m -> do
            withPassManager defaultCuratedPassSetSpec { optLevel = Just 2 } $ \pm -> do
              success <- runPassManager pm m
              writeIORef passmanagerSuccessful success
@@ -110,7 +121,26 @@ tests =
                Right (JITSymbol mainFn _) <- lookupSymbol es il dylib "main"
                result <- mkMain (castPtrToFunPtr (wordPtrToPtr mainFn))
                result @?= 42
-               readIORef passmanagerSuccessful @? "passmanager failed"
+               readIORef passmanagerSuccessful @? "passmanager failed",
+
+    testCase "defining absolute symbols" $ do
+      withHostTargetMachine Reloc.PIC CodeModel.Default CodeGenOpt.Default $ \tm ->
+        withExecutionSession $ \es -> do
+          ol <- createRTDyldObjectLinkingLayer es
+          il <- createIRCompileLayer es ol tm
+          alloca $ \ptr -> do
+            poke ptr (1234 :: Int32)
+            dylib <- createJITDylib es "testDylib"
+            withMangledSymbol il "data" $ \dataSym -> do
+              let flags = defaultJITSymbolFlags { jitSymbolAbsolute = True }
+              defineAbsoluteSymbols dylib [(dataSym, JITSymbol (ptrToWordPtr ptr) flags)]
+              withTestModule test3Module $ \m -> do
+                withClonedThreadSafeModule m $ \tsm -> do
+                  addModule tsm dylib il
+                  Right (JITSymbol addr _) <- lookupSymbol es il dylib "main"
+                  let mainFn = mkMain (castPtrToFunPtr $ wordPtrToPtr $ fromIntegral addr)
+                  result <- mainFn
+                  result @?= 1234
 
     -- TODO: Make it possible to use Haskell functions as definition generators
     --       and update to OrcJITv2
