@@ -146,6 +146,19 @@ void LLVM_Hs_JITDylib_addDynamicLibrarySearchGenerator_load(JITDylib* dylib, LLV
           name, dataLayoutCpp.getGlobalPrefix())));
 }
 
+void LLVM_Hs_JITDylib_defineAbsoluteSymbols(
+    JITDylib* dylib, unsigned num_symbols, const SymbolStringPtr** names, const JITEvaluatedSymbol** symbols) {
+  orc::SymbolMap map;
+  for (unsigned i = 0; i < num_symbols; ++i) {
+    map[*names[i]] = *symbols[i];
+  }
+  if (Error err = dylib->define(orc::absoluteSymbols(std::move(map)))) {
+    llvm::errs() << err << "\n";
+    // FIXME: Better error handling
+    exit(1);
+  }
+}
+
 // Warning: This consumes the module.
 void LLVM_Hs_IRLayer_addModule(ThreadSafeModule* tsm, JITDylib* dylib, LLVMTargetDataRef dataLayout, IRLayer* il) {
     auto dataLayoutCpp = *unwrap(dataLayout);
@@ -204,7 +217,15 @@ LLVMJITSymbolFlags_ LLVM_Hs_getExpectedJITEvaluatedSymbolFlags(
     return wrap(symbol->getFlags());
 }
 
-void LLVM_Hs_disposeJITEvaluatedSymbol(Expected<JITEvaluatedSymbol>* symbol) {
+JITEvaluatedSymbol* LLVM_Hs_createJITEvaluatedSymbol(uint64_t ptr, LLVMJITSymbolFlags_ flags) {
+    return new JITEvaluatedSymbol(ptr, unwrap(flags));
+}
+
+void LLVM_Hs_disposeJITEvaluatedSymbol(JITEvaluatedSymbol* symbol) {
+    delete symbol;
+}
+
+void LLVM_Hs_disposeExpectedJITEvaluatedSymbol(Expected<JITEvaluatedSymbol>* symbol) {
     delete symbol;
 }
 
