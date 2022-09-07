@@ -10,12 +10,18 @@ module LLVM.OrcJIT (
     -- ** Symbol search generators
     addDynamicLibrarySearchGeneratorForCurrentProcess,
     addDynamicLibrarySearchGenerator,
+    -- ** Symbol definitions
+    defineAbsoluteSymbols,
     -- ** Symbol lookups
     lookupSymbol,
     JITSymbol(..),
     JITSymbolError(..),
     JITSymbolFlags(..),
     defaultJITSymbolFlags,
+    -- * Mangled symbols
+    mangleSymbol,
+    disposeMangledSymbol,
+    withMangledSymbol,
     -- * ThreadSafeContext
     ThreadSafeContext,
     -- ** Lifetime management

@@ -1,4 +1,5 @@
 {-# LANGUAGE MultiParamTypeClasses #-}
+{-# LANGUAGE ScopedTypeVariables #-}
 module LLVM.Internal.OrcJIT where
 
 import LLVM.Prelude
@@ -8,6 +9,7 @@ import Control.Monad.AnyCont
 import Control.Monad.IO.Class
 import Data.Bits
 import Data.IORef
+import Foreign.C.Types
 import Foreign.C.String
 import Foreign.Ptr
 
@@ -109,6 +111,16 @@ instance Monad m => DecodeM m JITSymbolFlags FFI.JITSymbolFlags where
       jitSymbolMaterializationSideEffectsOnly = FFI.jitSymbolFlagsMaterializationSideEffectsOnly .&. f /= 0
     }
 
+instance Monad m => EncodeM m MangledSymbol (Ptr FFI.SymbolStringPtr) where
+  encodeM (MangledSymbol p) = return p
+
+instance (Monad m, MonadIO m, MonadAnyCont IO m) => EncodeM m JITSymbol (Ptr FFI.JITEvaluatedSymbol) where
+  encodeM (JITSymbol addr flags) = do
+    flags' <- encodeM flags
+    anyContToM $ bracket
+      (FFI.createJITEvaluatedSymbol (FFI.TargetAddress $ fromIntegral addr) flags')
+      FFI.disposeJITEvaluatedSymbol
+
 instance (MonadIO m, MonadAnyCont IO m) =>
          DecodeM m (Either JITSymbolError JITSymbol) (Ptr FFI.ExpectedJITEvaluatedSymbol) where
   decodeM expectedSym = do
@@ -148,6 +160,14 @@ addDynamicLibrarySearchGenerator :: IRLayer l => l -> JITDylib -> FilePath -> IO
 addDynamicLibrarySearchGenerator compileLayer (JITDylib dylib) s = withCString s $ \cStr ->
   FFI.addDynamicLibrarySearchGenerator dylib (getDataLayout compileLayer) cStr
 
+defineAbsoluteSymbols :: JITDylib -> [(MangledSymbol, JITSymbol)] -> IO ()
+defineAbsoluteSymbols (JITDylib dylib) symList =
+  runAnyContT' return $ do
+    (nsyms, symStrPtrPtr) :: (CUInt, Ptr (Ptr FFI.SymbolStringPtr)) <- encodeM symNames
+    (_, symValPtrPtr) :: (CUInt, Ptr (Ptr FFI.JITEvaluatedSymbol)) <- encodeM symVals
+    liftIO $ FFI.defineAbsoluteSymbols dylib nsyms symStrPtrPtr symValPtrPtr
+  where (symNames, symVals) = unzip symList
+
 -- | Looks up an (unmangled) symbol name in the given 'JITDylib'.
 --
 -- The symbol is expected to have been added to the 'JITDylib' by the same 'IRLayer'
@@ -157,7 +177,7 @@ lookupSymbol :: IRLayer l => ExecutionSession -> l -> JITDylib -> ShortByteStrin
 lookupSymbol (ExecutionSession es _) irl (JITDylib dylib) name = SBS.useAsCString name $ \nameStr ->
   runAnyContT' return $ do
     symbol <- anyContToM $ bracket
-      (FFI.lookupSymbol es dylib (getMangler irl) nameStr) FFI.disposeJITEvaluatedSymbol
+      (FFI.lookupSymbol es dylib (getMangler irl) nameStr) FFI.disposeExpectedJITEvaluatedSymbol
     decodeM symbol
 
 --------------------------------------------------------------------------------
