@@ -178,7 +178,7 @@ LLVMBool LLVM_Hs_AttributeGetAllocSizeArgs(LLVMAttributeRef a, unsigned *x,
 
 void LLVM_Hs_AttributeGetVScaleRangeArgs(LLVMAttributeRef a, unsigned *min, unsigned *max) {
   *min = unwrap(a).getVScaleRangeMin();
-  *max = unwrap(a).getVScaleRangeMax().getValueOr(0);
+  *max = unwrap(a).getVScaleRangeMax().value_or(0);
 }
 
 void LLVM_Hs_AttrBuilderAddVScaleRange(AttrBuilder &ab, unsigned min, unsigned max) {
