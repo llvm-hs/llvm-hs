@@ -1,6 +1,8 @@
 {-# LANGUAGE
   MultiParamTypeClasses,
-  UndecidableInstances
+  UndecidableInstances,
+  FlexibleContexts,
+  FlexibleInstances
   #-}
 module Control.Monad.AnyCont (
     MonadAnyCont(..),

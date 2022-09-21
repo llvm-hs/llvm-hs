@@ -75,7 +75,7 @@ newIndirectStubsManagerBuilder ::
   ShortByteString {- ^ target triple -} ->
   IO IndirectStubsManagerBuilder
 newIndirectStubsManagerBuilder triple =
-  flip runAnyContT return $ do
+  (\cont -> runAnyContT cont return) $ do
     triple' <- encodeM triple
     stubsMgr <- liftIO (FFI.createLocalIndirectStubsManagerBuilder triple')
     return (StubsMgr stubsMgr)
@@ -105,7 +105,7 @@ newJITCompileCallbackManager ::
   ShortByteString {- ^ target triple -} ->
   Maybe (IO ()) {- ^ called on compilation errors -} ->
   IO JITCompileCallbackManager
-newJITCompileCallbackManager (ExecutionSession es) triple errorHandler = flip runAnyContT return $ do
+newJITCompileCallbackManager (ExecutionSession es) triple errorHandler = (\cont -> runAnyContT cont return) $ do
   triple' <- encodeM triple
   (errorHandler', cleanup) <- encodeM errorHandler
   callbackMgr <- liftIO (FFI.createLocalCompileCallbackManager es triple' errorHandler')
@@ -145,7 +145,7 @@ newCompileOnDemandLayer :: CompileLayer l =>
   Bool {- ^ clone stubs into partitions -} ->
   IO (CompileOnDemandLayer l)
 newCompileOnDemandLayer (ExecutionSession es) baseLayer tm getSymbolResolver setSymbolResolver partition (CallbackMgr callbackMgr _) (StubsMgr stubsMgr) cloneStubs =
-  flip runAnyContT return $ do
+  (\cont -> runAnyContT cont return) $ do
     cleanups <- liftIO (newIORef [])
     dl <- createRegisteredDataLayout tm cleanups
     getSymbolResolver' <- liftIO (allocFunPtr cleanups (FFI.wrapGetSymbolResolver getSymbolResolver))

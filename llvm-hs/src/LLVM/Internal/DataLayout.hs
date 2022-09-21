@@ -17,7 +17,7 @@ import LLVM.Internal.Coding
 import LLVM.Internal.String ()
 
 withFFIDataLayout :: DataLayout -> (Ptr FFI.DataLayout -> IO a) -> IO a
-withFFIDataLayout dl f = flip runAnyContT return $ do
+withFFIDataLayout dl f = (\cont -> runAnyContT cont return) $ do
   dls <- encodeM (dataLayoutToString dl)
   liftIO $ bracket (FFI.createDataLayout dls) FFI.disposeDataLayout f
 

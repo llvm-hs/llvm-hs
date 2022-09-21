@@ -37,7 +37,7 @@ instance CompileLayer (IRCompileLayer l) where
 --
 -- When the layer is no longer needed, it should be disposed using 'disposeCompileLayer.
 newIRCompileLayer :: LinkingLayer l => l -> TargetMachine -> IO (IRCompileLayer l)
-newIRCompileLayer linkingLayer (TargetMachine tm) = flip runAnyContT return $ do
+newIRCompileLayer linkingLayer (TargetMachine tm) = (\cont -> runAnyContT cont return) $ do
   cleanups <- liftIO (newIORef [])
   dl <- createRegisteredDataLayout (TargetMachine tm) cleanups
   cl <- anyContToM $
