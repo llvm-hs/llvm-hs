@@ -170,6 +170,9 @@ main = do
           newHsc buildInfo localBuildInfo =
 #endif
               PreProcessor {
+#if MIN_VERSION_Cabal(3,8,0)
+                  ppOrdering = \_ _ ms -> pure ms,
+#endif
                   platformIndependent = platformIndependent (origHsc buildInfo),
                   runPreProcessor = \inFiles outFiles verbosity -> do
                       llvmConfig <- getLLVMConfig (configFlags localBuildInfo)
