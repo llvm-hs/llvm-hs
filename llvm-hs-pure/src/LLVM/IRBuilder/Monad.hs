@@ -6,6 +6,7 @@
 {-# LANGUAGE GeneralizedNewtypeDeriving #-}
 {-# LANGUAGE MultiParamTypeClasses      #-}
 {-# LANGUAGE UndecidableInstances       #-} -- For MonadState s (ModuleBuilderT m) instance
+{-# LANGUAGE TypeOperators #-}
 
 module LLVM.IRBuilder.Monad where
 

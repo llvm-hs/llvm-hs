@@ -376,5 +376,5 @@ parseTriple triple = do
    in
     case parseOnly (parseSpec `sepBy` char '-') tripleStr of
       Left _ -> throwE $ "ill-formed triple: " ++ show tripleStr
-      Right fs -> pure $ foldr ($) unknownTriple fs
+      Right fs -> pure $ LLVM.Prelude.foldr ($) unknownTriple fs
 

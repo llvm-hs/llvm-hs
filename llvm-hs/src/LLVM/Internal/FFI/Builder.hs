@@ -9,12 +9,6 @@ import Foreign.Ptr
 import Foreign.C
 import GHC.Stack
 
-import qualified Data.List as List
-import qualified Data.Map as Map
-
-import qualified LLVM.AST.Instruction as A
-import LLVM.Internal.InstructionDefs as ID
-
 import LLVM.Internal.FFI.Context
 import LLVM.Internal.FFI.LLVMCTypes
 import LLVM.Internal.FFI.PtrHierarchy

@@ -8,6 +8,8 @@
 {-# LANGUAGE GeneralizedNewtypeDeriving #-}
 {-# LANGUAGE MultiParamTypeClasses      #-}
 {-# LANGUAGE UndecidableInstances       #-} -- For MonadState s (IRBuilderT m) instance
+{-# LANGUAGE TypeOperators              #-}
+
 
 module LLVM.IRBuilder.Module where
 
@@ -50,7 +52,7 @@ import LLVM.AST.Linkage
 import LLVM.AST.Type (ptr)
 import qualified LLVM.AST.Constant as C
 
-import LLVM.IRBuilder.Internal.SnocList
+import qualified LLVM.IRBuilder.Internal.SnocList as SL
 import LLVM.IRBuilder.Monad
 
 newtype ModuleBuilderT m a = ModuleBuilderT { unModuleBuilderT :: StateT ModuleBuilderState m a }
@@ -63,7 +65,7 @@ instance MonadFail m => MonadFail (ModuleBuilderT m) where
   fail str = ModuleBuilderT (StateT $ \_ -> Fail.fail str)
 
 data ModuleBuilderState = ModuleBuilderState
-  { builderDefs :: SnocList Definition
+  { builderDefs :: SL.SnocList Definition
   , builderTypeDefs :: Map Name Type
   }
 
@@ -96,7 +98,7 @@ runModuleBuilder s m = runIdentity $ runModuleBuilderT s m
 -- | Evaluate 'ModuleBuilderT' to a result and a list of definitions
 runModuleBuilderT :: Monad m => ModuleBuilderState -> ModuleBuilderT m a -> m (a, [Definition])
 runModuleBuilderT s (ModuleBuilderT m)
-  = second (getSnocList . builderDefs)
+  = second (SL.getSnocList . builderDefs)
   <$> runStateT m s
 
 -- | Evaluate 'ModuleBuilder' to a list of definitions
@@ -108,7 +110,7 @@ execModuleBuilderT :: Monad m => ModuleBuilderState -> ModuleBuilderT m a -> m [
 execModuleBuilderT s m = snd <$> runModuleBuilderT s m
 
 emitDefn :: MonadModuleBuilder m => Definition -> m ()
-emitDefn def = liftModuleState $ modify $ \s -> s { builderDefs = builderDefs s `snoc` def }
+emitDefn def = liftModuleState $ modify $ \s -> s { builderDefs = builderDefs s `SL.snoc` def }
 
 -- | A parameter name suggestion
 data ParameterName
@@ -119,7 +121,7 @@ data ParameterName
 -- | Using 'fromString` on non-ASCII strings will throw an error.
 instance IsString ParameterName where
   fromString s
-    | all isAscii s = ParameterName (fromString s)
+    | Data.Foldable.all isAscii s = ParameterName (fromString s)
     | otherwise =
       error ("Only ASCII strings are automatically converted to LLVM parameter names. "
       <> "Other strings need to be encoded to a `ShortByteString` using an arbitrary encoding.")
