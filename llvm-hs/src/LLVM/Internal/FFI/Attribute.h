@@ -64,6 +64,7 @@
   macro(SanitizeMemory,F,F,T)                       \
   macro(SanitizeThread,F,F,T)                       \
   macro(ShadowCallStack,F,F,T)                      \
+  macro(SkipProfile,F,F,T)                          \
   macro(Speculatable,F,F,T)                         \
   macro(SpeculativeLoadHardening,F,F,T)             \
   macro(StackProtect,F,F,T)                         \
