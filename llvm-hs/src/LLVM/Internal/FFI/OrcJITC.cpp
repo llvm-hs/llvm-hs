@@ -1,4 +1,5 @@
 #include <iostream>
+#include <memory>
 
 #include <llvm/ExecutionEngine/Orc/CompileUtils.h>
 #include <llvm/ExecutionEngine/Orc/Core.h>
@@ -6,6 +7,8 @@
 #include <llvm/ExecutionEngine/Orc/Mangling.h>
 #include <llvm/ExecutionEngine/Orc/IRCompileLayer.h>
 #include <llvm/ExecutionEngine/Orc/RTDyldObjectLinkingLayer.h>
+#include <llvm/ExecutionEngine/Orc/ObjectLinkingLayer.h>
+#include <llvm/ExecutionEngine/JITLink/JITLinkMemoryManager.h>
 #include <llvm/ExecutionEngine/SectionMemoryManager.h>
 #include <llvm/Bitcode/BitcodeWriter.h>
 #include <llvm/Bitcode/BitcodeReader.h>
@@ -105,6 +108,10 @@ ObjectLayer* LLVM_Hs_createRTDyldObjectLinkingLayer(ExecutionSession* es) {
     return new RTDyldObjectLinkingLayer(*es, []() {
         return std::make_unique<SectionMemoryManager>();
     });
+}
+
+ObjectLayer* LLVM_Hs_createObjectLinkingLayer(ExecutionSession* es) {
+    return new ObjectLinkingLayer(*es, std::make_unique<jitlink::InProcessMemoryManager>());
 }
 
 void LLVM_Hs_ObjectLayerAddObjectFile(ObjectLayer* ol, JITDylib* dylib, const char* path) {

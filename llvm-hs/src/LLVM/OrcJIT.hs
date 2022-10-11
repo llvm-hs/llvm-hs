@@ -37,6 +37,9 @@ module LLVM.OrcJIT (
     -- * Object layers
     ObjectLayer,
     addObjectFile,
+    -- ** ObjectLinkingLayer
+    ObjectLinkingLayer,
+    createObjectLinkingLayer,
     -- ** RTDyldObjectLinkingLayer
     RTDyldObjectLinkingLayer,
     createRTDyldObjectLinkingLayer,
