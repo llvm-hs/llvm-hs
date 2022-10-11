@@ -53,6 +53,9 @@ foreign import ccall safe "LLVM_Hs_disposeThreadSafeModule" disposeThreadSafeMod
 foreign import ccall safe "LLVM_Hs_createRTDyldObjectLinkingLayer" createRTDyldObjectLinkingLayer ::
   Ptr ExecutionSession -> IO (Ptr ObjectLayer)
 
+foreign import ccall safe "LLVM_Hs_createObjectLinkingLayer" createObjectLinkingLayer ::
+  Ptr ExecutionSession -> IO (Ptr ObjectLayer)
+
 foreign import ccall safe "LLVM_Hs_ObjectLayerAddObjectFile" objectLayerAddObjectFile ::
   Ptr ObjectLayer -> Ptr JITDylib -> CString -> IO ()
 

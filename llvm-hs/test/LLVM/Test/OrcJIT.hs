@@ -91,6 +91,20 @@ tests =
               result <- mainFn
               result @?= 42,
 
+    testCase "basic self-contained function + ObjectLinkingLayer" $ do
+      withHostTargetMachine Reloc.PIC CodeModel.Default CodeGenOpt.Default $ \tm ->
+        withExecutionSession $ \es -> do
+          ol <- createObjectLinkingLayer es
+          il <- createIRCompileLayer es ol tm
+          dylib <- createJITDylib es "testDylib"
+          withTestModule test2Module $ \m ->
+            withClonedThreadSafeModule m $ \tsm -> do
+              addModule tsm dylib il
+              Right (JITSymbol addr _) <- lookupSymbol es il dylib "main"
+              let mainFn = mkMain (castPtrToFunPtr $ wordPtrToPtr $ fromIntegral addr)
+              result <- mainFn
+              result @?= 42,
+
     testCase "using symbols in external shared libraries" $
       withHostTargetMachine Reloc.PIC CodeModel.Default CodeGenOpt.Default $ \tm ->
         withExecutionSession $ \es -> do
