@@ -248,6 +248,17 @@ createRTDyldObjectLinkingLayer (ExecutionSession es cleanups) = do
   modifyIORef' cleanups (FFI.disposeObjectLayer ol :)
   return $ RTDyldObjectLinkingLayer ol
 
+data ObjectLinkingLayer = ObjectLinkingLayer !(Ptr FFI.ObjectLayer)
+
+instance ObjectLayer ObjectLinkingLayer where
+  getObjectLayer (ObjectLinkingLayer ol) = ol
+
+createObjectLinkingLayer :: ExecutionSession -> IO ObjectLinkingLayer
+createObjectLinkingLayer (ExecutionSession es cleanups) = do
+  ol <- FFI.createObjectLinkingLayer es
+  modifyIORef' cleanups (FFI.disposeObjectLayer ol :)
+  return $ ObjectLinkingLayer ol
+
 addObjectFile :: ObjectLayer l => l -> JITDylib -> FilePath -> IO ()
 addObjectFile ol (JITDylib dylib) path = do
   withCString path $ \cStr ->
