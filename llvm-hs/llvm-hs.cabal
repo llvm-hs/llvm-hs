@@ -1,6 +1,6 @@
 cabal-version: 2.2
 name: llvm-hs
-version: 15.0.0
+version: 16.0.0
 license: BSD-3-Clause
 license-file: LICENSE
 author: Anthony Cowley, Stephen Diehl, Moritz Kiefer <moritz.kiefer@purelyfunctional.org>, Benjamin S. Scarlet
@@ -80,13 +80,13 @@ library
     -fno-warn-orphans
     -optcxx=-O3
     -optcxx=-Wall
-    -optcxx=-std=c++14
+    -optcxx=-std=c++17
     -optcxx=-lstdc++
 
   cxx-options:
     -O3
     -Wall
-    -std=c++14
+    -std=c++17
 
   if flag(llvm-with-rtti)
     cxx-options: -frtti
@@ -114,7 +114,7 @@ library
     template-haskell >= 2.5.0.0,
     containers >= 0.4.2.1,
     array >= 0.4.0.0,
-    llvm-hs-pure == 15.0.*
+    llvm-hs-pure == 16.0.*
   hs-source-dirs: src
 
   default-extensions:

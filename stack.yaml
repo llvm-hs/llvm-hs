@@ -6,7 +6,3 @@ resolver: nightly-2021-07-04  # 9.0.1
 packages:
 - llvm-hs
 - llvm-hs-pure
-
-# We should not need to do this, but unfortunately, removing it breaks the stack build.
-ghc-options:
-  llvm-hs: -optcxx=-std=c++14 -optcxx=-lstdc++ -optcxx=-fno-rtti
