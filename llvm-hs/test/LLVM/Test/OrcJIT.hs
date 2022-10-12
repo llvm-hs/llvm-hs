@@ -78,7 +78,7 @@ foreign import ccall "dynamic"
 tests :: TestTree
 tests =
   testGroup "OrcJIT" [
-    testCase "basic self-contained function" $ do
+    testCase "basic self-contained function" $
       withHostTargetMachine Reloc.PIC CodeModel.Default CodeGenOpt.Default $ \tm ->
         withExecutionSession $ \es -> do
           ol <- createRTDyldObjectLinkingLayer es
