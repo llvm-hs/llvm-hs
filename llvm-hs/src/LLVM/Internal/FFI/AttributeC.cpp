@@ -168,8 +168,8 @@ LLVMBool LLVM_Hs_AttributeGetAllocSizeArgs(LLVMAttributeRef a, unsigned *x,
                                            unsigned *y) {
     auto pair = unwrap(a).getAllocSizeArgs();
     *x = pair.first;
-    if (pair.second.hasValue()) {
-        *y = pair.second.getValue();
+    if (pair.second.has_value()) {
+        *y = pair.second.value();
         return 1;
     } else {
         return 0;
