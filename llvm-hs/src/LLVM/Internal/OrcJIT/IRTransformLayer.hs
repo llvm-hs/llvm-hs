@@ -41,7 +41,7 @@ newIRTransformLayer
   -> (Ptr FFI.Module -> IO (Ptr FFI.Module)) {- ^ module transformation -}
   -> IO (IRTransformLayer l)
 newIRTransformLayer compileLayer tm moduleTransform =
-  flip runAnyContT return $ do
+  (\cont -> runAnyContT cont return) $ do
     cleanups <- liftIO (newIORef [])
     dl <- createRegisteredDataLayout tm cleanups
     let encodedModuleTransform =

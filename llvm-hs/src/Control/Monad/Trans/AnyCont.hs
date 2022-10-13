@@ -9,17 +9,18 @@ import Control.Monad.Catch
 import Control.Monad.Cont as Cont
 import Control.Monad.Fail as Fail
 
+
 newtype AnyContT m a = AnyContT { unAnyContT :: forall r . ContT r m a }
 
 instance Functor (AnyContT m) where
-  fmap f p = AnyContT $ fmap f . unAnyContT $ p
+  fmap f p = AnyContT $ fmap f (unAnyContT p)
 
 instance Applicative (AnyContT m) where
   pure a = AnyContT $ pure a
   f <*> v = AnyContT $ unAnyContT f <*> unAnyContT v
 
 instance Monad m => Monad (AnyContT m) where
-  AnyContT f >>= k = AnyContT $ f >>= unAnyContT . k
+  AnyContT f >>= k = AnyContT $ f >>= \v -> (unAnyContT (k v))
   return a = AnyContT $ return a
 #if !(MIN_VERSION_base(4,13,0))
   fail s = AnyContT (ContT (\_ -> Cont.fail s))
@@ -38,7 +39,7 @@ instance MonadThrow m => MonadThrow (AnyContT m) where
   throwM = lift . throwM
 
 runAnyContT :: AnyContT m a -> (forall r . (a -> m r) -> m r)
-runAnyContT = runContT . unAnyContT
+runAnyContT a = runContT (unAnyContT a)
 
 anyContT :: (forall r . (a -> m r) -> m r) -> AnyContT m a
 anyContT f = AnyContT (ContT f)

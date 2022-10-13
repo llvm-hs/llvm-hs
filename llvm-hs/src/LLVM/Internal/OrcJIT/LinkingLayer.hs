@@ -30,7 +30,7 @@ disposeLinkingLayer l = do
 
 -- | Add an object file to the 'LinkingLayer'.
 addObjectFile :: LinkingLayer l => l -> FFI.ModuleKey -> ObjectFile -> IO ()
-addObjectFile linkingLayer k (ObjectFile obj) = flip runAnyContT return $ do
+addObjectFile linkingLayer k (ObjectFile obj) = (\cont -> runAnyContT cont return) $ do
   errMsg <- alloca
   liftIO $
     FFI.addObjectFile
@@ -68,7 +68,7 @@ withObjectLinkingLayer es resolver = bracket (newObjectLinkingLayer es resolver)
 findSymbol :: LinkingLayer l => l -> ShortByteString -> Bool -> IO (Either JITSymbolError JITSymbol)
 findSymbol linkingLayer symbol exportedSymbolsOnly =
   SBS.useAsCString symbol $ \symbol' ->
-    flip runAnyContT return $ do
+    (\cont -> runAnyContT cont return) $ do
       exportedSymbolsOnly' <- encodeM exportedSymbolsOnly
       symbol <- anyContToM $ bracket
         (FFI.findSymbol (getLinkingLayer linkingLayer) symbol' exportedSymbolsOnly') FFI.disposeSymbol
@@ -80,7 +80,7 @@ findSymbol linkingLayer symbol exportedSymbolsOnly =
 findSymbolIn :: LinkingLayer l => l -> FFI.ModuleKey -> ShortByteString -> Bool -> IO (Either JITSymbolError JITSymbol)
 findSymbolIn linkingLayer handle symbol exportedSymbolsOnly =
   SBS.useAsCString symbol $ \symbol' ->
-    flip runAnyContT return $ do
+    (\cont -> runAnyContT cont return) $ do
       exportedSymbolsOnly' <- encodeM exportedSymbolsOnly
       symbol <- anyContToM $ bracket
         (FFI.findSymbolIn (getLinkingLayer linkingLayer) handle symbol' exportedSymbolsOnly') FFI.disposeSymbol

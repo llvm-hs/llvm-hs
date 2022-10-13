@@ -32,7 +32,7 @@ class CompileLayer l where
 -- | Mangle a symbol according to the data layout stored in the
 -- 'CompileLayer'.
 mangleSymbol :: CompileLayer l => l -> ShortByteString -> IO MangledSymbol
-mangleSymbol compileLayer symbol = flip runAnyContT return $ do
+mangleSymbol compileLayer symbol = (\cont -> runAnyContT cont return) $ do
   mangledSymbol <- alloca
   symbol' <- encodeM symbol
   anyContToM $ bracket
@@ -44,7 +44,7 @@ mangleSymbol compileLayer symbol = flip runAnyContT return $ do
 -- @symbol@ in all modules added to @layer@. If @exportedSymbolsOnly@
 -- is 'True' only exported symbols are searched.
 findSymbol :: CompileLayer l => l -> MangledSymbol -> Bool -> IO (Either JITSymbolError JITSymbol)
-findSymbol compileLayer symbol exportedSymbolsOnly = flip runAnyContT return $ do
+findSymbol compileLayer symbol exportedSymbolsOnly = (\cont -> runAnyContT cont return) $ do
   symbol' <- encodeM symbol
   exportedSymbolsOnly' <- encodeM exportedSymbolsOnly
   symbol <- anyContToM $ bracket
@@ -55,7 +55,7 @@ findSymbol compileLayer symbol exportedSymbolsOnly = flip runAnyContT return $ d
 -- @symbol@ in the context of the module represented by @handle@. If
 -- @exportedSymbolsOnly@ is 'True' only exported symbols are searched.
 findSymbolIn :: CompileLayer l => l -> FFI.ModuleKey -> MangledSymbol -> Bool -> IO (Either JITSymbolError JITSymbol)
-findSymbolIn compileLayer handle symbol exportedSymbolsOnly = flip runAnyContT return $ do
+findSymbolIn compileLayer handle symbol exportedSymbolsOnly = (\cont -> runAnyContT cont return) $ do
   symbol' <- encodeM symbol
   exportedSymbolsOnly' <- encodeM exportedSymbolsOnly
   symbol <- anyContToM $ bracket
@@ -68,7 +68,7 @@ findSymbolIn compileLayer handle symbol exportedSymbolsOnly = flip runAnyContT r
 -- /Note:/ This function consumes the module passed to it and it must
 -- not be used after calling this method.
 addModule :: CompileLayer l => l -> FFI.ModuleKey -> Module -> IO ()
-addModule compileLayer k mod = flip runAnyContT return $ do
+addModule compileLayer k mod = (\cont -> runAnyContT cont return) $ do
   mod' <- liftIO $ readModule mod
   liftIO $ deleteModule mod
   errMsg <- alloca
