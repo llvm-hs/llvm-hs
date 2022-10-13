@@ -171,7 +171,7 @@ main = do
 #endif
               PreProcessor {
 #if MIN_VERSION_Cabal(3,8,0)
-                  ppOrdering = \_ _ ms -> pure ms,
+                  ppOrdering = unsorted,
 #endif
                   platformIndependent = platformIndependent (origHsc buildInfo),
                   runPreProcessor = \inFiles outFiles verbosity -> do
