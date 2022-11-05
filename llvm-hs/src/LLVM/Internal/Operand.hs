@@ -837,8 +837,19 @@ instance EncodeM EncodeAST A.DILocalVariable (Ptr FFI.DILocalVariable) where
 
 instance EncodeM EncodeAST A.DITemplateParameter (Ptr FFI.DITemplateParameter) where
   encodeM p = do
-    name' <- encodeM (A.name (p :: A.DITemplateParameter)) :: EncodeAST (Ptr FFI.MDString)
-    ty <- encodeM (A.type' (p :: A.DITemplateParameter))
+    -- As of GHC 9.4.1, selector names have to be entirely unambiguous (under the
+    -- usual name resolution rules)
+    -- However, this type is ambiguous for reason not yet understood.
+    -- One solution would be to use OverloadedRecordDot, using p.name and p.type',
+    -- but it requires GHC 9.2.
+    -- The solution here is to just extract the values
+    --
+    -- (Referred from: https://github.com/llvm-hs/llvm-hs/pull/406)
+    let (name, type') = case p of
+               A.DITemplateTypeParameter{name, type'} -> (name, type')
+               A.DITemplateValueParameter{name, type'} -> (name, type')
+    name' <- encodeM name :: EncodeAST (Ptr FFI.MDString)
+    ty <- encodeM type'
     Context c <- gets encodeStateContext
     case p of
       A.DITemplateTypeParameter {} ->
