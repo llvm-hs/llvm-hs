@@ -18,6 +18,9 @@ import System.Environment
 #if MIN_VERSION_Cabal(2,0,0)
 #define MIN_VERSION_Cabal_2_0_0
 #endif
+#if MIN_VERSION_Cabal(3,8,1)
+#define MIN_VERSION_Cabal_3_8_1
+#endif
 #endif
 
 -- define these selectively in C files (we are _not_ using HsFFI.h),
@@ -171,6 +174,9 @@ main = do
 #endif
               PreProcessor {
                   platformIndependent = platformIndependent (origHsc buildInfo),
+#ifdef MIN_VERSION_Cabal_3_8_1
+                  ppOrdering = \_ _ modules -> pure modules,
+#endif
                   runPreProcessor = \inFiles outFiles verbosity -> do
                       llvmConfig <- getLLVMConfig (configFlags localBuildInfo)
                       llvmCFlags <- do
