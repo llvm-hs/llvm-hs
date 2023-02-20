@@ -34,7 +34,7 @@ import Control.Monad.Fail (MonadFail)
 #endif
 
 import Data.Bifunctor
-import Data.ByteString.Short as BS
+import qualified Data.ByteString.Short as BS
 import Data.Char
 import Data.Data
 import Data.Foldable
@@ -113,7 +113,7 @@ emitDefn def = liftModuleState $ modify $ \s -> s { builderDefs = builderDefs s 
 -- | A parameter name suggestion
 data ParameterName
   = NoParameterName
-  | ParameterName ShortByteString
+  | ParameterName BS.ShortByteString
   deriving (Eq, Ord, Read, Show, Typeable, Data, Generic)
 
 -- | Using 'fromString` on non-ASCII strings will throw an error.
@@ -211,13 +211,13 @@ typedef nm ty = do
   pure (NamedTypeReference nm)
 
 -- | Convenience function for module construction
-buildModule :: ShortByteString -> ModuleBuilder a -> Module
+buildModule :: BS.ShortByteString -> ModuleBuilder a -> Module
 buildModule nm = mkModule . execModuleBuilder emptyModuleBuilder
   where
     mkModule ds = defaultModule { moduleName = nm, moduleDefinitions = ds }
 
 -- | Convenience function for module construction (transformer version)
-buildModuleT :: Monad m => ShortByteString -> ModuleBuilderT m a -> m Module
+buildModuleT :: Monad m => BS.ShortByteString -> ModuleBuilderT m a -> m Module
 buildModuleT nm = fmap mkModule . execModuleBuilderT emptyModuleBuilder
   where
     mkModule ds = defaultModule { moduleName = nm, moduleDefinitions = ds }
