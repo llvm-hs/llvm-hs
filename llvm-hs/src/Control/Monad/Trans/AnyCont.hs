@@ -24,7 +24,7 @@ instance Applicative (AnyContT m) where
 instance Monad m => Monad (AnyContT m) where
   AnyContT f >>= k = AnyContT $ f >>= \x -> unAnyContT (k x)
   {-# INLINE (>>=) #-}
-  return a = AnyContT $ return a
+  return = pure
   {-# INLINE return #-}
 #if !(MIN_VERSION_base(4,13,0))
   fail s = AnyContT (ContT (\_ -> Cont.fail s))
