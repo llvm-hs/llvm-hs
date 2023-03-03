@@ -1,0 +1,206 @@
+name: CI
+
+# Trigger the workflow on push or pull request
+on:
+  # workflow_dispatch:
+  pull_request:
+    # branches: [master]
+    types: [synchronize, opened, reopened]
+  push:
+    # branches: [main]
+    paths:
+      - '.github/workflows/ci.yml'
+      - 'cabal.project'
+      - 'stack.yaml'
+      - 'llvm-hs/llvm-hs.cabal'
+      - 'llvm-hs/src/**'
+      - 'llvm-hs/test/**'
+      - 'llvm-hs-pure/llvm-hs-pure.cabal'
+      - 'llvm-hs-pure/src/**'
+      - 'llvm-hs-pure/test/**'
+  schedule:
+    # additionally run once per week (At 00:00 on Sunday) to maintain cache
+    - cron: '0 0 * * 0'
+
+jobs:
+  cabal:
+    name: cabal | ${{ matrix.os }}-${{ matrix.arch }} ghc-${{ matrix.ghc }}
+    runs-on: ${{ matrix.os }}
+    strategy:
+      fail-fast: false
+      matrix:
+        os:
+          - 'ubuntu-latest'
+          - 'macOS-latest'
+          - 'windows-latest'
+        arch:
+          - 'x64'
+          - 'ARM64'
+        ghc:
+          - 'latest'
+          - '9.4'
+          - '9.2'
+          - '9.0'
+          - '8.10'
+        exclude:
+          - os: 'windows-latest'      # chocolately llvm package does not include 'llvm-config'
+          - arch: 'ARM64'             # no github hosted aarch64 (apple silicon) runners
+
+    steps:
+      - uses: actions/checkout@v3
+
+      - uses: actions/checkout@v3
+        with:
+          repository: actions/cache
+          path: .github/actions/cache-always
+          ref: v3
+
+      # Tweak `action.yml` of `actions/cache@v3` to remove the `post-if`
+      # condition, making it default to `post-if: always ()`.
+      - name: Set up actions/cache-always@v3
+        run: |
+          sed -i -e '/ post-if: /d' .github/actions/cache-always/action.yml
+
+      - name: Set up Haskell
+        uses: haskell/actions/setup@v2
+        id: setup-haskell
+        with:
+          ghc-version: ${{ matrix.ghc }}
+          cabal-version: latest
+
+      - name: Set up environment
+        run: |
+          if [ ${{ matrix.os }} == 'ubuntu-latest' ]; then
+            curl https://apt.llvm.org/llvm-snapshot.gpg.key | sudo apt-key add -
+            sudo add-apt-repository "deb http://apt.llvm.org/jammy/ llvm-toolchain-jammy-15 main"
+            sudo apt-get update
+            sudo apt-get -y install llvm-15-dev
+          elif [ ${{ matrix.os }} == 'macOS-latest' ]; then
+            brew install llvm@15
+            mkdir -p $HOME/.local/bin
+            ln -s $(brew --prefix llvm@15)/bin/llvm-config $HOME/.local/bin/llvm-config-15
+            ln -s $(brew --prefix llvm@15)/bin/llvm-config $HOME/.local/bin/
+            echo "$HOME/.local/bin" >> $GITHUB_PATH
+          elif [ ${{ matrix.os }} == 'windows-latest' ]; then
+            choco install -y llvm --version 15.0.7
+          fi
+          echo CABAL_FLAGS=--enable-tests --test-show-details=direct >> $GITHUB_ENV
+        shell: bash
+
+      - name: Configure
+        run: cabal configure $CABAL_FLAGS
+
+      - name: Freeze
+        run: cabal freeze
+
+      - name: actions/cache-always@v3
+        uses: ./.github/actions/cache-always
+        with:
+          path: |
+            ${{ steps.setup-haskell.outputs.cabal-store }}
+            dist-newstyle
+          key: ${{ runner.os }}-${{ matrix.arch }}-${{ matrix.ghc }}-cabal-${{ hashFiles('cabal.project.freeze') }}
+          restore-keys: |
+            ${{ runner.os }}-${{ matrix.arch }}-${{ matrix.ghc }}-cabal-${{ hashFiles('cabal.project.freeze') }}
+            ${{ runner.os }}-${{ matrix.arch }}-${{ matrix.ghc }}-cabal-
+
+      - name: Build dependencies
+        run: cabal build all --only-dependencies
+
+      - name: Build llvm-hs-pure
+        run: cabal build llvm-hs-pure
+
+      - name: Build llvm-hs
+        run: cabal build llvm-hs
+
+      - name: Test llvm-hs-pure
+        run: cabal test llvm-hs-pure
+
+      - name: Test llvm-hs
+        run: cabal test llvm-hs
+
+      - name: Haddock llvm-hs-pure
+        run: cabal haddock llvm-hs-pure
+
+      - name: Haddock llvm-hs
+        run: cabal haddock llvm-hs
+
+  stack:
+    name: stack | ${{ matrix.os }}-${{ matrix.arch }}
+    runs-on: ${{ matrix.os }}
+    strategy:
+      fail-fast: false
+      matrix:
+        os:
+          - 'ubuntu-latest'
+          - 'macOS-latest'
+          - 'windows-latest'
+        arch:
+          - 'x64'
+          - 'ARM64'
+        exclude:
+          - os: 'windows-latest'      # chocolately llvm package does not include 'llvm-config'
+          - arch: 'ARM64'             # no github hosted aarch64 (apple silicon) runners
+
+    steps:
+      - uses: actions/checkout@v3
+
+      - uses: actions/checkout@v3
+        with:
+          repository: actions/cache
+          path: .github/actions/cache-always
+          ref: v3
+
+      # Tweak `action.yml` of `actions/cache@v3` to remove the `post-if`
+      # condition, making it default to `post-if: always ()`.
+      - name: Set up actions/cache-always@v3
+        run: |
+          sed -i -e '/ post-if: /d' .github/actions/cache-always/action.yml
+
+      - name: Set up Haskell
+        uses: haskell/actions/setup@v2
+        id: setup-haskell
+        with:
+          enable-stack: true
+          stack-no-global: true
+
+      - name: Set up environment
+        run: |
+          if [ ${{ matrix.os }} == 'ubuntu-latest' ]; then
+            curl https://apt.llvm.org/llvm-snapshot.gpg.key | sudo apt-key add -
+            sudo add-apt-repository "deb http://apt.llvm.org/jammy/ llvm-toolchain-jammy-15 main"
+            sudo apt-get update
+            sudo apt-get -y install llvm-15-dev
+          elif [ ${{ matrix.os }} == 'macOS-latest' ]; then
+            brew install llvm@15
+            mkdir -p $HOME/.local/bin
+            ln -s $(brew --prefix llvm@15)/bin/llvm-config $HOME/.local/bin/llvm-config-15
+            ln -s $(brew --prefix llvm@15)/bin/llvm-config $HOME/.local/bin/
+            echo "$HOME/.local/bin" >> $GITHUB_PATH
+          elif [ ${{ matrix.os }} == 'windows-latest' ]; then
+            choco install -y llvm --version 15.0.7
+          fi
+          echo CABAL_FLAGS=--enable-tests --test-show-details=direct >> $GITHUB_ENV
+        shell: bash
+
+      - name: actions/cache-always@v3
+        uses: ./.github/actions/cache-always
+        with:
+          path: |
+            ${{ steps.setup-haskell.outputs.stack-root }}
+            .stack-work
+          key: ${{ runner.os }}-${{ matrix.arch }}-stack-${{ hashFiles('stack.yaml') }}
+          restore-keys: |
+            ${{ runner.os }}-${{ matrix.arch }}-stack-${{ hashFiles('stack.yaml') }}
+            ${{ runner.os }}-${{ matrix.arch }}-stack-
+
+      - name: Setup
+        run: stack setup
+
+      - name: Build dependencies
+        run: stack build --only-dependencies
+
+      - name: Build
+        run: stack build
+
+# vi: nospell
