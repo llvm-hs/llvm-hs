@@ -24,15 +24,15 @@ on:
 
 jobs:
   cabal:
-    name: cabal | ${{ matrix.os }}-${{ matrix.arch }} ghc-${{ matrix.ghc }}
-    runs-on: ${{ matrix.os }}
+    name: cabal | ${{ matrix.sys.os }}-${{ matrix.arch }} ghc-${{ matrix.ghc }}
+    runs-on: ${{ matrix.sys.os }}
     strategy:
       fail-fast: false
       matrix:
-        os:
-          - 'ubuntu-latest'
-          - 'macOS-latest'
-          - 'windows-latest'
+        sys:
+          - { os: 'ubuntu-latest',  shell: 'bash' }
+          - { os: 'macOS-latest',   shell: 'bash' }
+          - { os: 'windows-latest', shell: 'msys2 {0}' }
         arch:
           - 'x64'
           - 'ARM64'
@@ -43,8 +43,10 @@ jobs:
           - '9.0'
           - '8.10'
         exclude:
-          - os: 'windows-latest'      # chocolately llvm package does not include 'llvm-config'
-          - arch: 'ARM64'             # no github hosted aarch64 (apple silicon) runners
+          - arch: 'ARM64'
+    defaults:
+      run:
+        shell: ${{ matrix.sys.shell }}
 
     steps:
       - uses: actions/checkout@v3
@@ -57,12 +59,17 @@ jobs:
 
       # Tweak `action.yml` of `actions/cache@v3` to remove the `post-if`
       # condition, making it default to `post-if: always ()`.
-      - name: Set up actions/cache-always@v3
+      - name: Run actions/cache-always@v3
         run: |
           sed -i -e '/ post-if: /d' .github/actions/cache-always/action.yml
+        shell: bash
 
-      - name: Set up Haskell
-        uses: haskell/actions/setup@v2
+      - uses: msys2/setup-msys2@v2
+        with:
+          path-type: inherit
+        if: matrix.sys.os == 'windows-latest'
+
+      - uses: haskell/actions/setup@v2
         id: setup-haskell
         with:
           ghc-version: ${{ matrix.ghc }}
@@ -70,19 +77,21 @@ jobs:
 
       - name: Set up environment
         run: |
-          if [ ${{ matrix.os }} == 'ubuntu-latest' ]; then
+          if [ ${{ matrix.sys.os }} == 'ubuntu-latest' ]; then
             curl https://apt.llvm.org/llvm-snapshot.gpg.key | sudo apt-key add -
             sudo add-apt-repository "deb http://apt.llvm.org/jammy/ llvm-toolchain-jammy-15 main"
             sudo apt-get update
             sudo apt-get -y install llvm-15-dev
-          elif [ ${{ matrix.os }} == 'macOS-latest' ]; then
+          elif [ ${{ matrix.sys.os }} == 'macOS-latest' ]; then
             brew install llvm@15
             mkdir -p $HOME/.local/bin
             ln -s $(brew --prefix llvm@15)/bin/llvm-config $HOME/.local/bin/llvm-config-15
             ln -s $(brew --prefix llvm@15)/bin/llvm-config $HOME/.local/bin/
             echo "$HOME/.local/bin" >> $GITHUB_PATH
-          elif [ ${{ matrix.os }} == 'windows-latest' ]; then
-            choco install -y llvm --version 15.0.7
+          elif [ ${{ matrix.sys.os }} == 'windows-latest' ]; then
+            # https://stackoverflow.com/questions/33969803/how-to-obtain-older-versions-of-packages-using-msys2
+            curl -O https://repo.msys2.org/mingw/x86_64/mingw-w64-x86_64-llvm-15.0.7-3-any.pkg.tar.zst
+            powershell "msys2 -c 'pacman -U --noconfirm mingw-w64-x86_64-llvm-15.0.7-3-any.pkg.tar.zst'"
           fi
           echo CABAL_FLAGS=--enable-tests --test-show-details=direct >> $GITHUB_ENV
         shell: bash
@@ -126,21 +135,23 @@ jobs:
         run: cabal haddock llvm-hs
 
   stack:
-    name: stack | ${{ matrix.os }}-${{ matrix.arch }}
-    runs-on: ${{ matrix.os }}
+    name: stack | ${{ matrix.sys.os }}-${{ matrix.arch }}
+    runs-on: ${{ matrix.sys.os }}
     strategy:
       fail-fast: false
       matrix:
-        os:
-          - 'ubuntu-latest'
-          - 'macOS-latest'
-          - 'windows-latest'
+        sys:
+          - { os: 'ubuntu-latest',  shell: 'bash' }
+          - { os: 'macOS-latest',   shell: 'bash' }
+          - { os: 'windows-latest', shell: 'msys2 {0}' }
         arch:
           - 'x64'
           - 'ARM64'
         exclude:
-          - os: 'windows-latest'      # chocolately llvm package does not include 'llvm-config'
-          - arch: 'ARM64'             # no github hosted aarch64 (apple silicon) runners
+          - arch: 'ARM64'
+    defaults:
+      run:
+        shell: ${{ matrix.sys.shell }}
 
     steps:
       - uses: actions/checkout@v3
@@ -153,12 +164,17 @@ jobs:
 
       # Tweak `action.yml` of `actions/cache@v3` to remove the `post-if`
       # condition, making it default to `post-if: always ()`.
-      - name: Set up actions/cache-always@v3
+      - name: Run actions/cache-always@v3
         run: |
           sed -i -e '/ post-if: /d' .github/actions/cache-always/action.yml
+        shell: bash
 
-      - name: Set up Haskell
-        uses: haskell/actions/setup@v2
+      - uses: msys2/setup-msys2@v2
+        with:
+          path-type: inherit
+        if: matrix.sys.os == 'windows-latest'
+
+      - uses: haskell/actions/setup@v2
         id: setup-haskell
         with:
           enable-stack: true
@@ -166,19 +182,21 @@ jobs:
 
       - name: Set up environment
         run: |
-          if [ ${{ matrix.os }} == 'ubuntu-latest' ]; then
+          if [ ${{ matrix.sys.os }} == 'ubuntu-latest' ]; then
             curl https://apt.llvm.org/llvm-snapshot.gpg.key | sudo apt-key add -
             sudo add-apt-repository "deb http://apt.llvm.org/jammy/ llvm-toolchain-jammy-15 main"
             sudo apt-get update
             sudo apt-get -y install llvm-15-dev
-          elif [ ${{ matrix.os }} == 'macOS-latest' ]; then
+          elif [ ${{ matrix.sys.os }} == 'macOS-latest' ]; then
             brew install llvm@15
             mkdir -p $HOME/.local/bin
             ln -s $(brew --prefix llvm@15)/bin/llvm-config $HOME/.local/bin/llvm-config-15
             ln -s $(brew --prefix llvm@15)/bin/llvm-config $HOME/.local/bin/
             echo "$HOME/.local/bin" >> $GITHUB_PATH
-          elif [ ${{ matrix.os }} == 'windows-latest' ]; then
-            choco install -y llvm --version 15.0.7
+          elif [ ${{ matrix.sys.os }} == 'windows-latest' ]; then
+            # https://stackoverflow.com/questions/33969803/how-to-obtain-older-versions-of-packages-using-msys2
+            curl -O https://repo.msys2.org/mingw/x86_64/mingw-w64-x86_64-llvm-15.0.7-3-any.pkg.tar.zst
+            powershell "msys2 -c 'pacman -U --noconfirm mingw-w64-x86_64-llvm-15.0.7-3-any.pkg.tar.zst'"
           fi
           echo CABAL_FLAGS=--enable-tests --test-show-details=direct >> $GITHUB_ENV
         shell: bash
