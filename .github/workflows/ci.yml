@@ -47,6 +47,8 @@ jobs:
     defaults:
       run:
         shell: ${{ matrix.sys.shell }}
+    env:
+      CABAL_FLAGS: --enable-tests --test-show-details=direct
 
     steps:
       - uses: actions/checkout@v3
@@ -65,9 +67,10 @@ jobs:
         shell: bash
 
       - uses: msys2/setup-msys2@v2
+        if: matrix.sys.os == 'windows-latest'
         with:
           path-type: inherit
-        if: matrix.sys.os == 'windows-latest'
+          msystem: clang64
 
       - uses: haskell/actions/setup@v2
         id: setup-haskell
@@ -75,26 +78,30 @@ jobs:
           ghc-version: ${{ matrix.ghc }}
           cabal-version: latest
 
-      - name: Set up environment
+      - name: Set up environment (ubuntu)
+        if: matrix.sys.os == 'ubuntu-latest'
         run: |
-          if [ ${{ matrix.sys.os }} == 'ubuntu-latest' ]; then
-            curl https://apt.llvm.org/llvm-snapshot.gpg.key | sudo apt-key add -
-            sudo add-apt-repository "deb http://apt.llvm.org/jammy/ llvm-toolchain-jammy-15 main"
-            sudo apt-get update
-            sudo apt-get -y install llvm-15-dev
-          elif [ ${{ matrix.sys.os }} == 'macOS-latest' ]; then
-            brew install llvm@15
-            mkdir -p $HOME/.local/bin
-            ln -s $(brew --prefix llvm@15)/bin/llvm-config $HOME/.local/bin/llvm-config-15
-            ln -s $(brew --prefix llvm@15)/bin/llvm-config $HOME/.local/bin/
-            echo "$HOME/.local/bin" >> $GITHUB_PATH
-          elif [ ${{ matrix.sys.os }} == 'windows-latest' ]; then
-            # https://stackoverflow.com/questions/33969803/how-to-obtain-older-versions-of-packages-using-msys2
-            curl -O https://repo.msys2.org/mingw/x86_64/mingw-w64-x86_64-llvm-15.0.7-3-any.pkg.tar.zst
-            powershell "msys2 -c 'pacman -U --noconfirm mingw-w64-x86_64-llvm-15.0.7-3-any.pkg.tar.zst'"
-          fi
-          echo CABAL_FLAGS=--enable-tests --test-show-details=direct >> $GITHUB_ENV
-        shell: bash
+          curl https://apt.llvm.org/llvm-snapshot.gpg.key | sudo apt-key add -
+          sudo add-apt-repository "deb http://apt.llvm.org/jammy/ llvm-toolchain-jammy-15 main"
+          sudo apt-get update
+          sudo apt-get -y install llvm-15-dev
+
+      - name: Set up environment (macOS)
+        if: matrix.sys.os == 'macOS-latest'
+        run: |
+          brew install llvm@15
+          mkdir -p $HOME/.local/bin
+          ln -s $(brew --prefix llvm@15)/bin/llvm-config $HOME/.local/bin/llvm-config-15
+          ln -s $(brew --prefix llvm@15)/bin/llvm-config $HOME/.local/bin/
+          echo "$HOME/.local/bin" >> $GITHUB_PATH
+
+      - name: Set up environment (windows)
+        if: matrix.sys.os == 'windows-latest'
+        run: |
+          # https://stackoverflow.com/questions/33969803/how-to-obtain-older-versions-of-packages-using-msys2
+          # https://packages.msys2.org/package/mingw-w64-clang-x86_64-llvm
+          curl -LO https://mirror.msys2.org/mingw/clang64/mingw-w64-clang-x86_64-llvm-15.0.7-3-any.pkg.tar.zst
+          pacman -U --noconfirm mingw-w64-clang-x86_64-llvm-15.0.7-3-any.pkg.tar.zst
 
       - name: Configure
         run: cabal configure $CABAL_FLAGS
@@ -152,6 +159,8 @@ jobs:
     defaults:
       run:
         shell: ${{ matrix.sys.shell }}
+    env:
+      CABAL_FLAGS: --enable-tests --test-show-details=direct
 
     steps:
       - uses: actions/checkout@v3
@@ -170,36 +179,16 @@ jobs:
         shell: bash
 
       - uses: msys2/setup-msys2@v2
+        if: matrix.sys.os == 'windows-latest'
         with:
           path-type: inherit
-        if: matrix.sys.os == 'windows-latest'
+          msystem: clang64
 
       - uses: haskell/actions/setup@v2
         id: setup-haskell
         with:
           enable-stack: true
           stack-no-global: true
-
-      - name: Set up environment
-        run: |
-          if [ ${{ matrix.sys.os }} == 'ubuntu-latest' ]; then
-            curl https://apt.llvm.org/llvm-snapshot.gpg.key | sudo apt-key add -
-            sudo add-apt-repository "deb http://apt.llvm.org/jammy/ llvm-toolchain-jammy-15 main"
-            sudo apt-get update
-            sudo apt-get -y install llvm-15-dev
-          elif [ ${{ matrix.sys.os }} == 'macOS-latest' ]; then
-            brew install llvm@15
-            mkdir -p $HOME/.local/bin
-            ln -s $(brew --prefix llvm@15)/bin/llvm-config $HOME/.local/bin/llvm-config-15
-            ln -s $(brew --prefix llvm@15)/bin/llvm-config $HOME/.local/bin/
-            echo "$HOME/.local/bin" >> $GITHUB_PATH
-          elif [ ${{ matrix.sys.os }} == 'windows-latest' ]; then
-            # https://stackoverflow.com/questions/33969803/how-to-obtain-older-versions-of-packages-using-msys2
-            curl -O https://repo.msys2.org/mingw/x86_64/mingw-w64-x86_64-llvm-15.0.7-3-any.pkg.tar.zst
-            powershell "msys2 -c 'pacman -U --noconfirm mingw-w64-x86_64-llvm-15.0.7-3-any.pkg.tar.zst'"
-          fi
-          echo CABAL_FLAGS=--enable-tests --test-show-details=direct >> $GITHUB_ENV
-        shell: bash
 
       - name: actions/cache-always@v3
         uses: ./.github/actions/cache-always
@@ -211,6 +200,31 @@ jobs:
           restore-keys: |
             ${{ runner.os }}-${{ matrix.arch }}-stack-${{ hashFiles('stack.yaml') }}
             ${{ runner.os }}-${{ matrix.arch }}-stack-
+
+      - name: Set up environment (ubuntu)
+        if: matrix.sys.os == 'ubuntu-latest'
+        run: |
+          curl https://apt.llvm.org/llvm-snapshot.gpg.key | sudo apt-key add -
+          sudo add-apt-repository "deb http://apt.llvm.org/jammy/ llvm-toolchain-jammy-15 main"
+          sudo apt-get update
+          sudo apt-get -y install llvm-15-dev
+
+      - name: Set up environment (macOS)
+        if: matrix.sys.os == 'macOS-latest'
+        run: |
+          brew install llvm@15
+          mkdir -p $HOME/.local/bin
+          ln -s $(brew --prefix llvm@15)/bin/llvm-config $HOME/.local/bin/llvm-config-15
+          ln -s $(brew --prefix llvm@15)/bin/llvm-config $HOME/.local/bin/
+          echo "$HOME/.local/bin" >> $GITHUB_PATH
+
+      - name: Set up environment (windows)
+        if: matrix.sys.os == 'windows-latest'
+        run: |
+          # https://stackoverflow.com/questions/33969803/how-to-obtain-older-versions-of-packages-using-msys2
+          # https://packages.msys2.org/package/mingw-w64-clang-x86_64-llvm
+          curl -LO https://mirror.msys2.org/mingw/clang64/mingw-w64-clang-x86_64-llvm-15.0.7-3-any.pkg.tar.zst
+          pacman -U --noconfirm mingw-w64-clang-x86_64-llvm-15.0.7-3-any.pkg.tar.zst
 
       - name: Setup
         run: stack setup
