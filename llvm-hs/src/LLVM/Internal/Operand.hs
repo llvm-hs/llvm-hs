@@ -138,6 +138,9 @@ instance Applicative m => DecodeM m [A.DIFlag] FFI.DIFlags where
         , A.AllCallsDescribed
         ]
 
+instance DecodeM DecodeAST A.Metadata (Ptr FFI.MetadataAsVal) where
+  decodeM = decodeM <=< liftIO . FFI.getMetadataOperand
+
 instance DecodeM DecodeAST A.Operand (Ptr FFI.Value) where
   decodeM v = do
     c <- liftIO $ FFI.isAConstant v
@@ -1041,9 +1044,6 @@ instance DecodeM DecodeAST [Maybe A.Metadata] (Ptr FFI.MDNode) where
 
 instance DecodeM DecodeAST A.Operand (Ptr FFI.MDValue) where
   decodeM = decodeM <=< liftIO . FFI.getMDValue
-
-instance DecodeM DecodeAST A.Metadata (Ptr FFI.MetadataAsVal) where
-  decodeM = decodeM <=< liftIO . FFI.getMetadataOperand
 
 genCodingInstance [t|A.DIMacroInfo|] ''FFI.Macinfo [ (FFI.DW_Macinfo_Define, A.Define), (FFI.DW_Macinfo_Undef, A.Undef) ]
 
