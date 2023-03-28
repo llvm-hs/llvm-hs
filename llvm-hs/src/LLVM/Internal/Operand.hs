@@ -45,6 +45,73 @@ import qualified LLVM.AST.Operand as A
 
 import LLVM.Internal.FFI.LLVMCTypes (mdSubclassIdP)
 
+genCodingInstance [t|A.DebugEmissionKind|] ''FFI.DebugEmissionKind
+  [ (FFI.NoDebug, A.NoDebug)
+  , (FFI.FullDebug, A.FullDebug)
+  , (FFI.LineTablesOnly, A.LineTablesOnly)
+  ]
+
+genCodingInstance [t|A.DebugNameTableKind|] ''FFI.DebugNameTableKind
+  [ (FFI.NameTableKindDefault, A.NameTableKindDefault)
+  , (FFI.NameTableKindGNU, A.NameTableKindGNU)
+  , (FFI.NameTableKindNone, A.NameTableKindNone)
+  ]
+
+genCodingInstance [t|A.Encoding|] ''FFI.Encoding
+  [ (FFI.DwAtE_address, A.AddressEncoding)
+  , (FFI.DwAtE_boolean, A.BooleanEncoding)
+  , (FFI.DwAtE_float, A.FloatEncoding)
+  , (FFI.DwAtE_signed, A.SignedEncoding)
+  , (FFI.DwAtE_signed_char, A.SignedCharEncoding)
+  , (FFI.DwAtE_unsigned, A.UnsignedEncoding)
+  , (FFI.DwAtE_unsigned_char, A.UnsignedCharEncoding)
+  , (FFI.DwAtE_UTF, A.UTFEncoding)
+  ]
+
+genCodingInstance [t|A.ChecksumKind|] ''FFI.ChecksumKind
+  [ (FFI.ChecksumKind 1, A.MD5)
+  , (FFI.ChecksumKind 2, A.SHA1)
+  ]
+
+genCodingInstance [t|A.BasicTypeTag|] ''FFI.DwTag
+  [ (FFI.DwTag_base_type, A.BaseType)
+  , (FFI.DwTag_unspecified_type, A.UnspecifiedType)
+  ]
+
+genCodingInstance [t|A.DerivedTypeTag|] ''FFI.DwTag
+  [ (FFI.DwTag_typedef, A.Typedef)
+  , (FFI.DwTag_pointer_type, A.PointerType)
+  , (FFI.DwTag_ptr_to_member_type, A.PtrToMemberType)
+  , (FFI.DwTag_reference_type, A.ReferenceType)
+  , (FFI.DwTag_rvalue_reference_type, A.RValueReferenceType)
+  , (FFI.DwTag_const_type, A.ConstType)
+  , (FFI.DwTag_volatile_type, A.VolatileType)
+  , (FFI.DwTag_restrict_type, A.RestrictType)
+  , (FFI.DwTag_atomic_type, A.AtomicType)
+  , (FFI.DwTag_member, A.Member)
+  , (FFI.DwTag_inheritance, A.Inheritance)
+  , (FFI.DwTag_friend, A.Friend)
+  ]
+
+genCodingInstance [t|A.TemplateValueParameterTag|] ''FFI.DwTag
+  [ (FFI.DwTag_template_value_parameter, A.TemplateValueParameter)
+  , (FFI.DwTag_GNU_template_template_param, A.GNUTemplateTemplateParam)
+  , (FFI.DwTag_GNU_template_parameter_pack, A.GNUTemplateParameterPack)
+  ]
+
+genCodingInstance [t|A.Virtuality|] ''FFI.DwVirtuality
+  [ (FFI.DwVirtuality_none, A.NoVirtuality)
+  , (FFI.DwVirtuality_virtual, A.Virtual)
+  , (FFI.DwVirtuality_pure_virtual, A.PureVirtual)
+  ]
+
+genCodingInstance [t|A.DIMacroInfo|] ''FFI.Macinfo [ (FFI.DW_Macinfo_Define, A.Define), (FFI.DW_Macinfo_Undef, A.Undef) ]
+
+genCodingInstance [t|A.ImportedEntityTag|] ''FFI.DwTag
+  [ (FFI.DwTag_imported_module, A.ImportedModule)
+  , (FFI.DwTag_imported_declaration, A.ImportedDeclaration)
+  ]
+
 instance EncodeM EncodeAST ShortByteString (Ptr FFI.MDString) where
   encodeM s = do
     s' <- encodeM s
@@ -327,18 +394,6 @@ instance EncodeM EncodeAST A.DIModule (Ptr FFI.DIModule) where
     Context c <- gets encodeStateContext
     liftIO (FFI.getDIModule c scope name configurationMacros includePath isysRoot)
 
-genCodingInstance [t|A.DebugEmissionKind|] ''FFI.DebugEmissionKind
-  [ (FFI.NoDebug, A.NoDebug)
-  , (FFI.FullDebug, A.FullDebug)
-  , (FFI.LineTablesOnly, A.LineTablesOnly)
-  ]
-
-genCodingInstance [t|A.DebugNameTableKind|] ''FFI.DebugNameTableKind
-  [ (FFI.NameTableKindDefault, A.NameTableKindDefault)
-  , (FFI.NameTableKindGNU, A.NameTableKindGNU)
-  , (FFI.NameTableKindNone, A.NameTableKindNone)
-  ]
-
 instance DecodeM DecodeAST A.DICompileUnit (Ptr FFI.DICompileUnit) where
   decodeM p = do
     language <- decodeM =<< liftIO (FFI.getDICompileUnitLanguage p)
@@ -453,26 +508,6 @@ instance DecodeM DecodeAST (Maybe A.Encoding) FFI.Encoding where
   decodeM (FFI.Encoding 0) = pure Nothing
   decodeM e = Just <$> decodeM e
 
-genCodingInstance [t|A.Encoding|] ''FFI.Encoding
-  [ (FFI.DwAtE_address, A.AddressEncoding)
-  , (FFI.DwAtE_boolean, A.BooleanEncoding)
-  , (FFI.DwAtE_float, A.FloatEncoding)
-  , (FFI.DwAtE_signed, A.SignedEncoding)
-  , (FFI.DwAtE_signed_char, A.SignedCharEncoding)
-  , (FFI.DwAtE_unsigned, A.UnsignedEncoding)
-  , (FFI.DwAtE_unsigned_char, A.UnsignedCharEncoding)
-  , (FFI.DwAtE_UTF, A.UTFEncoding)
-  ]
-
-genCodingInstance [t|A.ChecksumKind|] ''FFI.ChecksumKind
-  [ (FFI.ChecksumKind 1, A.MD5)
-  , (FFI.ChecksumKind 2, A.SHA1)
-  ]
-
-genCodingInstance [t|A.BasicTypeTag|] ''FFI.DwTag
-  [ (FFI.DwTag_base_type, A.BaseType)
-  , (FFI.DwTag_unspecified_type, A.UnspecifiedType)
-  ]
 
 instance EncodeM EncodeAST A.DIType (Ptr FFI.DIType) where
   encodeM (A.DIBasicType t) = FFI.upCast <$> (encodeM t :: EncodeAST (Ptr FFI.DIBasicType))
@@ -667,21 +702,6 @@ instance DecodeM DecodeAST A.DIDerivedType (Ptr FFI.DIDerivedType) where
       , A.flags = flags
       }
 
-genCodingInstance [t|A.DerivedTypeTag|] ''FFI.DwTag
-  [ (FFI.DwTag_typedef, A.Typedef)
-  , (FFI.DwTag_pointer_type, A.PointerType)
-  , (FFI.DwTag_ptr_to_member_type, A.PtrToMemberType)
-  , (FFI.DwTag_reference_type, A.ReferenceType)
-  , (FFI.DwTag_rvalue_reference_type, A.RValueReferenceType)
-  , (FFI.DwTag_const_type, A.ConstType)
-  , (FFI.DwTag_volatile_type, A.VolatileType)
-  , (FFI.DwTag_restrict_type, A.RestrictType)
-  , (FFI.DwTag_atomic_type, A.AtomicType)
-  , (FFI.DwTag_member, A.Member)
-  , (FFI.DwTag_inheritance, A.Inheritance)
-  , (FFI.DwTag_friend, A.Friend)
-  ]
-
 instance EncodeM EncodeAST A.DIVariable (Ptr FFI.DIVariable) where
   encodeM (A.DIGlobalVariable v) = do
     ptr <- encodeM v
@@ -772,12 +792,6 @@ instance EncodeM EncodeAST A.DILocalVariable (Ptr FFI.DILocalVariable) where
     Context c <- gets encodeStateContext
     FFI.upCast <$> liftIO (FFI.getDILocalVariable c scope name file line type' arg flags alignInBits)
 
-genCodingInstance [t|A.TemplateValueParameterTag|] ''FFI.DwTag
-  [ (FFI.DwTag_template_value_parameter, A.TemplateValueParameter)
-  , (FFI.DwTag_GNU_template_template_param, A.GNUTemplateTemplateParam)
-  , (FFI.DwTag_GNU_template_parameter_pack, A.GNUTemplateParameterPack)
-  ]
-
 instance EncodeM EncodeAST A.DITemplateParameter (Ptr FFI.DITemplateParameter) where
   encodeM p = do
     name' <- encodeM (A.name (p :: A.DITemplateParameter)) :: EncodeAST (Ptr FFI.MDString)
@@ -805,11 +819,6 @@ instance DecodeM DecodeAST A.DITemplateParameter (Ptr FFI.DITemplateParameter) w
         pure (A.DITemplateValueParameter name ty value tag)
       _ -> throwM (DecodeException ("Unknown subclass id for DITemplateParameter: " <> show sId))
 
-genCodingInstance [t|A.Virtuality|] ''FFI.DwVirtuality
-  [ (FFI.DwVirtuality_none, A.NoVirtuality)
-  , (FFI.DwVirtuality_virtual, A.Virtual)
-  , (FFI.DwVirtuality_pure_virtual, A.PureVirtual)
-  ]
 
 instance DecodeM DecodeAST A.DISubprogram (Ptr FFI.DISubprogram) where
   decodeM p = do
@@ -1045,8 +1054,6 @@ instance DecodeM DecodeAST [Maybe A.Metadata] (Ptr FFI.MDNode) where
 instance DecodeM DecodeAST A.Operand (Ptr FFI.MDValue) where
   decodeM = decodeM <=< liftIO . FFI.getMDValue
 
-genCodingInstance [t|A.DIMacroInfo|] ''FFI.Macinfo [ (FFI.DW_Macinfo_Define, A.Define), (FFI.DW_Macinfo_Undef, A.Undef) ]
-
 decodeMDNode :: Ptr FFI.MDNode -> DecodeAST (Either String A.MDNode)
 decodeMDNode p = scopeAnyCont $ do
   sId <- liftIO $ FFI.getMetadataClassId p
@@ -1164,10 +1171,6 @@ instance DecodeM DecodeAST A.DIGlobalVariableExpression (Ptr FFI.DIGlobalVariabl
     expr <- decodeM =<< liftIO (FFI.getDIGlobalVariableExpressionExpression p)
     pure (A.GlobalVariableExpression var expr)
 
-genCodingInstance [t|A.ImportedEntityTag|] ''FFI.DwTag
-  [ (FFI.DwTag_imported_module, A.ImportedModule)
-  , (FFI.DwTag_imported_declaration, A.ImportedDeclaration)
-  ]
 
 instance EncodeM EncodeAST A.DIImportedEntity (Ptr FFI.DIImportedEntity) where
   encodeM A.ImportedEntity {..} = do
