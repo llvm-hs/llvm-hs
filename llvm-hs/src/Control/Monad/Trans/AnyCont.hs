@@ -1,11 +1,13 @@
-{-# LANGUAGE
-  CPP, RankNTypes
-  #-}
+{-# LANGUAGE CPP        #-}
+{-# LANGUAGE RankNTypes #-}
+
 module Control.Monad.Trans.AnyCont where
 
 import LLVM.Prelude
 
 import Control.Monad.Catch
+import Control.Monad.IO.Class
+import Control.Monad.Trans.Class
 import Control.Monad.Cont as Cont
 import Control.Monad.Fail as Fail
 
@@ -66,3 +68,4 @@ withAnyContT f m = anyContT $ runAnyContT m . f
 mapAnyContT :: (forall r . m r -> m r) -> AnyContT m a -> AnyContT m a
 mapAnyContT f m = anyContT $ f . runAnyContT m
 {-# INLINE mapAnyContT #-}
+

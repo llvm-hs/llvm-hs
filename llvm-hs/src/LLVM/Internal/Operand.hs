@@ -16,9 +16,10 @@ import LLVM.Prelude
 
 import LLVM.Exception
 
-import Control.Monad.Catch
-import Control.Monad.State
 import Control.Monad.AnyCont
+import Control.Monad.Catch
+import Control.Monad.Fix
+import Control.Monad.State
 import Data.Bits
 import Data.Functor.Identity
 import qualified Data.Map as Map
