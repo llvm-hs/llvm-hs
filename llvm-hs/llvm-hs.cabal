@@ -265,7 +265,7 @@ test-suite test
   type: exitcode-stdio-1.0
   build-depends:
     base >= 4.9 && < 5,
-    bytestring >= 0.10 && < 0.11,
+    bytestring >= 0.10 && < 0.12,
     tasty >= 0.11,
     tasty-hunit >= 0.9,
     tasty-quickcheck >= 0.8,
