@@ -66,6 +66,8 @@ data Definition
     deriving (Eq, Read, Show, Typeable, Data, Generic)
 
 -- | <http://llvm.org/docs/LangRef.html#module-structure>
+-- You can for example put this in llvm-hs withModuleFromAst
+-- <https://hackage.haskell.org/package/llvm-hs/docs/LLVM-Module.html#v:withModuleFromAST>
 data Module =
   Module {
     moduleName :: ShortByteString,
