@@ -14,7 +14,7 @@ import Control.Monad.Trans.Except
 import Data.Attoparsec.ByteString
 import Data.Attoparsec.ByteString.Char8
 import Data.ByteString.Char8 as ByteString hiding (map, foldr)
-import Data.ByteString.Short hiding (pack)
+import Data.ByteString.Short hiding (pack, foldr)
 
 import Data.Map (Map, (!))
 import qualified Data.Map as Map

@@ -1,5 +1,6 @@
 {-# LANGUAGE
   DuplicateRecordFields,
+  DisambiguateRecordFields,
   MultiParamTypeClasses,
   NamedFieldPuns,
   OverloadedStrings,
@@ -835,10 +836,18 @@ instance EncodeM EncodeAST A.DILocalVariable (Ptr FFI.DILocalVariable) where
     Context c <- gets encodeStateContext
     FFI.upCast <$> liftIO (FFI.getDILocalVariable c scope name file line type' arg flags alignInBits)
 
+getDITemplateParameterName :: A.DITemplateParameter -> ShortByteString
+getDITemplateParameterName A.DITemplateTypeParameter {..} = name
+getDITemplateParameterName A.DITemplateValueParameter{..} = name
+
+getDITemplateParameterType :: A.DITemplateParameter -> Maybe (A.MDRef A.DIType)
+getDITemplateParameterType A.DITemplateTypeParameter {..} = type'
+getDITemplateParameterType A.DITemplateValueParameter{..} = type'
+
 instance EncodeM EncodeAST A.DITemplateParameter (Ptr FFI.DITemplateParameter) where
   encodeM p = do
-    name' <- encodeM (A.name (p :: A.DITemplateParameter)) :: EncodeAST (Ptr FFI.MDString)
-    ty <- encodeM (A.type' (p :: A.DITemplateParameter))
+    name' <- encodeM (getDITemplateParameterName p) :: EncodeAST (Ptr FFI.MDString)
+    ty <- encodeM (getDITemplateParameterType p)
     Context c <- gets encodeStateContext
     case p of
       A.DITemplateTypeParameter {} ->

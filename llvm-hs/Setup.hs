@@ -169,7 +169,7 @@ main = do
 #else
           newHsc buildInfo localBuildInfo =
 #endif
-              PreProcessor {
+              ppUnlit {
                   platformIndependent = platformIndependent (origHsc buildInfo),
                   runPreProcessor = \inFiles outFiles verbosity -> do
                       llvmConfig <- getLLVMConfig (configFlags localBuildInfo)
