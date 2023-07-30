@@ -160,6 +160,9 @@ addDynamicLibrarySearchGenerator :: IRLayer l => l -> JITDylib -> FilePath -> IO
 addDynamicLibrarySearchGenerator compileLayer (JITDylib dylib) s = withCString s $ \cStr ->
   FFI.addDynamicLibrarySearchGenerator dylib (getDataLayout compileLayer) cStr
 
+addLinkAgainstOrder :: JITDylib -> JITDylib -> IO ()
+addLinkAgainstOrder (JITDylib dylib) (JITDylib against) = FFI.addLinkAgainstOrder dylib against
+
 defineAbsoluteSymbols :: JITDylib -> [(MangledSymbol, JITSymbol)] -> IO ()
 defineAbsoluteSymbols (JITDylib dylib) symList =
   runAnyContT' return $ do

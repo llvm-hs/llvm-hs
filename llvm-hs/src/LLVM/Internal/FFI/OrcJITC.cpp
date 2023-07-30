@@ -157,6 +157,10 @@ void LLVM_Hs_JITDylib_addDynamicLibrarySearchGenerator_load(JITDylib* dylib, LLV
           name, dataLayoutCpp.getGlobalPrefix())));
 }
 
+void LLVM_Hs_JITDylib_addToLinkOrder(JITDylib* dylib, JITDylib* against) {
+    dylib->addToLinkOrder(*against);
+}
+
 void LLVM_Hs_JITDylib_defineAbsoluteSymbols(
     JITDylib* dylib, unsigned num_symbols, const SymbolStringPtr** names, const JITEvaluatedSymbol** symbols) {
   orc::SymbolMap map;
