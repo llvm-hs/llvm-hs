@@ -7,6 +7,11 @@ module LLVM.OrcJIT (
     -- * JITDylib
     JITDylib(..),
     createJITDylib,
+    addLinkAgainstOrder,
+    removeLinkAgainstOrder,
+    replaceLinkAgainstOrder,
+    addLinkAgainstOrders,
+    removeLinkAgainstOrders,
     -- ** Symbol search generators
     addDynamicLibrarySearchGeneratorForCurrentProcess,
     addDynamicLibrarySearchGenerator,

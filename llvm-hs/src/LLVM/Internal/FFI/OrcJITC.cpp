@@ -157,8 +157,16 @@ void LLVM_Hs_JITDylib_addDynamicLibrarySearchGenerator_load(JITDylib* dylib, LLV
           name, dataLayoutCpp.getGlobalPrefix())));
 }
 
-void LLVM_Hs_JITDylib_addToLinkOrder(JITDylib* dylib, JITDylib* against) {
+void LLVM_Hs_JITDylib_addToLinkOrderSimpl(JITDylib* dylib, JITDylib* against) {
     dylib->addToLinkOrder(*against);
+}
+
+void LLVM_Hs_JITDylib_removeFromLinkOrder(JITDylib* dylib, JITDylib* against) {
+    dylib->removeFromLinkOrder(*against);
+}
+
+void LLVM_Hs_JITDylib_replaceLinkOrder(JITDylib* dylib, JITDylib* oldlib, JITDylib* newlib) {
+    dylib->replaceInLinkOrder(*oldlib, *newlib);
 }
 
 void LLVM_Hs_JITDylib_defineAbsoluteSymbols(

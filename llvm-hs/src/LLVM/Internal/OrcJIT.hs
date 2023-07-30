@@ -5,6 +5,7 @@ module LLVM.Internal.OrcJIT where
 import LLVM.Prelude
 
 import Control.Exception
+import Control.Monad (forM_)
 import Control.Monad.AnyCont
 import Control.Monad.IO.Class
 import Data.Bits
@@ -146,6 +147,32 @@ createJITDylib :: ExecutionSession -> ShortByteString -> IO JITDylib
 createJITDylib (ExecutionSession es _) name =
   SBS.useAsCString name $ fmap JITDylib . FFI.createJITDylib es
 
+-- | Link 'JITDylib' "a" against another 'JITDylib' "b"
+--
+-- When searching symbol for "a", it will lookup symbol in "b".
+addLinkAgainstOrder :: JITDylib -> JITDylib -> IO ()
+addLinkAgainstOrder (JITDylib dylib) (JITDylib against) = FFI.addLinkAgainstOrder dylib against
+
+-- | Remove 'JITDylib' dependency "b" from 'JITDylib' "a"
+--
+-- When invoked @removeLinkAgainstOrder a b@, "a" does not lookup missing symbols in "b" any more.
+removeLinkAgainstOrder :: JITDylib -> JITDylib -> IO ()
+removeLinkAgainstOrder (JITDylib dylib) (JITDylib against) = FFI.removeLinkAgainstOrder dylib against
+
+-- | Replace 'JITDylib' dependency "b" with 'JITDylib' "c" in "a"
+--
+-- When invoked @replaceLinkAgainstOrder a b c@, "b" is replaced by "c" is "b" is
+-- presented in linking order of "a".
+replaceLinkAgainstOrder :: JITDylib -> JITDylib -> JITDylib -> IO ()
+replaceLinkAgainstOrder (JITDylib dylib) (JITDylib old) (JITDylib new) =
+  FFI.replaceLinkAgainstOrder dylib old new
+
+addLinkAgainstOrders :: JITDylib -> [JITDylib] -> IO ()
+addLinkAgainstOrders dylib libs = forM_ libs $ addLinkAgainstOrder dylib
+
+removeLinkAgainstOrders :: JITDylib -> [JITDylib] -> IO ()
+removeLinkAgainstOrders dylib libs = forM_ libs $ removeLinkAgainstOrder dylib
+
 -- NB: JITDylib unloading is WIP (at least according to some old-looking docs)
 
 -- | Adds a 'JITDylib' definition generator that looks up missing symbols in
@@ -159,9 +186,6 @@ addDynamicLibrarySearchGeneratorForCurrentProcess compileLayer (JITDylib dylib) 
 addDynamicLibrarySearchGenerator :: IRLayer l => l -> JITDylib -> FilePath -> IO ()
 addDynamicLibrarySearchGenerator compileLayer (JITDylib dylib) s = withCString s $ \cStr ->
   FFI.addDynamicLibrarySearchGenerator dylib (getDataLayout compileLayer) cStr
-
-addLinkAgainstOrder :: JITDylib -> JITDylib -> IO ()
-addLinkAgainstOrder (JITDylib dylib) (JITDylib against) = FFI.addLinkAgainstOrder dylib against
 
 defineAbsoluteSymbols :: JITDylib -> [(MangledSymbol, JITSymbol)] -> IO ()
 defineAbsoluteSymbols (JITDylib dylib) symList =
