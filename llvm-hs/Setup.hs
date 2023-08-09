@@ -138,12 +138,8 @@ main = do
       libDirs <- liftM lines $ llvmConfig ["--libdir"]
       [llvmVersion] <- liftM lines $ llvmConfig ["--version"]
       let getLibs = liftM (map (fromJust . stripPrefix "-l") . words) . llvmConfig
-          flags    = configConfigurationsFlags confFlags
-          linkFlag = case lookupFlagAssignment (mkFlagName "shared-llvm") flags of
-                       Nothing     -> "--link-shared"
-                       Just shared -> if shared then "--link-shared" else "--link-static"
-      libs       <- getLibs ["--libs", linkFlag]
-      systemLibs <- getLibs ["--system-libs", linkFlag]
+      libs_static   <- getLibs ["--libs", "--system-libs", "--link-static"]
+      libs_shared   <- getLibs ["--libs", "--system-libs", "--link-shared"]
 
       let genericPackageDescription' = genericPackageDescription {
             condLibrary = do
@@ -153,7 +149,8 @@ main = do
                     libBuildInfo =
                       mempty {
                         ccOptions = llvmCxxFlags,
-                        extraLibs = libs ++ stdLib : systemLibs
+                        extraLibs = stdLib : libs_static,
+                        extraGHCiLibs = libs_shared
                       }
                   }
               }

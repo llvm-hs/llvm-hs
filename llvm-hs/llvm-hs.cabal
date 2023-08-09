@@ -49,10 +49,6 @@ source-repository head
   location: git://github.com/llvm-hs/llvm-hs.git
   branch: llvm-head-unstable
 
-flag shared-llvm
-  description: link against llvm shared rather than static library
-  default: True
-
 flag llvm-with-rtti
   description: assume llvm was built with LLVM_ENABLE_RTTI=ON (default is OFF)
   default: False
