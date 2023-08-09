@@ -85,7 +85,7 @@ jobs:
           curl https://apt.llvm.org/llvm-snapshot.gpg.key | sudo apt-key add -
           sudo add-apt-repository "deb http://apt.llvm.org/jammy/ llvm-toolchain-jammy-15 main"
           sudo apt-get update
-          sudo apt-get -y install llvm-15-dev llvm-15-linker-tools
+          sudo apt-get -y install llvm-15-dev libpolly-15-dev
 
       - name: Set up environment (macOS)
         if: matrix.sys.os == 'macOS-latest'
@@ -208,7 +208,7 @@ jobs:
           curl https://apt.llvm.org/llvm-snapshot.gpg.key | sudo apt-key add -
           sudo add-apt-repository "deb http://apt.llvm.org/jammy/ llvm-toolchain-jammy-15 main"
           sudo apt-get update
-          sudo apt-get -y install llvm-15-dev llvm-15-linker-tools
+          sudo apt-get -y install llvm-15-dev libpolly-15-dev
 
       - name: Set up environment (macOS)
         if: matrix.sys.os == 'macOS-latest'
