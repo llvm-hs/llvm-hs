@@ -55,7 +55,13 @@ extern "C" {
 // ExecutionSession
 
 ExecutionSession *LLVM_Hs_createExecutionSession() {
-    return new ExecutionSession(std::move(*SelfExecutorProcessControl::Create()));
+    if (auto e = SelfExecutorProcessControl::Create()) {
+      return new ExecutionSession(std::move(*e));
+    } else {
+      llvm::errs() << e.takeError() << "\n";
+      // FIXME: Better error handling
+      exit(1);
+    }
 }
 
 void LLVM_Hs_disposeExecutionSession(ExecutionSession *es) {
