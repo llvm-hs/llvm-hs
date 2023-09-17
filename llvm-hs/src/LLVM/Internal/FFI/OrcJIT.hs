@@ -76,6 +76,18 @@ foreign import ccall safe "LLVM_Hs_JITDylib_addDynamicLibrarySearchGenerator_loa
   addDynamicLibrarySearchGenerator ::
     Ptr JITDylib -> Ptr DataLayout -> CString -> IO ()
 
+foreign import ccall safe "LLVM_Hs_JITDylib_addToLinkOrderSimpl"
+  addLinkAgainstOrder ::
+    Ptr JITDylib -> Ptr JITDylib -> IO ()
+
+foreign import ccall safe "LLVM_Hs_JITDylib_removeFromLinkOrder"
+  removeLinkAgainstOrder ::
+    Ptr JITDylib -> Ptr JITDylib -> IO ()
+
+foreign import ccall safe "LLVM_Hs_JITDylib_replaceLinkOrder"
+  replaceLinkAgainstOrder ::
+    Ptr JITDylib -> Ptr JITDylib -> Ptr JITDylib -> IO ()
+
 foreign import ccall safe "LLVM_Hs_JITDylib_defineAbsoluteSymbols"
   defineAbsoluteSymbols :: Ptr JITDylib -> CUInt -> Ptr (Ptr SymbolStringPtr) -> Ptr (Ptr JITEvaluatedSymbol) -> IO ()
 
