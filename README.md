@@ -68,9 +68,6 @@ inconveniences.
 
 ## Installing LLVM
 
-This branch tracks LLVM HEAD, meaning that the only way to build it is to
-use a fresh checkout of LLVM sources.
-
 ### Building from source
 
 Example of building LLVM from source. Detailed build instructions are available
