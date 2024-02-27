@@ -68,9 +68,6 @@ inconveniences.
 
 ## Installing LLVM
 
-This branch tracks LLVM HEAD, meaning that the only way to build it is to
-use a fresh checkout of LLVM sources.
-
 ### Building from source
 
 Example of building LLVM from source. Detailed build instructions are available
@@ -81,7 +78,7 @@ compiler are required, at least Clang 3.1, GCC 4.8, or Visual Studio 2015
 
   1. Download and unpack the [LLVM source code](https://github.com/llvm/llvm-project):
      ```sh
-     git clone https://github.com/llvm/llvm-project -b release/12.x --single-branch
+     git clone https://github.com/llvm/llvm-project -b release/15.x --single-branch
      cd llvm-project
      ```
 
