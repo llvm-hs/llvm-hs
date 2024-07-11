@@ -30,6 +30,7 @@ import Prelude hiding (
     minimum, maximum, sum, product, all, any, and, or,
     concatMap,
     elem, notElem,
+    unzip
   )
 import Data.Data (Data, Typeable)
 import GHC.Generics (Generic)
