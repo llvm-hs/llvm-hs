@@ -30,6 +30,7 @@ import Control.Monad.Trans.Identity
 #if __GLASGOW_HASKELL__ < 808
 import Control.Monad.Fail (MonadFail)
 #endif
+import Control.Monad.Fix (MonadFix)
 
 import Data.Bifunctor
 import Data.Monoid (First(..))

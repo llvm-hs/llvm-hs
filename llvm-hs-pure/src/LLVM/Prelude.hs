@@ -36,7 +36,7 @@ import GHC.Generics (Generic)
 import Data.Int
 import Data.Maybe (fromMaybe)
 import Data.Word
-import Data.Functor
+import Data.Functor hiding (unzip)
 import Data.Foldable
 import Data.Semigroup (Semigroup((<>)))
 import Data.Traversable
