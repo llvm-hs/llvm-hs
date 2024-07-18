@@ -21,6 +21,9 @@ import System.Environment
 #if MIN_VERSION_Cabal(3,8,1)
 #define MIN_VERSION_Cabal_3_8_1
 #endif
+#if MIN_VERSION_Cabal(3,12,0)
+#define MIN_VERSION_Cabal_3_12_0
+#endif
 #endif
 
 -- define these selectively in C files (we are _not_ using HsFFI.h),
@@ -185,13 +188,21 @@ main = do
               where origHsc buildInfo' =
                       fromMaybe
                         ppHsc2hs
+#ifdef MIN_VERSION_Cabal_3_12_0
+                        (lookup (Suffix "hsc") origHookedPreprocessors)
+#else
                         (lookup "hsc" origHookedPreprocessors)
+#endif
                         buildInfo'
                         localBuildInfo
 #ifdef MIN_VERSION_Cabal_2_0_0
                         componentLocalBuildInfo
 #endif
+#ifdef MIN_VERSION_Cabal_3_12_0
+      in [(Suffix "hsc", newHsc)] ++ origHookedPreprocessors,
+#else
       in [("hsc", newHsc)] ++ origHookedPreprocessors,
+#endif
 
     buildHook = \packageDesc localBuildInfo userHooks buildFlags ->
       do addLLVMToLdLibraryPath (configFlags localBuildInfo)
