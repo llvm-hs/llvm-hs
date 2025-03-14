@@ -4,22 +4,23 @@
 
 // The last three arguments are flags indicating if this is a
 // parameter attribute, function result attribute or function attribute.
-#define LLVM_HS_FOR_EACH_ATTRIBUTE_KIND(macro)	\
+#define LLVM_HS_FOR_EACH_ATTRIBUTE_KIND(macro) \
   macro(None,F,F,F)                                 \
+  macro(AllocAlign,T,F,F)                           \
+  macro(AllocatedPointer,T,F,F)                     \
   macro(AlwaysInline,F,F,T)                         \
-  macro(ArgMemOnly,F,F,T)                           \
   macro(Builtin,F,F,T)                              \
   macro(Cold,F,F,T)                                 \
   macro(Convergent,F,F,T)                           \
+  macro(DisableSanitizerInstrumentation,F,F,T)      \
+  macro(FnRetThunkExtern,F,F,T)                     \
   macro(Hot,F,F,T)                                  \
   macro(ImmArg,T,F,F)                               \
-  macro(InAlloca,T,F,F)                             \
   macro(InReg,T,T,F)                                \
-  macro(InaccessibleMemOnly,F,F,T)                  \
-  macro(InaccessibleMemOrArgMemOnly,F,F,T)          \
   macro(InlineHint,F,F,T)                           \
   macro(JumpTable,F,F,T)                            \
   macro(MinSize,F,F,T)                              \
+  macro(MustProgress,F,F,T)                         \
   macro(Naked,F,F,T)                                \
   macro(Nest,T,F,F)                                 \
   macro(NoAlias,T,T,F)                              \
@@ -36,15 +37,18 @@
   macro(NoRecurse,F,F,T)                            \
   macro(NoRedZone,F,F,T)                            \
   macro(NoReturn,F,F,T)                             \
+  macro(NoSanitizeBounds,F,F,T)                     \
+  macro(NoSanitizeCoverage,F,F,T)                   \
   macro(NoSync,F,F,T)                               \
-  macro(NoUndef,F,F,T)                              \
+  macro(NoUndef,T,F,T)                              \
   macro(NoUnwind,F,F,T)                             \
   macro(NonLazyBind,F,F,T)                          \
   macro(NonNull,T,T,F)                              \
-  macro(NullPointerIsValid,T,T,F)                   \
+  macro(NullPointerIsValid,F,F,T)                   \
   macro(OptForFuzzing,F,F,T)                        \
   macro(OptimizeForSize,F,F,T)                      \
   macro(OptimizeNone,F,F,T)                         \
+  macro(PresplitCoroutine,F,F,T)                    \
   macro(ReadNone,T,F,T)                             \
   macro(ReadOnly,T,F,T)                             \
   macro(Returned,T,F,F)                             \
@@ -57,28 +61,34 @@
   macro(SanitizeMemory,F,F,T)                       \
   macro(SanitizeThread,F,F,T)                       \
   macro(ShadowCallStack,F,F,T)                      \
+  macro(SkipProfile,F,F,T)                          \
   macro(Speculatable,F,F,T)                         \
   macro(SpeculativeLoadHardening,F,F,T)             \
   macro(StackProtect,F,F,T)                         \
   macro(StackProtectReq,F,F,T)                      \
   macro(StackProtectStrong,F,F,T)                   \
   macro(StrictFP,F,F,T)                             \
+  macro(SwiftAsync,T,F,F)                           \
   macro(SwiftError,T,F,F)                           \
   macro(SwiftSelf,T,F,F)                            \
-  macro(UWTable,F,F,T)                              \
   macro(WillReturn,F,F,T)                           \
   macro(WriteOnly,T,F,T)                            \
   macro(ZExt,T,T,F)                                 \
   macro(ByRef,T,F,F)                                \
   macro(ByVal,T,F,F)                                \
-  macro(MustProgress,F,F,T)                         \
+  macro(ElementType,T,F,F)                          \
+  macro(InAlloca,T,F,F)                             \
   macro(Preallocated,F,F,T)                         \
   macro(StructRet,T,F,F)                            \
   macro(Alignment,T,T,F)                            \
+  macro(AllocKind,F,F,T)                            \
   macro(AllocSize,F,F,T)                            \
   macro(Dereferenceable,T,T,F)                      \
   macro(DereferenceableOrNull,T,T,F)                \
+  macro(Memory, F, F, T)                            \
   macro(StackAlignment,F,F,T)                       \
+  macro(UWTable,F,F,T)                              \
+  macro(VScaleRange,F,F,T)                          \
   macro(EndAttrKinds,F,F,F)
 
 typedef enum {

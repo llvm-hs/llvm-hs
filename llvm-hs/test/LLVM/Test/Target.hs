@@ -74,7 +74,6 @@ instance Arbitrary Options where
     trapUnreachable <- arbitrary
     emulatedThreadLocalStorage <- arbitrary
     enableInterProceduralRegisterAllocation <- arbitrary
-    stackAlignmentOverride <- arbitrary
     floatABIType <- arbitrary
     allowFloatingPointOperationFusion <- arbitrary
     threadModel <- arbitrary
@@ -84,6 +83,9 @@ instance Arbitrary Options where
     exceptionModel <- arbitrary
     machineCodeOptions <- arbitrary
     return Options { .. }
+
+instance Arbitrary DwarfDirectory where
+  arbitrary = elements [minBound .. maxBound]
 
 instance Arbitrary MachineCodeOptions where
   arbitrary = do
@@ -102,7 +104,7 @@ instance Arbitrary MachineCodeOptions where
     return MachineCodeOptions { .. }
 
 instance Arbitrary DebugCompressionType where
-  arbitrary = elements [CompressNone, CompressGNU, CompressZ]
+  arbitrary = elements [CompressNone, CompressZlib]
 
 arbitraryASCIIString :: Gen String
 #if MIN_VERSION_QuickCheck(2,10,0)
@@ -131,6 +133,7 @@ tests = testGroup "Target" [
                reloc = Reloc.Default
                codeModel = CodeModel.Default
                codeGenOpt = CodeGenOpt.Default
+           initializeAllTargets
            (target, _) <- lookupTarget Nothing triple
            withTargetMachine target triple cpu features to reloc codeModel codeGenOpt $ \tm -> do
              options' <- peekTargetOptions =<< targetMachineOptions tm

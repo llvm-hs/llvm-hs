@@ -60,10 +60,8 @@ foreign import ccall unsafe "LLVM_Hs_Get_DILocation" getDILocation ::
 foreign import ccall unsafe "LLVM_Hs_GetMDValue" getMDValue ::
   Ptr MDValue -> IO (Ptr Value)
 
-{-
 foreign import ccall unsafe "LLVM_Hs_DumpMetadata" dumpMetadata ::
   Ptr Metadata -> IO ()
--}
 
 foreign import ccall unsafe "LLVM_Hs_GetMetadataOperand" getMetadataOperand ::
   Ptr MetadataAsVal -> IO (Ptr Metadata)
@@ -473,7 +471,7 @@ foreign import ccall unsafe "LLVM_Hs_Get_DICompileUnit" getDICompileUnit ::
   CUInt -> Ptr MDString -> DebugEmissionKind -> TupleArray DICompositeType -> TupleArray DIScope ->
   TupleArray DIGlobalVariableExpression -> TupleArray DIImportedEntity -> TupleArray DIMacroNode ->
   Word64 -> LLVMBool ->
-  LLVMBool -> DebugNameTableKind -> LLVMBool ->
+  LLVMBool -> DebugNameTableKind -> LLVMBool -> Ptr MDString -> Ptr MDString ->
   IO (Ptr DICompileUnit)
 
 foreign import ccall unsafe "LLVM_Hs_DICompileUnit_GetLanguage" getDICompileUnitLanguage ::
@@ -527,6 +525,12 @@ foreign import ccall unsafe "LLVM_Hs_DICompileUnit_GetMacros" getDICompileUnitMa
 foreign import ccall unsafe "LLVM_Hs_DICompileUnit_GetRangesBaseAddress" getDICompileUnitRangesBaseAddress ::
   Ptr DICompileUnit -> IO LLVMBool
 
+foreign import ccall unsafe "LLVM_Hs_DICompileUnit_GetSysroot" getDICompileUnitSysroot ::
+  Ptr DICompileUnit -> IO (Ptr MDString)
+
+foreign import ccall unsafe "LLVM_Hs_DICompileUnit_GetSDK" getDICompileUnitSDK ::
+  Ptr DICompileUnit -> IO (Ptr MDString)
+
 -- DIFlags
 foreign import ccall unsafe "LLVM_Hs_DIFlags_GetFlag" getDIFlag ::
   CString -> IO DIFlags
@@ -542,7 +546,7 @@ foreign import ccall unsafe "LLVM_Hs_DITemplateParameter_GetType" getDITemplateP
 -- DITemplateTypeParameter
 
 foreign import ccall unsafe "LLVM_Hs_Get_DITemplateTypeParameter" getDITemplateTypeParameter ::
-  Ptr Context -> Ptr MDString -> Ptr DIType -> IO (Ptr DITemplateTypeParameter)
+  Ptr Context -> Ptr MDString -> Ptr DIType -> Bool -> IO (Ptr DITemplateTypeParameter)
 
 -- DITemplateValueParameter
 

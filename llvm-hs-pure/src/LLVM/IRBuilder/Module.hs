@@ -7,14 +7,16 @@
 {-# LANGUAGE GADTs                      #-}
 {-# LANGUAGE GeneralizedNewtypeDeriving #-}
 {-# LANGUAGE MultiParamTypeClasses      #-}
+{-# LANGUAGE TypeOperators              #-}
 {-# LANGUAGE UndecidableInstances       #-} -- For MonadState s (IRBuilderT m) instance
 
 module LLVM.IRBuilder.Module where
 
-import Prelude hiding (and, or)
+import LLVM.Prelude
 
 import Control.Applicative
 import Control.Monad.Cont
+import Control.Monad.Fix
 import Control.Monad.Except
 import qualified Control.Monad.Fail as Fail
 import Control.Monad.Identity
@@ -34,7 +36,7 @@ import Control.Monad.Fail (MonadFail)
 #endif
 
 import Data.Bifunctor
-import Data.ByteString.Short as BS
+import Data.ByteString.Short (ShortByteString)
 import Data.Char
 import Data.Data
 import Data.Foldable
@@ -47,7 +49,6 @@ import GHC.Generics(Generic)
 import LLVM.AST hiding (function)
 import LLVM.AST.Global
 import LLVM.AST.Linkage
-import LLVM.AST.Type (ptr)
 import qualified LLVM.AST.Constant as C
 
 import LLVM.IRBuilder.Internal.SnocList
@@ -147,9 +148,8 @@ function label argtys retty body = do
       , returnType  = retty
       , basicBlocks = blocks
       }
-    funty = ptr $ FunctionType retty (fst <$> argtys) False
   emitDefn def
-  pure $ ConstantOperand $ C.GlobalReference funty label
+  pure $ ConstantOperand $ C.GlobalReference label
 
 -- | An external function definition
 extern
@@ -165,8 +165,7 @@ extern nm argtys retty = do
     , parameters  = ([Parameter ty (mkName "") [] | ty <- argtys], False)
     , returnType  = retty
     }
-  let funty = ptr $ FunctionType retty argtys False
-  pure $ ConstantOperand $ C.GlobalReference funty nm
+  pure $ ConstantOperand $ C.GlobalReference nm
 
 -- | An external variadic argument function definition
 externVarArgs
@@ -182,8 +181,7 @@ externVarArgs nm argtys retty = do
     , parameters  = ([Parameter ty (mkName "") [] | ty <- argtys], True)
     , returnType  = retty
     }
-  let funty = ptr $ FunctionType retty argtys True
-  pure $ ConstantOperand $ C.GlobalReference funty nm
+  pure $ ConstantOperand $ C.GlobalReference nm
 
 -- | A global variable definition
 global
@@ -199,7 +197,7 @@ global nm ty initVal = do
     , linkage               = External
     , initializer           = Just initVal
     }
-  pure $ ConstantOperand $ C.GlobalReference (ptr ty) nm
+  pure $ ConstantOperand $ C.GlobalReference nm
 
 -- | A named type definition
 typedef

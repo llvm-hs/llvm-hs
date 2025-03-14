@@ -4,7 +4,7 @@
   OverloadedStrings
   #-}
 module LLVM.Internal.InlineAssembly where
- 
+
 import LLVM.Prelude
 
 import Control.Monad.IO.Class
@@ -21,12 +21,11 @@ import qualified LLVM.Internal.FFI.PtrHierarchy as FFI
 
 import qualified LLVM.AST as A (Definition(..))
 import qualified LLVM.AST.InlineAssembly as A
-import qualified LLVM.AST.Type as A
 
-import LLVM.Internal.Coding 
+import LLVM.Internal.Coding
 import LLVM.Internal.EncodeAST
 import LLVM.Internal.DecodeAST
-import LLVM.Internal.Value
+import LLVM.Internal.Type ()
 
 genCodingInstance [t| A.Dialect |] ''FFI.AsmDialect [
    (FFI.asmDialectATT, A.ATTDialect),
@@ -53,7 +52,7 @@ instance EncodeM EncodeAST A.InlineAssembly (Ptr FFI.InlineAsm) where
 instance DecodeM DecodeAST A.InlineAssembly (Ptr FFI.InlineAsm) where
   decodeM p = do
     return A.InlineAssembly
-      `ap` (liftM (\(A.PointerType f _) -> f) (typeOf p))
+      `ap` (decodeM =<< liftIO (FFI.getInlineAsmFunctionType p))
       `ap` (decodeM =<< liftIO (FFI.getInlineAsmAssemblyString p))
       `ap` (decodeM =<< liftIO (FFI.getInlineAsmConstraintString p))
       `ap` (decodeM =<< liftIO (FFI.inlineAsmHasSideEffects p))

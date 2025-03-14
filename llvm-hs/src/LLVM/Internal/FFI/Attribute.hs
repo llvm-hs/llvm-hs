@@ -11,6 +11,7 @@ import Foreign.Ptr
 
 import LLVM.Internal.FFI.Context
 import LLVM.Internal.FFI.LLVMCTypes
+import LLVM.Internal.FFI.PtrHierarchy
 
 type Slot = CUInt
 type IntValue = Word64
@@ -35,11 +36,13 @@ data ParameterAttributeType
 data AttributeImpl a
 data AttributeSetImpl a
 data AttributeListImpl
+data MemoryEffectsImpl
 
 type Attribute a = Ptr (AttributeImpl a)
 type FunctionAttribute = Attribute FunctionAttributeType
 type ParameterAttribute = Attribute ParameterAttributeType
 newtype AttributeIndex = AttributeIndex CUInt
+type MemoryEffectsType = Ptr MemoryEffectsImpl
 
 type AttributeSet a = Ptr (AttributeSetImpl a)
 -- type MixedAttributeSet = AttributeSet MixedAttributeType
@@ -87,7 +90,12 @@ foreign import ccall unsafe "LLVM_Hs_AttributeValueAsString" attributeValueAsStr
 foreign import ccall unsafe "LLVM_Hs_AttributeValueAsInt" attributeValueAsInt ::
   Attribute a -> IO Word64
 
--- | The LLVM C API does not expose this functionality
+foreign import ccall unsafe "LLVM_Hs_AttributeEnsureUWTableKindDefault" attributeEnsureUWTableKindDefault ::
+  Attribute a -> IO ()
+
+foreign import ccall unsafe "LLVM_Hs_AttributeValueAsType" attributeValueAsType ::
+  Attribute a -> IO (Ptr Type)
+
 foreign import ccall unsafe "LLVM_Hs_getNumAttributes" getNumAttributes ::
   AttributeSet a -> IO CUInt
 
@@ -123,7 +131,7 @@ foreign import ccall unsafe "LLVM_Hs_GetAttrBuilderSize" getAttrBuilderSize ::
   CSize
 
 foreign import ccall unsafe "LLVM_Hs_AttrBuilderFromAttrSet" attrBuilderFromSet ::
-  AttributeSet a -> IO (Ptr (AttrBuilder a))
+  Ptr Context -> AttributeSet a -> IO (Ptr (AttrBuilder a))
 
 foreign import ccall unsafe "LLVM_Hs_DisposeAttrBuilder" disposeAttrBuilder ::
   Ptr (AttrBuilder a) -> IO ()
@@ -132,7 +140,7 @@ foreign import ccall unsafe "LLVM_Hs_AttrBuilderMerge" mergeAttrBuilder ::
   Ptr (AttrBuilder a) -> Ptr (AttrBuilder a) -> IO ()
 
 foreign import ccall unsafe "LLVM_Hs_ConstructAttrBuilder" constructAttrBuilder ::
-  Ptr Word8 -> IO (Ptr (AttrBuilder a))
+  Ptr Context -> Ptr Word8 -> IO (Ptr (AttrBuilder a))
 
 foreign import ccall unsafe "LLVM_Hs_DestroyAttrBuilder" destroyAttrBuilder ::
   Ptr (AttrBuilder a) -> IO ()
@@ -143,6 +151,9 @@ foreign import ccall unsafe "LLVM_Hs_AttrBuilderAddAttributeKind" attrBuilderAdd
 foreign import ccall unsafe "LLVM_Hs_AttrBuilderAddAttributeKind" attrBuilderAddParameterAttributeKind ::
   Ptr ParameterAttrBuilder -> ParameterAttributeKind -> IO ()
 
+foreign import ccall unsafe "LLVM_Hs_AttrBuilderAddTypeAttribute" attrBuilderAddParameterTypeAttribute ::
+  Ptr ParameterAttrBuilder -> ParameterAttributeKind -> Ptr Type -> IO ()
+
 foreign import ccall unsafe "LLVM_Hs_AttrBuilderAddStringAttribute" attrBuilderAddStringAttribute ::
   Ptr (AttrBuilder a) -> Ptr CChar -> CSize -> Ptr CChar -> CSize -> IO ()
 
@@ -151,6 +162,9 @@ foreign import ccall unsafe "LLVM_Hs_AttrBuilderAddAlignment" attrBuilderAddAlig
 
 foreign import ccall unsafe "LLVM_Hs_AttrBuilderAddStackAlignment" attrBuilderAddStackAlignment ::
   Ptr FunctionAttrBuilder -> Word64 -> IO ()
+
+foreign import ccall unsafe "LLVM_Hs_AttrBuilderAddUWTable" attrBuilderAddUWTable ::
+  Ptr FunctionAttrBuilder -> IO ()
 
 -- The CInt is 0 if the last value is null and 1 otherwise
 foreign import ccall unsafe "LLVM_Hs_AttrBuilderAddAllocSize" attrBuilderAddAllocSize' ::
@@ -167,3 +181,35 @@ foreign import ccall unsafe "LLVM_Hs_AttrBuilderAddDereferenceableOrNullAttr" at
 
 foreign import ccall unsafe "LLVM_Hs_AttributeGetAllocSizeArgs" attributeGetAllocSizeArgs ::
   FunctionAttribute -> Ptr CUInt -> Ptr CUInt -> IO LLVMBool
+
+foreign import ccall unsafe "LLVM_Hs_AttributeGetVScaleRangeArgs" attributeGetVScaleRangeArgs ::
+  FunctionAttribute -> Ptr CUInt -> Ptr CUInt -> IO ()
+
+foreign import ccall unsafe "LLVM_Hs_AttrBuilderAddVScaleRange" attrBuilderAddVScaleRange ::
+  Ptr FunctionAttrBuilder -> CUInt -> CUInt -> IO ()
+
+foreign import ccall unsafe "LLVM_Hs_AttributeGetMemoryEffects" attributeGetMemoryEffects ::
+  FunctionAttribute -> Ptr MemoryEffectsImpl -> IO ()
+
+foreign import ccall unsafe "LLVM_Hs_AttrBuilderAddMemoryAttr" attrBuilderAddMemoryEffects ::
+  Ptr FunctionAttrBuilder -> Ptr MemoryEffectsImpl -> IO ()
+
+foreign import ccall unsafe "LLVM_Hs_ConstructMemoryEffects" constructMemoryEffects ::
+  CUInt -> CUInt -> Ptr MemoryEffectsImpl -> IO ()
+
+foreign import ccall unsafe "LLVM_Hs_DisposeMemoryEffects" disposeMemoryEffects ::
+  Ptr MemoryEffectsImpl -> IO ()
+
+foreign import ccall unsafe "LLVM_Hs_MemoryEffectsCreateFromIntValue" createMemoryEffectsFromInt ::
+  Word32 -> Ptr MemoryEffectsImpl -> IO ()
+
+foreign import ccall unsafe "LLVM_Hs_MemoryEffectsGetModRefLoc" memoryAccessForLoc ::
+  Ptr MemoryEffectsImpl -> CUInt -> Ptr CUInt -> IO ()
+
+foreign import ccall unsafe "LLVM_Hs_MemoryEffectsSize" memoryEffectsSize :: IO CSize
+
+foreign import ccall unsafe "LLVM_Hs_MemoryEffectsUnionInPlace" memoryEffectsUnionInPlace ::
+  Ptr MemoryEffectsImpl -> Ptr MemoryEffectsImpl -> IO ()
+
+foreign import ccall unsafe "LLVM_Hs_MemoryEffectsIntersectInPlace" memoryEffectsIntersectInPlace ::
+  Ptr MemoryEffectsImpl -> Ptr MemoryEffectsImpl -> IO ()

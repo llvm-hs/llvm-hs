@@ -51,7 +51,6 @@ LLVM_HS_FOR_EACH_FAST_MATH_FLAG(ENUM_CASE)
 #undef ENUM_CASE
     return r;
 }
-
 }
 
 extern "C" {
@@ -294,16 +293,18 @@ LLVMValueRef LLVM_Hs_BuildICmp(LLVMBuilderRef b, LLVMIntPredicate op, LLVMValueR
 LLVMValueRef LLVM_Hs_BuildLoad(
     LLVMBuilderRef b,
     LLVMBool isVolatile,
+    LLVMTypeRef ty,
     LLVMValueRef p,
     LLVMAtomicOrdering atomicOrdering,
     LLVMSynchronizationScope synchScope,
     unsigned align,
     const char *name
 ) {
-    LoadInst *i = unwrap(b)->CreateAlignedLoad(unwrap(p), MaybeAlign(align), isVolatile, name);
-    i->setOrdering(unwrap(atomicOrdering));
-    if (atomicOrdering != LLVMAtomicOrderingNotAtomic) i->setSyncScopeID(unwrap(synchScope));
-    return wrap(i);
+	LoadInst *i = unwrap(b)->CreateAlignedLoad(
+	    unwrap(ty), unwrap(p), MaybeAlign(align), isVolatile, name);
+	i->setOrdering(unwrap(atomicOrdering));
+	if (atomicOrdering != LLVMAtomicOrderingNotAtomic) i->setSyncScopeID(unwrap(synchScope));
+	return wrap(i);
 }
 
 LLVMValueRef LLVM_Hs_BuildStore(
@@ -316,11 +317,11 @@ LLVMValueRef LLVM_Hs_BuildStore(
     unsigned align,
     const char *name
 ) {
-    StoreInst *i = unwrap(b)->CreateAlignedStore(unwrap(v), unwrap(p), MaybeAlign(align), isVolatile);
-    i->setName(name);
-    i->setOrdering(unwrap(atomicOrdering));
-    if (atomicOrdering != LLVMAtomicOrderingNotAtomic) i->setSyncScopeID(unwrap(synchScope));
-    return wrap(i);
+	StoreInst *i = unwrap(b)->CreateAlignedStore(unwrap(v), unwrap(p), MaybeAlign(align), isVolatile);
+	i->setName(name);
+	i->setOrdering(unwrap(atomicOrdering));
+	if (atomicOrdering != LLVMAtomicOrderingNotAtomic) i->setSyncScopeID(unwrap(synchScope));
+	return wrap(i);
 }
 
 LLVMValueRef LLVM_Hs_BuildFence(
@@ -332,47 +333,49 @@ LLVMValueRef LLVM_Hs_BuildFence(
 }
 
 LLVMValueRef LLVM_Hs_BuildAtomicCmpXchg(
-    LLVMBuilderRef b,
-    LLVMBool v,
-    LLVMValueRef ptr,
-    LLVMValueRef cmp,
-    LLVMValueRef n,
-    LLVMAtomicOrdering successOrdering,
-    LLVMAtomicOrdering failureOrdering,
-    LLVMSynchronizationScope lss,
-    const char *name
+	LLVMBuilderRef b,
+	LLVMBool v,
+	LLVMValueRef ptr,
+	LLVMValueRef cmp,
+	LLVMValueRef n,
+	unsigned align,
+	LLVMAtomicOrdering successOrdering,
+	LLVMAtomicOrdering failureOrdering,
+	LLVMSynchronizationScope lss,
+	const char *name
 ) {
-    AtomicCmpXchgInst *a = unwrap(b)->CreateAtomicCmpXchg(
-        unwrap(ptr), unwrap(cmp), unwrap(n), unwrap(successOrdering), unwrap(failureOrdering), unwrap(lss)
-    );
-    a->setVolatile(v);
-    a->setName(name);
-    return wrap(a);
+	AtomicCmpXchgInst *a = unwrap(b)->CreateAtomicCmpXchg(
+		unwrap(ptr), unwrap(cmp), unwrap(n), MaybeAlign(align), unwrap(successOrdering), unwrap(failureOrdering), unwrap(lss)
+	);
+	a->setVolatile(v);
+	a->setName(name);
+	return wrap(a);
 }
 
 LLVMValueRef LLVM_Hs_BuildAtomicRMW(
-    LLVMBuilderRef b,
-    LLVMBool v,
-    LLVMAtomicRMWBinOp_ rmwOp,
-    LLVMValueRef ptr,
-    LLVMValueRef val,
-    LLVMAtomicOrdering lao,
-    LLVMSynchronizationScope lss,
-    const char *name
+	LLVMBuilderRef b,
+	LLVMBool v,
+	LLVMAtomicRMWBinOp_ rmwOp,
+	LLVMValueRef ptr,
+	LLVMValueRef val,
+	unsigned align,
+	LLVMAtomicOrdering lao,
+	LLVMSynchronizationScope lss,
+	const char *name
 ) {
-    AtomicRMWInst *a = unwrap(b)->CreateAtomicRMW(
-        unwrap(rmwOp), unwrap(ptr), unwrap(val), unwrap(lao), unwrap(lss)
-    );
-    a->setVolatile(v);
-    a->setName(name);
-    return wrap(a);
+	AtomicRMWInst *a = unwrap(b)->CreateAtomicRMW(
+		unwrap(rmwOp), unwrap(ptr), unwrap(val), MaybeAlign(align), unwrap(lao), unwrap(lss)
+	);
+	a->setVolatile(v);
+	a->setName(name);
+	return wrap(a);
 }
 
 LLVMValueRef LLVM_Hs_BuildCleanupPad(LLVMBuilderRef b, LLVMValueRef parentPad,
                                      LLVMValueRef *args, unsigned numArgs,
                                      const char *name) {
   return wrap(unwrap(b)->CreateCleanupPad(unwrap(parentPad),
-                                          makeArrayRef(unwrap(args), numArgs),
+                                          ArrayRef<Value*>(unwrap(args), numArgs),
                                           name));
 }
 
@@ -380,7 +383,7 @@ LLVMValueRef LLVM_Hs_BuildCatchPad(LLVMBuilderRef b, LLVMValueRef catchSwitch,
                                    LLVMValueRef *args, unsigned numArgs,
                                    const char *name) {
     return wrap(unwrap(b)->CreateCatchPad(unwrap(catchSwitch),
-                                          makeArrayRef(unwrap(args), numArgs),
+                                          ArrayRef<Value*>(unwrap(args), numArgs),
                                           name));
 }
 
@@ -410,18 +413,24 @@ LLVMValueRef LLVM_Hs_BuildCatchSwitch(LLVMBuilderRef b, LLVMValueRef parentPad,
                                              unwrap(unwindDest), numHandlers));
 }
 
-LLVMValueRef LLVM_Hs_BuildGEP(LLVMBuilderRef B, LLVMValueRef Pointer,
+LLVMValueRef LLVM_Hs_BuildGEP(LLVMBuilderRef B, LLVMTypeRef PointeeType, LLVMValueRef Pointer,
                              LLVMValueRef *Indices, unsigned NumIndices,
                              const char *Name) {
   ArrayRef<Value *> IdxList(unwrap(Indices), NumIndices);
-  return wrap(unwrap(B)->Insert(GetElementPtrInst::Create(nullptr, unwrap(Pointer), IdxList), Name));
+  return wrap(
+      unwrap(B)->Insert(GetElementPtrInst::Create(unwrap(PointeeType),
+                                                  unwrap(Pointer), IdxList),
+                        Name));
 }
 
-LLVMValueRef LLVM_Hs_BuildInBoundsGEP(LLVMBuilderRef B, LLVMValueRef Pointer,
+LLVMValueRef LLVM_Hs_BuildInBoundsGEP(LLVMBuilderRef B, LLVMTypeRef PointeeType, LLVMValueRef Pointer,
                                       LLVMValueRef *Indices, unsigned NumIndices,
                                       const char *Name) {
   ArrayRef<Value *> IdxList(unwrap(Indices), NumIndices);
-  return wrap(unwrap(B)->Insert(GetElementPtrInst::CreateInBounds(nullptr, unwrap(Pointer), IdxList), Name));
+  return wrap(
+      unwrap(B)->Insert(GetElementPtrInst::CreateInBounds(
+                            unwrap(PointeeType), unwrap(Pointer), IdxList),
+                        Name));
 }
 
 LLVMValueRef LLVM_Hs_BuildSelect(LLVMBuilderRef B, LLVMValueRef If,

@@ -39,7 +39,7 @@ LLVMValueRef LLVM_Hs_CreateInlineAsm(
 ) {
 	return wrap(
 		InlineAsm::get(
-			unwrap<FunctionType>(t), 
+			unwrap<FunctionType>(t),
 			asmStr,
 			constraintsStr,
 			hasSideEffects,
@@ -69,5 +69,8 @@ LLVMAsmDialect LLVM_Hs_GetInlineAsmDialect(LLVMValueRef v) {
 	return wrap(unwrap<InlineAsm>(v)->getDialect());
 }
 
+LLVMTypeRef LLVM_Hs_GetInlineAsmFunctionType(LLVMValueRef v) {
+  return wrap(unwrap<InlineAsm>(v)->getFunctionType());
 }
 
+}

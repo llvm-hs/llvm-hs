@@ -137,6 +137,7 @@ instance DecodeM DecodeAST A.Terminator (Ptr FFI.Instruction) where
         cc <- decodeM =<< liftIO (FFI.getCallSiteCallingConvention i)
         attrs <- callInstAttributeList i
         fv <- liftIO $ FFI.getCallSiteCalledValue i
+        ty <- decodeM =<< liftIO (FFI.getCalledFunctionType i)
         f <- decodeM fv
         let argIndices = if nOps >= 4 then [0 .. nOps - 4] else []
         args <-
@@ -147,6 +148,7 @@ instance DecodeM DecodeAST A.Terminator (Ptr FFI.Instruction) where
         return A.Invoke {
           A.callingConvention' = cc,
           A.returnAttributes' = returnAttributes attrs,
+          A.type'' = ty,
           A.function' = f,
           A.arguments' = args,
           A.functionAttributes' = functionAttributes attrs,
@@ -236,6 +238,7 @@ instance EncodeM EncodeAST A.Terminator (Ptr FFI.Instruction) where
       A.Invoke {
         A.callingConvention' = cc,
         A.returnAttributes' = rAttrs,
+        A.type'' = ty,
         A.function' = fun,
         A.arguments' = args,
         A.functionAttributes' = fAttrs,
@@ -243,11 +246,12 @@ instance EncodeM EncodeAST A.Terminator (Ptr FFI.Instruction) where
         A.exceptionDest = ed
       } -> do
         fv <- encodeM fun
+        tb <- encodeM ty
         rb <- encodeM rd
         eb <- encodeM ed
-        let (argvs, argAttrs) = unzip args
+        let (argvs, argAttrs) = List.unzip args
         (n, argvs) <- encodeM argvs
-        i <- liftIO $ FFI.buildInvoke builder fv argvs n rb eb s
+        i <- liftIO $ FFI.buildInvoke builder tb fv argvs n rb eb s
         attrs <- encodeM $ AttributeList fAttrs rAttrs argAttrs
         liftIO $ FFI.setCallSiteAttributeList i attrs
         cc <- encodeM cc
@@ -360,7 +364,10 @@ $(do
                             t <- typeOf v
                             return $ case t of { A.ArrayType _ _ -> A.Filter; _ -> A.Catch} $ c |])
                 "functionAttributes" -> (["attrs"], [| return $ functionAttributes $(TH.dyn "attrs") |])
-                "type'" -> ([], [| return t |])
+                "type'" -> ([], case lrn of
+                                  "GetElementPtr" -> [| decodeM =<< liftIO (FFI.getGEPSourceElementType i) |]
+                                  "Call" -> [| decodeM =<< liftIO (FFI.getCalledFunctionType i) |]
+                                  _ -> [| return t |])
                 "incomingValues" ->
                     ([], [| do
                             n <- liftIO $ FFI.countIncoming i
@@ -407,7 +414,7 @@ $(do
               let opcodeP = TH.dataToPatQ (const Nothing) (ID.cppOpcode iDef)
                   handlerBody =
                     let TH.RecC fullName fields = findInstrFields lrn
-                        (fieldNames,_,_) = unzip3 fields
+                        (fieldNames,_,_) = List.unzip3 fields
                         allNames ns = List.nub $ [ d | n <- ns, d <- allNames . fst . fieldDecoders lrn $ n ] ++ ns
                     in
                       [
@@ -456,7 +463,7 @@ $(do
              return (
                FFI.upCast i,
                do
-                 let (ivs3, bs3) = unzip ivs
+                 let (ivs3, bs3) = List.unzip ivs
                  ivs3' <- encodeM ivs3
                  bs3' <- encodeM bs3
                  liftIO $ FFI.addIncoming i ivs3' bs3'
@@ -476,14 +483,16 @@ $(do
             A.tailCallKind = tck,
             A.callingConvention = cc,
             A.returnAttributes = rAttrs,
+            A.type' = ty,
             A.function = f,
             A.arguments = args,
             A.functionAttributes = fAttrs
           } -> do
             fv <- encodeM f
-            let (argvs, argAttrs) = unzip args
+            let (argvs, argAttrs) = List.unzip args
             (n, argvs) <- encodeM argvs
-            i <- liftIO $ FFI.buildCall builder fv argvs n s
+            tb <- encodeM ty
+            i <- liftIO $ FFI.buildCall builder tb fv argvs n s
             attrs <- encodeM $ AttributeList fAttrs rAttrs argAttrs
             liftIO $ FFI.setCallSiteAttributeList i attrs
             tck <- encodeM tck
@@ -578,7 +587,7 @@ $(do
                      (ID.Memory, _) -> True
                      _ -> False,
                    let
-                     TH.RecC fullName (unzip3 -> (fieldNames, _, _)) = findInstrFields name
+                     TH.RecC fullName (List.unzip3 -> (fieldNames, _, _)) = findInstrFields name
                      encodeFieldNames = filter (\f -> TH.nameBase f /= "metadata") fieldNames
                      encodeMFields = map TH.nameBase encodeFieldNames
                      handlerBody = ([

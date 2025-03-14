@@ -37,6 +37,9 @@ foreign import ccall unsafe "LLVMGetTarget" getTargetTriple ::
 foreign import ccall unsafe "LLVMSetTarget" setTargetTriple ::
   Ptr Module -> CString -> IO ()
 
+foreign import ccall unsafe "LLVM_Hs_DumpModule" dumpModule ::
+  Ptr Module -> IO ()
+
 foreign import ccall unsafe "LLVM_Hs_GetModuleIdentifier" getModuleIdentifier ::
   Ptr Module -> IO (OwnerTransfered CString)
 

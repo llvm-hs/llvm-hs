@@ -288,10 +288,10 @@ newtype TargetOptionFlag = TargetOptionFlag CUInt
 #define TOF_Rec(n) { #n, LLVM_Hs_TargetOptionFlag_ ## n },
 #{inject TARGET_OPTION_FLAG, TargetOptionFlag, TargetOptionFlag, targetOptionFlag, TOF_Rec}
 
-newtype MCTargetOptionFlag = MCTargetOptionFlag CUInt
+newtype MCTargetOptionBoolFlag = MCTargetOptionBoolFlag CUInt
   deriving (Eq, Read, Show, Typeable, Data, Generic)
-#define MCTOF_Rec(n) { #n, LLVM_Hs_MCTargetOptionFlag_ ## n },
-#{inject MC_TARGET_OPTION_FLAG, MCTargetOptionFlag, MCTargetOptionFlag, mcTargetOptionFlag, MCTOF_Rec}
+#define MCTOF_Rec(n) { #n, LLVM_Hs_MCTargetOptionBoolFlag_ ## n },
+#{inject MC_TARGET_OPTION_BOOL_FLAG, MCTargetOptionBoolFlag, MCTargetOptionBoolFlag, mcTargetOptionFlag, MCTOF_Rec}
 
 newtype DebugCompressionType = DebugCompressionType CUInt
   deriving (Eq, Read, Show, Typeable, Data, Generic)

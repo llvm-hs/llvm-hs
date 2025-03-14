@@ -22,8 +22,10 @@ import qualified LLVM.Test.OrcJIT as OrcJIT
 import qualified LLVM.Test.ParameterAttribute as ParameterAttribute
 import qualified LLVM.Test.Target as Target
 import qualified LLVM.Test.Regression as Regression
+import qualified LLVM.Test.Support as Support
 
-tests = testGroup "llvm-hs" [
+
+tests = Support.withTargets $ testGroup "llvm-hs" [
     CallingConvention.tests,
     Constants.tests,
     DataLayout.tests,

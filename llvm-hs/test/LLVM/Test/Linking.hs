@@ -13,8 +13,6 @@ import qualified Data.Map as Map
 
 import LLVM.Module
 import LLVM.Context
-import LLVM.PassManager
-import LLVM.Transforms
 import LLVM.Target
 
 import LLVM.AST as A

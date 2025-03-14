@@ -2,6 +2,7 @@
 #include "llvm/IR/LLVMContext.h"
 #include "llvm/IR/Constants.h"
 #include "llvm/IR/Function.h"
+#include "llvm/IR/Operator.h"
 
 #include "llvm-c/Core.h"
 #include "LLVM/Internal/FFI/Value.h"
@@ -68,14 +69,6 @@ LLVMValueRef LLVM_Hs_ConstSub(unsigned nsw, unsigned nuw, LLVMValueRef o0, LLVMV
     return wrap(ConstantExpr::getSub(unwrap<Constant>(o0), unwrap<Constant>(o1), nuw != 0, nsw != 0));
 }
 
-LLVMValueRef LLVM_Hs_ConstUDiv(unsigned isExact, LLVMValueRef o0, LLVMValueRef o1) {
-    return wrap(ConstantExpr::getUDiv(unwrap<Constant>(o0), unwrap<Constant>(o1), isExact != 0));
-}
-
-LLVMValueRef LLVM_Hs_ConstSDiv(unsigned isExact, LLVMValueRef o0, LLVMValueRef o1) {
-    return wrap(ConstantExpr::getSDiv(unwrap<Constant>(o0), unwrap<Constant>(o1), isExact != 0));
-}
-
 LLVMValueRef LLVM_Hs_ConstLShr(unsigned isExact, LLVMValueRef o0, LLVMValueRef o1) {
     return wrap(ConstantExpr::getLShr(unwrap<Constant>(o0), unwrap<Constant>(o1), isExact != 0));
 }
@@ -90,12 +83,6 @@ unsigned LLVM_Hs_GetConstCPPOpcode(LLVMValueRef v) {
 
 unsigned LLVM_Hs_GetConstPredicate(LLVMValueRef v) {
     return unwrap<ConstantExpr>(v)->getPredicate();
-}
-
-const unsigned *LLVM_Hs_GetConstIndices(LLVMValueRef v, unsigned *n) {
-    ArrayRef<unsigned> r = unwrap<ConstantExpr>(v)->getIndices();
-    *n = r.size();
-    return r.data();
 }
 
 const uint64_t *LLVM_Hs_GetConstantIntWords(LLVMValueRef v, unsigned *n) {
@@ -127,5 +114,8 @@ LLVMValueRef LLVM_Hs_GetConstTokenNone(LLVMContextRef context) {
     return wrap(ConstantTokenNone::get(*unwrap(context)));
 }
 
+LLVMTypeRef LLVM_Hs_GetConstGEPSourceType(LLVMValueRef v) {
+    return wrap(unwrap<GEPOperator>(v)->getSourceElementType());
+}
 
 }

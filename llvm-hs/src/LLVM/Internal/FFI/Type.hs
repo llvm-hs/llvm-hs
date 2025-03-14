@@ -57,6 +57,12 @@ newtype AddrSpace = AddrSpace CUInt
 foreign import ccall unsafe "LLVMPointerType" pointerType ::
   Ptr Type -> AddrSpace -> IO (Ptr Type)
 
+foreign import ccall unsafe "LLVM_Hs_OpaquePointerType" opaquePointerType ::
+  Ptr Context -> AddrSpace -> IO (Ptr Type)
+
+foreign import ccall unsafe "LLVM_Hs_IsOpaquePointerType" isOpaquePointerType ::
+  Ptr Type -> IO LLVMBool
+
 -- | <http://llvm.org/doxygen/group__LLVMCCoreTypeSequential.html#ga124b162b69b5def41dde2fda3668cbd9>
 foreign import ccall unsafe "LLVMGetPointerAddressSpace" getPointerAddressSpace ::
   Ptr Type -> IO AddrSpace

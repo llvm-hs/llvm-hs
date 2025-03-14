@@ -1,6 +1,11 @@
 #define __STDC_LIMIT_MACROS
+#include "llvm-c/Core.h"
+#include "llvm/IR/DerivedTypes.h"
 #include "LLVM/Internal/FFI/AttributeC.hpp"
 #include "llvm/IR/LLVMContext.h"
+#include "llvm/Support/ModRef.h"
+
+#include <tuple>
 
 extern "C" {
 
@@ -20,6 +25,18 @@ LLVM_HS_FOR_EACH_ATTRIBUTE_KIND(CHECK)
 
 uint64_t LLVM_Hs_AttributeValueAsInt(LLVMAttributeRef a) {
     return unwrap(a).getValueAsInt();
+}
+
+void LLVM_Hs_AttributeEnsureUWTableKindDefault(LLVMAttributeRef a) {
+    assert(unwrap(a).getUWTableKind() == UWTableKind::Default);
+}
+
+LLVMTypeRef LLVM_Hs_AttributeValueAsType(LLVMAttributeRef a) {
+    return wrap(unwrap(a).getValueAsType());
+}
+
+LLVMBool LLVM_Hs_IsStringAttribute(LLVMAttributeRef a) {
+    return unwrap(a).isStringAttribute();
 }
 
 const char *LLVM_Hs_AttributeKindAsString(LLVMAttributeRef a, size_t &l) {
@@ -88,15 +105,15 @@ void LLVM_Hs_getAttributes(AttributeSet *attributeSet,
 
 size_t LLVM_Hs_GetAttrBuilderSize() { return sizeof(AttrBuilder); }
 
-AttrBuilder *LLVM_Hs_ConstructAttrBuilder(char *p) {
-    return new (p) AttrBuilder();
+AttrBuilder *LLVM_Hs_ConstructAttrBuilder(LLVMContextRef context, char *p) {
+    return new (p) AttrBuilder(*unwrap(context));
 }
 
-AttrBuilder *LLVM_Hs_AttrBuilderFromAttrSet(AttributeSet *as) {
-    return new AttrBuilder(*as);
+AttrBuilder *LLVM_Hs_AttrBuilderFromAttrSet(LLVMContextRef context, LLVMAttributeSetRef as) {
+    return new AttrBuilder(*unwrap(context), *as);
 }
 
-void LLVM_Hs_DisposeAttrBuilder(AttributeSet *as) { delete as; }
+void LLVM_Hs_DisposeAttrBuilder(AttrBuilder *as) { delete as; }
 
 void LLVM_Hs_AttrBuilderMerge(AttrBuilder *ab1, AttrBuilder *ab2) {
     ab1->merge(*ab2);
@@ -106,6 +123,10 @@ void LLVM_Hs_DestroyAttrBuilder(AttrBuilder *a) { a->~AttrBuilder(); }
 
 void LLVM_Hs_AttrBuilderAddAttributeKind(AttrBuilder &ab, unsigned kind) {
     ab.addAttribute(Attribute::AttrKind(kind));
+}
+
+void LLVM_Hs_AttrBuilderAddTypeAttribute(AttrBuilder &ab, unsigned kind, LLVMTypeRef t) {
+    ab.addTypeAttr(Attribute::AttrKind(kind), unwrap(t));
 }
 
 void LLVM_Hs_AttrBuilderAddStringAttribute(AttrBuilder &ab, const char *kind,
@@ -122,12 +143,16 @@ void LLVM_Hs_AttrBuilderAddStackAlignment(AttrBuilder &ab, uint64_t v) {
     ab.addStackAlignmentAttr(MaybeAlign(v));
 }
 
+void LLVM_Hs_AttrBuilderAddUWTable(AttrBuilder &ab) {
+    ab.addUWTableAttr(UWTableKind::Default);
+}
+
 void LLVM_Hs_AttrBuilderAddAllocSize(AttrBuilder &ab, unsigned x, unsigned y,
                                      LLVMBool optionalIsThere) {
     if (optionalIsThere) {
-        ab.addAllocSizeAttr(x, Optional<unsigned>(y));
+        ab.addAllocSizeAttr(x, std::optional<unsigned>(y));
     } else {
-        ab.addAllocSizeAttr(x, Optional<unsigned>());
+        ab.addAllocSizeAttr(x, std::optional<unsigned>());
     }
 }
 
@@ -144,11 +169,58 @@ LLVMBool LLVM_Hs_AttributeGetAllocSizeArgs(LLVMAttributeRef a, unsigned *x,
                                            unsigned *y) {
     auto pair = unwrap(a).getAllocSizeArgs();
     *x = pair.first;
-    if (pair.second.hasValue()) {
-        *y = pair.second.getValue();
+    if (pair.second.has_value()) {
+        *y = pair.second.value();
         return 1;
     } else {
         return 0;
     }
 }
+
+void LLVM_Hs_AttributeGetVScaleRangeArgs(LLVMAttributeRef a, unsigned *min, unsigned *max) {
+  *min = unwrap(a).getVScaleRangeMin();
+  *max = unwrap(a).getVScaleRangeMax().value_or(0);
+}
+
+void LLVM_Hs_AttrBuilderAddVScaleRange(AttrBuilder &ab, unsigned min, unsigned max) {
+  ab.addVScaleRangeAttr(min, max);
+}
+
+void LLVM_Hs_AttributeGetMemoryEffects(LLVMAttributeRef a, MemoryEffects *me) {
+    *me = unwrap(a).getMemoryEffects();
+}
+
+void LLVM_Hs_AttrBuilderAddMemoryAttr(AttrBuilder &ab, MemoryEffects *me) {
+    ab.addMemoryAttr(*me);
+}
+
+void LLVM_Hs_ConstructMemoryEffects(unsigned loc, unsigned modref, MemoryEffects *me) {
+    *me = MemoryEffects(static_cast<MemoryEffects::Location>(loc),
+                        static_cast<ModRefInfo>(modref));
+}
+
+void LLVM_Hs_DisposeMemoryEffects(MemoryEffects *me) { delete me; }
+
+void LLVM_Hs_MemoryEffectsCreateFromIntValue(uint32_t data, MemoryEffects *me) {
+    *me = MemoryEffects::createFromIntValue(data);
+}
+
+void LLVM_Hs_MemoryEffectsUnionInPlace(MemoryEffects &me, MemoryEffects *me2) { me |= *me2; }
+
+void LLVM_Hs_MemoryEffectsIntersectInPlace(MemoryEffects &me, MemoryEffects *me2) { me &= *me2; }
+
+void LLVM_Hs_MemoryEffectsUnion(MemoryEffects me, MemoryEffects me2, MemoryEffects* mer) { *mer = me | me2; }
+
+void LLVM_Hs_MemoryEffectsIntersect(MemoryEffects me, MemoryEffects me2, MemoryEffects* mer) { *mer = me & me2; }
+
+void LLVM_Hs_MemoryEffectsGetModRef(MemoryEffects &me, unsigned *mr) {
+    *mr = static_cast<unsigned>(me.getModRef());
+}
+
+void LLVM_Hs_MemoryEffectsGetModRefLoc(MemoryEffects &me, unsigned loc, unsigned *mr) {
+    *mr = static_cast<unsigned>(me.getModRef(static_cast<MemoryEffects::Location>(loc)));
+}
+
+size_t LLVM_Hs_MemoryEffectsSize() { return sizeof(MemoryEffects); }
+
 }

@@ -23,7 +23,7 @@ data Type
   -- | <http://llvm.org/docs/LangRef.html#integer-type>
   | IntegerType { typeBits :: Word32 }
   -- | <http://llvm.org/docs/LangRef.html#pointer-type>
-  | PointerType { pointerReferent :: Type, pointerAddrSpace :: AddrSpace }
+  | PointerType { pointerAddrSpace :: AddrSpace }
   -- | <http://llvm.org/docs/LangRef.html#floating-point-types>
   | FloatingPointType { floatingPointType :: FloatingPointType }
   -- | <http://llvm.org/docs/LangRef.html#function-type>
@@ -72,9 +72,9 @@ i64 = IntegerType 64
 i128 :: Type
 i128 = IntegerType 128
 
--- | An abbreviation for 'PointerType' t ('AddrSpace' 0)
-ptr :: Type -> Type
-ptr t = PointerType t (AddrSpace 0)
+-- | An abbreviation for 'PointerType' ('AddrSpace' 0)
+ptr :: Type
+ptr = PointerType (AddrSpace 0)
 
 -- | An abbreviation for 'FloatingPointType' 'HalfFP'
 half :: Type

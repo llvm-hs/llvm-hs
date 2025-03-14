@@ -7,14 +7,15 @@
 #include "llvm-c/Target.h"
 #include "llvm-c/TargetMachine.h"
 #include "llvm/ADT/Triple.h"
+#include "llvm/ADT/Optional.h"
 #include "llvm/Analysis/TargetLibraryInfo.h"
 #include "llvm/ExecutionEngine/Interpreter.h"
 #include "llvm/IR/DataLayout.h"
 #include "llvm/IR/LegacyPassManager.h"
 #include "llvm/IR/Module.h"
+#include "llvm/MC/TargetRegistry.h"
 #include "llvm/Support/FormattedStream.h"
 #include "llvm/Support/Host.h"
-#include "llvm/Support/TargetRegistry.h"
 #include "llvm/Support/TargetSelect.h"
 #include "llvm/Target/CodeGenCWrappers.h"
 #include "llvm/Target/TargetMachine.h"
@@ -270,16 +271,27 @@ void LLVM_Hs_SetTargetOptionFlag(TargetOptions *to, LLVM_Hs_TargetOptionFlag f,
     }
 }
 
-void LLVM_Hs_SetMCTargetOptionFlag(MCTargetOptions *to,
-                                   LLVM_Hs_MCTargetOptionFlag f, unsigned v) {
+void LLVM_Hs_SetMCTargetOptionBoolFlag(MCTargetOptions *to,
+                                       LLVM_Hs_MCTargetOptionBoolFlag f,
+                                       unsigned v) {
     switch (f) {
 #define ENUM_CASE(op)                                                          \
-    case LLVM_Hs_MCTargetOptionFlag_##op:                                      \
+    case LLVM_Hs_MCTargetOptionBoolFlag_##op:                                  \
         to->op = v ? 1 : 0;                                                    \
         break;
-        LLVM_HS_FOR_EACH_MC_TARGET_OPTION_FLAG(ENUM_CASE)
+        LLVM_HS_FOR_EACH_MC_TARGET_OPTION_BOOL_FLAG(ENUM_CASE)
 #undef ENUM_CASE
     }
+}
+
+void LLVM_Hs_SetMCTargetOptionFlagUseDwarfDirectory(MCTargetOptions *to, int v) {
+  if (v == 0) {
+    to->MCUseDwarfDirectory = MCTargetOptions::DisableDwarfDirectory;
+  } else if (v == 1) {
+    to->MCUseDwarfDirectory = MCTargetOptions::EnableDwarfDirectory;
+  } else {
+    to->MCUseDwarfDirectory = MCTargetOptions::DefaultDwarfDirectory;
+  }
 }
 
 static llvm::DebugCompressionType
@@ -335,13 +347,13 @@ unsigned LLVM_Hs_GetTargetOptionFlag(TargetOptions *to,
     }
 }
 
-unsigned LLVM_Hs_GetMCTargetOptionFlag(MCTargetOptions *to,
-                                       LLVM_Hs_MCTargetOptionFlag f) {
+unsigned LLVM_Hs_GetMCTargetOptionBoolFlag(MCTargetOptions *to,
+                                           LLVM_Hs_MCTargetOptionBoolFlag f) {
     switch (f) {
 #define ENUM_CASE(op)                                                          \
-    case LLVM_Hs_MCTargetOptionFlag_##op:                                      \
+    case LLVM_Hs_MCTargetOptionBoolFlag_##op:                                  \
         return to->op;
-        LLVM_HS_FOR_EACH_MC_TARGET_OPTION_FLAG(ENUM_CASE)
+        LLVM_HS_FOR_EACH_MC_TARGET_OPTION_BOOL_FLAG(ENUM_CASE)
 #undef ENUM_CASE
     default:
         reportFatalError("Unknown machine code target option flag");
@@ -349,12 +361,8 @@ unsigned LLVM_Hs_GetMCTargetOptionFlag(MCTargetOptions *to,
     }
 }
 
-void LLVM_Hs_SetStackAlignmentOverride(TargetOptions *to, unsigned v) {
-    to->StackAlignmentOverride = v;
-}
-
-unsigned LLVM_Hs_GetStackAlignmentOverride(TargetOptions *to) {
-    return to->StackAlignmentOverride;
+int LLVM_Hs_GetMCTargetOptionFlagUseDwarfDirectory(MCTargetOptions *to) {
+  return to->MCUseDwarfDirectory;
 }
 
 void LLVM_Hs_SetFloatABIType(TargetOptions *to, LLVM_Hs_FloatABI v) {

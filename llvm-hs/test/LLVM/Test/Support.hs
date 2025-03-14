@@ -20,6 +20,7 @@ import Text.Show.Pretty
 import LLVM.Context
 import LLVM.Module
 import LLVM.Diagnostic
+import LLVM.Target
 
 withModuleFromLLVMAssembly' :: Context -> ByteString -> (Module -> IO a) -> IO a
 withModuleFromLLVMAssembly' c s f  = withModuleFromLLVMAssembly c s f
@@ -40,3 +41,6 @@ strCheck mAST mStr = strCheckC mAST mStr mStr
 
 arbitrarySbs :: Gen ShortByteString
 arbitrarySbs = BSS.pack <$> listOf arbitrary
+
+withTargets :: TestTree -> TestTree
+withTargets = withResource initializeAllTargets return . const

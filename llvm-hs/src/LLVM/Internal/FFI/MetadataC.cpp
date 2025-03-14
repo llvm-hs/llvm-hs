@@ -3,11 +3,13 @@
 #include <iostream>
 #include "llvm/Support/FormattedStream.h"
 
+#include "llvm/BinaryFormat/Dwarf.h"
 #include "llvm/Config/llvm-config.h"
 #include "llvm/IR/LLVMContext.h"
 #include "llvm/IR/Metadata.h"
 #include "llvm/IR/DebugInfoMetadata.h"
 #include "llvm-c/Core.h"
+#include "llvm/ADT/Optional.h"
 
 using namespace llvm;
 
@@ -79,11 +81,9 @@ MDTuple* LLVM_Hs_Get_MDTuple(LLVMContextRef c,
     return MDTuple::get(*unwrap(c), {unwrap(mds), count});
 }
 
-/*
 void LLVM_Hs_DumpMetadata(LLVMMetadataRef md) {
-    unwrap(md)->dump();
+    unwrap(md)->print(llvm::errs(), nullptr);
 }
-*/
 
 unsigned LLVM_Hs_GetMDKindNames(
 	LLVMContextRef c,
@@ -226,7 +226,7 @@ MDString* LLVM_Hs_DIFileGetDirectory(DIFile *di) {
 
 MDString* LLVM_Hs_DIFileGetChecksum(DIFile *di) {
     auto checksumInfo = di->getRawChecksum();
-    if (checksumInfo.hasValue()) {
+    if (checksumInfo.has_value()) {
         return checksumInfo->Value;
     }
     return nullptr;
@@ -234,7 +234,7 @@ MDString* LLVM_Hs_DIFileGetChecksum(DIFile *di) {
 
 llvm::DIFile::ChecksumKind LLVM_Hs_DIFileGetChecksumKind(DIFile *di) {
     auto checksumInfo = di->getRawChecksum();
-    if (checksumInfo.hasValue()) {
+    if (checksumInfo.has_value()) {
         return checksumInfo->Kind;
     }
     return static_cast<llvm::DIFile::ChecksumKind>(0);
@@ -471,8 +471,8 @@ DILexicalBlock* LLVM_Hs_Get_DILexicalBlock(LLVMContextRef ctx, DILocalScope* sco
 
 LLVMBool LLVM_Hs_DIDerivedTypeGetAddressSpace(DIDerivedType *a, unsigned *x) {
     auto addressSpace = a->getDWARFAddressSpace();
-    if (addressSpace.hasValue()) {
-        *x = addressSpace.getValue();
+    if (addressSpace.has_value()) {
+        *x = addressSpace.value();
         return 1;
     } else {
         return 0;
@@ -636,7 +636,7 @@ DILocalVariable* LLVM_Hs_Get_DILocalVariable(LLVMContextRef ctx,
                                              DINode::DIFlags flags, uint32_t alignInBits) {
     LLVMContext &c = *unwrap(ctx);
     return DILocalVariable::get(c, static_cast<DILocalScope*>(scope), name, file, line, type,
-                                arg, flags, alignInBits);
+                                arg, flags, alignInBits, nullptr);
 }
 
 uint16_t LLVM_Hs_DILocalVariable_GetArg(DILocalVariable* v) {
@@ -661,7 +661,7 @@ DIGlobalVariable* LLVM_Hs_Get_DIGlobalVariable(LLVMContextRef ctx,
                                  file, line, type,
                                  isLocalToUnit, isDefinition,
                                  declaration, templateParams,
-                                 alignInBits);
+                                 alignInBits, nullptr);
 }
 
 LLVMBool LLVM_Hs_DIGlobalVariable_GetLocal(DIGlobalVariable* v) {
@@ -762,6 +762,14 @@ MDTuple* LLVM_Hs_DICompileUnit_GetMacros(DICompileUnit* cu) {
 
 LLVMBool LLVM_Hs_DICompileUnit_GetRangesBaseAddress(DICompileUnit* cu) {
     return cu->getRangesBaseAddress();
+}
+
+MDString* LLVM_Hs_DICompileUnit_GetSysroot(DICompileUnit* cu) {
+    return cu->getRawSysRoot();
+}
+
+MDString* LLVM_Hs_DICompileUnit_GetSDK(DICompileUnit* cu) {
+    return cu->getRawSDK();
 }
 
 // DIFlags

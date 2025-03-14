@@ -1,3 +1,5 @@
+#include <unistd.h>
+
 #include <iostream>
 #include <memory>
 
@@ -53,7 +55,13 @@ extern "C" {
 // ExecutionSession
 
 ExecutionSession *LLVM_Hs_createExecutionSession() {
-    return new ExecutionSession();
+    if (auto e = SelfExecutorProcessControl::Create()) {
+      return new ExecutionSession(std::move(*e));
+    } else {
+      llvm::errs() << e.takeError() << "\n";
+      // FIXME: Better error handling
+      exit(1);
+    }
 }
 
 void LLVM_Hs_disposeExecutionSession(ExecutionSession *es) {
@@ -111,7 +119,11 @@ ObjectLayer* LLVM_Hs_createRTDyldObjectLinkingLayer(ExecutionSession* es) {
 }
 
 ObjectLayer* LLVM_Hs_createObjectLinkingLayer(ExecutionSession* es) {
-    return new ObjectLinkingLayer(*es, std::make_unique<jitlink::InProcessMemoryManager>());
+    auto IPMM = jitlink::InProcessMemoryManager::Create();
+    if (!IPMM) {
+        return nullptr;
+    }
+    return new ObjectLinkingLayer(*es, std::move(*IPMM));
 }
 
 void LLVM_Hs_ObjectLayerAddObjectFile(ObjectLayer* ol, JITDylib* dylib, const char* path) {

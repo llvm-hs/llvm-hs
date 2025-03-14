@@ -32,7 +32,7 @@ data Constant
     | Vector { memberValues :: [ Constant ] }
     | Undef { constantType :: Type }
     | BlockAddress { blockAddressFunction :: Name, blockAddressBlock :: Name }
-    | GlobalReference Type Name
+    | GlobalReference Name
     | TokenNone
     | Add {
         nsw :: Bool,
@@ -61,16 +61,6 @@ data Constant
         operand1 :: Constant
       }
     | FMul {
-        operand0 :: Constant,
-        operand1 :: Constant
-      }
-    | UDiv {
-        exact :: Bool,
-        operand0 :: Constant,
-        operand1 :: Constant
-      }
-    | SDiv {
-        exact :: Bool,
         operand0 :: Constant,
         operand1 :: Constant
       }
@@ -120,6 +110,7 @@ data Constant
       }
     | GetElementPtr {
         inBounds :: Bool,
+        type' :: Type,
         address :: Constant,
         indices :: [Constant]
       }
@@ -204,15 +195,6 @@ data Constant
         operand1 :: Constant,
         mask :: Constant
       }
-    | ExtractValue {
-        aggregate :: Constant,
-        indices' :: [Word32]
-      }
-    | InsertValue {
-        aggregate :: Constant,
-        element :: Constant,
-        indices' :: [Word32]
-      }
     deriving (Eq, Ord, Read, Show, Typeable, Data, Generic)
 
 
@@ -242,6 +224,6 @@ unsignedIntegerValue _ = error "unsignedIntegerValue is only defined for Int"
 sizeof :: Word32 -> Type -> Constant
 sizeof szBits t = PtrToInt szPtr (IntegerType szBits)
   where
-     ptrType = PointerType t (AddrSpace 0)
+     ptrType = PointerType (AddrSpace 0)
      nullPtr = IntToPtr (Int szBits 0) ptrType
-     szPtr   = GetElementPtr True nullPtr [Int szBits 1]
+     szPtr   = GetElementPtr True t nullPtr [Int szBits 1]

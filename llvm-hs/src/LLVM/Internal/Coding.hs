@@ -33,10 +33,10 @@ class DecodeM d h c where
 genCodingInstance :: (Data c, Data h) => TypeQ -> Name -> [(c, h)] -> Q [Dec]
 genCodingInstance ht ctn chs = do
   let n = const Nothing
-  [d| 
+  [d|
     instance Monad m => EncodeM m $(ht) $(conT ctn) where
       encodeM h = return $(
-        caseE [| h |] [ match (dataToPatQ n h) (normalB (dataToExpQ n c)) [] | (c,h) <- chs ] 
+        caseE [| h |] [ match (dataToPatQ n h) (normalB (dataToExpQ n c)) [] | (c,h) <- chs ]
        )
 
     instance Monad m => DecodeM m $(ht) $(conT ctn) where
@@ -50,6 +50,9 @@ allocaArray p = anyContToM $ Foreign.Marshal.Array.allocaArray (fromIntegral p)
 
 alloca :: (Storable a, MonadAnyCont IO m) => m (Ptr a)
 alloca = anyContToM Foreign.Marshal.Alloc.alloca
+
+allocaBytes :: (MonadAnyCont IO m) => Int -> m (Ptr a)
+allocaBytes s = anyContToM (Foreign.Marshal.Alloc.allocaBytes s)
 
 peek :: (Storable a, MonadIO m) => Ptr a -> m a
 peek p = liftIO $ Foreign.Storable.peek p

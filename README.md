@@ -1,6 +1,6 @@
 # llvm-hs - Haskell bindings for LLVM
 
-[![Build Status](https://travis-ci.org/llvm-hs/llvm-hs.svg?branch=llvm-6)](https://travis-ci.org/llvm-hs/llvm-hs) [![Hackage](https://img.shields.io/hackage/v/llvm-hs.svg)](https://hackage.haskell.org/package/llvm-hs)
+[![Build Status](https://github.com/llvm-hs/llvm-hs/actions/workflows/ci.yml/badge.svg)](https://github.com/llvm-hs/llvm-hs/actions/workflows/ci.yml) [![Hackage](https://img.shields.io/hackage/v/llvm-hs.svg)](https://hackage.haskell.org/package/llvm-hs)
 
 This project aims to provide a relatively complete set of bindings for
 the LLVM API. If you find that anything is missing please open an
@@ -62,8 +62,48 @@ and merely exposing them to Haskell as wrapped C or C++ functions.
 
 ## Contributing
 
-We love all kinds of contributions so please feel free to open issues for
-missing LLVM features, report & fix bugs or report API inconveniences.
+We love all kinds of contributions so feel free to open issues for
+missing LLVM features, report & fix bugs or report API
+inconveniences.
+
+## Installing LLVM
+
+This branch tracks LLVM HEAD, meaning that the only way to build it is to
+use a fresh checkout of LLVM sources.
+
+### Building from source
+
+Example of building LLVM from source. Detailed build instructions are available
+on the LLVM.org website [here](http://llvm.org/docs/CMake.html). [CMake
+3.4.3](http://www.cmake.org/cmake/resources/software.html) and a recent C++
+compiler are required, at least Clang 3.1, GCC 4.8, or Visual Studio 2015
+(Update 3).
+
+  1. Download and unpack the [LLVM source code](https://github.com/llvm/llvm-project):
+     ```sh
+     git clone https://github.com/llvm/llvm-project -b release/16.x --single-branch
+     cd llvm-project
+     ```
+
+  2. Create a temporary build directory and `cd` to it, for example:
+     ```sh
+     mkdir build && cd build
+     ```
+
+  3. Execute the following to configure the build. Here, `INSTALL_PREFIX` is
+     where LLVM is to be installed, for example `/usr/local`:
+     ```sh
+     cmake -DCMAKE_BUILD_TYPE=Release -DCMAKE_INSTALL_PREFIX=$INSTALL_PREFIX -DLLVM_PARALLEL_LINK_JOBS=1 -DLLVM_BUILD_LLVM_DYLIB=True -DLLVM_LINK_LLVM_DYLIB=True ../llvm
+     ```
+     See [options and variables](http://llvm.org/docs/CMake.html#options-and-variables)
+     for a list of additional build parameters you can specify (we especially recommend the
+     `ninja` build system).
+
+  4. Build and install:
+     ```sh
+     cmake --build .
+     cmake --build . --target install
+     ```
 
 ## Versioning
 

@@ -398,6 +398,8 @@ genDICompileUnit file retained macro =
     <*> arbitrary
     <*> arbitrary
     <*> arbitrary
+    <*> arbitrarySbs
+    <*> arbitrarySbs
 
 instance Arbitrary DebugEmissionKind where
   arbitrary = QC.elements [NoDebug, FullDebug, LineTablesOnly]
@@ -827,7 +829,7 @@ cyclicMetadata = testGroup "cyclic" [
              },
             MetadataNodeDefinition
               (MetadataNodeID 0)
-              (MDTuple [Just $ MDValue $ ConstantOperand (C.GlobalReference (ptr (FunctionType A.T.void [] False)) (Name "foo"))])
+              (MDTuple [Just $ MDValue $ ConstantOperand (C.GlobalReference (Name "foo"))])
            ]
       let s = "; ModuleID = '<string>'\n\
               \source_filename = \"<string>\"\n\
@@ -836,7 +838,7 @@ cyclicMetadata = testGroup "cyclic" [
               \  ret void, !my-metadatum !0\n\
               \}\n\
               \\n\
-              \!0 = !{void ()* @foo}\n"
+              \!0 = !{ptr @foo}\n"
       strCheck ast s
    ]
 
@@ -942,6 +944,8 @@ globalObjectMetadata = testGroup "Metadata on GlobalObject" $
                       , debugInfoForProfiling = False
                       , nameTableKind = NameTableKindDefault
                       , rangesBaseAddress = False
+                      , sysroot = ""
+                      , sdk = ""
                       }
                   , MetadataNodeDefinition (MetadataNodeID 3) $
                     DINode . DIScope . DIFile $
@@ -1004,6 +1008,8 @@ globalObjectMetadata = testGroup "Metadata on GlobalObject" $
                       , debugInfoForProfiling = False
                       , nameTableKind = NameTableKindDefault
                       , rangesBaseAddress = False
+                      , sysroot = ""
+                      , sdk = ""
                       }
                   , MetadataNodeDefinition (MetadataNodeID 3) $
                     DINode . DIVariable . DIGlobalVariable $

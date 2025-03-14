@@ -24,7 +24,7 @@ import qualified LLVM.Internal.FFI.LLVMCTypes as FFI
 
 import LLVM.Internal.Module
 import LLVM.Internal.Context
-import LLVM.Internal.Coding
+import LLVM.Internal.Coding hiding (allocaBytes)
 import qualified LLVM.CodeModel as CodeModel
 import LLVM.Internal.Target
 import qualified LLVM.AST as A

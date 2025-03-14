@@ -49,17 +49,16 @@ moduleAst =
                      { tailCallKind = Nothing
                      , callingConvention = C
                      , returnAttributes = []
+                     , type' =
+                         FunctionType
+                           { resultType = i32
+                           , argumentTypes = []
+                           , isVarArg = False
+                           }
                      , function =
                          Right
                            (ConstantOperand
-                              (GlobalReference
-                                 (ptr
-                                    (FunctionType
-                                     { resultType = i32
-                                     , argumentTypes = []
-                                     , isVarArg = False
-                                     }))
-                                 ("f")))
+                              (GlobalReference "f"))
                      , arguments = []
                      , functionAttributes = [Left (GroupID 0)]
                      , metadata = []
@@ -75,12 +74,9 @@ moduleAst =
       , FunctionAttributes
           (GroupID 0)
           [ AlwaysInline
-          , ArgMemOnly
           , Builtin
           , Cold
           , Convergent
-          , InaccessibleMemOnly
-          , InaccessibleMemOrArgMemOnly
           , InlineHint
           , JumpTable
           , MinimizeSize
@@ -96,8 +92,6 @@ moduleAst =
           , NonLazyBind
           , OptimizeForSize
           , OptimizeNone
-          , ReadNone
-          , ReadOnly
           , ReturnsTwice
           , SafeStack
           , SanitizeAddress
@@ -106,10 +100,10 @@ moduleAst =
           , StackProtect
           , StackProtectReq
           , StackProtectStrong
-          , UWTable
-          , WriteOnly
           , AllocSize 8 (Just 16)
+          , Memory (Union (Union (Exact (Other None)) (Exact (Argmem None))) (Exact (Inaccessiblemem None)))
           , StackAlignment 8
+          , UWTable
           , StringAttribute "bar" "baz"
           , StringAttribute "foo" ""
           , StringAttribute "qux" ""

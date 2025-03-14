@@ -288,6 +288,8 @@ data DICompileUnit = CompileUnit
   , debugInfoForProfiling :: Bool
   , nameTableKind :: DebugNameTableKind
   , rangesBaseAddress :: Bool
+  , sysroot :: ShortByteString
+  , sdk :: ShortByteString
   } deriving (Eq, Ord, Read, Show, Typeable, Data, Generic)
 
 -- | <https://llvm.org/docs/LangRef.html#difile>

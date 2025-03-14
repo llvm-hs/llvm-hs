@@ -42,8 +42,7 @@ import qualified LLVM.CodeGenOpt as CGO
 handString = "; ModuleID = '<string>'\n\
     \source_filename = \"<string>\"\n\
     \\n\
-    \%0 = type { i32, %1*, %0* }\n\
-    \%1 = type opaque\n\
+    \%0 = type { i32, ptr, ptr }\n\
     \\n\
     \$bob = comdat largest\n\
     \\n\
@@ -55,22 +54,22 @@ handString = "; ModuleID = '<string>'\n\
     \@.argyle = thread_local global i32 0\n\
     \@5 = thread_local(localdynamic) global i32 1\n\
     \\n\
-    \@three = private alias i32, i32 addrspace(3)* @1\n\
-    \@two = unnamed_addr alias i32, i32 addrspace(3)* @three\n\
-    \@one = thread_local(initialexec) alias i32, i32* @5\n\
+    \@three = private alias i32, ptr addrspace(3) @1\n\
+    \@two = unnamed_addr alias i32, ptr addrspace(3) @three\n\
+    \@one = thread_local(initialexec) alias i32, ptr @5\n\
     \\n\
     \define i32 @bar() prefix i32 1 {\n\
-    \  %1 = musttail call zeroext i32 @foo(i32 inreg align 16 1, i8 signext 4) #0\n\
+    \  %1 = musttail call zeroext i32 @foo(i32 inreg 1, i8 signext 4) #0\n\
     \  ret i32 %1\n\
     \}\n\
     \\n\
     \define i32 @baz() prefix i32 1 {\n\
-    \  %1 = notail call zeroext i32 @foo(i32 inreg align 16 1, i8 signext 4) #0\n\
+    \  %1 = notail call zeroext i32 @foo(i32 inreg 1, i8 signext 4) #0\n\
     \  ret i32 %1\n\
     \}\n\
     \\n\
-    \; Function Attrs: nounwind readnone uwtable\n\
-    \define zeroext i32 @foo(i32 inreg align 16 %x, i8 signext %y) #0 {\n\
+    \; Function Attrs: nounwind memory(none) uwtable\n\
+    \define zeroext i32 @foo(i32 inreg %x, i8 signext %y) #0 {\n\
     \  %1 = mul nsw i32 %x, %x\n\
     \  br label %here\n\
     \\n\
@@ -87,16 +86,15 @@ handString = "; ModuleID = '<string>'\n\
     \  ret i32 %r\n\
     \}\n\
     \\n\
-    \attributes #0 = { nounwind readnone uwtable \"eep\" }\n"
+    \attributes #0 = { nounwind memory(none) uwtable \"eep\" }\n"
 
 handAST = Module "<string>" "<string>" Nothing Nothing [
       TypeDefinition (UnName 0) (
          Just $ StructureType False [
            i32,
-           ptr (NamedTypeReference (UnName 1)),
-           ptr (NamedTypeReference (UnName 0))
+           ptr,
+           ptr
           ]),
-      TypeDefinition (UnName 1) Nothing,
       GlobalDefinition $ globalVariableDefaults {
         G.name = UnName 0,
         G.type' = i32,
@@ -142,19 +140,19 @@ handAST = Module "<string>" "<string>" Nothing Nothing [
          G.linkage = L.Private,
          G.type' = i32,
          G.addrSpace = AddrSpace 3,
-         G.aliasee = C.GlobalReference (PointerType i32 (AddrSpace 3)) (UnName 1)
+         G.aliasee = C.GlobalReference (UnName 1)
       },
       GlobalDefinition $ globalAliasDefaults {
         G.name = Name "two",
         G.unnamedAddr = Just GlobalAddr,
         G.type' = i32,
         G.addrSpace = AddrSpace 3,
-        G.aliasee = C.GlobalReference (PointerType i32 (AddrSpace 3)) (Name "three")
+        G.aliasee = C.GlobalReference (Name "three")
       },
       GlobalDefinition $ globalAliasDefaults {
         G.name = Name "one",
         G.type' = i32,
-        G.aliasee = C.GlobalReference (ptr i32) (UnName 5),
+        G.aliasee = C.GlobalReference (UnName 5),
         G.threadLocalMode = Just TLS.InitialExec
       },
       GlobalDefinition $ functionDefaults {
@@ -167,9 +165,10 @@ handAST = Module "<string>" "<string>" Nothing Nothing [
              tailCallKind = Just MustTail,
              callingConvention = CC.C,
              returnAttributes = [PA.ZeroExt],
-             function = Right (ConstantOperand (C.GlobalReference (ptr (FunctionType i32 [i32, i8] False)) (Name "foo"))),
+             type' = FunctionType i32 [i32, i8] False,
+             function = Right (ConstantOperand (C.GlobalReference (Name "foo"))),
              arguments = [
-              (ConstantOperand (C.Int 32 1), [PA.InReg, PA.Alignment 16]),
+              (ConstantOperand (C.Int 32 1), [PA.InReg]),
               (ConstantOperand (C.Int 8 4), [PA.SignExt])
              ],
              functionAttributes = [Left (FA.GroupID 0)],
@@ -190,9 +189,10 @@ handAST = Module "<string>" "<string>" Nothing Nothing [
              tailCallKind = Just NoTail,
              callingConvention = CC.C,
              returnAttributes = [PA.ZeroExt],
-             function = Right (ConstantOperand (C.GlobalReference (ptr (FunctionType i32 [i32, i8] False)) (Name "foo"))),
+             type' = FunctionType i32 [i32, i8] False,
+             function = Right (ConstantOperand (C.GlobalReference (Name "foo"))),
              arguments = [
-              (ConstantOperand (C.Int 32 1), [PA.InReg, PA.Alignment 16]),
+              (ConstantOperand (C.Int 32 1), [PA.InReg]),
               (ConstantOperand (C.Int 8 4), [PA.SignExt])
              ],
              functionAttributes = [Left (FA.GroupID 0)],
@@ -208,7 +208,7 @@ handAST = Module "<string>" "<string>" Nothing Nothing [
         G.returnType = i32,
         G.name = Name "foo",
         G.parameters = ([
-          Parameter i32 (Name "x") [PA.InReg, PA.Alignment 16],
+          Parameter i32 (Name "x") [PA.InReg],
           Parameter i8 (Name "y") [PA.SignExt]
          ], False),
         G.functionAttributes = [Left (FA.GroupID 0)],
@@ -264,7 +264,7 @@ handAST = Module "<string>" "<string>" Nothing Nothing [
            )
          ]
         },
-      FunctionAttributes (FA.GroupID 0) [FA.NoUnwind, FA.ReadNone, FA.UWTable, FA.StringAttribute "eep" ""],
+      FunctionAttributes (FA.GroupID 0) [FA.NoUnwind, FA.Memory (FA.Union (FA.Union (FA.Exact (FA.Other FA.None)) (FA.Exact (FA.Argmem FA.None))) (FA.Exact (FA.Inaccessiblemem FA.None))), FA.UWTable, FA.StringAttribute "eep" ""],
       COMDAT "bob" COMDAT.Largest
      ]
 
@@ -286,7 +286,7 @@ tests = testGroup "Module" [
 
   testGroup "emit" [
     testCase "assemble" $ withContext $ \context -> do
-      let s = "define i32 @main(i32 %argc, i8** %argv) {\n\
+      let s = "define i32 @main(i32 %argc, ptr %argv) {\n\
               \  ret i32 0\n\
               \}\n"
       a <- withModuleFromLLVMAssembly' context s $ \m -> do
@@ -317,7 +317,7 @@ tests = testGroup "Module" [
   testCase "moduleAST" $ withContext $ \context -> do
     ast <- withModuleFromLLVMAssembly' context handString moduleAST
     assertEqPretty ast handAST,
-    
+
   testCase "withModuleFromAST" $ withContext $ \context -> do
     s <- withModuleFromAST context handAST moduleLLVMAssembly
     s @?= handString,
@@ -457,7 +457,7 @@ tests = testGroup "Module" [
                  ] (
                    Do $ Br (Name "elsewhere") []
                  ),
-                BasicBlock (Name "elsewhere") [             
+                BasicBlock (Name "elsewhere") [
                  ] (
                    Do $ Br (Name "there") []
                  ),
@@ -536,7 +536,7 @@ tests = testGroup "Module" [
              ]
         strCheck ast s
    ],
-        
+
   testGroup "failures" [
     testCase "bad block reference" $ withContext $ \context -> do
       let badAST = Module "<string>" "<string>" Nothing Nothing [
@@ -610,8 +610,8 @@ tests = testGroup "Module" [
       t @?= Left (EncodeException "A type definition requires a structure type but got: VoidType"),
     testCase "renamed type definitions" $ do
       let modStr1 = unlines
-            [ "%struct = type { %struct* }"
-            , "define void @f(%struct*) {"
+            [ "%struct = type { ptr }"
+            , "define void @f(ptr) {"
             , "  ret void"
             , "}"
             ]
@@ -619,10 +619,10 @@ tests = testGroup "Module" [
             [
             ]
           modStr2 = unlines
-            [ "%struct = type { %struct* }"
-            , "declare void @f(%struct*)"
+            [ "%struct = type { ptr }"
+            , "declare void @f(ptr)"
             , "define void @main() {"
-            , "  call void @f(%struct* zeroinitializer)"
+            , "  call void @f(ptr zeroinitializer)"
             , "  ret void"
             , "}"
             ]

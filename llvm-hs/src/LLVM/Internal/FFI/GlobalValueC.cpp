@@ -1,5 +1,6 @@
 #define __STDC_LIMIT_MACROS
 #include "llvm/IR/Comdat.h"
+#include "llvm/IR/Type.h"
 #include "llvm/IR/GlobalValue.h"
 #include "llvm/IR/GlobalObject.h"
 #include "llvm/IR/Metadata.h"
@@ -76,6 +77,14 @@ void LLVM_Hs_GlobalObject_GetAllMetadata(GlobalObject* obj, unsigned *kinds, LLV
 
 void LLVM_Hs_GlobalObject_SetMetadata(GlobalObject* obj, unsigned kind, MDNode* node) {
     obj->setMetadata(kind, node);
+}
+
+LLVMTypeRef LLVM_Hs_GetGlobalValueType(LLVMValueRef v) {
+  return wrap(unwrap<GlobalValue>(v)->getValueType());
+}
+
+unsigned LLVM_Hs_GetGlobalValueAddressSpace(LLVMValueRef v) {
+  return unwrap<GlobalValue>(v)->getAddressSpace();
 }
 
 }

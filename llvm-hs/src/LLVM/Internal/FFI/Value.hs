@@ -27,7 +27,7 @@ foreign import ccall unsafe "LLVMSetValueName" setValueName ::
   Ptr Value -> CString -> IO ()
 
 -- | This function exposes the ID returned by llvm::Value::getValueID()
--- | <http://llvm.org/doxygen/classllvm_1_1Value.html#a2983b7b4998ef5b9f51b18c01588af3c>. 
+-- | <http://llvm.org/doxygen/classllvm_1_1Value.html#a2983b7b4998ef5b9f51b18c01588af3c>.
 foreign import ccall unsafe "LLVM_Hs_GetValueSubclassId" getValueSubclassId ::
   Ptr Value -> IO ValueSubclassId
 

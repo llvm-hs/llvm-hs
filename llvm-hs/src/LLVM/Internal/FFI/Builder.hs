@@ -9,12 +9,6 @@ import Foreign.Ptr
 import Foreign.C
 import GHC.Stack
 
-import qualified Data.List as List
-import qualified Data.Map as Map
-
-import qualified LLVM.AST.Instruction as A
-import LLVM.Internal.InstructionDefs as ID
-
 import LLVM.Internal.FFI.Context
 import LLVM.Internal.FFI.LLVMCTypes
 import LLVM.Internal.FFI.PtrHierarchy
@@ -45,8 +39,8 @@ foreign import ccall unsafe "LLVMBuildSwitch" buildSwitch ::
 foreign import ccall unsafe "LLVMBuildIndirectBr" buildIndirectBr ::
   Ptr Builder -> Ptr Value -> CUInt -> IO (Ptr Instruction)
 
-foreign import ccall unsafe "LLVMBuildInvoke" buildInvoke ::
-  Ptr Builder -> Ptr Value -> Ptr (Ptr Value) -> CUInt
+foreign import ccall unsafe "LLVMBuildInvoke2" buildInvoke ::
+  Ptr Builder -> Ptr Type -> Ptr Value -> Ptr (Ptr Value) -> CUInt
               -> Ptr BasicBlock -> Ptr BasicBlock -> CString -> IO (Ptr Instruction)
 
 foreign import ccall unsafe "LLVMBuildResume" buildResume ::
@@ -164,10 +158,10 @@ foreign import ccall unsafe "LLVMBuildArrayAlloca" buildAlloca ::
   Ptr Builder -> Ptr Type -> Ptr Value -> CString -> IO (Ptr Instruction)
 
 foreign import ccall unsafe "LLVM_Hs_BuildLoad" buildLoad' ::
-  Ptr Builder -> LLVMBool -> Ptr Value -> MemoryOrdering -> SynchronizationScope -> CUInt -> CString -> IO (Ptr Instruction)
+  Ptr Builder -> LLVMBool -> Ptr Type -> Ptr Value -> MemoryOrdering -> SynchronizationScope -> CUInt -> CString -> IO (Ptr Instruction)
 
-buildLoad :: Ptr Builder -> LLVMBool -> Ptr Value -> (SynchronizationScope, MemoryOrdering) -> CUInt -> CString -> IO (Ptr Instruction)
-buildLoad builder vol a' (ss, mo) al s = buildLoad' builder vol a' mo ss al s
+buildLoad :: Ptr Builder -> LLVMBool -> Ptr Type -> Ptr Value -> (SynchronizationScope, MemoryOrdering) -> CUInt -> CString -> IO (Ptr Instruction)
+buildLoad builder vol ty a' (ss, mo) al s = buildLoad' builder vol ty a' mo ss al s
 
 foreign import ccall unsafe "LLVM_Hs_BuildStore" buildStore' ::
   Ptr Builder -> LLVMBool -> Ptr Value -> Ptr Value -> MemoryOrdering -> SynchronizationScope -> CUInt -> CString -> IO (Ptr Instruction)
@@ -176,15 +170,15 @@ buildStore :: Ptr Builder -> LLVMBool -> Ptr Value -> Ptr Value -> (Synchronizat
 buildStore builder vol a' v' (ss, mo) al s = buildStore' builder vol a' v' mo ss al s
 
 foreign import ccall unsafe "LLVM_Hs_BuildGEP" buildGetElementPtr' ::
-  Ptr Builder -> Ptr Value -> Ptr (Ptr Value) -> CUInt -> CString -> IO (Ptr Instruction)
+  Ptr Builder -> Ptr Type -> Ptr Value -> Ptr (Ptr Value) -> CUInt -> CString -> IO (Ptr Instruction)
 
 foreign import ccall unsafe "LLVM_Hs_BuildInBoundsGEP" buildInBoundsGetElementPtr' ::
-  Ptr Builder -> Ptr Value -> Ptr (Ptr Value) -> CUInt -> CString -> IO (Ptr Instruction)
+  Ptr Builder -> Ptr Type -> Ptr Value -> Ptr (Ptr Value) -> CUInt -> CString -> IO (Ptr Instruction)
 
-buildGetElementPtr :: HasCallStack => Ptr Builder -> LLVMBool -> Ptr Value -> (CUInt, Ptr (Ptr Value)) -> CString -> IO (Ptr Instruction)
-buildGetElementPtr builder (LLVMBool 1) a (n, is) s = buildInBoundsGetElementPtr' builder a is n s
-buildGetElementPtr builder (LLVMBool 0) a (n, is) s = buildGetElementPtr' builder a is n s
-buildGetElementPtr _ (LLVMBool i) _ _ _ = error ("LLVMBool should be 0 or 1 but is " <> show i)
+buildGetElementPtr :: HasCallStack => Ptr Builder -> LLVMBool -> Ptr Type -> Ptr Value -> (CUInt, Ptr (Ptr Value)) -> CString -> IO (Ptr Instruction)
+buildGetElementPtr builder (LLVMBool 1) ty a (n, is) s = buildInBoundsGetElementPtr' builder ty a is n s
+buildGetElementPtr builder (LLVMBool 0) ty a (n, is) s = buildGetElementPtr' builder ty a is n s
+buildGetElementPtr _ (LLVMBool i) _ _ _ _ = error ("LLVMBool should be 0 or 1 but is " <> show i)
 
 foreign import ccall unsafe "LLVM_Hs_BuildFence" buildFence' ::
   Ptr Builder -> MemoryOrdering -> SynchronizationScope -> CString -> IO (Ptr Instruction)
@@ -193,16 +187,16 @@ buildFence :: Ptr Builder -> (SynchronizationScope, MemoryOrdering) -> CString -
 buildFence builder (ss, mo) s = buildFence' builder mo ss s
 
 foreign import ccall unsafe "LLVM_Hs_BuildAtomicCmpXchg" buildCmpXchg' ::
-  Ptr Builder -> LLVMBool -> Ptr Value -> Ptr Value -> Ptr Value -> MemoryOrdering -> MemoryOrdering -> SynchronizationScope -> CString -> IO (Ptr Instruction)
+  Ptr Builder -> LLVMBool -> Ptr Value -> Ptr Value -> Ptr Value -> CUInt -> MemoryOrdering -> MemoryOrdering -> SynchronizationScope -> CString -> IO (Ptr Instruction)
 
-buildCmpXchg :: Ptr Builder -> LLVMBool -> Ptr Value -> Ptr Value -> Ptr Value -> (SynchronizationScope, MemoryOrdering) -> MemoryOrdering -> CString -> IO (Ptr Instruction)
-buildCmpXchg builder vol a e r (ss, smo) fmo s =  buildCmpXchg' builder vol a e r smo fmo ss s
+buildCmpXchg :: Ptr Builder -> LLVMBool -> Ptr Value -> Ptr Value -> Ptr Value -> CUInt -> (SynchronizationScope, MemoryOrdering) -> MemoryOrdering -> CString -> IO (Ptr Instruction)
+buildCmpXchg builder vol a e r al (ss, smo) fmo s =  buildCmpXchg' builder vol a e r al smo fmo ss s
 
 foreign import ccall unsafe "LLVM_Hs_BuildAtomicRMW" buildAtomicRMW' ::
-  Ptr Builder -> LLVMBool -> RMWOperation -> Ptr Value -> Ptr Value -> MemoryOrdering -> SynchronizationScope -> CString -> IO (Ptr Instruction)
+  Ptr Builder -> LLVMBool -> RMWOperation -> Ptr Value -> Ptr Value -> CUInt -> MemoryOrdering -> SynchronizationScope -> CString -> IO (Ptr Instruction)
 
-buildAtomicRMW :: Ptr Builder -> LLVMBool -> RMWOperation -> Ptr Value -> Ptr Value -> (SynchronizationScope, MemoryOrdering) -> CString -> IO (Ptr Instruction)
-buildAtomicRMW builder vol rmwOp a v (ss, mo) s = buildAtomicRMW' builder vol rmwOp a v mo ss s
+buildAtomicRMW :: Ptr Builder -> LLVMBool -> RMWOperation -> Ptr Value -> Ptr Value -> CUInt -> (SynchronizationScope, MemoryOrdering) -> CString -> IO (Ptr Instruction)
+buildAtomicRMW builder vol rmwOp a v al (ss, mo) s = buildAtomicRMW' builder vol rmwOp a v al mo ss s
 
 foreign import ccall unsafe "LLVM_Hs_BuildICmp" buildICmp ::
   Ptr Builder -> ICmpPredicate -> Ptr Value -> Ptr Value -> CString -> IO (Ptr Instruction)
@@ -213,8 +207,8 @@ foreign import ccall unsafe "LLVMBuildFCmp" buildFCmp ::
 foreign import ccall unsafe "LLVMBuildPhi" buildPhi ::
   Ptr Builder -> Ptr Type -> CString -> IO (Ptr Instruction)
 
-foreign import ccall unsafe "LLVMBuildCall" buildCall ::
-  Ptr Builder -> Ptr Value -> Ptr (Ptr Value) -> CUInt -> CString -> IO (Ptr Instruction)
+foreign import ccall unsafe "LLVMBuildCall2" buildCall ::
+  Ptr Builder -> Ptr Type -> Ptr Value -> Ptr (Ptr Value) -> CUInt -> CString -> IO (Ptr Instruction)
 
 foreign import ccall unsafe "LLVMBuildFreeze" buildFreeze ::
   Ptr Builder -> Ptr Value -> Ptr Type -> IO (Ptr Instruction)

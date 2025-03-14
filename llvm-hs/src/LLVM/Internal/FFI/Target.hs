@@ -35,23 +35,23 @@ foreign import ccall unsafe "LLVM_Hs_SetTargetOptionFlag" setTargetOptionFlag ::
 foreign import ccall unsafe "LLVM_Hs_GetTargetOptionFlag" getTargetOptionsFlag ::
   Ptr TargetOptions -> TargetOptionFlag -> IO LLVMBool
 
-foreign import ccall unsafe "LLVM_Hs_SetMCTargetOptionFlag" setMCTargetOptionFlag ::
-  Ptr MCTargetOptions -> MCTargetOptionFlag -> LLVMBool -> IO ()
+foreign import ccall unsafe "LLVM_Hs_SetMCTargetOptionBoolFlag" setMCTargetOptionBoolFlag ::
+  Ptr MCTargetOptions -> MCTargetOptionBoolFlag -> LLVMBool -> IO ()
 
-foreign import ccall unsafe "LLVM_Hs_GetMCTargetOptionFlag" getMCTargetOptionsFlag ::
-  Ptr MCTargetOptions -> MCTargetOptionFlag -> IO LLVMBool
+foreign import ccall unsafe "LLVM_Hs_GetMCTargetOptionBoolFlag" getMCTargetOptionsBoolFlag ::
+  Ptr MCTargetOptions -> MCTargetOptionBoolFlag -> IO LLVMBool
+
+foreign import ccall unsafe "LLVM_Hs_SetMCTargetOptionFlagUseDwarfDirectory" setMCTargetOptionFlagUseDwarfDirectory ::
+  Ptr MCTargetOptions -> CInt -> IO ()
+
+foreign import ccall unsafe "LLVM_Hs_GetMCTargetOptionFlagUseDwarfDirectory" getMCTargetOptionFlagUseDwarfDirectory ::
+  Ptr MCTargetOptions -> IO CInt
 
 foreign import ccall unsafe "LLVM_Hs_GetCompressDebugSections" getCompressDebugSections ::
   Ptr TargetOptions -> IO DebugCompressionType
 
 foreign import ccall unsafe "LLVM_Hs_SetCompressDebugSections" setCompressDebugSections ::
   Ptr TargetOptions -> DebugCompressionType -> IO ()
-
-foreign import ccall unsafe "LLVM_Hs_SetStackAlignmentOverride" setStackAlignmentOverride ::
-  Ptr TargetOptions -> CUInt -> IO ()
-
-foreign import ccall unsafe "LLVM_Hs_GetStackAlignmentOverride" getStackAlignmentOverride ::
-  Ptr TargetOptions -> IO CUInt
 
 foreign import ccall unsafe "LLVM_Hs_SetFloatABIType" setFloatABIType ::
   Ptr TargetOptions -> FloatABIType -> IO ()

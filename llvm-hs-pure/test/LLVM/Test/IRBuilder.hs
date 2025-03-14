@@ -149,18 +149,11 @@ tests =
                         (UnName 7)
                         [ UnName 8 := GetElementPtr {
                             inBounds = False,
-                            address = ConstantOperand (C.Null (AST.ptr (AST.ptr (AST.ptr AST.i32)))),
+                            type' = AST.i32,
+                            address = ConstantOperand (C.Null AST.ptr),
                             indices =
-                              [ ConstantOperand (C.Int 32 10)
-                              , ConstantOperand (C.Int 32 20)
-                              , ConstantOperand (C.Int 32 30)
+                              [ ConstantOperand (C.Int 32 40)
                               ],
-                            metadata = []
-                          }
-                        , UnName 9 := GetElementPtr {
-                            inBounds = False,
-                            address = LocalReference (AST.ptr AST.i32) (UnName 8),
-                            indices = [ ConstantOperand (C.Int 32 40) ],
                             metadata = []
                           }
                         ]
@@ -187,8 +180,8 @@ recursiveFunctionCalls = do
                     { tailCallKind = Nothing
                     , callingConvention = CC.C
                     , returnAttributes = []
-                    , I.function =
-                        Right (ConstantOperand (C.GlobalReference (AST.ptr (FunctionType AST.i32 [AST.i32] False)) (Name "f")))
+                    , type' = (FunctionType AST.i32 [AST.i32] False)
+                    , I.function = Right (ConstantOperand (C.GlobalReference (Name "f")))
                     , arguments = [(LocalReference (IntegerType {typeBits = 32}) (Name "a_0"),[])]
                     , functionAttributes = []
                     , metadata = []
@@ -203,7 +196,7 @@ recursiveFunctionCalls = do
     m = buildModule "exampleModule" $ mdo
       f <- function "f" [(AST.i32, "a")] AST.i32 $ \[a] -> mdo
         entry <- block `named` "entry"; do
-          c <- call f [(a, [])]
+          c <- call (FunctionType AST.i32 [AST.i32] False) f [(a, [])]
           ret c
       pure ()
 
@@ -213,7 +206,7 @@ callWorksWithConstantGlobals = do
     { moduleName = "exampleModule"
     , moduleDefinitions =
       [ GlobalDefinition functionDefaults {
-          LLVM.AST.Global.returnType = AST.ptr AST.i8,
+          LLVM.AST.Global.returnType = AST.ptr,
           LLVM.AST.Global.name = Name "malloc",
           LLVM.AST.Global.parameters = ([Parameter (IntegerType {typeBits = 64}) (Name "") []],False),
           LLVM.AST.Global.basicBlocks = []
@@ -224,11 +217,12 @@ callWorksWithConstantGlobals = do
           LLVM.AST.Global.parameters = ([],False),
           LLVM.AST.Global.basicBlocks = [
             BasicBlock (UnName 0) [
-              UnName 1 := Call { tailCallKind = Nothing
+              UnName 1 := Call
+                { tailCallKind = Nothing
+                , type' = FunctionType {resultType = AST.ptr, argumentTypes = [IntegerType {typeBits = 64}], isVarArg = False}
                 , I.function = Right (
                   ConstantOperand (
                     C.GlobalReference
-                      (AST.ptr $ FunctionType {resultType = AST.ptr $ IntegerType {typeBits = 8}, argumentTypes = [IntegerType {typeBits = 64}], isVarArg = False})
                       (Name "malloc")
                     )
                   )
@@ -250,9 +244,9 @@ resolvesTypeDefs = do
   buildModule "<string>" builder @?= ast
   where builder = mdo
           pairTy <- typedef "pair" (Just (StructureType False [AST.i32, AST.i32]))
-          function "f" [(AST.ptr pairTy, "ptr"), (AST.i32, "x"), (AST.i32, "y")] AST.void $ \[ptr, x, y] -> do
-            xPtr <- gep ptr [ConstantOperand (C.Int 32 0), ConstantOperand (C.Int 32 0)]
-            yPtr <- gep ptr [ConstantOperand (C.Int 32 0), ConstantOperand (C.Int 32 1)]
+          function "f" [(AST.ptr, "ptr"), (AST.i32, "x"), (AST.i32, "y")] AST.void $ \[ptr, x, y] -> do
+            xPtr <- gep pairTy ptr [ConstantOperand (C.Int 32 0), ConstantOperand (C.Int 32 0)]
+            yPtr <- gep pairTy ptr [ConstantOperand (C.Int 32 0), ConstantOperand (C.Int 32 1)]
             store xPtr 0 x
             store yPtr 0 y
           function "g" [(pairTy, "pair")] AST.i32 $ \[pair] -> do
@@ -267,7 +261,7 @@ resolvesTypeDefs = do
             [ TypeDefinition "pair" (Just (StructureType False [AST.i32, AST.i32]))
             , GlobalDefinition functionDefaults
               { LLVM.AST.Global.name = "f"
-              , LLVM.AST.Global.parameters = ( [ Parameter (AST.ptr (NamedTypeReference "pair")) "ptr_0" []
+              , LLVM.AST.Global.parameters = ( [ Parameter AST.ptr "ptr_0" []
                                , Parameter AST.i32 "x_0" []
                                , Parameter AST.i32 "y_0" []]
                              , False)
@@ -276,19 +270,21 @@ resolvesTypeDefs = do
                 [ BasicBlock (UnName 0)
                   [ UnName 1 := GetElementPtr
                       { inBounds = False
-                      , address = LocalReference (AST.ptr (NamedTypeReference "pair")) "ptr_0"
+                      , type' = NamedTypeReference "pair"
+                      , address = LocalReference AST.ptr "ptr_0"
                       , indices = [ConstantOperand (C.Int 32 0), ConstantOperand (C.Int 32 0)]
                       , metadata = []
                       }
                   , UnName 2 := GetElementPtr
                       { inBounds = False
-                      , address = LocalReference (AST.ptr (NamedTypeReference "pair")) "ptr_0"
+                      , type' = NamedTypeReference "pair"
+                      , address = LocalReference AST.ptr "ptr_0"
                       , indices = [ConstantOperand (C.Int 32 0), ConstantOperand (C.Int 32 1)]
                       , metadata = []
                       }
                   , Do $ Store
                       { volatile = False
-                      , address = LocalReference (AST.ptr AST.i32) (UnName 1)
+                      , address = LocalReference AST.ptr (UnName 1)
                       , value = LocalReference AST.i32 "x_0"
                       , maybeAtomicity = Nothing
                       , alignment = 0
@@ -296,7 +292,7 @@ resolvesTypeDefs = do
                       }
                   , Do $ Store
                       { volatile = False
-                      , address = LocalReference (AST.ptr AST.i32) (UnName 2)
+                      , address = LocalReference AST.ptr (UnName 2)
                       , value = LocalReference AST.i32 "y_0"
                       , maybeAtomicity = Nothing
                       , alignment = 0
@@ -343,13 +339,13 @@ resolvesConstantTypeDefs = do
           pairTy <- typedef "pair" (Just (StructureType False [AST.i32, AST.i32]))
           globalPair <- global "gpair" pairTy (C.AggregateZero pairTy)
           function "f" [(AST.i32, "x"), (AST.i32, "y")] AST.void $ \[x, y] -> do
-            let ptr = ConstantOperand $ C.GlobalReference (AST.ptr pairTy) "gpair"
-            xPtr <- gep ptr [ConstantOperand (C.Int 32 0), ConstantOperand (C.Int 32 0)]
-            yPtr <- gep ptr [ConstantOperand (C.Int 32 0), ConstantOperand (C.Int 32 1)]
+            let ptr = ConstantOperand $ C.GlobalReference "gpair"
+            xPtr <- gep pairTy ptr [ConstantOperand (C.Int 32 0), ConstantOperand (C.Int 32 0)]
+            yPtr <- gep pairTy ptr [ConstantOperand (C.Int 32 0), ConstantOperand (C.Int 32 1)]
             store xPtr 0 x
             store yPtr 0 y
           function "g" [] AST.i32 $ \[] -> do
-            pair <- load (ConstantOperand $ C.GlobalReference (AST.ptr pairTy) "gpair") 0
+            pair <- load pairTy (ConstantOperand $ C.GlobalReference "gpair") 0
             x <- extractValue pair [0]
             y <- extractValue pair [1]
             z <- add x y
@@ -375,19 +371,21 @@ resolvesConstantTypeDefs = do
                 [ BasicBlock (UnName 0)
                   [ UnName 1 := GetElementPtr
                       { inBounds = False
-                      , address = ConstantOperand (C.GlobalReference (AST.ptr (NamedTypeReference "pair")) "gpair")
+                      , type' = NamedTypeReference "pair"
+                      , address = ConstantOperand (C.GlobalReference "gpair")
                       , indices = [ConstantOperand (C.Int 32 0), ConstantOperand (C.Int 32 0)]
                       , metadata = []
                       }
                   , UnName 2 := GetElementPtr
                       { inBounds = False
-                      , address = ConstantOperand (C.GlobalReference (AST.ptr (NamedTypeReference "pair")) "gpair")
+                      , type' = NamedTypeReference "pair"
+                      , address = ConstantOperand (C.GlobalReference "gpair")
                       , indices = [ConstantOperand (C.Int 32 0), ConstantOperand (C.Int 32 1)]
                       , metadata = []
                       }
                   , Do $ Store
                       { volatile = False
-                      , address = LocalReference (AST.ptr AST.i32) (UnName 1)
+                      , address = LocalReference AST.ptr (UnName 1)
                       , value = LocalReference AST.i32 "x_0"
                       , maybeAtomicity = Nothing
                       , alignment = 0
@@ -395,7 +393,7 @@ resolvesConstantTypeDefs = do
                       }
                   , Do $ Store
                       { volatile = False
-                      , address = LocalReference (AST.ptr AST.i32) (UnName 2)
+                      , address = LocalReference AST.ptr (UnName 2)
                       , value = LocalReference AST.i32 "y_0"
                       , maybeAtomicity = Nothing
                       , alignment = 0
@@ -413,7 +411,8 @@ resolvesConstantTypeDefs = do
                 [ BasicBlock (UnName 0)
                   [ UnName 1 := Load
                       { volatile = False,
-                        address = ConstantOperand (C.GlobalReference (AST.ptr (NamedTypeReference "pair")) "gpair"),
+                        type' = NamedTypeReference "pair",
+                        address = ConstantOperand (C.GlobalReference "gpair"),
                         maybeAtomicity = Nothing,
                         alignment = 0,
                         metadata = []
@@ -605,9 +604,7 @@ example = mkModule $ execModuleBuilder emptyModuleBuilder $ mdo
       retVoid
 
     blk3 <- block; do
-      let nul = cons $ C.Null $ AST.ptr $ AST.ptr $ AST.ptr $ IntegerType 32
-      addr <- gep nul [cons $ C.Int 32 10, cons $ C.Int 32 20, cons $ C.Int 32 30]
-      addr' <- gep addr [cons $ C.Int 32 40]
+      addr <- gep AST.i32 (cons (C.Null AST.ptr)) [cons $ C.Int 32 40]
       retVoid
 
     pure ()
@@ -617,13 +614,13 @@ example = mkModule $ execModuleBuilder emptyModuleBuilder $ mdo
 
 funcCall :: Module
 funcCall = mkModule $ execModuleBuilder emptyModuleBuilder $ mdo
-  extern "malloc" [AST.i64] (AST.ptr AST.i8)
+  extern "malloc" [AST.i64] AST.ptr
 
-  let mallocTy = AST.ptr $ AST.FunctionType (AST.ptr AST.i8) [AST.i64] False
+  let mallocTy = AST.FunctionType AST.ptr [AST.i64] False
 
   function "omg" [] (AST.void) $ \_ -> do
     let size = int64 10
-    call (ConstantOperand $ C.GlobalReference mallocTy "malloc") [(size, [])]
+    call mallocTy (ConstantOperand $ C.GlobalReference "malloc") [(size, [])]
     unreachable
   where
   mkModule ds = defaultModule { moduleName = "exampleModule", moduleDefinitions = ds }

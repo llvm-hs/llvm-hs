@@ -23,7 +23,7 @@
 	macro(Any)                                                \
 	macro(ExactMatch)                                         \
 	macro(Largest)                                            \
-	macro(NoDuplicates)                                       \
+	macro(NoDeduplicate)                                      \
 	macro(SameSize)
 
 typedef enum {

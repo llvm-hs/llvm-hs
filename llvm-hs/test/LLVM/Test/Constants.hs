@@ -117,44 +117,44 @@ tests = testGroup "Constants" [
     ), (
       "binop/cast",
       i64,
-      C.Add False False (C.PtrToInt (C.GlobalReference (ptr i32) (UnName 1)) i64) (C.Int 64 2),
-      "global i64 add (i64 ptrtoint (i32* @1 to i64), i64 2)"
+      C.Add False False (C.PtrToInt (C.GlobalReference (UnName 1)) i64) (C.Int 64 2),
+      "global i64 add (i64 ptrtoint (ptr @1 to i64), i64 2)"
     ), (
       "binop/cast nsw",
       i64,
-      C.Add True False (C.PtrToInt (C.GlobalReference (ptr i32) (UnName 1)) i64) (C.Int 64 2),
-      "global i64 add nsw (i64 ptrtoint (i32* @1 to i64), i64 2)"
+      C.Add True False (C.PtrToInt (C.GlobalReference (UnName 1)) i64) (C.Int 64 2),
+      "global i64 add nsw (i64 ptrtoint (ptr @1 to i64), i64 2)"
     ), (
       "icmp",
       i1,
-      C.ICmp IPred.SGE (C.GlobalReference (ptr i32) (UnName 1)) (C.GlobalReference (ptr i32) (UnName 2)),
-      "global i1 icmp sge (i32* @1, i32* @2)"
+      C.ICmp IPred.SGE (C.GlobalReference (UnName 1)) (C.GlobalReference (UnName 2)),
+      "global i1 icmp sge (ptr @1, ptr @2)"
     ), (
       "getelementptr",
-      ptr i32,
-      C.GetElementPtr True (C.GlobalReference (ptr i32) (UnName 1)) [C.Int 64 27],
-      "global i32* getelementptr inbounds (i32, i32* @1, i64 27)"
+      ptr,
+      C.GetElementPtr True i32 (C.GlobalReference (UnName 1)) [C.Int 64 27],
+      "global ptr getelementptr inbounds (i32, ptr @1, i64 27)"
     ), (
       "selectvalue",
       i32,
-      C.Select (C.PtrToInt (C.GlobalReference (ptr i32) (UnName 1)) i1)
+      C.Select (C.PtrToInt (C.GlobalReference (UnName 1)) i1)
          (C.Int 32 1)
          (C.Int 32 2),
-      "global i32 select (i1 ptrtoint (i32* @1 to i1), i32 1, i32 2)"
+      "global i32 select (i1 ptrtoint (ptr @1 to i1), i32 1, i32 2)"
     ), (
       "extractelement",
       i32,
       C.ExtractElement
          (C.BitCast
-             (C.PtrToInt (C.GlobalReference (ptr i32) (UnName 1)) i64)
+             (C.PtrToInt (C.GlobalReference (UnName 1)) i64)
              (VectorType 2 i32))
          (C.Int 32 1),
-      "global i32 extractelement (<2 x i32> bitcast (i64 ptrtoint (i32* @1 to i64) to <2 x i32>), i32 1)"
+      "global i32 extractelement (<2 x i32> bitcast (i64 ptrtoint (ptr @1 to i64) to <2 x i32>), i32 1)"
     ), (
      "addrspacecast",
-     (PointerType i32 (AddrSpace 1)),
-     C.AddrSpaceCast (C.GlobalReference (ptr i32) (UnName 1)) (PointerType i32 (AddrSpace 1)),
-     "global i32 addrspace(1)* addrspacecast (i32* @1 to i32 addrspace(1)*)"
+     (PointerType (AddrSpace 1)),
+     C.AddrSpaceCast (C.GlobalReference (UnName 1)) (PointerType (AddrSpace 1)),
+     "global ptr addrspace(1) addrspacecast (ptr @1 to ptr addrspace(1))"
 {-    ), (
 -- This test fails since LLVM 3.2!
 -- LLVM parses the extractValue instruction from a file via llvm-as properly, but it does not here.
