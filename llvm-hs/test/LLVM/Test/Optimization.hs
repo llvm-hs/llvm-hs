@@ -27,6 +27,7 @@ import qualified LLVM.AST.Linkage as L
 import qualified LLVM.AST.Visibility as V
 import qualified LLVM.AST.CallingConvention as CC
 import qualified LLVM.AST.Attribute as A
+import qualified LLVM.AST.FunctionAttribute as A
 import qualified LLVM.AST.Global as G
 import qualified LLVM.AST.Constant as C
 
@@ -120,6 +121,8 @@ tests = testGroup "Optimization" [
             )
           ]
         },
-      FunctionAttributes (A.GroupID 0) [A.MustProgress, A.NoFree, A.NoRecurse, A.NoSync, A.NoUnwind, A.ReadNone, A.WillReturn, A.UWTable]
+      FunctionAttributes (A.GroupID 0) [A.MustProgress, A.NoFree, A.NoRecurse, A.NoSync, A.NoUnwind, A.ReadNone, A.WillReturn
+                                       , A.Memory (A.Union (A.Union (A.Exact (A.Other A.None)) (A.Exact (A.Argmem A.None))) (A.Exact (A.Inaccessiblemem A.None)))
+                                       , A.UWTable]
       ]
  ]

@@ -3,6 +3,7 @@
 #include "llvm/IR/DerivedTypes.h"
 #include "LLVM/Internal/FFI/AttributeC.hpp"
 #include "llvm/IR/LLVMContext.h"
+#include "llvm/Support/ModRef.h"
 
 #include <tuple>
 
@@ -149,9 +150,9 @@ void LLVM_Hs_AttrBuilderAddUWTable(AttrBuilder &ab) {
 void LLVM_Hs_AttrBuilderAddAllocSize(AttrBuilder &ab, unsigned x, unsigned y,
                                      LLVMBool optionalIsThere) {
     if (optionalIsThere) {
-        ab.addAllocSizeAttr(x, Optional<unsigned>(y));
+        ab.addAllocSizeAttr(x, std::optional<unsigned>(y));
     } else {
-        ab.addAllocSizeAttr(x, Optional<unsigned>());
+        ab.addAllocSizeAttr(x, std::optional<unsigned>());
     }
 }
 
@@ -184,5 +185,42 @@ void LLVM_Hs_AttributeGetVScaleRangeArgs(LLVMAttributeRef a, unsigned *min, unsi
 void LLVM_Hs_AttrBuilderAddVScaleRange(AttrBuilder &ab, unsigned min, unsigned max) {
   ab.addVScaleRangeAttr(min, max);
 }
+
+void LLVM_Hs_AttributeGetMemoryEffects(LLVMAttributeRef a, MemoryEffects *me) {
+    *me = unwrap(a).getMemoryEffects();
+}
+
+void LLVM_Hs_AttrBuilderAddMemoryAttr(AttrBuilder &ab, MemoryEffects *me) {
+    ab.addMemoryAttr(*me);
+}
+
+void LLVM_Hs_ConstructMemoryEffects(unsigned loc, unsigned modref, MemoryEffects *me) {
+    *me = MemoryEffects(static_cast<MemoryEffects::Location>(loc),
+                        static_cast<ModRefInfo>(modref));
+}
+
+void LLVM_Hs_DisposeMemoryEffects(MemoryEffects *me) { delete me; }
+
+void LLVM_Hs_MemoryEffectsCreateFromIntValue(uint32_t data, MemoryEffects *me) {
+    *me = MemoryEffects::createFromIntValue(data);
+}
+
+void LLVM_Hs_MemoryEffectsUnionInPlace(MemoryEffects &me, MemoryEffects *me2) { me |= *me2; }
+
+void LLVM_Hs_MemoryEffectsIntersectInPlace(MemoryEffects &me, MemoryEffects *me2) { me &= *me2; }
+
+void LLVM_Hs_MemoryEffectsUnion(MemoryEffects me, MemoryEffects me2, MemoryEffects* mer) { *mer = me | me2; }
+
+void LLVM_Hs_MemoryEffectsIntersect(MemoryEffects me, MemoryEffects me2, MemoryEffects* mer) { *mer = me & me2; }
+
+void LLVM_Hs_MemoryEffectsGetModRef(MemoryEffects &me, unsigned *mr) {
+    *mr = static_cast<unsigned>(me.getModRef());
+}
+
+void LLVM_Hs_MemoryEffectsGetModRefLoc(MemoryEffects &me, unsigned loc, unsigned *mr) {
+    *mr = static_cast<unsigned>(me.getModRef(static_cast<MemoryEffects::Location>(loc)));
+}
+
+size_t LLVM_Hs_MemoryEffectsSize() { return sizeof(MemoryEffects); }
 
 }

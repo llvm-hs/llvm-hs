@@ -68,7 +68,7 @@ handString = "; ModuleID = '<string>'\n\
     \  ret i32 %1\n\
     \}\n\
     \\n\
-    \; Function Attrs: nounwind readnone uwtable\n\
+    \; Function Attrs: nounwind memory(none) uwtable\n\
     \define zeroext i32 @foo(i32 inreg %x, i8 signext %y) #0 {\n\
     \  %1 = mul nsw i32 %x, %x\n\
     \  br label %here\n\
@@ -86,7 +86,7 @@ handString = "; ModuleID = '<string>'\n\
     \  ret i32 %r\n\
     \}\n\
     \\n\
-    \attributes #0 = { nounwind readnone uwtable \"eep\" }\n"
+    \attributes #0 = { nounwind memory(none) uwtable \"eep\" }\n"
 
 handAST = Module "<string>" "<string>" Nothing Nothing [
       TypeDefinition (UnName 0) (
@@ -264,7 +264,7 @@ handAST = Module "<string>" "<string>" Nothing Nothing [
            )
          ]
         },
-      FunctionAttributes (FA.GroupID 0) [FA.NoUnwind, FA.ReadNone, FA.UWTable, FA.StringAttribute "eep" ""],
+      FunctionAttributes (FA.GroupID 0) [FA.NoUnwind, FA.Memory (FA.Union (FA.Union (FA.Exact (FA.Other FA.None)) (FA.Exact (FA.Argmem FA.None))) (FA.Exact (FA.Inaccessiblemem FA.None))), FA.UWTable, FA.StringAttribute "eep" ""],
       COMDAT "bob" COMDAT.Largest
      ]
 

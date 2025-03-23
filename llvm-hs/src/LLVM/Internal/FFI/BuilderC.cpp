@@ -375,7 +375,7 @@ LLVMValueRef LLVM_Hs_BuildCleanupPad(LLVMBuilderRef b, LLVMValueRef parentPad,
                                      LLVMValueRef *args, unsigned numArgs,
                                      const char *name) {
   return wrap(unwrap(b)->CreateCleanupPad(unwrap(parentPad),
-                                          makeArrayRef(unwrap(args), numArgs),
+                                          ArrayRef<Value*>(unwrap(args), numArgs),
                                           name));
 }
 
@@ -383,7 +383,7 @@ LLVMValueRef LLVM_Hs_BuildCatchPad(LLVMBuilderRef b, LLVMValueRef catchSwitch,
                                    LLVMValueRef *args, unsigned numArgs,
                                    const char *name) {
     return wrap(unwrap(b)->CreateCatchPad(unwrap(catchSwitch),
-                                          makeArrayRef(unwrap(args), numArgs),
+                                          ArrayRef<Value*>(unwrap(args), numArgs),
                                           name));
 }
 

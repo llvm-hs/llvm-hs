@@ -9,6 +9,11 @@ import Distribution.PackageDescription hiding (buildInfo, includeDirs)
 import Distribution.Simple
 import Distribution.Simple.LocalBuildInfo
 import Distribution.Simple.PreProcess
+#ifdef MIN_VERSION_Cabal
+#if MIN_VERSION_Cabal(3,12,0)
+import Distribution.Simple.PreProcess.Types (Suffix)
+#endif
+#endif
 import Distribution.Simple.Program
 import Distribution.Simple.Setup hiding (Flag)
 import Distribution.System
@@ -17,6 +22,12 @@ import System.Environment
 #ifdef MIN_VERSION_Cabal
 #if MIN_VERSION_Cabal(2,0,0)
 #define MIN_VERSION_Cabal_2_0_0
+#endif
+#if MIN_VERSION_Cabal(3,8,1)
+#define MIN_VERSION_Cabal_3_8_1
+#endif
+#if MIN_VERSION_Cabal(3,12,0)
+#define MIN_VERSION_Cabal_3_12_0
 #endif
 #endif
 
@@ -135,12 +146,8 @@ main = do
       libDirs <- liftM lines $ llvmConfig ["--libdir"]
       [llvmVersion] <- liftM lines $ llvmConfig ["--version"]
       let getLibs = liftM (map (fromJust . stripPrefix "-l") . words) . llvmConfig
-          flags    = configConfigurationsFlags confFlags
-          linkFlag = case lookupFlagAssignment (mkFlagName "shared-llvm") flags of
-                       Nothing     -> "--link-shared"
-                       Just shared -> if shared then "--link-shared" else "--link-static"
-      libs       <- getLibs ["--libs", linkFlag]
-      systemLibs <- getLibs ["--system-libs", linkFlag]
+      libs_static   <- getLibs ["--libs", "--system-libs", "--link-static"]
+      libs_shared   <- getLibs ["--libs", "--system-libs", "--link-shared"]
 
       let genericPackageDescription' = genericPackageDescription {
             condLibrary = do
@@ -150,7 +157,8 @@ main = do
                     libBuildInfo =
                       mempty {
                         ccOptions = llvmCxxFlags,
-                        extraLibs = libs ++ stdLib : systemLibs
+                        extraLibs = stdLib : libs_static,
+                        extraGHCiLibs = libs_shared
                       }
                   }
               }
@@ -171,6 +179,9 @@ main = do
 #endif
               PreProcessor {
                   platformIndependent = platformIndependent (origHsc buildInfo),
+#ifdef MIN_VERSION_Cabal_3_8_1
+                  ppOrdering = \_ _ modules -> pure modules,
+#endif
                   runPreProcessor = \inFiles outFiles verbosity -> do
                       llvmConfig <- getLLVMConfig (configFlags localBuildInfo)
                       llvmCFlags <- do
@@ -182,14 +193,21 @@ main = do
               where origHsc buildInfo' =
                       fromMaybe
                         ppHsc2hs
+#ifdef MIN_VERSION_Cabal_3_12_0
+                        (lookup (Suffix "hsc") origHookedPreprocessors)
+#else
                         (lookup "hsc" origHookedPreprocessors)
+#endif
                         buildInfo'
                         localBuildInfo
 #ifdef MIN_VERSION_Cabal_2_0_0
                         componentLocalBuildInfo
 #endif
+#ifdef MIN_VERSION_Cabal_3_12_0
+      in [(Suffix "hsc", newHsc)] ++ origHookedPreprocessors,
+#else
       in [("hsc", newHsc)] ++ origHookedPreprocessors,
-
+#endif
     buildHook = \packageDesc localBuildInfo userHooks buildFlags ->
       do addLLVMToLdLibraryPath (configFlags localBuildInfo)
          buildHook origUserHooks packageDesc localBuildInfo userHooks buildFlags,

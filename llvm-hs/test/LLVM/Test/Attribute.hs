@@ -74,12 +74,9 @@ moduleAst =
       , FunctionAttributes
           (GroupID 0)
           [ AlwaysInline
-          , ArgMemOnly
           , Builtin
           , Cold
           , Convergent
-          , InaccessibleMemOnly
-          , InaccessibleMemOrArgMemOnly
           , InlineHint
           , JumpTable
           , MinimizeSize
@@ -95,8 +92,6 @@ moduleAst =
           , NonLazyBind
           , OptimizeForSize
           , OptimizeNone
-          , ReadNone
-          , ReadOnly
           , ReturnsTwice
           , SafeStack
           , SanitizeAddress
@@ -105,8 +100,8 @@ moduleAst =
           , StackProtect
           , StackProtectReq
           , StackProtectStrong
-          , WriteOnly
           , AllocSize 8 (Just 16)
+          , Memory (Union (Union (Exact (Other None)) (Exact (Argmem None))) (Exact (Inaccessiblemem None)))
           , StackAlignment 8
           , UWTable
           , StringAttribute "bar" "baz"

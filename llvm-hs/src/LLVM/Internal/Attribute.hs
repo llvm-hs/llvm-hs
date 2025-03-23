@@ -98,15 +98,13 @@ instance Monad m => EncodeM m A.FA.FunctionAttribute (Ptr FFI.FunctionAttrBuilde
       liftIO $ FFI.attrBuilderAddVScaleRange b vsMin' vsMax'
     A.FA.StackAlignment v -> liftIO $ FFI.attrBuilderAddStackAlignment b v
     A.FA.UWTable -> liftIO $ FFI.attrBuilderAddUWTable b
+    A.FA.Memory me -> foldMemoryEffects b me
     _ -> liftIO $ FFI.attrBuilderAddFunctionAttributeKind b $ case a of
       A.FA.AlwaysInline -> FFI.functionAttributeKindAlwaysInline
-      A.FA.ArgMemOnly -> FFI.functionAttributeKindArgMemOnly
       A.FA.Builtin -> FFI.functionAttributeKindBuiltin
       A.FA.Cold -> FFI.functionAttributeKindCold
       A.FA.Convergent -> FFI.functionAttributeKindConvergent
       A.FA.Hot -> FFI.functionAttributeKindHot
-      A.FA.InaccessibleMemOnly -> FFI.functionAttributeKindInaccessibleMemOnly
-      A.FA.InaccessibleMemOrArgMemOnly -> FFI.functionAttributeKindInaccessibleMemOrArgMemOnly
       A.FA.InlineHint -> FFI.functionAttributeKindInlineHint
       A.FA.JumpTable -> FFI.functionAttributeKindJumpTable
       A.FA.MinimizeSize -> FFI.functionAttributeKindMinSize
@@ -209,13 +207,10 @@ instance DecodeM DecodeAST A.FA.FunctionAttribute FFI.FunctionAttribute where
              x' <- decodeM =<< peek x
              return (A.FA.AllocSize x' y)
            [functionAttributeKindP|AlwaysInline|] -> return A.FA.AlwaysInline
-           [functionAttributeKindP|ArgMemOnly|] -> return A.FA.ArgMemOnly
            [functionAttributeKindP|Builtin|] -> return A.FA.Builtin
            [functionAttributeKindP|Cold|] -> return A.FA.Cold
            [functionAttributeKindP|Convergent|] -> return A.FA.Convergent
            [functionAttributeKindP|Hot|] -> return A.FA.Hot
-           [functionAttributeKindP|InaccessibleMemOnly|] -> return A.FA.InaccessibleMemOnly
-           [functionAttributeKindP|InaccessibleMemOrArgMemOnly|] -> return A.FA.InaccessibleMemOrArgMemOnly
            [functionAttributeKindP|InlineHint|] -> return A.FA.InlineHint
            [functionAttributeKindP|JumpTable|] -> return A.FA.JumpTable
            [functionAttributeKindP|MinSize|] -> return A.FA.MinimizeSize
@@ -252,6 +247,7 @@ instance DecodeM DecodeAST A.FA.FunctionAttribute FFI.FunctionAttribute where
            [functionAttributeKindP|ShadowCallStack|] -> return A.FA.ShadowCallStack
            [functionAttributeKindP|Speculatable|] -> return A.FA.Speculatable
            [functionAttributeKindP|SpeculativeLoadHardening|] -> return A.FA.SpeculativeLoadHardening
+           [functionAttributeKindP|Memory|] -> return A.FA.Memory `ap` (liftIO (FFI.attributeValueAsInt a) >>= decomposeMemoryEffects)
            [functionAttributeKindP|StackAlignment|] -> return A.FA.StackAlignment `ap` (liftIO $ FFI.attributeValueAsInt a)
            [functionAttributeKindP|StackProtectReq|] -> return A.FA.StackProtectReq
            [functionAttributeKindP|StackProtectStrong|] -> return A.FA.StackProtectStrong
@@ -277,6 +273,46 @@ allocaAttrBuilder (context) = do
     r <- f ab
     FFI.destroyAttrBuilder ab
     return r
+
+decomposeMemoryEffects :: (Monad m, MonadAnyCont IO m, MonadIO m) =>  Word64 -> m (A.FA.MemoryEffects A.FA.MemoryAccess)
+decomposeMemoryEffects bits = do
+  size <- liftIO FFI.memoryEffectsSize
+  mePtr <- allocaBytes (fromIntegral size)
+  liftIO $ FFI.createMemoryEffectsFromInt (fromIntegral bits) mePtr
+  (argAcc, inaccAcc, otherAcc) <- (,,) <$>  alloca <*> alloca <*> alloca
+  anyContToM $ \f -> do
+    FFI.memoryAccessForLoc mePtr 0 argAcc *> FFI.memoryAccessForLoc mePtr 1 inaccAcc *> FFI.memoryAccessForLoc mePtr 2 otherAcc
+    (other, arg, inacc) <- (,,) <$> readAccess otherAcc <*> readAccess argAcc <*> readAccess inaccAcc
+    f $ A.FA.Exact (A.FA.Other other) `A.FA.Union` A.FA.Exact (A.FA.Argmem arg) `A.FA.Union` A.FA.Exact (A.FA.Inaccessiblemem inacc)
+  where
+    readAccess i = toEnum  . fromIntegral <$> peek i
+
+foldMemoryEffects :: (Monad m, MonadAnyCont IO m, MonadIO m) => Ptr FFI.FunctionAttrBuilder -> A.FA.MemoryEffects A.FA.MemoryAccess -> m ()
+foldMemoryEffects ab me = do
+  mePtr <- go me
+  anyContToM (FFI.attrBuilderAddMemoryEffects ab mePtr >>=)
+  where
+    encodeAccess loc acc = do
+      size <- liftIO FFI.memoryEffectsSize
+      mePtr <- allocaBytes (fromIntegral size)
+      anyContToM $ \f -> do
+        FFI.constructMemoryEffects loc (fromIntegral . fromEnum $ acc) mePtr
+        f mePtr
+
+    go (A.FA.Exact loc) = case loc of
+      A.FA.Other acc -> encodeAccess 2 acc
+      A.FA.Inaccessiblemem acc -> encodeAccess 1 acc
+      A.FA.Argmem acc -> encodeAccess 0 acc
+    go (A.FA.Union me me') = do
+      (mePtr, mePtr') <- (,) <$> go me <*> go me'
+      anyContToM $ \f -> do
+        FFI.memoryEffectsUnionInPlace mePtr mePtr'
+        f mePtr
+    go (A.FA.Intersect me me') = do
+      (mePtr, mePtr') <- (,) <$> go me <*> go me'
+      anyContToM $ \f -> do
+        FFI.memoryEffectsIntersectInPlace mePtr mePtr'
+        f mePtr
 
 instance forall a b. EncodeM EncodeAST a (Ptr (FFI.AttrBuilder b) -> EncodeAST ()) =>
          EncodeM EncodeAST [a] (FFI.AttributeSet b) where

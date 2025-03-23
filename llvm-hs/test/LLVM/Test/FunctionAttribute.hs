@@ -27,13 +27,10 @@ import qualified Data.ByteString.Short                    as B
 instance Arbitrary FunctionAttribute where
   arbitrary = oneof
     [ return AlwaysInline
-    , return ArgMemOnly
     , return Builtin
     , return Cold
     , return Convergent
     , return Hot
-    , return InaccessibleMemOnly
-    , return InaccessibleMemOrArgMemOnly
     , return InlineHint
     , return JumpTable
     , return MinimizeSize

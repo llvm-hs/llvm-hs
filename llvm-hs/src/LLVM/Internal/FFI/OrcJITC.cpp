@@ -1,3 +1,5 @@
+#include <unistd.h>
+
 #include <iostream>
 #include <memory>
 
@@ -8,6 +10,7 @@
 #include <llvm/ExecutionEngine/Orc/IRCompileLayer.h>
 #include <llvm/ExecutionEngine/Orc/RTDyldObjectLinkingLayer.h>
 #include <llvm/ExecutionEngine/Orc/ObjectLinkingLayer.h>
+#include <llvm/ExecutionEngine/JITLink/JITLinkMemoryManager.h>
 #include <llvm/ExecutionEngine/SectionMemoryManager.h>
 #include <llvm/Bitcode/BitcodeWriter.h>
 #include <llvm/Bitcode/BitcodeReader.h>
@@ -52,14 +55,13 @@ extern "C" {
 // ExecutionSession
 
 ExecutionSession *LLVM_Hs_createExecutionSession() {
-  auto sepc = SelfExecutorProcessControl::Create();
-  if (sepc) {
-    return new ExecutionSession(std::move(*sepc));
-  } else {
-    llvm::errs() << sepc.takeError() << "\n";
-    // FIXME: Better error handling
-    exit(1);
-  }
+    if (auto e = SelfExecutorProcessControl::Create()) {
+      return new ExecutionSession(std::move(*e));
+    } else {
+      llvm::errs() << e.takeError() << "\n";
+      // FIXME: Better error handling
+      exit(1);
+    }
 }
 
 void LLVM_Hs_disposeExecutionSession(ExecutionSession *es) {
@@ -117,7 +119,11 @@ ObjectLayer* LLVM_Hs_createRTDyldObjectLinkingLayer(ExecutionSession* es) {
 }
 
 ObjectLayer* LLVM_Hs_createObjectLinkingLayer(ExecutionSession* es) {
-    return new ObjectLinkingLayer(*es);
+    auto IPMM = jitlink::InProcessMemoryManager::Create();
+    if (!IPMM) {
+        return nullptr;
+    }
+    return new ObjectLinkingLayer(*es, std::move(*IPMM));
 }
 
 void LLVM_Hs_ObjectLayerAddObjectFile(ObjectLayer* ol, JITDylib* dylib, const char* path) {

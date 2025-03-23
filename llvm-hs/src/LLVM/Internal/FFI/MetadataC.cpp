@@ -9,6 +9,7 @@
 #include "llvm/IR/Metadata.h"
 #include "llvm/IR/DebugInfoMetadata.h"
 #include "llvm-c/Core.h"
+#include "llvm/ADT/Optional.h"
 
 using namespace llvm;
 
@@ -761,6 +762,14 @@ MDTuple* LLVM_Hs_DICompileUnit_GetMacros(DICompileUnit* cu) {
 
 LLVMBool LLVM_Hs_DICompileUnit_GetRangesBaseAddress(DICompileUnit* cu) {
     return cu->getRangesBaseAddress();
+}
+
+MDString* LLVM_Hs_DICompileUnit_GetSysroot(DICompileUnit* cu) {
+    return cu->getRawSysRoot();
+}
+
+MDString* LLVM_Hs_DICompileUnit_GetSDK(DICompileUnit* cu) {
+    return cu->getRawSDK();
 }
 
 // DIFlags

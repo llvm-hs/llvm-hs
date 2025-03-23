@@ -9,7 +9,6 @@
   macro(AllocAlign,T,F,F)                           \
   macro(AllocatedPointer,T,F,F)                     \
   macro(AlwaysInline,F,F,T)                         \
-  macro(ArgMemOnly,F,F,T)                           \
   macro(Builtin,F,F,T)                              \
   macro(Cold,F,F,T)                                 \
   macro(Convergent,F,F,T)                           \
@@ -18,8 +17,6 @@
   macro(Hot,F,F,T)                                  \
   macro(ImmArg,T,F,F)                               \
   macro(InReg,T,T,F)                                \
-  macro(InaccessibleMemOnly,F,F,T)                  \
-  macro(InaccessibleMemOrArgMemOnly,F,F,T)          \
   macro(InlineHint,F,F,T)                           \
   macro(JumpTable,F,F,T)                            \
   macro(MinSize,F,F,T)                              \
@@ -88,6 +85,7 @@
   macro(AllocSize,F,F,T)                            \
   macro(Dereferenceable,T,T,F)                      \
   macro(DereferenceableOrNull,T,T,F)                \
+  macro(Memory, F, F, T)                            \
   macro(StackAlignment,F,F,T)                       \
   macro(UWTable,F,F,T)                              \
   macro(VScaleRange,F,F,T)                          \

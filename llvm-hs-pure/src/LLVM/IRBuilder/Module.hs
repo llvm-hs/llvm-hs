@@ -7,14 +7,16 @@
 {-# LANGUAGE GADTs                      #-}
 {-# LANGUAGE GeneralizedNewtypeDeriving #-}
 {-# LANGUAGE MultiParamTypeClasses      #-}
+{-# LANGUAGE TypeOperators              #-}
 {-# LANGUAGE UndecidableInstances       #-} -- For MonadState s (IRBuilderT m) instance
 
 module LLVM.IRBuilder.Module where
 
-import Prelude hiding (and, or)
+import LLVM.Prelude
 
 import Control.Applicative
 import Control.Monad.Cont
+import Control.Monad.Fix
 import Control.Monad.Except
 import qualified Control.Monad.Fail as Fail
 import Control.Monad.Identity
@@ -34,7 +36,7 @@ import Control.Monad.Fail (MonadFail)
 #endif
 
 import Data.Bifunctor
-import Data.ByteString.Short as BS
+import Data.ByteString.Short (ShortByteString)
 import Data.Char
 import Data.Data
 import Data.Foldable
@@ -47,7 +49,6 @@ import GHC.Generics(Generic)
 import LLVM.AST hiding (function)
 import LLVM.AST.Global
 import LLVM.AST.Linkage
-import LLVM.AST.Type (ptr)
 import qualified LLVM.AST.Constant as C
 
 import LLVM.IRBuilder.Internal.SnocList

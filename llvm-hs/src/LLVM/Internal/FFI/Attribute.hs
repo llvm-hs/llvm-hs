@@ -36,11 +36,13 @@ data ParameterAttributeType
 data AttributeImpl a
 data AttributeSetImpl a
 data AttributeListImpl
+data MemoryEffectsImpl
 
 type Attribute a = Ptr (AttributeImpl a)
 type FunctionAttribute = Attribute FunctionAttributeType
 type ParameterAttribute = Attribute ParameterAttributeType
 newtype AttributeIndex = AttributeIndex CUInt
+type MemoryEffectsType = Ptr MemoryEffectsImpl
 
 type AttributeSet a = Ptr (AttributeSetImpl a)
 -- type MixedAttributeSet = AttributeSet MixedAttributeType
@@ -185,3 +187,29 @@ foreign import ccall unsafe "LLVM_Hs_AttributeGetVScaleRangeArgs" attributeGetVS
 
 foreign import ccall unsafe "LLVM_Hs_AttrBuilderAddVScaleRange" attrBuilderAddVScaleRange ::
   Ptr FunctionAttrBuilder -> CUInt -> CUInt -> IO ()
+
+foreign import ccall unsafe "LLVM_Hs_AttributeGetMemoryEffects" attributeGetMemoryEffects ::
+  FunctionAttribute -> Ptr MemoryEffectsImpl -> IO ()
+
+foreign import ccall unsafe "LLVM_Hs_AttrBuilderAddMemoryAttr" attrBuilderAddMemoryEffects ::
+  Ptr FunctionAttrBuilder -> Ptr MemoryEffectsImpl -> IO ()
+
+foreign import ccall unsafe "LLVM_Hs_ConstructMemoryEffects" constructMemoryEffects ::
+  CUInt -> CUInt -> Ptr MemoryEffectsImpl -> IO ()
+
+foreign import ccall unsafe "LLVM_Hs_DisposeMemoryEffects" disposeMemoryEffects ::
+  Ptr MemoryEffectsImpl -> IO ()
+
+foreign import ccall unsafe "LLVM_Hs_MemoryEffectsCreateFromIntValue" createMemoryEffectsFromInt ::
+  Word32 -> Ptr MemoryEffectsImpl -> IO ()
+
+foreign import ccall unsafe "LLVM_Hs_MemoryEffectsGetModRefLoc" memoryAccessForLoc ::
+  Ptr MemoryEffectsImpl -> CUInt -> Ptr CUInt -> IO ()
+
+foreign import ccall unsafe "LLVM_Hs_MemoryEffectsSize" memoryEffectsSize :: IO CSize
+
+foreign import ccall unsafe "LLVM_Hs_MemoryEffectsUnionInPlace" memoryEffectsUnionInPlace ::
+  Ptr MemoryEffectsImpl -> Ptr MemoryEffectsImpl -> IO ()
+
+foreign import ccall unsafe "LLVM_Hs_MemoryEffectsIntersectInPlace" memoryEffectsIntersectInPlace ::
+  Ptr MemoryEffectsImpl -> Ptr MemoryEffectsImpl -> IO ()

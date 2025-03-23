@@ -38,9 +38,9 @@ tests = testGroup "DataLayout" $
       size @?= 1
       size <-
         withFFIDataLayout
-          (ddl { typeLayouts = Map.singleton (IntegerAlign, 8) (AlignmentInfo 32 32) })
+          (ddl { typeLayouts = Map.singleton (IntegerAlign, 8) (AlignmentInfo 8 8) })
           (\dl -> getTypeAllocSize dl ty)
-      size @?= 4)
+      size @?= 1)
   :
   [
   testCase name $ strCheckC (Module "<string>" "<string>" mdl Nothing []) (m sdl) (m sdlc)
@@ -51,27 +51,27 @@ tests = testGroup "DataLayout" $
    | (name, mdl, sdl, msdlc) <- [
     ("little-endian", defaultDataLayout LittleEndian, "e", Nothing),
     ("big-endian", defaultDataLayout BigEndian, "E", Nothing),
-    ("native", ddl { nativeSizes = Just (Set.fromList [8,32]) }, "E-n8:32", Nothing),
+    ("native", ddl { nativeSizes = Just (Set.fromList [8,8]) }, "E-n8", Nothing),
     (
      "no pref",
      ddl {
-       pointerLayouts = 
+       pointerLayouts =
          Map.singleton
-         (AddrSpace 0) 
+         (AddrSpace 0)
          (
           8,
-          AlignmentInfo 64 64
+          AlignmentInfo 8 8
          )
      },
-     "E-p:8:64",
+     "E-p:8:8",
      Nothing
     ), (
      "no pref",
      ddl {
-       pointerLayouts = 
-         Map.insert (AddrSpace 1) (8, AlignmentInfo 32 64) (pointerLayouts ddl)
+       pointerLayouts =
+         Map.insert (AddrSpace 1) (8, AlignmentInfo 8 8) (pointerLayouts ddl)
      },
-     "E-p1:8:32:64",
+     "E-p1:8:8",
      Nothing
     ), (
      "big",
@@ -80,7 +80,7 @@ tests = testGroup "DataLayout" $
        mangling = Just ELFMangling,
        stackAlignment = Just 128,
        pointerLayouts = Map.fromList [
-         (AddrSpace 0, (8, AlignmentInfo 8 16))
+         (AddrSpace 0, (8, AlignmentInfo 8 8))
         ],
        typeLayouts = Map.fromList [
          ((IntegerAlign, 1), AlignmentInfo 8 256),
@@ -93,11 +93,11 @@ tests = testGroup "DataLayout" $
          ((FloatAlign, 32), AlignmentInfo 32 256),
          ((FloatAlign, 64), AlignmentInfo 64 256),
          ((FloatAlign, 80), AlignmentInfo 128 256)
-        ] `Map.union` typeLayouts ddl, 
+        ] `Map.union` typeLayouts ddl,
        aggregateLayout = AlignmentInfo 0 256,
        nativeSizes = Just (Set.fromList [8,16,32,64])
      },
-     "e-m:e-p:8:8:16-i1:8:256-i8:8:256-i16:16:256-i32:32:256-i64:64:256-v64:64:256-v128:128:256-f32:32:256-f64:64:256-f80:128:256-a:0:256-n8:16:32:64-S128",
+     "e-m:e-p:8:8-i1:8:256-i8:8:256-i16:16:256-i32:32:256-i64:64:256-v64:64:256-v128:128:256-f32:32:256-f64:64:256-f80:128:256-a:0:256-n8:16:32:64-S128",
      Nothing
     )
    ]

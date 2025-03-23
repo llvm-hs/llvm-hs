@@ -398,6 +398,8 @@ genDICompileUnit file retained macro =
     <*> arbitrary
     <*> arbitrary
     <*> arbitrary
+    <*> arbitrarySbs
+    <*> arbitrarySbs
 
 instance Arbitrary DebugEmissionKind where
   arbitrary = QC.elements [NoDebug, FullDebug, LineTablesOnly]
@@ -942,6 +944,8 @@ globalObjectMetadata = testGroup "Metadata on GlobalObject" $
                       , debugInfoForProfiling = False
                       , nameTableKind = NameTableKindDefault
                       , rangesBaseAddress = False
+                      , sysroot = ""
+                      , sdk = ""
                       }
                   , MetadataNodeDefinition (MetadataNodeID 3) $
                     DINode . DIScope . DIFile $
@@ -1004,6 +1008,8 @@ globalObjectMetadata = testGroup "Metadata on GlobalObject" $
                       , debugInfoForProfiling = False
                       , nameTableKind = NameTableKindDefault
                       , rangesBaseAddress = False
+                      , sysroot = ""
+                      , sdk = ""
                       }
                   , MetadataNodeDefinition (MetadataNodeID 3) $
                     DINode . DIVariable . DIGlobalVariable $

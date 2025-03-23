@@ -7,6 +7,7 @@
 #include "llvm-c/Target.h"
 #include "llvm-c/TargetMachine.h"
 #include "llvm/ADT/Triple.h"
+#include "llvm/ADT/Optional.h"
 #include "llvm/Analysis/TargetLibraryInfo.h"
 #include "llvm/ExecutionEngine/Interpreter.h"
 #include "llvm/IR/DataLayout.h"

@@ -16,9 +16,10 @@ import LLVM.Prelude
 
 import LLVM.Exception
 
-import Control.Monad.Catch
-import Control.Monad.State
 import Control.Monad.AnyCont
+import Control.Monad.Catch
+import Control.Monad.Fix
+import Control.Monad.State
 import Data.Bits
 import Data.Functor.Identity
 import qualified Data.Map as Map
@@ -464,6 +465,8 @@ instance DecodeM DecodeAST A.DICompileUnit (Ptr FFI.DICompileUnit) where
     macros <- decodeM =<< liftIO (FFI.getDICompileUnitMacros p)
     nameTableKind <- decodeM =<< liftIO (FFI.getDICompileUnitNameTableKind p)
     rangesBaseAddress <- decodeM =<< liftIO (FFI.getDICompileUnitRangesBaseAddress p)
+    sysroot <- decodeM =<< liftIO (FFI.getDICompileUnitSysroot p)
+    sdk <- decodeM =<< liftIO (FFI.getDICompileUnitSDK p)
     pure A.CompileUnit
       { A.language = language
       , A.file = file
@@ -483,6 +486,8 @@ instance DecodeM DecodeAST A.DICompileUnit (Ptr FFI.DICompileUnit) where
       , A.debugInfoForProfiling = debugInfoForProfiling
       , A.nameTableKind = nameTableKind
       , A.rangesBaseAddress = rangesBaseAddress
+      , A.sysroot = sysroot
+      , A.sdk = sdk
       }
 
 instance EncodeM EncodeAST A.DICompileUnit (Ptr FFI.DICompileUnit) where
@@ -505,13 +510,15 @@ instance EncodeM EncodeAST A.DICompileUnit (Ptr FFI.DICompileUnit) where
     debugInfoForProfiling <- encodeM debugInfoForProfiling
     nameTableKind <- encodeM nameTableKind
     rangesBaseAddress <- encodeM rangesBaseAddress
+    sysroot <- encodeM sysroot
+    sdk <- encodeM sdk
     Context c <- gets encodeStateContext
     liftIO $ FFI.getDICompileUnit
       c
       language file producer optimized flags
       runtimeVersion debugFileName emissionKind enums retainedTypes
       globals imports macros dwoid splitDebugInlining
-      debugInfoForProfiling nameTableKind rangesBaseAddress
+      debugInfoForProfiling nameTableKind rangesBaseAddress sysroot sdk
 
 instance EncodeM EncodeAST A.DIScope (Ptr FFI.DIScope) where
   encodeM (A.DIFile f) = FFI.upCast <$> (encodeM f :: EncodeAST (Ptr FFI.DIFile))
@@ -837,8 +844,19 @@ instance EncodeM EncodeAST A.DILocalVariable (Ptr FFI.DILocalVariable) where
 
 instance EncodeM EncodeAST A.DITemplateParameter (Ptr FFI.DITemplateParameter) where
   encodeM p = do
-    name' <- encodeM (A.name (p :: A.DITemplateParameter)) :: EncodeAST (Ptr FFI.MDString)
-    ty <- encodeM (A.type' (p :: A.DITemplateParameter))
+    -- As of GHC 9.4.1, selector names have to be entirely unambiguous (under the
+    -- usual name resolution rules)
+    -- However, this type is ambiguous for reason not yet understood.
+    -- One solution would be to use OverloadedRecordDot, using p.name and p.type',
+    -- but it requires GHC 9.2.
+    -- The solution here is to just extract the values
+    --
+    -- (Referred from: https://github.com/llvm-hs/llvm-hs/pull/406)
+    let (name, type') = case p of
+               A.DITemplateTypeParameter{name, type'} -> (name, type')
+               A.DITemplateValueParameter{name, type'} -> (name, type')
+    name' <- encodeM name :: EncodeAST (Ptr FFI.MDString)
+    ty <- encodeM type'
     Context c <- gets encodeStateContext
     case p of
       A.DITemplateTypeParameter _ _ -> do

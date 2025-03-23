@@ -1,6 +1,6 @@
 # llvm-hs - Haskell bindings for LLVM
 
-[![Build Status](https://travis-ci.org/llvm-hs/llvm-hs.svg?branch=llvm-6)](https://travis-ci.org/llvm-hs/llvm-hs) [![Hackage](https://img.shields.io/hackage/v/llvm-hs.svg)](https://hackage.haskell.org/package/llvm-hs)
+[![Build Status](https://github.com/llvm-hs/llvm-hs/actions/workflows/ci.yml/badge.svg)](https://github.com/llvm-hs/llvm-hs/actions/workflows/ci.yml) [![Hackage](https://img.shields.io/hackage/v/llvm-hs.svg)](https://hackage.haskell.org/package/llvm-hs)
 
 This project aims to provide a relatively complete set of bindings for
 the LLVM API. If you find that anything is missing please open an
@@ -81,7 +81,7 @@ compiler are required, at least Clang 3.1, GCC 4.8, or Visual Studio 2015
 
   1. Download and unpack the [LLVM source code](https://github.com/llvm/llvm-project):
      ```sh
-     git clone https://github.com/llvm/llvm-project -b release/12.x --single-branch
+     git clone https://github.com/llvm/llvm-project -b release/16.x --single-branch
      cd llvm-project
      ```
 
